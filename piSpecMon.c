@@ -126,10 +126,10 @@ unsigned int writeResultsHeader( void )
 	resultsFile = fopen(RESULTS_FILE,"a+");
 	if (resultsFile) 
 	{
-		fprintf(resultsFile, "# ");
+		fprintf(resultsFile, "#TimeDate, ");
 		if ( gLimitScanConfig != -1 )  // limit scan mode
 		{
-			for ( fCounter=config[gLimitScanConfig].minFrequency; fCounter < config[gLimitScanConfig].maxFrequency; fCounter += config[gLimitScanConfig].step )
+			for ( fCounter=config[gLimitScanConfig].minFrequency; fCounter <= config[gLimitScanConfig].maxFrequency; fCounter += config[gLimitScanConfig].step )
 			{
 				fprintf(resultsFile, "%lf,",(double)fCounter/1000000);
 				//signal[fCounter]=0;
@@ -293,7 +293,7 @@ int main (int argc, char *argv[])
 		else  // range mode - scan between a low and high frequency
 		{
 			currentFrequency = currentFrequency + currentStep;
-			if ( currentFrequency > config[gLimitScanConfig].maxFrequency) // we have reached the max frequency in a limit scan. save results and start again at the bottom 
+			if ( currentFrequency >= config[gLimitScanConfig].maxFrequency) // we have reached the max frequency in a limit scan. save results and start again at the bottom 
 			{
 				writeResults();
 				currentFrequency = config[gLimitScanConfig].minFrequency;
