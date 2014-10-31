@@ -172,7 +172,7 @@ unsigned int writeResults ( void )
 		
 		if ( gLimitScanConfig != -1 )  // limit scan mode
 		{
-			for ( fCounter=0; fCounter < gFrequencyListLen ; fCounter ++ )
+			for ( frequencyCounter=0; frequencyCounter < gFrequencyListLen ; frequencyCounter ++ )
 			{
 				fprintf(resultsFile,"%i,",gSignal[frequencyCounter]+SIGNAL_OFFSET); 
 				//signal[fCounter]=0;
