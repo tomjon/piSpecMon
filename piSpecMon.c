@@ -5,9 +5,9 @@
 #include <hamlib/rig.h>
 #include <time.h>
 
-#define VERSION_STRING "1.02"
+#define VERSION_STRING "1.03"
 #define SERIAL_PORT "/dev/icomCiv"
-#define FREQ_LIST_LEN 30  // maximum number of frequencies that can be scanned
+#define FREQ_LIST_LEN 5000  // maximum number of frequencies that can be scanned
 #define LINE_LEN 300
 #define SIGNAL_OFFSET 60 //the AR8600 puts out an RSSI where the noise floor is -51. This will make signals more positive..
 #define DEBUG 1
@@ -156,7 +156,7 @@ unsigned int writeResultsHeader( void )
 unsigned int writeResults ( void )
 {
 	FILE *resultsFile;
-	char str[20];
+	char str[LINE_LEN];
 	unsigned int frequencyCounter;	
 	time_t rawTime;
 	
@@ -268,7 +268,7 @@ int main (int argc, char *argv[])
 	retcode = rig_set_ts(my_rig, RIG_VFO_CURR, 6250);
 	frequencyCounter = 0;
 	lastFrequency = 0;
-	lastMode = 0 ;
+	lastMode = -1 ;   // so as to force a mode change on boot up
 	if ( gLimitScanConfig != -1 ) 
 	{
 		currentFrequency = config[gLimitScanConfig].minFrequency;
