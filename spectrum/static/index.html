@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Ofcom - Spectrum Monitor</title>
+    <script src="lib/require.js"></script>
+    <script>
+      require(["main"], function (main) {
+        main();
+      });
+    </script>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+  </head>
+  <body style="display: none">
+    <h1>Spectrum Monitor</h1>
+    <div id="config">
+      <h2>Rig Configuration</h2>
+      <table id="rig">
+        <tr><td>Model</td><td><select id="model"></select></td></tr>
+        <tr><td>Serial port path</td><td><input id="pathname" /></td></tr>
+        <tr><td>Stop bits</td><td><input id="stop_bits" /></td></tr>
+        <tr><td>Write delay</td><td><input id="write_delay" /></td></tr>
+      </table>
+      <h2>Scan Configuration</h2>
+      <table id="scan">
+        <tr><td>Mode</td><td><select id="mode"></select></td></tr>
+      </table>
+      <label for="discrete">Discrete</label><input type="radio" name="type" id="discrete" checked />
+      <label for="range">Range</label><input type="radio" name="type" id="range" />
+      <div id="discreteSet">
+        <table>
+        </table>
+        <button id="add">Add</button>
+      </div>
+      <div id="rangeSet">
+        <table>
+          <tr id="f0"><td>Start</td><td><input /></td></tr>
+          <tr id="f1"><td>End</td><td><input /></td></tr>
+          <tr id="df"><td>Step</td><td><input /></td></tr>
+          <tr><td>Units</td><td><select class="hz" /></td></tr>
+        </table>
+      </div>
+    </div>
+    <div id="process">
+      <h2>Monitor</h2>
+      <button id="start">Start</button>
+      <button id="stop">Stop</button>
+    </div>
+    <div id="stats">
+      <h2>Elasticsearch Index</h2>
+      <table>
+        <tr><td>Total index size (bytes)</td><td id="totalSize"><td></td></tr>
+        <tr><td>Number of records</td><td id="records"><td></td></tr>
+      </table>
+    </div>
+    <div id="sweep_set">
+      <h2>Sweep sets</h2>
+      <select>
+        <option value="">New</option>
+      </select>
+    </div>
+    <div id="charts">
+      <div id="frequency-chart">
+        <h2>Level / frequency</h2>
+        <select id="sweep" class="option">
+          <option value="latest">Latest sweep</option>
+          <option value="avg">Average</option>
+          <option value="max">Maximum</option>
+          <option value="min">Minimum</option>
+        </select>
+      </div>
+      <div id="level-chart">
+        <h2>Level / time</h2>
+        <span>
+          <label>Top</label><select id="N" class="option"></select><label>by</label>
+          <select id="top" class="option">
+            <option value="avg">Average</option>
+            <option value="max">Maximum</option>
+            <option value="min">Minimum</option>
+          </select>
+        </span>
+        <!-- time range choice -->
+      </div>
+      <div id="waterfall-chart">
+        <h2>Waterfall</h2>
+        <!-- time range choice -->
+      </div>
+    </div>
+    <div id="debugSwitch">
+      <label for="debug">Debug</label><input id="debug" type="checkbox" />
+    </div>
+  </body>
+</html>
