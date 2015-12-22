@@ -92,7 +92,6 @@ class Monitor:
     return self._check(self.rig.get_strength, Hamlib.RIG_VFO_CURR)
 
   def _scan(self, freqs=[], range=None, mode=None):
-    raise RigError(self.rig, "test")
     if mode is not None and mode != Hamlib.RIG_MODE_NONE:
       width = self._check(self.rig.passband_normal, mode)
       self._check(self.rig.set_mode, mode, width, Hamlib.RIG_VFO_CURR)
