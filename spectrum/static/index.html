@@ -5,6 +5,9 @@
     <title>Ofcom - Spectrum Monitor</title>
     <script src="lib/require.js"></script>
     <script>
+      require.config({
+        waitSeconds: 0
+      });
       require(["main"], function (main) {
         main();
       });
