@@ -39,9 +39,9 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'process'
       "#sweep_set": sweep(),
       "#config": config(),
       "#charts": options(),
-      "#frequency-chart": freq({ y_axis: [-60, 10, 10], margin: { top: 50, left: 60, right: 50, bottom: 40 }, width: 1200, height: 400 }),
-      "#level-chart": level({ y_axis: [-60, 10, 10], margin: { top: 50, left: 60, right: 50, bottom: 40 }, width: 1200, height: 400 }),
-      "#waterfall-chart": waterfall({ heat: [-60, 0, 10], margin: { top: 50, left: 80, right: 50, bottom: 40 }, width: 1200, height: 400 })
+      "#frequency-chart": freq({ y_axis: [-70, 70, 10], margin: { top: 50, left: 60, right: 50, bottom: 40 }, width: 1200, height: 400 }),
+      "#level-chart": level({ y_axis: [-70, 70, 10], margin: { top: 50, left: 60, right: 50, bottom: 40 }, width: 1200, height: 400 }),
+      "#waterfall-chart": waterfall({ heat: [-70, 0, 70], margin: { top: 50, left: 80, right: 50, bottom: 40 }, width: 1200, height: 400 })
     };
 
     //FIXME is the config panel 'locked' when the sweeper thread is running? - and you send the config set in the REST API /start call
