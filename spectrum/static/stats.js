@@ -1,34 +1,23 @@
 define(['lib/d3/d3.v3'], function (d3) {
   "use strict";
 
-  /* HTML field ids, and their values from Elasticsearch output */
-  function fields(stats) {
-    return {
-      'records': stats ? stats.docs.count : null,
-      'totalSize': stats ? stats.store.size_in_bytes : null
-    };
+  var units = [' bytes', 'k', 'M', 'G'];
+
+  function convertBytes(bytes) {
+    var m = Math.floor(Math.log2(bytes) / 10);
+    if (m >= units.length) m = 0;
+    return (bytes / Math.pow(2, 10 * m)).toFixed(1) + units[m];
   }
 
   return function (options) {
     return function (parent) {
-      var nodes = {};
-      var values = fields();
-      for (var id in values) {
-        nodes[id] = d3.select('#' + id);
-        nodes[id].text(values[id]);
-      }
-
       return {
-        // FIXME: couldn't you get the ids from the parent node? then can simplify fields() above
-        q: 'spectrum/_stats/docs,store',
+        q: 'stats',
 
-        render: function (resp) {
-          var values = fields(resp.indices.spectrum.primaries);
-          for (var id in values) {
-            if (values[id]) {
-              nodes[id].text(values[id]);
-            }
-          }
+        render: function (stats) {
+          d3.select('#totalSize').text(convertBytes(stats.size_in_bytes));
+          d3.select('#records').text(stats.doc_count);
+          d3.select('#recordSize').text(convertBytes(stats.size_in_bytes / stats.doc_count));
         }
       };
     }

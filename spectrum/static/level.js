@@ -30,8 +30,8 @@ define(['lib/d3/d3.v3'], function (d3) {
           order[opts.top] = { field: "level" };
           return {
             query: {
-              query_string: {
-                query: "config_id:" + config_id
+              term: {
+                conf_id: config_id
               }
             },
             aggs: {
@@ -46,7 +46,7 @@ define(['lib/d3/d3.v3'], function (d3) {
                 aggs: {
                   timestamp: {
                     terms: {
-                      field: "timestamp",
+                      field: "time",
                       size: 0,
                     },
                     aggs: {

@@ -2,66 +2,21 @@ from flask import Flask, redirect, url_for, request, send_from_directory
 import requests
 import json
 import os
-from pypath import PyPath
 from threading import Thread, Lock
 from monitor import Monitor, get_capabilities
-from time import sleep, time
+from time import sleep, time, strftime, localtime
 from md5 import md5
 import Hamlib
 import math
 
+
 ELASTICSEARCH = 'http://localhost:9200/'
-BATCH = True
-
-app = Flask(__name__)
-app.settings = { }
-app.thread = None
-app.monitor_lock = Lock()
-app.caps = get_capabilities()
-
-@app.route('/')
-def main():
-  return send_from_directory(os.path.join(app.root_path, 'static'),
-                             'index.html', mimetype='text/html')
-
-@app.route('/favicon.ico')
-def favicon():
-  return send_from_directory(os.path.join(app.root_path, 'static'),
-                             'favicon.ico', mimetype='image/vnd.microsoft.icon')
-
-
-# settings API
-@app.route('/settings/', methods=['GET', 'PUT', 'DELETE'])
-@app.route('/settings', methods=['GET', 'PUT', 'DELETE'])
-@app.route('/settings/<path:path>', methods=['GET', 'PUT', 'DELETE'])
-def setting(path=''):
-  if path == '' and request.method == 'DELETE':
-    app.settings = {}
-    return 'OK'
-  try:
-    node = PyPath(path)(app.settings)
-  except ValueError as e:
-    return 'Bad path: %s' % e, 400
-  if request.method == 'GET':
-    x = node.get()
-    return json.dumps(x) if x is not None else ('Not found', 404)
-  elif request.method == 'PUT':
-    node.set(request.get_json() or request.get_data())
-    return 'OK'
-  else:
-    node.delete()
-    return 'OK'
-
-
-# rig capabilities API
-@app.route('/rig')
-def rig():
-  return json.dumps(app.caps)
 
 
 #FIXME: should this be done in the UI?
 def convert(d):
-  # auto-convert number strings into numbers
+  """ Auto-convert empty strings into None, and number strings into numbers.
+  """
   for k, v in d.iteritems():
     if v.strip() == '':
       d[k] = None
@@ -75,12 +30,101 @@ def convert(d):
         pass
 
 
+def now():
+  """ Return time in milliseconds since the epoch.
+  """
+  return int(time() * 1000)
+
+
+def set_settings(id, value):
+  data = { 'timestamp': int(time()), 'json': json.dumps(value) }
+  r = requests.put(ELASTICSEARCH + 'spectrum/settings/' + id, data=json.dumps(data))
+  if r.status_code != 201:
+    raise Exception("Can not apply settings: %s (%d)" % (id, r.status_code))
+
+def get_settings(id, new={}):
+  """ Get the settings by id from Elasticsearch.
+  """
+  params = { 'fields': 'json' }
+  r = requests.get(ELASTICSEARCH + 'spectrum/settings/' + id, params=params)
+  if r.status_code == 404:
+    print "Initialising settings: " + id
+    set_settings(id, new)
+    return new
+  fields = r.json()['fields']
+  return json.loads(fields['json'][0])
+
+
+def get_stats():
+  r = requests.get(ELASTICSEARCH + 'spectrum/_stats/docs,store')
+  if r.status_code != 200:
+    return None
+  stats = r.json()['indices']['spectrum']['primaries']
+  return {
+    'timestamp': now(),
+    'doc_count': stats['docs']['count'],
+    'size_in_bytes': stats['store']['size_in_bytes']
+  }
+
+def post_stats():
+  app.stats = get_stats()
+  r = requests.post(ELASTICSEARCH + 'spectrum/stats/', data=json.dumps(app.stats))
+  if r.status_code != 201:
+    print "** FAILED TO POST STATS"
+
+
+app = Flask(__name__)
+app.settings = get_settings('global', { 'batch': True })
+app.thread = None
+app.monitor_lock = Lock()
+app.caps = get_capabilities()
+app.stats = get_stats()
+
+print "Global settings:", app.settings
+print len(app.caps['models']), "rig models"
+
+
+@app.route('/')
+def main():
+  return send_from_directory(os.path.join(app.root_path, 'static'),
+                             'index.html', mimetype='text/html')
+
+@app.route('/favicon.ico')
+def favicon():
+  return send_from_directory(os.path.join(app.root_path, 'static'),
+                             'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
+
+# settings API
+@app.route('/settings/', methods=['GET', 'PUT'])
+@app.route('/settings', methods=['GET', 'PUT'])
+def setting():
+  if request.method == 'GET':
+    return json.dumps(app.settings)
+  elif request.method == 'PUT':
+    set_settings('global', request.get_json())
+    return 'OK'
+
+
+# rig capabilities API
+@app.route('/rig')
+def rig():
+  return json.dumps(app.caps)
+
+
+@app.route('/stats')
+def stats():
+  if app.stats is None:
+    return "Stats not found", 404
+  return json.dumps(app.stats)
+
+
 class Collector (Thread):
 
   def __init__(self, config_id, config):
     Thread.__init__(self)
+
     self.config_id = config_id
-    self.error = None
 
     convert(config['rig'])
     convert(config['scan'])
@@ -111,26 +155,27 @@ class Collector (Thread):
     try:
       with Monitor(**self.rig_config) as scan:
         while not self.stop:
-          self.timestamp = int(time() * 1000)
+          self.timestamp = now()
           index = 0
           bulk = []
-          print "**", self.scan
+          print "Scan:", self.scan
           for x in scan(**self.scan):
             json1 = { 'index': { '_index': 'spectrum', '_type': 'signal' } }
-            json2 = { 'config_id': self.config_id, 'timestamp': self.timestamp, 'index': index, 'level': x[1] }
+            json2 = { 'conf_id': self.config_id, 'time': self.timestamp, 'index': index, 'level': x[1] }
             data = '%s\n%s\n' % (json.dumps(json1), json.dumps(json2))
-            if not BATCH:
+            if not app.settings['batch']:
               self._post_es(data)
             else:
               bulk.append(data)
             index += 1
-          if BATCH:
+          if app.settings['batch']:
             self._post_es(''.join(bulk))
+          post_stats()
           sleep(self.period)
     except Exception as e:
       print e
       # store the error and FIXME check the result
-      data = { 'timestamp': int(time() * 1000), 'config_id': self.config_id, 'message': str(e) }
+      data = { 'timestamp': now(), 'config_id': self.config_id, 'json': json.dumps(str(e)) }
       params = { 'parent': self.config_id, 'refresh': 'true' }
       requests.post(ELASTICSEARCH + 'spectrum/error/', params=params, data=json.dumps(data))
     finally:
@@ -156,10 +201,11 @@ def monitor():
         return "Thread already running", 400
       # start process - start by storing the config set
       config = request.get_json()
-      data = { 'timestamp': int(time() * 1000), 'config': json.dumps(config) }
+      data = { 'timestamp': now(), 'json': json.dumps(config) }
       r = requests.post(ELASTICSEARCH + 'spectrum/config/', params={ 'refresh': 'true' }, data=json.dumps(data))
       if r.status_code != 201:
-        return 'Bad update', r.status_code
+        print "Can not post config:", r.status_code, config
+        return 'Can not post config', r.status_code
       config_id = r.json()['_id']
       app.thread = Collector(config_id, config)
       app.thread.start()
@@ -180,7 +226,7 @@ def monitor():
       # process status
       if app.thread is None:
         return "Not found", 404
-      return json.dumps({ 'config_id': app.thread.config_id, 'last_sweep': app.thread.timestamp })
+      return json.dumps({ 'last_sweep': app.thread.timestamp })
 
 
 @app.route('/spectrum/<path:path>', methods=['GET', 'POST'])

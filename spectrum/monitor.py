@@ -3,6 +3,7 @@ import math
 import inspect
 import time
 
+Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_NONE)
 
 def _frange(min, max, step):
   digits = -int(round(math.log10(step)))

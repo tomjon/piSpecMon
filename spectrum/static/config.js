@@ -100,11 +100,11 @@ define(['lib/d3/d3.v3'], function (d3) {
         },
 
         q: function (conf_id) {
-          return 'spectrum/config/' + conf_id + '?fields=config';
+          return 'spectrum/config/' + conf_id + '?fields=json';
         },
 
         render: function (resp) {
-          var conf = JSON.parse(resp.fields.config[0]);
+          var conf = JSON.parse(resp.fields.json[0]);
 
           /* render config in the UI */
           for (var id in conf.rig) {

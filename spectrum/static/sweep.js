@@ -3,7 +3,7 @@ define(['lib/d3/d3.v3'], function (d3) {
 
   function formatBucket(d) {
     var time = new Date(d.fields.timestamp[0]);
-    var config = JSON.parse(d.fields.config[0]);
+    var config = JSON.parse(d.fields.json[0]);
     var s = format(time) + '   ';
     if (config.freqs.range) {
       var u = hz[config.freqs.exp];

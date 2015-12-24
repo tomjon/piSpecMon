@@ -30,14 +30,14 @@ define(['lib/d3/d3.v3'], function (d3) {
           if (opts.sweep == 'latest') {
             return {
               query: {
-                query_string: {
-                  query: "config_id:" + config_id
+                term: {
+                  conf_id: config_id
                 }
               },
               aggs: {
                 latest: {
                   terms: {
-                    field: "timestamp",
+                    field: "time",
                     size: 1,
                     order: {
                       _term: "desc"
@@ -66,8 +66,8 @@ define(['lib/d3/d3.v3'], function (d3) {
             level_agg[opts.sweep] = { field: "level" };
             return {
               query: {
-                query_string: {
-                  query: "config_id:" + config_id
+                term: {
+                  conf_id: config_id
                 }
               },
               aggs: {

@@ -28,14 +28,14 @@ define(['lib/d3/d3.v3'], function (d3) {
           }
           return {
             query: {
-              query_string: {
-                query: "config_id:" + config_id
+              term: {
+                conf_id: config_id
               }
             },
             aggs: {
               sweep: {
                 terms: {
-                  field: "timestamp",
+                  field: "time",
                   size: 0
                 },
                 aggs: {
