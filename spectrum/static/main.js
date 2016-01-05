@@ -60,7 +60,9 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'process'
           this.clear();
         }
         d3.select(this.selector).style("display", "initial");
-        this.render(resp, opts, conf);
+        if (this.render(resp, opts, conf) == false) {
+          d3.select(this.selector).style("display", "none");
+        }
       }
     }
 
@@ -90,7 +92,7 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'process'
       var handler = _handle.bind(widget, opts, conf);
       if (typeof q == 'object') {
         // widget returned a JSON query body - POST it to Elasticsearch
-        var type = widget.type || 'signal';
+        var type = widget.type || 'sweep';
         var xhr = d3.json('/spectrum/' + type + '/_search?size=0');
         xhr.header("Content-Type", "application/json");
         xhr.post(JSON.stringify(q), handler);

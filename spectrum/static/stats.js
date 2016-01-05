@@ -17,9 +17,6 @@ define(['lib/d3/d3.v3'], function (d3) {
         render: function (stats) {
           d3.select('#totalSize').text(convertBytes(stats.size_in_bytes));
           d3.select('#records').text(stats.doc_count);
-          if (stats.doc_count > 0) {
-            d3.select('#recordSize').text(convertBytes(stats.size_in_bytes / stats.doc_count));
-          }
         }
       };
     }

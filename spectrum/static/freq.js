@@ -14,7 +14,7 @@ define(['lib/d3/d3.v3'], function (d3) {
       var yAxis = d3.svg.axis().scale(y).orient("left");
 
       var line = d3.svg.line().interpolate("monotone")
-                   .y(function(d) { return y(d.level.value) });
+                   .y(function(d) { return y(d.v) });
 
       var svg = parent.append("svg")
                       .attr("width", width + margin.left + margin.right)
@@ -23,82 +23,52 @@ define(['lib/d3/d3.v3'], function (d3) {
                       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
       return {
-        q: function (config_id, opts, conf) {
-          if (! config_id || conf.freqs.freqs) {
-            return null;
-          }
-          if (opts.sweep == 'latest') {
-            return {
-              query: {
-                term: {
-                  conf_id: config_id
-                }
-              },
-              aggs: {
-                latest: {
-                  terms: {
-                    field: "time",
-                    size: 1,
-                    order: {
-                      _term: "desc"
-                    }
-                  },
-                  aggs: {
-                    index: {
-                      terms: {
-                        field: "index",
-                        size: 0
-                      },
-                      aggs: {
-                        level: {
-                          avg: {
-                            field: "level"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            };
-          } else {
-            var level_agg = {};
-            level_agg[opts.sweep] = { field: "level" };
-            return {
-              query: {
-                term: {
-                  conf_id: config_id
-                }
-              },
-              aggs: {
-                index: {
-                  terms: {
-                    field: "index",
-                    size: 0
-                  },
-                  aggs: {
-                    level: level_agg
-                  }
-                }
-              }
-            };
-          }
+        q: function (config_id) {
+          return 'spectrum/sweep/_search?size=10000&q=config_id:' + config_id + '&fields=*';
         },
 
-        clear: function () {
+        clear: function() {
           svg.selectAll("*").remove();
         },
 
         render: function (resp, opts, conf) {
-          var data;
-          if (resp.aggregations.latest) {
-            if (resp.aggregations.latest.buckets.length > 0) {
-              data = resp.aggregations.latest.buckets[0].index.buckets;
-            } else {
-              return;
+          if (conf.freqs.freqs) {
+            return false;
+          }
+
+          var data = resp.hits.hits;
+          if (data.length == 0) {
+            return;
+          }
+
+          data.sort(function (x, y) { return x.fields.timestamp - y.fields.timestamp });
+
+          /* find top N by avg, min or max */
+          var agg = [];
+          if (opts.sweep == 'latest') {
+            for (var freq_idx in data[data.length - 1].fields.level) {
+              agg[freq_idx] = { idx: freq_idx, v: data[data.length - 1].fields.level[freq_idx] };
             }
           } else {
-            data = resp.aggregations.index.buckets;
+            for (var sweep_idx in data) {
+              for (var freq_idx in data[sweep_idx].fields.level) {
+                var level = data[sweep_idx].fields.level[freq_idx];
+                if (opts.sweep == 'min') {
+                  if (agg[freq_idx] == null || level < agg[freq_idx].v) {
+                    agg[freq_idx] = { idx: freq_idx, v: level };
+                  }
+                } else if (opts.sweep == 'max') {
+                  if (agg[freq_idx] == null || level > agg[freq_idx].v) {
+                    agg[freq_idx] = { idx: freq_idx, v: level };
+                  }
+                } else {
+                  if (agg[freq_idx] == null) {
+                    agg[freq_idx] = { idx: freq_idx, v: 0 };
+                  }
+                  agg[freq_idx].v += level / data.length;
+                }
+              }
+            }
           }
 
           x.domain([conf.freqs.range[0], conf.freqs.range[1]]);
@@ -106,7 +76,7 @@ define(['lib/d3/d3.v3'], function (d3) {
             y.domain([options.y_axis[0], options.y_axis[1]]);
             yAxis.tickValues(d3.range(options.y_axis[0], options.y_axis[1] + options.y_axis[2], options.y_axis[2]));
           } else {
-            y.domain(d3.extent(data, function (d) { return d.level.value }));
+            y.domain(d3.extent(agg, function (d) { return d.v }));
           }
 
           line.x(function (d, i) { return x(+conf.freqs.range[0] + i * conf.freqs.range[2]) });
@@ -131,7 +101,7 @@ define(['lib/d3/d3.v3'], function (d3) {
              .text("dB");
 
           svg.append("path")
-             .datum(data)
+             .datum(agg)
              .attr("class", "line")
              .attr("d", line);
         }

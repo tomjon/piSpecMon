@@ -11,6 +11,7 @@ import math
 
 
 ELASTICSEARCH = 'http://localhost:9200/'
+POST_STATS = False
 
 
 #FIXME: should this be done in the UI?
@@ -67,7 +68,6 @@ def get_stats():
   }
 
 def post_stats():
-  app.stats = get_stats()
   r = requests.post(ELASTICSEARCH + 'spectrum/stats/', data=json.dumps(app.stats))
   if r.status_code != 201:
     print "** FAILED TO POST STATS"
@@ -121,10 +121,11 @@ def stats():
 
 class Collector (Thread):
 
-  def __init__(self, config_id, config):
+  def __init__(self, config_id, config, timestamp):
     Thread.__init__(self)
 
     self.config_id = config_id
+    self.t0 = timestamp
 
     convert(config['rig'])
     convert(config['scan'])
@@ -155,22 +156,18 @@ class Collector (Thread):
     try:
       with Monitor(**self.rig_config) as scan:
         while not self.stop:
-          self.timestamp = now()
-          index = 0
-          bulk = []
           print "Scan:", self.scan
+          sweep = { 'config_id': self.config_id, 'timestamp': now(), 'level': [] }
           for x in scan(**self.scan):
-            json1 = { 'index': { '_index': 'spectrum', '_type': 'signal' } }
-            json2 = { 'conf_id': self.config_id, 'time': self.timestamp, 'index': index, 'level': x[1] }
-            data = '%s\n%s\n' % (json.dumps(json1), json.dumps(json2))
-            if not app.settings['batch']:
-              self._post_es(data)
-            else:
-              bulk.append(data)
-            index += 1
-          if app.settings['batch']:
-            self._post_es(''.join(bulk))
-          post_stats()
+            sweep['level'].append(x[1])
+          data = json.dumps(sweep)
+          r = requests.post(ELASTICSEARCH + '/spectrum/sweep/', params={ 'refresh': 'true' }, data=data)
+          if r.status_code != 201:
+            print "***", r.status_code
+            self.stop = True
+          app.stats = get_stats()
+          if POST_STATS:
+            post_stats()
           sleep(self.period)
     except Exception as e:
       print e
@@ -180,12 +177,6 @@ class Collector (Thread):
       requests.post(ELASTICSEARCH + 'spectrum/error/', params=params, data=json.dumps(data))
     finally:
       app.thread = None
-
-  def _post_es(self, data):
-    r = requests.post(ELASTICSEARCH + '_bulk', params={ 'refresh': 'true' }, data=data)
-    if r.status_code != 200:
-      print "***", r.status_code
-      self.stop = True
 
 
 # API: GET /monitor - return process status
@@ -207,7 +198,7 @@ def monitor():
         print "Can not post config:", r.status_code, config
         return 'Can not post config', r.status_code
       config_id = r.json()['_id']
-      app.thread = Collector(config_id, config)
+      app.thread = Collector(config_id, config, data['timestamp'])
       app.thread.start()
       return "OK"
     if request.method == 'DELETE':

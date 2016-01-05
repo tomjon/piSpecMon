@@ -22,40 +22,8 @@ define(['lib/d3/d3.v3'], function (d3) {
                       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
       return {
-        q: function (config_id, opts, conf) {
-          if (! config_id || conf.freqs.freqs) {
-            return null;
-          }
-          return {
-            query: {
-              term: {
-                conf_id: config_id
-              }
-            },
-            aggs: {
-              sweep: {
-                terms: {
-                  field: "time",
-                  size: 0
-                },
-                aggs: {
-                  index: {
-                    terms: {
-                      field: "index",
-                      size: 0
-                    },
-                    aggs: {
-                      level: {
-                        avg: {
-                          field: "level"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          };
+        q: function (config_id) {
+          return 'spectrum/sweep/_search?size=10000&q=config_id:' + config_id + '&fields=*';
         },
 
         clear: function() {
@@ -63,17 +31,22 @@ define(['lib/d3/d3.v3'], function (d3) {
         },
 
         render: function (resp, opts, conf) {
-          var data = resp.aggregations.sweep.buckets;
+          if (conf.freqs.freqs) {
+            return false;
+          }
+
+          var data = resp.hits.hits;
           if (data.length == 0) {
             return;
           }
 
-          // all sweep buckets have the same index set, so just use the first
+          data.sort(function (x, y) { return x.fields.timestamp - y.fields.timestamp });
+
           var f0 = +conf.freqs.range[0];
           var f1 = +conf.freqs.range[1];
           var df = +conf.freqs.range[2];
           x.domain([f0 - 0.5 * df, f1 + 0.5 * df]);
-          y.domain(d3.extent(data, function (d) { return d.key }));
+          y.domain(d3.extent(data, function (d) { return d.fields.timestamp }));
 
           svg.append("g")
              .attr("class", "x axis")
@@ -97,7 +70,7 @@ define(['lib/d3/d3.v3'], function (d3) {
 
           svg.selectAll('g.y.axis g text').each(insertLineBreaks);
 
-          var rw = width / data[0].index.buckets.length;
+          var rw = width / data[0].fields.level.length;
           var rh = height / data.length;
 
           var g = svg.selectAll('g.row')
@@ -106,12 +79,12 @@ define(['lib/d3/d3.v3'], function (d3) {
                      .attr('transform', function (d, i) { return 'translate(0, ' + rh * i + ')' });
 
           g.selectAll('rect')
-           .data(function(d) { return d.index.buckets })
+           .data(function(d) { return d.fields.level })
            .enter().append('rect')
            .attr('x', function (d, i) { return rw * i })
            .attr('width', rw)
            .attr('height', rh)
-           .attr('style', function (d) { return 'fill:' + heat(d.level.value) });
+           .attr('style', function (d, i) { return 'fill:' + heat(d) });
         }
       };
     };
