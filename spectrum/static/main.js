@@ -34,7 +34,7 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
     }
   };
 
-  dispatch = d3.dispatch("config", "config_id", "running");
+  dispatch = d3.dispatch("config", "config_id");
 
   // main module definition
   return function () {
@@ -56,7 +56,7 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
       d3.json(path, function (error, resp) {
         if (error) {
           LOG(error);
-          d3.select("#error").text(error);
+          alert(id + ": " + error);
         } else {
           LOG("UPDATE", id, values, resp);
           widget.update(resp);
@@ -75,7 +75,10 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
             d3.select("#stop").property("disabled", false);
           }
           update("stats");
-          if (values.config_id) {
+          if (d3.select("#lock").property("checked")) {
+            d3.select("#sweep_set select").property({ value: resp.config_id, disabled: true });
+            dispatch.config_id(resp.config_id);
+          } else if (values.config_id) {
             update("charts");
           }
           if (timer == null) {
@@ -86,6 +89,7 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
           awaitingStop = false;
           d3.select("#start").property("disabled", false);
           d3.select("#stop").property("disabled", true);
+          d3.select("#sweep_set select").property("disabled", false);
           if (timer != null) {
             clearInterval(timer);
             timer = null;
@@ -115,9 +119,18 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
       d3.json('/monitor').send('DELETE');
     });
 
+    d3.select("#lock").on("change", function () {
+      if (! d3.select(this).property("checked")) {
+        d3.select("#sweep_set select").property("disabled", false);
+      }
+    });
+
     dispatch.on("config_id", function (config_id) {
+      d3.selectAll("#shield, #charts").style("display", config_id ? "initial" : "none");
       values.config_id = config_id;
-      update("config");
+      if (config_id) {
+        update("config");
+      }
     });
 
     dispatch.on("config", function (config) {

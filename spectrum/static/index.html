@@ -16,8 +16,8 @@
   </head>
   <body style="display: none">
     <h1>Spectrum Monitor</h1>
-    <div id="error"></div>
     <div id="config">
+      <div id="shield"></div>
       <h2>Rig Configuration</h2>
       <table id="rig">
         <tr><td>Model</td><td><select id="model"></select></td></tr>
@@ -49,6 +49,8 @@
       <h2>Monitor</h2>
       <button id="start">Start</button>
       <button id="stop">Stop</button>
+      <p/>
+      <label for="lock">Lock config to running monitor</label><input type="checkbox" id="lock" checked />
     </div>
     <div id="stats">
       <h2>Elasticsearch Index</h2>

@@ -217,7 +217,7 @@ def monitor():
       # process status
       if app.thread is None:
         return "Not found", 404
-      return json.dumps({ 'last_sweep': app.thread.timestamp })
+      return json.dumps({ 'config_id': app.thread.config_id, 'last_sweep': app.thread.timestamp })
 
 
 @app.route('/spectrum/<path:path>', methods=['GET', 'POST'])

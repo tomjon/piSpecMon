@@ -25,7 +25,7 @@ define(['lib/d3/d3.v3'], function (d3) {
   }
 
   return function () {
-    var select = d3.select("#sweep_set").select("select");
+    var select = d3.select("#sweep_set select");
     select.on("change", function () {
       dispatch.config_id(d3.select(this).property('value'));
     });
@@ -41,8 +41,6 @@ define(['lib/d3/d3.v3'], function (d3) {
                .text(formatBucket)
                .attr('value', function (d) { return d._id });
         options.exit().remove();
-
-        dispatch.config_id(select.property('value'));
       }
     };
   };

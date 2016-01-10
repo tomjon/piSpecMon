@@ -27,8 +27,21 @@ h1 {
 }
 
 #config {
-	position: absolute;
-	top: 80px;
+	position: relative;
+	top: 20px;
+  width: 450px;
+}
+
+#shield {
+  display: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: lightgrey;
+  z-index: 10;
+  opacity: 0.4;
 }
 
 #config tr td:first-child {
@@ -54,6 +67,7 @@ h1 {
 }
 
 #charts {
+  display: none;
 	position: absolute;
 	top: 500px;
 }
