@@ -1,7 +1,8 @@
 curl -XPUT 'http://localhost:9200/spectrum' -d '{
   "settings": {
     "number_of_shards": 1,
-    "number_of_replicas": 0
+    "number_of_replicas": 0,
+    "max_result_window": 1000000
   },
   "mappings": {
     "settings": {

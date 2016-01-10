@@ -1,13 +1,18 @@
-// globals
+// globals, available to all modules
 var hz = { 0: 'Hz', 3: 'kHz', 6: 'MHz', 9: 'GHz' };
 var format = "%d/%m/%Y %X";
 var debug = false;
 var insertLineBreaks;
+var getOptions;
+var LOG;
+var dispatch;
+var values = { config_id: null, config: null };
 
-define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'process', 'options', 'config', 'sweep', 'rig'],
-       function (d3, util, stats, level, freq, waterfall, process, options, config, sweep, rig) {
+define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config', 'sweep', 'rig', 'charts'],
+       function (d3, util, stats, level, freq, waterfall, config, sweep, rig, charts) {
   "use strict";
 
+  // initialise globals
   format = d3.time.format(format);
 
   insertLineBreaks = function (d) {
@@ -23,92 +28,74 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'process'
     }
   };
 
-  function LOG() {
+  LOG = function () {
     if (debug) {
       console.log.apply(console, arguments);
     }
-  }
+  };
 
-  var dispatch = d3.dispatch("options", "config", "config_id", "running");
+  dispatch = d3.dispatch("config", "config_id", "running");
 
+  // main module definition
   return function () {
+    // initialise widgets
     var widgets = {
-      "#rig": rig(),
-      "#process": process(),
-      "#stats": stats(),
-      "#sweep_set": sweep(),
-      "#config": config(),
-      "#charts": options(),
-      "#frequency-chart": freq({ y_axis: [-70, 70, 10], margin: { top: 50, left: 60, right: 50, bottom: 40 }, width: 1200, height: 400 }),
-      "#level-chart": level({ y_axis: [-70, 70, 10], margin: { top: 50, left: 60, right: 50, bottom: 40 }, width: 1200, height: 400 }),
-      "#waterfall-chart": waterfall({ heat: [-70, 0, 70], margin: { top: 50, left: 80, right: 50, bottom: 40 }, width: 1200, height: 400 })
+      rig: rig(),
+      stats: stats(),
+      sweep: sweep(),
+      config: config(),
+      frequency: freq({ y_axis: [-70, 70, 10], margin: { top: 50, left: 60, right: 50, bottom: 40 }, width: 1200, height: 400 }),
+      level: level({ y_axis: [-70, 70, 10], margin: { top: 50, left: 60, right: 50, bottom: 40 }, width: 1200, height: 400 }),
+      waterfall: waterfall({ heat: [-70, 0, 70], margin: { top: 50, left: 80, right: 50, bottom: 40 }, width: 1200, height: 400 })
     };
+    widgets.charts = charts(widgets);
 
-    //FIXME is the config panel 'locked' when the sweeper thread is running? - and you send the config set in the REST API /start call
-
-    function _handle(opts, conf, error, resp) {
-      if (error) {
-        if (this.error) {
-          this.error(error);
-        } else {
-          //FIXME: put this somewhere on the page
+    function update(id) {
+      var widget = widgets[id];
+      var path = widget.q ? widget.q() : '/' + id;
+      d3.json(path, function (error, resp) {
+        if (error) {
           LOG(error);
+          d3.select("#error").text(error);
+        } else {
+          LOG("UPDATE", id, values, resp);
+          widget.update(resp);
         }
-      } else {
-        LOG("RENDER", this.selector, this.query, resp);
-        if (this.clear) {
-          this.clear();
-        }
-        d3.select(this.selector).style("display", "initial");
-        if (this.render(resp, opts, conf) == false) {
-          d3.select(this.selector).style("display", "none");
-        }
-      }
+      });
     }
 
-    var conf_id = null;
-    var opts = null;
-    var conf = null;
+    var timer = null, awaitingStop = false;
 
-    function update(selector) {
-      LOG("UPDATE", selector, opts, conf);
-      var widget = widgets[selector];
-      var q = widget.q;
-      if (! q) {
-        LOG("HIDE", selector);
-        d3.select(selector).style("display", "none");
-        return;
-      }
-      if (typeof q == 'function') {
-        // if the widget returned a function, evaluate it to get the query
-        q = q(conf_id, opts, conf);
-      }
-      if (! q) {
-        LOG("HIDE", selector);
-        d3.select(selector).style("display", "none");
-        return;
-      }
-      widget.query = q;
-      var handler = _handle.bind(widget, opts, conf);
-      if (typeof q == 'object') {
-        // widget returned a JSON query body - POST it to Elasticsearch
-        var type = widget.type || 'sweep';
-        var xhr = d3.json('/spectrum/' + type + '/_search?size=0');
-        xhr.header("Content-Type", "application/json");
-        xhr.post(JSON.stringify(q), handler);
-      } else if (typeof q == 'string') {
-        // widget returned a URL path - use it to query the server
-        d3.json('/' + q, handler);
-      } else {
-        //FIXME: put this somewhere on the page
-        LOG("ERROR: bad q value from widget", q, widget);
-      }
-    };
-
-    var timer;
+    function checkRunning() {
+      d3.json('/monitor', function (error, resp) {
+        if (error == null) {
+          // monitor running
+          d3.select("#start").property("disabled", true);
+          if (! awaitingStop) {
+            d3.select("#stop").property("disabled", false);
+          }
+          update("stats");
+          if (values.config_id) {
+            update("charts");
+          }
+          if (timer == null) {
+            timer = setInterval(checkRunning, 1000);
+          }
+        } else {
+          // monitor not running
+          awaitingStop = false;
+          d3.select("#start").property("disabled", false);
+          d3.select("#stop").property("disabled", true);
+          if (timer != null) {
+            clearInterval(timer);
+            timer = null;
+          }
+        }
+      });
+    }
 
     d3.select("#start").on("click", function () {
-      var conf = widgets["#config"].get();
+      var conf = widgets.config.get();
       LOG("START", conf);
       var xhr = d3.json('/monitor');
       xhr.header("Content-Type", "application/json")
@@ -116,51 +103,27 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'process'
         if (xhr.response) {
           LOG(xhr.response);
         }
-        update("#sweep_set");
-        update("#process");
+        update("sweep");
+        checkRunning();
       });
       d3.select(this).property("disabled", true);
     });
 
     d3.select("#stop").on("click", function () {
       d3.select(this).property("disabled", true);
-      var xhr = d3.json('/monitor');
-      xhr.send('DELETE');
+      awaitingStop = true;
+      d3.json('/monitor').send('DELETE');
     });
 
-    dispatch.on("options", function (_opts) {
-      opts = _opts;
-      update("#frequency-chart");
-      update("#level-chart");
-      update("#waterfall-chart");
+    dispatch.on("config_id", function (config_id) {
+      values.config_id = config_id;
+      update("config");
     });
 
-    dispatch.on("config_id", function (_config_id) {
-      conf_id = _config_id;
-      update("#config");
-    });
-
-    dispatch.on("config", function (_conf) {
-      conf = _conf;
-      update("#frequency-chart");
-      update("#level-chart");
-      update("#waterfall-chart");
-    });
-
-    dispatch.on("running", function (running) {
-      if (running && timer == null) {
-        d3.select("#stop").property("disabled", false);
-        timer = setInterval(function () {
-          update("#process");
-          update("#stats");
-          update("#frequency-chart");
-          update("#level-chart");
-          update("#waterfall-chart");
-        }, 940);
-      } else if (! running && timer != null) {
-        d3.select("#start").property("disabled", false);
-        clearInterval(timer);
-        timer = null;
+    dispatch.on("config", function (config) {
+      values.config = config;
+      if (values.config_id) {
+        update("charts");
       }
     });
 
@@ -168,17 +131,24 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'process'
       debug = d3.select(this).property("checked");
     });
 
-    for (var selector in widgets) {
-      widgets[selector] = widgets[selector](d3.select(selector), dispatch);
-      widgets[selector].selector = selector;
-    }
+    update("rig");
+    update("sweep");
+    update("stats");
+    checkRunning();
 
-    update("#rig");
-    update("#sweep_set");
-    update("#stats");
-    update("#process");
+    // wire up options
+    d3.select("#N")
+      .selectAll("option")
+      .data([1, 2, 3, 4, 5])
+      .enter().append("option")
+      .text(function (d) { return d });
+    d3.selectAll("#N, #top").on("change", function () {
+      setTimeout(widgets.charts.updateLevel, 1);
+    });
+    d3.select("#sweep").on("change", function () {
+      setTimeout(widgets.charts.updateFreq, 1);
+    });
 
-    d3.select("#stop").property("disabled", true);
-    setTimeout(function () { d3.select("body").style("display", "block") }, 100);
+    d3.select("body").style("display", "block");
   };
 });

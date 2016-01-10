@@ -10,15 +10,11 @@ define(['lib/d3/d3.v3'], function (d3) {
   }
 
   return function (options) {
-    return function (parent) {
-      return {
-        q: 'stats',
-
-        render: function (stats) {
-          d3.select('#totalSize').text(convertBytes(stats.size_in_bytes));
-          d3.select('#records').text(stats.doc_count);
-        }
-      };
-    }
+    return {
+      update: function (stats) {
+        d3.select('#totalSize').text(convertBytes(stats.size_in_bytes));
+        d3.select('#records').text(stats.doc_count);
+      }
+    };
   };
 });

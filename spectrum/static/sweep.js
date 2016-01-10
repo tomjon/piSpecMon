@@ -24,28 +24,26 @@ define(['lib/d3/d3.v3'], function (d3) {
     return s;
   }
 
-  return function (options) {
-    return function (parent, dispatch) {
-      var select = parent.select("select");
-      select.on("change", function () {
-        dispatch.config_id(d3.select(this).property('value'));
-      });
+  return function () {
+    var select = d3.select("#sweep_set").select("select");
+    select.on("change", function () {
+      dispatch.config_id(d3.select(this).property('value'));
+    });
 
-      return {
-        q: "spectrum/config/_search?size=100&fields=*",
+    return {
+      q: function() { return '/spectrum/config/_search?size=10000&fields=*' },
 
-        render: function (resp) {
-          var options = select.selectAll('option.set')
-                              .data(resp.hits.hits);
-          options.enter().append('option')
-                 .attr("class", "set")
-                 .text(formatBucket)
-                 .attr('value', function (d) { return d._id });
-          options.exit().remove();
+      update: function (data) {
+        var options = select.selectAll('option.set')
+                            .data(data.hits.hits);
+        options.enter().append('option')
+               .attr("class", "set")
+               .text(formatBucket)
+               .attr('value', function (d) { return d._id });
+        options.exit().remove();
 
-          dispatch.config_id(select.property('value'));
-        }
-      };
-    }
+        dispatch.config_id(select.property('value'));
+      }
+    };
   };
 });
