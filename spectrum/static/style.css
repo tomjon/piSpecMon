@@ -66,6 +66,15 @@ h1 {
 	left: 600px;
 }
 
+#controls {
+  display: none;
+}
+
+#count {
+  display: inline;
+  margin-right: 20px;
+}
+
 #charts {
   display: none;
 	position: absolute;

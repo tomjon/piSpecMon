@@ -101,9 +101,9 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
     d3.select("#start").on("click", function () {
       var conf = widgets.config.get();
       LOG("START", conf);
-      var xhr = d3.json('/monitor');
-      xhr.header("Content-Type", "application/json")
-      xhr.send('PUT', JSON.stringify(conf), function (xhr) {
+      d3.json('/monitor')
+        .header("Content-Type", "application/json")
+        .send('PUT', JSON.stringify(conf), function (xhr) {
         if (xhr.response) {
           LOG(xhr.response);
         }
@@ -125,8 +125,19 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
       }
     });
 
+    d3.select("#delete").on("click", function () {
+      d3.json('/spectrum/sweep/_query?q=config_id:' + values.config_id)
+        .send('DELETE', function (xhr) {
+          d3.json('/spectrum/config/' + values.config_id)
+            .send('DELETE', function (xhr) {
+              dispatch.config_id();
+              update("sweep");
+            });
+        });
+    });
+
     dispatch.on("config_id", function (config_id) {
-      d3.selectAll("#shield, #charts").style("display", config_id ? "initial" : "none");
+      d3.selectAll("#shield, #charts, #controls").style("display", config_id ? "initial" : "none");
       values.config_id = config_id;
       if (config_id) {
         update("config");

@@ -1,4 +1,4 @@
-Elasticsearch
+Elasticsearch + delete-by-query (sudo bin/plugin install delete-by-query)
 d3
 require.js
 Python 2.7

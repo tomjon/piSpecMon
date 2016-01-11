@@ -155,9 +155,12 @@ class Collector (Thread):
   def run(self):
     try:
       with Monitor(**self.rig_config) as scan:
+        n = 0
         while not self.stop:
           print "Scan:", self.scan
-          sweep = { 'config_id': self.config_id, 'timestamp': now(), 'level': [] }
+          sweep = { 'config_id': self.config_id, 'n': n, 'timestamp': now(), 'level': [] }
+          n += 1
+
           for x in scan(**self.scan):
             sweep['level'].append(x[1])
           data = json.dumps(sweep)
@@ -165,6 +168,7 @@ class Collector (Thread):
           if r.status_code != 201:
             print "***", r.status_code
             self.stop = True
+
           app.stats = get_stats()
           if POST_STATS:
             post_stats()
@@ -220,12 +224,16 @@ def monitor():
       return json.dumps({ 'config_id': app.thread.config_id, 'last_sweep': app.thread.timestamp })
 
 
-@app.route('/spectrum/<path:path>', methods=['GET', 'POST'])
+# forward Elasticsearch queryies verbatim
+#FIXME shouldn't do this, really
+@app.route('/spectrum/<path:path>', methods=['GET', 'POST', 'DELETE'])
 def search(path):
-  if request.method == 'GET':
+  if request.method == 'POST':
+    r = requests.post(''.join([ELASTICSEARCH + 'spectrum/', path]), params=request.args, data=request.get_data())
+  elif request.method == 'GET':
     r = requests.get(''.join([ELASTICSEARCH + 'spectrum/', path]), params=request.args)
   else:
-    r = requests.post(''.join([ELASTICSEARCH + 'spectrum/', path]), params=request.args, data=request.get_data())
+    r = requests.delete(''.join([ELASTICSEARCH + 'spectrum/', path]), params=request.args)
   return r.text, r.status_code
 
 

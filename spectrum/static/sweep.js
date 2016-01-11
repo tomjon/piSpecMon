@@ -34,13 +34,13 @@ define(['lib/d3/d3.v3'], function (d3) {
       q: function() { return '/spectrum/config/_search?size=10000&fields=*' },
 
       update: function (data) {
+        select.selectAll('option.set').remove();
         var options = select.selectAll('option.set')
                             .data(data.hits.hits);
         options.enter().append('option')
                .attr("class", "set")
                .text(formatBucket)
-               .attr('value', function (d) { return d._id });
-        options.exit().remove();
+               .attr('value', function (d) { return d._id })
       }
     };
   };
