@@ -83,12 +83,23 @@ define(['lib/d3/d3.v3'], function (d3) {
             })
             .style("stroke", function (d) { return colour(d) });
 
+        var discreteFn = function (idx) {
+          var freq = values.config.freqs.freqs[idx];
+          return freq.f + ' ' + hz[freq.exp];
+        };
+
+        var rangeFn = function (idx) {
+          var range = values.config.freqs.range;
+          var f = +range[0] + idx * +range[2];
+          return f + ' ' + hz[values.config.freqs.exp];
+        };
+
         freq.append("text")
-            .datum(function (d) { return d })
-            .attr("transform", function (d) { return "translate(" + x(d.value.date) + "," + y(d.value.temperature) + ")"; })
-            .attr("x", 3)
-            .attr("dy", ".35em")
-            .text(function(d) { return d.key });
+            .attr("x", 20)
+            .attr("y", function (idx, i) { return 16 * i })
+            .attr("dy", 12)
+            .text(values.config.freqs.freqs ? discreteFn : rangeFn)
+            .style("stroke", function (idx) { return colour(idx) });
       }
     };
   };
