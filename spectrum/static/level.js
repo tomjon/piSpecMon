@@ -85,13 +85,13 @@ define(['lib/d3/d3.v3'], function (d3) {
 
         var discreteFn = function (idx) {
           var freq = values.config.freqs.freqs[idx];
-          return freq.f + ' ' + hz[freq.exp];
+          return +freq.f.toFixed(3) + ' ' + hz[freq.exp];
         };
 
         var rangeFn = function (idx) {
           var range = values.config.freqs.range;
           var f = +range[0] + idx * +range[2];
-          return f + ' ' + hz[values.config.freqs.exp];
+          return +f.toFixed(3) + ' ' + hz[values.config.freqs.exp];
         };
 
         freq.append("text")
