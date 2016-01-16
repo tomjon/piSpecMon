@@ -5,7 +5,7 @@ import time
 
 Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_NONE)
 
-def _frange(min, max, step):
+def frange(min, max, step):
   digits = -int(round(math.log10(step)))
   N = round((max - min) / float(step))
   for n in xrange(int(N) + 1):
@@ -99,7 +99,7 @@ class Monitor:
     for freq in freqs:
       yield freq, self._get_strength(freq)
     if range is not None:
-      for freq in _frange(*range):
+      for freq in frange(*range):
         yield freq, self._get_strength(freq)
 
 

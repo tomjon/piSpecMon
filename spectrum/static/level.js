@@ -83,12 +83,12 @@ define(['lib/d3/d3.v3'], function (d3) {
             })
             .style("stroke", function (d) { return colour(d) });
 
-        /*freq.append("text")
+        freq.append("text")
             .datum(function (d) { return d })
             .attr("transform", function (d) { return "translate(" + x(d.value.date) + "," + y(d.value.temperature) + ")"; })
             .attr("x", 3)
             .attr("dy", ".35em")
-            .text(function(d) { return d.key });*/
+            .text(function(d) { return d.key });
       }
     };
   };

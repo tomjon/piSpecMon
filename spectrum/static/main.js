@@ -136,6 +136,22 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
         });
     });
 
+    d3.select("#export").on("click", function () {
+      d3.xhr('/export/' + values.config_id)
+        .post(null, function (error, xhr) {
+          if (error) {
+            alert(error);
+            LOG(error);
+          } else {
+            alert("CSV written to " + xhr.responseText);
+          }
+        });
+    });
+
+    d3.select("#download").on("click", function () {
+      window.open('/export/' + values.config_id, '_blank');
+    });
+
     dispatch.on("config_id", function (config_id) {
       d3.selectAll("#shield, #charts, #controls").style("display", config_id ? "initial" : "none");
       values.config_id = config_id;

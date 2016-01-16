@@ -5,12 +5,10 @@ define(['lib/d3/d3.v3'], function (d3) {
     var data, agg, freq_idxs;
 
     return {
-      q: function () { return '/spectrum/sweep/_search?size=1000000&q=config_id:' + values.config_id + '&fields=*' },
+      q: function () { return '/spectrum/sweep/_search?size=1000000&q=config_id:' + values.config_id + '&fields=*&sort=timestamp' },
 
       update: function (resp) {
         data = resp.hits.hits;
-        //FIXME probably do this sort in ES (should be fairly trivial since this should be index order anyway)
-        data.sort(function (x, y) { return x.fields.timestamp - y.fields.timestamp });
 
         // update sweep count in UI
         d3.select("#count span").text(data.length);

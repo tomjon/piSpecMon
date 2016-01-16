@@ -1,17 +1,19 @@
-from flask import Flask, redirect, url_for, request, send_from_directory
+from flask import Flask, redirect, url_for, request, send_from_directory, Response
 import requests
 import json
 import os
 from threading import Thread, Lock
-from monitor import Monitor, get_capabilities
+from monitor import Monitor, get_capabilities, frange
 from time import sleep, time, strftime, localtime
 from md5 import md5
 import Hamlib
 import math
+from datetime import datetime
 
 
 ELASTICSEARCH = 'http://localhost:9200/'
 POST_STATS = False
+EXPORT_DIRECTORY = '/tmp'
 
 
 #FIXME: should this be done in the UI?
@@ -224,7 +226,7 @@ def monitor():
       return json.dumps({ 'config_id': app.thread.config_id, 'last_sweep': app.thread.timestamp })
 
 
-# forward Elasticsearch queryies verbatim
+# forward Elasticsearch queries verbatim
 #FIXME shouldn't do this, really
 @app.route('/spectrum/<path:path>', methods=['GET', 'POST', 'DELETE'])
 def search(path):
@@ -236,6 +238,44 @@ def search(path):
     r = requests.delete(''.join([ELASTICSEARCH + 'spectrum/', path]), params=request.args)
   return r.text, r.status_code
 
+
+def _iter_export(config, hits):
+  yield '#TimeDate,'
+  if 'freqs' in config['freqs']:
+    yield ','.join(freq['f'] * 10 ** int(freq['exp']) for freq in config['freqs']['freqs'])
+  else:
+    e = 10 ** int(config['freqs']['exp'])
+    yield ','.join(str(f * e) for f in frange(*[float(x) for x in config['freqs']['range']]))
+  yield '\n'
+  for hit in hits:
+    dt = datetime.fromtimestamp(hit['fields']['timestamp'][0] / 1000.0)
+    yield str(dt)
+    yield ','
+    yield ','.join([str(v) for v in hit['fields']['level']])
+    yield '\n'
+
+# writes file locally (POST) or stream the output (GET)
+@app.route('/export/<config_id>', methods=['GET', 'POST'])
+def export(config_id):
+  r = requests.get('%s/spectrum/config/_search?fields=*&q=_id:%s' % (ELASTICSEARCH, config_id))
+  if r.status_code != 200:
+    return r.text, r.status_code
+  hits = r.json()['hits']['hits']
+  if len(hits) == 0:
+    return 'No such config id', 404
+  config = json.loads(hits[0]['fields']['json'][0])
+  r = requests.get('%s/spectrum/sweep/_search?size=1000000&sort=timestamp&fields=*&q=config_id:%s' % (ELASTICSEARCH, config_id))
+  if r.status_code != 200:
+    return r.text, r.status_code
+  export = _iter_export(config, r.json()['hits']['hits'])
+  if request.method == 'GET':
+    return Response(export, mimetype='text/csv')
+  else:
+    path = '/'.join([EXPORT_DIRECTORY, config_id + '.csv'])
+    with open(path, 'w') as f:
+      for x in export:
+        f.write(x)
+    return path
 
 
 if __name__ == "__main__":
