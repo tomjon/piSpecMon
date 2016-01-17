@@ -1,4 +1,5 @@
 from flask import Flask, redirect, url_for, request, send_from_directory, Response
+from functools import wraps
 import requests
 import json
 import os
@@ -14,6 +15,7 @@ from datetime import datetime
 ELASTICSEARCH = 'http://localhost:9200/'
 POST_STATS = False
 EXPORT_DIRECTORY = '/tmp'
+USERS_FILE = 'users.passwords'
 
 
 #FIXME: should this be done in the UI?
@@ -74,6 +76,37 @@ def post_stats():
   if r.status_code != 201:
     print "** FAILED TO POST STATS"
 
+def load_users():
+  """ For now, usernames / passwords are stored plain-text
+      in a file, one pair per line separated by a tab.
+  """
+  with open(USERS_FILE) as f:
+    return dict(line[:-1].split('\t') for line in f)
+
+def check_auth(username, password):
+  """ This function is called to check if a username /
+      password combination is valid.
+  """
+  print "Authenticating user '{0}'".format(username)
+  return username in app.users and app.users[username] == password
+
+def authenticate():
+  """ Sends a 401 response that enables basic authentication.
+  """
+  return Response(
+    'Could not verify your access level for that URL.\n'
+    'You have to login with proper credentials', 401,
+    {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
+def requires_auth(f):
+  @wraps(f)
+  def decorated(*args, **kwargs):
+    auth = request.authorization
+    if not auth or not check_auth(auth.username, auth.password):
+      return authenticate()
+    return f(*args, **kwargs)
+  return decorated
+
 
 app = Flask(__name__)
 app.settings = get_settings('global', { 'batch': True })
@@ -81,6 +114,7 @@ app.thread = None
 app.monitor_lock = Lock()
 app.caps = get_capabilities()
 app.stats = get_stats()
+app.users = load_users()
 
 print "Global settings:", app.settings
 print len(app.caps['models']), "rig models"
@@ -100,6 +134,7 @@ def favicon():
 # settings API
 @app.route('/settings/', methods=['GET', 'PUT'])
 @app.route('/settings', methods=['GET', 'PUT'])
+@requires_auth
 def setting():
   if request.method == 'GET':
     return json.dumps(app.settings)
@@ -115,6 +150,7 @@ def rig():
 
 
 @app.route('/stats')
+@requires_auth
 def stats():
   if app.stats is None:
     return "Stats not found", 404
@@ -190,6 +226,7 @@ class Collector (Thread):
 #      PUT /monitor - start process with supplied config as request body
 #      DELETE /monitor - stop process
 @app.route('/monitor', methods=['HEAD', 'GET', 'PUT', 'DELETE'])
+@requires_auth
 def monitor():
   with app.monitor_lock:
     if request.method == 'PUT':
@@ -229,6 +266,7 @@ def monitor():
 # forward Elasticsearch queries verbatim
 #FIXME shouldn't do this, really
 @app.route('/spectrum/<path:path>', methods=['GET', 'POST', 'DELETE'])
+@requires_auth
 def search(path):
   if request.method == 'POST':
     r = requests.post(''.join([ELASTICSEARCH + 'spectrum/', path]), params=request.args, data=request.get_data())
@@ -256,6 +294,7 @@ def _iter_export(config, hits):
 
 # writes file locally (POST) or stream the output (GET)
 @app.route('/export/<config_id>', methods=['GET', 'POST'])
+@requires_auth
 def export(config_id):
   r = requests.get('%s/spectrum/config/_search?fields=*&q=_id:%s' % (ELASTICSEARCH, config_id))
   if r.status_code != 200:
