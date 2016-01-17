@@ -63,7 +63,8 @@ class RigError (Exception):
 
 class Monitor:
 
-  def __init__(self, model=1, stop_bits=None, write_delay=None, pathname=None):
+  # set_check 0 - set frequency and hope. set_check N - set/check N times before giving up
+  def __init__(self, model=1, stop_bits=None, write_delay=None, pathname=None, set_check=0):
     self.rig = Hamlib.Rig(model)
     if self.rig.this is None:
       raise RigError()
@@ -73,6 +74,7 @@ class Monitor:
       self.rig.state.rigport.write_delay = write_delay
     if pathname is not None:
       self.rig.state.rigport.pathname = str(pathname)
+    self.set_check = set_check
 
   def __enter__(self):
     self._check(self.rig.open)
@@ -88,8 +90,17 @@ class Monitor:
       if self.rig.error_status != Hamlib.RIG_OK:
         raise RigError(self.rig, fn.__name__)
 
+  # return strength, or None if the freq can't be set
   def _get_strength(self, freq):
-    self._check(self.rig.set_freq, Hamlib.RIG_VFO_CURR, freq)
+    if self.set_check == 0:
+      self._check(self.rig.set_freq, Hamlib.RIG_VFO_CURR, freq)
+    else:
+      for _ in xrange(self.set_check):
+        self._check(self.rig.set_freq, Hamlib.RIG_VFO_CURR, freq)
+        if freq == self._check(self.rig.get_freq, Hamlib.RIG_VFO_CURR):
+          break
+      else:
+        return None
     return self._check(self.rig.get_strength, Hamlib.RIG_VFO_CURR)
 
   def _scan(self, freqs=[], range=None, mode=None):

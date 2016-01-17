@@ -56,7 +56,7 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
       d3.json(path, function (error, resp) {
         if (error) {
           LOG(error);
-          alert(id + ": " + error);
+          alert(id + ": " + resp.responseText);
         } else {
           LOG("UPDATE", id, values, resp);
           widget.update(resp);

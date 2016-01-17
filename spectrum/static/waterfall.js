@@ -66,15 +66,15 @@ define(['lib/d3/d3.v3'], function (d3) {
         var g = svg.selectAll('g.row')
                    .data(data)
                    .enter().append('g').attr("class", 'row')
-                   .attr('transform', function (d, i) { return 'translate(0, ' + rh * i + ')' });
+                   .attr('transform', function (d, i) { return 'translate(0, ' + (rh * i - 1) + ')' });
 
         g.selectAll('rect')
-         .data(function(d) { return d.fields.level })
+         .data(function (d) { return d.fields.level })
          .enter().append('rect')
-         .attr('x', function (d, i) { return rw * i })
+         .attr('x', function (d, i) { return 1 + rw * i })
          .attr('width', rw)
          .attr('height', rh)
-         .attr('style', function (d, i) { return 'fill:' + heat(d) });
+         .attr('style', function (d, i) { return d != null ? 'fill:' + heat(d) : 'display:none' });
       }
     };
   };

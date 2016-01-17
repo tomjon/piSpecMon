@@ -15,7 +15,8 @@ define(['lib/d3/d3.v3'], function (d3) {
     var yAxis = d3.svg.axis().scale(y).orient("left");
 
     var line = d3.svg.line().interpolate("monotone")
-                 .y(function(d) { return y(d.v) });
+                 .y(function (d) { return y(d.v) })
+                 .defined(function (d) { return d.v != null });
 
     var svg = parent.append("svg")
                     .attr("width", width + margin.left + margin.right)

@@ -19,11 +19,18 @@ define(['lib/d3/d3.v3'], function (d3) {
 
         if (data.length > 0) {
           for (var freq_idx in data[data.length - 1].fields.level) {
-            agg['latest'][freq_idx] = { idx: freq_idx, v: data[data.length - 1].fields.level[freq_idx] };
+            // take into account failed readings (level -128)
+            var level = data[data.length - 1].fields.level[freq_idx];
+            agg['latest'][freq_idx] = { idx: freq_idx, v: level != -128 ? level : null };
           }
           for (var sweep_idx in data) {
             for (var freq_idx in data[sweep_idx].fields.level) {
               var level = data[sweep_idx].fields.level[freq_idx];
+              if (level == -128) {
+                // failed reading, remove from data
+                data[sweep_idx].fields.level[freq_idx] = null;
+                continue;
+              }
               if (agg['min'][freq_idx] == null || level < agg['min'][freq_idx].v) {
                 agg['min'][freq_idx] = { idx: freq_idx, v: level };
               }

@@ -164,7 +164,7 @@ class Collector (Thread):
           n += 1
 
           for x in scan(**self.scan):
-            sweep['level'].append(x[1])
+            sweep['level'].append(x[1] or -128)
           data = json.dumps(sweep)
           r = requests.post(ELASTICSEARCH + '/spectrum/sweep/', params={ 'refresh': 'true' }, data=data)
           if r.status_code != 201:
@@ -251,7 +251,7 @@ def _iter_export(config, hits):
     dt = datetime.fromtimestamp(hit['fields']['timestamp'][0] / 1000.0)
     yield str(dt)
     yield ','
-    yield ','.join([str(v) for v in hit['fields']['level']])
+    yield ','.join([str(v) if v > -128 else '' for v in hit['fields']['level']])
     yield '\n'
 
 # writes file locally (POST) or stream the output (GET)

@@ -78,14 +78,15 @@ define(['lib/d3/d3.v3'], function (d3) {
             .attr("d", function (idx) {
               var line = d3.svg.line().interpolate("monotone")
                            .x(function (d) { return x(d.fields.timestamp) })
-                           .y(function (d) { return y(d.fields.level[idx]) });
+                           .y(function (d) { return y(d.fields.level[idx]) })
+                           .defined(function (d) { return d.fields.level[idx] != null });
               return line(data);
             })
             .style("stroke", function (d) { return colour(d) });
 
         var discreteFn = function (idx) {
           var freq = values.config.freqs.freqs[idx];
-          return +freq.f.toFixed(3) + ' ' + hz[freq.exp];
+          return (+freq.f).toFixed(3) + ' ' + hz[freq.exp];
         };
 
         var rangeFn = function (idx) {
