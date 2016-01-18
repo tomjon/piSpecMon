@@ -248,7 +248,7 @@ def monitor():
       config_id = r.json()['_id']
       app.thread = Collector(config_id, config, data['timestamp'])
       app.thread.start()
-      return "OK"
+      return json.dumps({ 'config_id': app.thread.config_id })
     if request.method == 'DELETE':
       # stop process
       if app.thread is None:

@@ -51,7 +51,7 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
     };
     widgets.charts = charts(widgets);
 
-    function update(id) {
+    function update(id, callback) {
       var widget = widgets[id];
       var path = widget.q ? widget.q() : '/' + id;
       d3.json(path, function (error, resp) {
@@ -63,6 +63,9 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
         } else {
           LOG("UPDATE", id, values, resp);
           widget.update(resp);
+        }
+        if (callback) {
+          callback();
         }
       });
     }
@@ -78,10 +81,6 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
             d3.select("#start").property("disabled", true);
             if (! awaitingStop) {
               d3.select("#stop").property("disabled", false);
-            }
-            if (d3.select("#lock").property("checked")) {
-              d3.select("#sweep_set select").property({ value: resp.config_id, disabled: true });
-              dispatch.config_id(resp.config_id);
             }
             timer = setInterval(checkRunning, 1000);
           } else {
@@ -107,13 +106,16 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
     d3.select("#start").on("click", function () {
       var conf = widgets.config.get();
       LOG("START", conf);
-      d3.json('/monitor')
+      d3.xhr('/monitor')
         .header("Content-Type", "application/json")
-        .send('PUT', JSON.stringify(conf), function (xhr) {
-          if (xhr.response) {
-            LOG(xhr.response);
-          }
-          update("sweep");
+        .send('PUT', JSON.stringify(conf), function (error, xhr) {
+          update("sweep", function () {
+            if (d3.select("#lock").property("checked")) {
+              var data = JSON.parse(xhr.responseText);
+              d3.select("#sweep_set select").property({ value: data.config_id, disabled: true });
+              dispatch.config_id(data.config_id);
+            }
+          });
           checkRunning();
         });
       d3.select(this).property("disabled", true);
@@ -132,12 +134,14 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
     });
 
     d3.select("#delete").on("click", function () {
+      d3.select(this).property("disabled", true);
       d3.xhr('/spectrum/_query?refresh=true&q=config_id:' + values.config_id)
         .send('DELETE', function (error, xhr) {
           d3.xhr('/spectrum/config/' + values.config_id + '?refresh=true')
             .send('DELETE', function (error, xhr) {
               dispatch.config_id();
               update("sweep");
+              d3.select("#delete").property("disabled", false);
             });
         });
     });
