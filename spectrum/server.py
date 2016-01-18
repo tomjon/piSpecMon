@@ -26,7 +26,6 @@ class SecuredStaticFlask (Flask):
       abort(403)
 
 
-#FIXME: should this be done in the UI?
 def convert(d):
   """ Auto-convert empty strings into None, and number strings into numbers.
   """
@@ -241,7 +240,6 @@ def monitor():
   with app.monitor_lock:
     if request.method == 'PUT':
       if app.thread is not None:
-        #FIXME or should this be idempotent?
         return "Thread already running", 400
       # start process - start by storing the config set
       config = request.get_json()
@@ -257,7 +255,6 @@ def monitor():
     if request.method == 'DELETE':
       # stop process
       if app.thread is None:
-        #FIXME or silently OK?
         return "Thread not running", 400
       app.thread.stop = True
       return "OK"
@@ -274,7 +271,6 @@ def monitor():
 
 
 # forward Elasticsearch queries verbatim
-#FIXME shouldn't do this, really
 @app.route('/spectrum/<path:path>', methods=['GET', 'POST', 'DELETE'])
 @requires_auth
 def search(path):
