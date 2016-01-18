@@ -110,12 +110,12 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
       d3.json('/monitor')
         .header("Content-Type", "application/json")
         .send('PUT', JSON.stringify(conf), function (xhr) {
-        if (xhr.response) {
-          LOG(xhr.response);
-        }
-        update("sweep");
-        checkRunning();
-      });
+          if (xhr.response) {
+            LOG(xhr.response);
+          }
+          update("sweep");
+          checkRunning();
+        });
       d3.select(this).property("disabled", true);
     });
 

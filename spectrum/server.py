@@ -174,11 +174,11 @@ class Collector (Thread):
     self.t0 = timestamp
 
     convert(config['rig'])
+    convert(config['monitor'])
     convert(config['scan'])
 
-    # rig settings
-    self.rig_config = config['rig']
-    self.period = getattr(config, "period", 1.0)
+    self.rig = config['rig']
+    self.period = config['monitor'].get('period', 1.0)
 
     # scan settings
     self.scan = config['scan']
@@ -200,12 +200,9 @@ class Collector (Thread):
 
   def run(self):
     try:
-      with Monitor(**self.rig_config) as scan:
+      with Monitor(**self.rig) as scan:
         n = 0
         while not self.stop:
-          if n > 3:
-            raise Exception("Test error")
-
           print "Scan:", self.scan
           sweep = { 'config_id': self.config_id, 'n': n, 'timestamp': now(), 'level': [] }
           n += 1
