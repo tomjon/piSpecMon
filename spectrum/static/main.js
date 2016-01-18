@@ -57,7 +57,9 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
       d3.json(path, function (error, resp) {
         if (error) {
           LOG(error);
-          alert(id + ": " + resp.responseText);
+          if (resp && resp.responseText) {
+            alert(id + ": " + resp.responseText);
+          }
         } else {
           LOG("UPDATE", id, values, resp);
           widget.update(resp);
@@ -71,19 +73,21 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
       d3.json('/monitor', function (error, resp) {
         if (error == null) {
           // monitor running
-          d3.select("#start").property("disabled", true);
-          if (! awaitingStop) {
-            d3.select("#stop").property("disabled", false);
-          }
           update("stats");
-          if (d3.select("#lock").property("checked")) {
-            d3.select("#sweep_set select").property({ value: resp.config_id, disabled: true });
-            dispatch.config_id(resp.config_id);
-          } else if (values.config_id) {
-            update("charts");
-          }
           if (timer == null) {
+            d3.select("#start").property("disabled", true);
+            if (! awaitingStop) {
+              d3.select("#stop").property("disabled", false);
+            }
+            if (d3.select("#lock").property("checked")) {
+              d3.select("#sweep_set select").property({ value: resp.config_id, disabled: true });
+              dispatch.config_id(resp.config_id);
+            }
             timer = setInterval(checkRunning, 1000);
+          } else {
+            if (values.config_id) {
+              update("charts");
+            }
           }
         } else {
           // monitor not running
@@ -128,10 +132,10 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
     });
 
     d3.select("#delete").on("click", function () {
-      d3.json('/spectrum/sweep/_query?q=config_id:' + values.config_id)
-        .send('DELETE', function (xhr) {
-          d3.json('/spectrum/config/' + values.config_id)
-            .send('DELETE', function (xhr) {
+      d3.xhr('/spectrum/_query?refresh=true&q=config_id:' + values.config_id)
+        .send('DELETE', function (error, xhr) {
+          d3.xhr('/spectrum/config/' + values.config_id + '?refresh=true')
+            .send('DELETE', function (error, xhr) {
               dispatch.config_id();
               update("sweep");
             });
