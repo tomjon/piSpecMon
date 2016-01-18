@@ -94,7 +94,6 @@ def check_auth(username, password):
   """ This function is called to check if a username /
       password combination is valid.
   """
-  print "Authenticating user '{0}'".format(username)
   return username in app.users and app.users[username] == password
 
 def authenticate():
@@ -204,6 +203,9 @@ class Collector (Thread):
       with Monitor(**self.rig_config) as scan:
         n = 0
         while not self.stop:
+          if n > 3:
+            raise Exception("Test error")
+
           print "Scan:", self.scan
           sweep = { 'config_id': self.config_id, 'n': n, 'timestamp': now(), 'level': [] }
           n += 1
@@ -221,10 +223,8 @@ class Collector (Thread):
             post_stats()
           sleep(self.period)
     except Exception as e:
-      print e
-      # store the error and FIXME check the result
       data = { 'timestamp': now(), 'config_id': self.config_id, 'json': json.dumps(str(e)) }
-      params = { 'parent': self.config_id, 'refresh': 'true' }
+      params = { 'refresh': 'true' }
       requests.post(ELASTICSEARCH + 'spectrum/error/', params=params, data=json.dumps(data))
     finally:
       app.thread = None

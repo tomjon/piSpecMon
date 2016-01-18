@@ -8,8 +8,8 @@ var LOG;
 var dispatch;
 var values = { config_id: null, config: null };
 
-define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config', 'sweep', 'rig', 'charts'],
-       function (d3, util, stats, level, freq, waterfall, config, sweep, rig, charts) {
+define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config', 'sweep', 'rig', 'charts', 'error'],
+       function (d3, util, stats, level, freq, waterfall, config, sweep, rig, charts, error) {
   "use strict";
 
   // initialise globals
@@ -44,6 +44,7 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
       stats: stats(),
       sweep: sweep(),
       config: config(),
+      error: error(),
       frequency: freq({ y_axis: [-70, 70, 10], margin: { top: 50, left: 60, right: 50, bottom: 40 }, width: 1200, height: 400 }),
       level: level({ y_axis: [-70, 70, 10], margin: { top: 50, left: 60, right: 50, bottom: 40 }, width: 1200, height: 400 }),
       waterfall: waterfall({ heat: [-70, 0, 70], margin: { top: 50, left: 80, right: 50, bottom: 40 }, width: 1200, height: 400 })
@@ -94,6 +95,7 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
             clearInterval(timer);
             timer = null;
           }
+          update("error");
         }
       });
     }
@@ -153,10 +155,11 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
     });
 
     dispatch.on("config_id", function (config_id) {
-      d3.selectAll("#shield, #charts, #controls").style("display", config_id ? "initial" : "none");
+      d3.selectAll("#shield, #charts, #controls, #error").style("display", config_id ? "initial" : "none");
       values.config_id = config_id;
       if (config_id) {
         update("config");
+        update("error");
       }
     });
 
