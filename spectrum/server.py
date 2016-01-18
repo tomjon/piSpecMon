@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, request, send_from_directory, Response
+from flask import Flask, redirect, url_for, request, send_from_directory, Response, abort
 from functools import wraps
 import requests
 import json
@@ -16,6 +16,14 @@ ELASTICSEARCH = 'http://localhost:9200/'
 POST_STATS = False
 EXPORT_DIRECTORY = '/tmp'
 USERS_FILE = 'users.passwords'
+
+
+class SecuredStaticFlask (Flask):
+  def send_static_file(self, filename):
+    if request.authorization:
+      return super(SecuredStaticFlask, self).send_static_file(filename)
+    else:
+      abort(403)
 
 
 #FIXME: should this be done in the UI?
@@ -108,7 +116,7 @@ def requires_auth(f):
   return decorated
 
 
-app = Flask(__name__)
+app = SecuredStaticFlask(__name__)
 app.settings = get_settings('global', { 'batch': True })
 app.thread = None
 app.monitor_lock = Lock()
@@ -121,9 +129,11 @@ print len(app.caps['models']), "rig models"
 
 
 @app.route('/')
+@requires_auth
 def main():
-  return send_from_directory(os.path.join(app.root_path, 'static'),
-                             'index.html', mimetype='text/html')
+  #return 'Login'
+  return redirect("/static/index.html")
+
 
 @app.route('/favicon.ico')
 def favicon():
