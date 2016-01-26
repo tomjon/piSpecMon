@@ -31,7 +31,8 @@ curl -XPUT 'http://localhost:9200/spectrum' -d '{
         "config_id": { "type": "string", "store": true, "index": "not_analyzed" },
         "n": { "type": "integer", "store": true, "index": "no" },
         "timestamp": { "type": "long", "store": true },
-        "level": { "type": "byte", "store": true, "index": "no" }
+        "level": { "type": "byte", "store": true, "index": "no" },
+        "totaltime": { "type": "long", "store": true, "index": "no" }
       }
     },
     "error": {

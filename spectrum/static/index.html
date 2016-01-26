@@ -33,7 +33,7 @@
       </table>
       <h2>Monitor Configuration</h2>
       <table id="monitor">
-        <tr><td>Interval (secs)</td><td><input id="period" /></td></tr>
+        <tr><td>Minimum interval (s)</td><td><input id="period" /></td></tr>
       </table>
       <h2>Scan Configuration</h2>
       <table id="scan">
@@ -76,7 +76,8 @@
       </select>
       <p/>
       <div id="controls">
-        <div id="count"><span></span> sweeps</div>
+        <div id="count"><span></span> sweeps (average time <span id="avg"></span>)</div>
+        <p/>
         <button id="delete">Delete</button>
         <button id="export">Export</button>
         <button id="download">Download</button>

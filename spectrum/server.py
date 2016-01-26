@@ -204,13 +204,16 @@ class Collector (Thread):
         n = 0
         while not self.stop:
           print "Scan:", self.scan
-          sweep = { 'config_id': self.config_id, 'n': n, 'timestamp': now(), 'level': [] }
+          t0 = now()
+          sweep = { 'config_id': self.config_id, 'n': n, 'timestamp': t0, 'level': [] }
           n += 1
 
           for x in scan(**self.scan):
             sweep['level'].append(x[1] if x[1] is not None else -128)
-          data = json.dumps(sweep)
-          r = requests.post(ELASTICSEARCH + '/spectrum/sweep/', params={ 'refresh': 'true' }, data=data)
+
+          sweep['totaltime'] = now() - t0
+
+          r = requests.post(ELASTICSEARCH + '/spectrum/sweep/', params={ 'refresh': 'true' }, data=json.dumps(sweep))
           if r.status_code != 201:
             print "***", r.status_code
             self.stop = True
@@ -218,7 +221,8 @@ class Collector (Thread):
           app.stats = get_stats()
           if POST_STATS:
             post_stats()
-          sleep(self.period)
+
+          sleep(max(self.period - sweep['totaltime'], 0))
     except Exception as e:
       data = { 'timestamp': now(), 'config_id': self.config_id, 'json': json.dumps(str(e)) }
       params = { 'refresh': 'true' }
