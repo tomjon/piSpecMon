@@ -61,8 +61,13 @@ define(['lib/d3/d3.v3'], function (d3) {
         }
 
         // update average sweep time in UI
-        var mt = total_time / (1000 * data.length);
-        d3.select("#avg").text(mt < 1 ? "<1s" : mt.toFixed(1) + "s");
+        if (data.length > 0) {
+          var mt = total_time / (1000 * data.length);
+          d3.select("#avg span").text(mt < 1 ? "<1s" : mt.toFixed(1) + "s");
+          d3.select("#avg").style("display", "initial");
+        } else {
+          d3.select("#avg").style("display", "none");
+        }
 
         widgets.frequency.update(agg);
         widgets.level.update(data, agg, freq_idxs);
