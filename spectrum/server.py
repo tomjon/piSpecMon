@@ -208,7 +208,7 @@ class Collector (Thread):
           n += 1
 
           for x in scan(**self.scan):
-            sweep['level'].append(x[1] or -128)
+            sweep['level'].append(x[1] if x[1] is not None else -128)
           data = json.dumps(sweep)
           r = requests.post(ELASTICSEARCH + '/spectrum/sweep/', params={ 'refresh': 'true' }, data=data)
           if r.status_code != 201:
