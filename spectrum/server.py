@@ -329,4 +329,5 @@ if __name__ == "__main__":
 
   if len(sys.argv) > 1 and sys.argv[1] == 'debug':
     app.debug = True
+  Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
   app.run(host='0.0.0.0', port=8080)

@@ -115,15 +115,15 @@ class Monitor:
 
 
 if __name__ == "__main__":
-#  import sys
+  import sys
 
   Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
 
-#  if len(sys.argv) < 2:
-#    rig_model = probe_rig_model()
-#  else:
-#    rig_model = int(sys.argv[1])
+  if len(sys.argv) < 2:
+    print "Model 358? 501?"
+    sys.exit(1)
 
-  with Monitor(model=358, pathname="/dev/ttyUSB0", stop_bits=1, write_delay=5) as scan:
+  model = int(sys.argv[1])
+  with Monitor(model=model, pathname="/dev/ttyUSB0", stop_bits=1, write_delay=5) as scan:
     for x in scan(range=(88E6, 108E6, 0.1E6), mode=Hamlib.RIG_MODE_WFM):
       print x

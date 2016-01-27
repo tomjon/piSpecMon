@@ -96,7 +96,7 @@ define(['lib/d3/d3.v3'], function (d3) {
         };
 
         freq.append("text")
-            .attr("x", 20)
+            .attr("x", width + 10)
             .attr("y", function (idx, i) { return 16 * i })
             .attr("dy", 12)
             .text(values.config.freqs.freqs ? discreteFn : rangeFn)

@@ -62,8 +62,8 @@ define(['lib/d3/d3.v3'], function (d3) {
             for (var idx = 0; idx < agg[x].length; ++idx) {
               var v = agg[x][idx].v;
 
-              if (idx + 1 < agg[x].length) {
-                if ((x == 'min' && v >= agg[x][idx + 1].v) || (x != 'min' && v <= agg[x][idx + 1].v)) {
+              if (idx > 0 && idx + 1 < agg[x].length) {
+                if (agg[x][idx - 1].v >= v || v < agg[x][idx + 1].v) {
                   continue;
                 }
               }
