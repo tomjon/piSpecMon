@@ -62,7 +62,7 @@ define(['lib/d3/d3.v3'], function (d3) {
             // see if it beats any, if so swap and keep looking down the list... drop off end and gets kicked out
             for (var idx = 0; idx < agg[x].length; ++idx) {
               var v = agg[x][idx].v;
-              var skip = (x == 'min' && v < last_v) || (x != 'min' && v > last_v);
+              var skip = (x == 'min' && v <= last_v) || (x != 'min' && v >= last_v);
               last_v = v;
               if (skip) {
                 continue;
