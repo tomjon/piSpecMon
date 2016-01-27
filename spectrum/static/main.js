@@ -7,6 +7,7 @@ var getOptions;
 var LOG;
 var dispatch;
 var values = { config_id: null, config: null };
+var maxN = 10;
 
 define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config', 'sweep', 'rig', 'charts', 'error'],
        function (d3, util, stats, level, freq, waterfall, config, sweep, rig, charts, error) {
@@ -190,7 +191,7 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
     // wire up options
     d3.select("#N")
       .selectAll("option")
-      .data([1, 2, 3, 4, 5])
+      .data(d3.range(1, maxN + 1))
       .enter().append("option")
       .text(function (d) { return d });
     d3.selectAll("#N, #top").on("change", function () {

@@ -1,6 +1,14 @@
 define(['lib/d3/d3.v3'], function (d3) {
   "use strict";
 
+  function nullArray() {
+    var a = [];
+    for (var n = 0; n < maxN; ++n) {
+      a.push(null);
+    }
+    return a;
+  }
+
   return function (widgets) {
     var data, agg, freq_idxs;
 
@@ -13,9 +21,8 @@ define(['lib/d3/d3.v3'], function (d3) {
         // update sweep count in UI
         d3.select("#count span").text(data.length);
 
-        /* find top N by avg, min and max */
         agg = { latest: [], min: [], max: [], avg: [] };
-        freq_idxs = { 'min': [], 'max': [], 'avg': [] };
+        freq_idxs = { 'min': nullArray(), 'max': nullArray(), 'avg': nullArray() };
 
         /* also compute sweep time */
         var total_time = 0.0;
@@ -48,14 +55,37 @@ define(['lib/d3/d3.v3'], function (d3) {
               agg['avg'][freq_idx].v += level / data.length;
             }
           }
-          agg['min'].sort(function (x, y) { return x.v - y.v });
-          agg['max'].sort(function (x, y) { return y.v - x.v });
-          agg['avg'].sort(function (x, y) { return y.v - x.v });
 
+          /* find top N by avg, min and max */
           for (var x in freq_idxs) {
-            //FIXME: decide properly what to do here... 5 is currently the max N value in the UI
-            for (var n = 0; n < Math.min(5, agg[x].length); ++n) {
-              freq_idxs[x][n] = agg[x][n].idx;
+            var last_v = x == 'min' ? 127 : -128;
+            // see if it beats any, if so swap and keep looking down the list... drop off end and gets kicked out
+            for (var idx = 0; idx < agg[x].length; ++idx) {
+              var v = agg[x][idx].v;
+              var skip = (x == 'min' && v < last_v) || (x != 'min' && v > last_v);
+              last_v = v;
+              if (skip) {
+                continue;
+              }
+
+              var i = idx;
+              // try slotting in our value
+              for (var n = 0; n < maxN; ++n) {
+                var slot_idx = freq_idxs[x][n];
+                // if we find an empty slot, just use it and quit
+                if (slot_idx == null) {
+                  freq_idxs[x][n] = i;
+                  break;
+                }
+                var slot_v = agg[x][slot_idx].v;
+                // otherwise, compare with each slot, swapping if we beat it
+                if ((x == 'min' && v < slot_v) || (x != 'min' && v > slot_v)) {
+                  var tmp = i;
+                  i = slot_idx;
+                  freq_idxs[x][n] = tmp;
+                  v = slot_v;
+                }
+              }
             }
           }
         }
