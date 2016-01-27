@@ -124,6 +124,6 @@ if __name__ == "__main__":
 #  else:
 #    rig_model = int(sys.argv[1])
 
-  with Monitor(model=358, pathname="/dev/icomCiv", stop_bits=1, write_delay=5) as scan:
+  with Monitor(model=358, pathname="/dev/ttyUSB0", stop_bits=1, write_delay=5) as scan:
     for x in scan(range=(88E6, 108E6, 0.1E6), mode=Hamlib.RIG_MODE_WFM):
       print x

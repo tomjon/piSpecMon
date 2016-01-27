@@ -58,14 +58,14 @@ define(['lib/d3/d3.v3'], function (d3) {
 
           /* find top N by avg, min and max */
           for (var x in freq_idxs) {
-            var last_v = x == 'min' ? 127 : -128;
             // see if it beats any, if so swap and keep looking down the list... drop off end and gets kicked out
             for (var idx = 0; idx < agg[x].length; ++idx) {
               var v = agg[x][idx].v;
-              var skip = (x == 'min' && v <= last_v) || (x != 'min' && v >= last_v);
-              last_v = v;
-              if (skip) {
-                continue;
+
+              if (idx + 1 < agg[x].length) {
+                if ((x == 'min' && v >= agg[x][idx + 1].v) || (x != 'min' && v <= agg[x][idx + 1].v)) {
+                  continue;
+                }
               }
 
               var i = idx;
