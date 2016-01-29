@@ -71,35 +71,30 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
       });
     }
 
-    var timer = null, awaitingStop = false;
-
     function checkRunning() {
       d3.json('/monitor', function (error, resp) {
-        if (error == null) {
+        if (resp != null) {
           // monitor running
+          if (d3.select("#lock").property("checked") && values.confid_id != resp.config_id) {
+            update("sweep", function () {
+              d3.select("#sweep_set select").property({ value: resp.config_id, disabled: true });
+              dispatch.config_id(resp.config_id);
+            });
+          }
           update("stats");
-          if (timer == null) {
-            d3.select("#start").property("disabled", true);
-            if (! awaitingStop) {
-              d3.select("#stop").property("disabled", false);
-            }
-            timer = setInterval(checkRunning, 1000);
-          } else {
-            if (values.config_id) {
-              update("charts");
-            }
+          d3.select("#start").property("disabled", true);
+          d3.select("#stop").property("disabled", false);
+          if (values.config_id == resp.config_id) {
+            update("charts");
           }
         } else {
           // monitor not running
-          awaitingStop = false;
           d3.select("#start").property("disabled", false);
           d3.select("#stop").property("disabled", true);
           d3.select("#sweep_set select").property("disabled", false);
-          if (timer != null) {
-            clearInterval(timer);
-            timer = null;
+          if (values.config_id) {
+            update("error");
           }
-          update("error");
         }
       });
     }
@@ -110,13 +105,7 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
       d3.xhr('/monitor')
         .header("Content-Type", "application/json")
         .send('PUT', JSON.stringify(conf), function (error, xhr) {
-          update("sweep", function () {
-            if (d3.select("#lock").property("checked")) {
-              var data = JSON.parse(xhr.responseText);
-              d3.select("#sweep_set select").property({ value: data.config_id, disabled: true });
-              dispatch.config_id(data.config_id);
-            }
-          });
+          update("sweep");
           checkRunning();
         });
       d3.select(this).property("disabled", true);
@@ -124,7 +113,6 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
 
     d3.select("#stop").on("click", function () {
       d3.select(this).property("disabled", true);
-      awaitingStop = true;
       d3.json('/monitor').send('DELETE');
     });
 
@@ -186,7 +174,6 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
     update("rig");
     update("sweep");
     update("stats");
-    checkRunning();
 
     // wire up options
     d3.select("#N")
@@ -200,6 +187,8 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
     d3.select("#sweep").on("change", function () {
       setTimeout(widgets.charts.updateFreq, 1);
     });
+
+    setInterval(checkRunning, 1000);
 
     d3.select("body").style("display", "block");
   };

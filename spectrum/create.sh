@@ -44,16 +44,6 @@ curl -XPUT 'http://localhost:9200/spectrum' -d '{
         "timestamp": { "type": "long", "store": true },
         "json": { "type": "string", "store": true, "index": "no" }
       }
-    },
-    "stats": {
-      "_all": { "enabled": false },
-      "_source": { "enabled": false },
-      "_timestamp": { "enabled": false },
-      "properties": {
-        "timestamp": { "type": "long", "store": true },
-        "doc_count": { "type": "integer", "store": true },
-        "size_in_bytes": { "type": "integer", "store": true }
-      }
     }
   }
 }'; echo
