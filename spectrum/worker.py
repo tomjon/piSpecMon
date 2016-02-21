@@ -30,10 +30,11 @@ def now():
 
 class WorkerInit:
 
-  def __init__(self, elasticsearch='http://localhost:9200/', config_file = '.config', monitor_file='.monitor', signum=signal.SIGUSR1):
+  def __init__(self, elasticsearch='http://localhost:9200/', config_file='.config', monitor_file='.monitor', signum=signal.SIGUSR1):
     self.elasticsearch = elasticsearch
     self.config_file = config_file
     self.monitor_file = monitor_file
+    self.signum = signum
 
   def worker(self):
     return Worker(self)
@@ -46,10 +47,10 @@ class Worker:
 
   def __init__(self, init):
     self.init = init
-    self.stop = False
+    self._stop = False
 
-  def run():
-    self.stop = False
+  def run(self):
+    self._stop = False
 
     if not os.path.isfile(self.init.config_file):
       return
@@ -57,7 +58,7 @@ class Worker:
       config = json.loads(f.read())
 
     data = { 'timestamp': now(), 'json': json.dumps(config) }
-    r = requests.post(ELASTICSEARCH + 'spectrum/config/', params={ 'refresh': 'true' }, data=json.dumps(data))
+    r = requests.post(self.init.elasticsearch + 'spectrum/config/', params={ 'refresh': 'true' }, data=json.dumps(data))
     if r.status_code != 201:
       print "Can not post config:", r.status_code, config
       return
@@ -93,7 +94,7 @@ class Worker:
     try:
       with Monitor(**rig) as scanner:
         n = 0
-        while not self.stop:
+        while not self._stop:
           print "Scan:", scan
           t0 = now()
           sweep = { 'config_id': config_id, 'n': n, 'timestamp': t0, 'level': [] }
@@ -101,7 +102,7 @@ class Worker:
 
           os.utime(self.init.monitor_file, None)
           for x in scanner(**scan):
-            if self.stop:
+            if self._stop:
               break
             sweep['level'].append(x[1] if x[1] is not None else -128)
           else:
@@ -122,7 +123,7 @@ class Worker:
       os.remove(self.init.monitor_file)
 
   def stop(self, *args):
-    self.stop = True
+    self._stop = True
 
   def start(self):
     signal.signal(self.init.signum, self.stop)
@@ -131,7 +132,7 @@ class Worker:
       self.run()
 
 
-class Client:
+class WorkerClient:
 
   def __init__(self, init, worker_pid):
     self.worker_pid = worker_pid

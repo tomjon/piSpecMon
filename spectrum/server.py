@@ -8,7 +8,7 @@ from md5 import md5
 import Hamlib
 import math
 from datetime import datetime
-import worker
+from worker import WorkerInit, WorkerClient
 import signal
 from monitor import get_capabilities, frange
 
@@ -206,7 +206,7 @@ if __name__ == "__main__":
   if len(sys.argv) < 2:
     print "Missing worker pid"
     sys.exit(1)
-  app.worker_pid = int(sys.argv[1])
+  app.worker = WorkerClient(WorkerInit(), int(sys.argv[1]))
   if len(sys.argv) > 2 and sys.argv[2] == 'debug':
     app.debug = True
   app.run(host='0.0.0.0', port=8080)
