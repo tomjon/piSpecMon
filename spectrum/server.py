@@ -123,23 +123,19 @@ def rig():
 @requires_auth
 def monitor():
   if request.method == 'PUT':
-    if worker.status() is not None:
+    if app.worker.status() is not None:
       return "Thread already running", 400
-    # start process - start by storing the config set
-    #FIXME move this into worker, and really, don't call json.dumps(..get_json())!!!!!
-    with open(worker.CONFIG_FILE, 'w') as f:
-      f.write(json.dumps(request.get_json()))
-    os.kill(app.worker_pid, signal.SIGUSR1)
+    app.worker.sweep(request.get_data())
     return "OK"
   if request.method == 'DELETE':
     # stop process
-    if worker.status() is None:
+    if app.worker.status() is None:
       return "Thread not running", 400
-    os.kill(app.worker_pid, signal.SIGUSR1)
+    app.worker.stop()
     return "OK"
   if request.method == 'GET':
     # monitor status
-    return json.dumps(worker.status())
+    return json.dumps(app.worker.status())
 
 
 # forward Elasticsearch queries verbatim
