@@ -13,7 +13,13 @@ define(['lib/d3/d3.v3'], function (d3) {
     var data, agg, freq_idxs;
 
     return {
-      q: function () { return '/spectrum/sweep/_search?size=1000000&q=config_id:' + values.config_id + '&fields=*&sort=timestamp' },
+      q: function () {
+        var q = 'config_id:' + values.config_id;
+        if (values.range) {
+          q += '+AND+timestamp:[' + values.range[0] + '+TO+' + values.range[1] + ']';
+        }
+        return '/spectrum/sweep/_search?size=1000000&q=' + q + '&fields=*&sort=timestamp'
+      },
 
       update: function (resp) {
         data = resp.hits.hits;

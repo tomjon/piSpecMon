@@ -25,9 +25,12 @@ define(['lib/d3/d3.v3'], function (d3) {
   }
 
   return function () {
+    var times = {};
+
     var select = d3.select("#sweep_set select");
     select.on("change", function () {
-      dispatch.config_id(d3.select(this).property('value'));
+      var id = d3.select(this).property('value');
+      dispatch.config_id(id, times[id]);
     });
 
     return {
@@ -40,7 +43,7 @@ define(['lib/d3/d3.v3'], function (d3) {
         options.enter().append('option')
                .attr("class", "set")
                .text(formatBucket)
-               .attr('value', function (d) { return d._id })
+               .attr('value', function (d) { times[d._id] = d.fields.timestamp[0]; return d._id })
       }
     };
   };

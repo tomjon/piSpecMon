@@ -6,11 +6,11 @@ var insertLineBreaks;
 var getOptions;
 var LOG;
 var dispatch;
-var values = { config_id: null, config: null };
+var values = { config_id: null, config: null, range: null };
 var maxN = 10;
 
-define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config', 'sweep', 'rig', 'charts', 'error'],
-       function (d3, util, stats, level, freq, waterfall, config, sweep, rig, charts, error) {
+define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config', 'sweep', 'rig', 'charts', 'error', 'range'],
+       function (d3, util, stats, level, freq, waterfall, config, sweep, rig, charts, error, range) {
   "use strict";
 
   // initialise globals
@@ -35,7 +35,7 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
     }
   };
 
-  dispatch = d3.dispatch("config", "config_id");
+  dispatch = d3.dispatch("config", "config_id", "range");
 
   // main module definition
   return function () {
@@ -46,6 +46,7 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
       sweep: sweep(),
       config: config(),
       error: error(),
+      range: range(),
       frequency: freq({ y_axis: [-70, 70, 10], margin: { top: 50, left: 60, right: 50, bottom: 40 }, width: 1200, height: 400 }),
       level: level({ y_axis: [-70, 70, 10], margin: { top: 50, left: 60, right: 85, bottom: 40 }, width: 1200, height: 400 }),
       waterfall: waterfall({ heat: [-70, 0, 70], margin: { top: 50, left: 80, right: 50, bottom: 40 }, width: 1200, height: 400 })
@@ -151,19 +152,28 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
       window.open('/export/' + values.config_id, '_blank');
     });
 
-    dispatch.on("config_id", function (config_id) {
-      d3.selectAll("#shield, #charts, #controls, #error").style("display", config_id ? "initial" : "none");
+    dispatch.on("config_id", function (config_id, start) {
+      d3.selectAll("#shield, #controls, #error").style("display", config_id ? "initial" : "none");
+      d3.selectAll("#charts").style("display", "none");
       values.config_id = config_id;
+      values.start = start;
       if (config_id) {
         update("config");
         update("error");
       }
     });
 
+    dispatch.on("range", function (range) {
+      values.range = range;
+      console.log(values);
+      d3.selectAll("#charts").style("display", "initial");
+      update("charts");
+    });
+
     dispatch.on("config", function (config) {
       values.config = config;
       if (values.config_id) {
-        update("charts");
+        update("range");
       }
     });
 

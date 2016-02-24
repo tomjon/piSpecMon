@@ -78,7 +78,7 @@ h1 {
 #charts {
   display: none;
 	position: absolute;
-	top: 600px;
+	top: 700px;
 }
 
 svg {
@@ -89,4 +89,16 @@ svg {
 	position: absolute;
 	left: 750px;
 	top: 30px;
+}
+
+#slider {
+  width: 400px;
+}
+
+#go {
+  margin-top: 50px;
+}
+
+button {
+  cursor: pointer;
 }
