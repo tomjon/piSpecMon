@@ -77,7 +77,7 @@
       </select>
       <p/>
       <div id="controls">
-        <div id="count"><span></span> sweeps<p id="avg"> (average time <span></span>)</p></div>
+        <div id="count"><span></span> sweeps in total</div>
         <p/>
         <button id="delete">Delete</button>
         <button id="export">Export</button>
@@ -85,12 +85,14 @@
         <p/>
         <div id="slider"></div>
         <button id="go">Go</button>
+        <div id="progress"><span id="n"></span> of <span id="total"></span></div>
       </div>
       <p/>
       <div id="error">
       </div>
     </div>
     <div id="charts">
+      <p id="avg">Average time per sweep <span></span></p>
       <div id="frequency-chart">
         <h2>Level / frequency</h2>
         <select id="sweep" class="option">

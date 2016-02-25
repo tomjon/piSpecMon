@@ -22,10 +22,9 @@ define(['lib/d3/d3.v3'], function (d3) {
       },
 
       update: function (resp) {
-        data = resp.hits.hits;
+        d3.selectAll("#charts").style("display", "initial");
 
-        // update sweep count in UI
-        d3.select("#count span").text(data.length);
+        data = resp.hits.hits;
 
         agg = { latest: [], min: [], max: [], avg: [] };
         freq_idxs = { 'min': nullArray(), 'max': nullArray(), 'avg': nullArray() };

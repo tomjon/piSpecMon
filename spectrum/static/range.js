@@ -5,7 +5,6 @@ define(['lib/d3/d3.v3', 'lib/d3/slider/d3.slider'], function (d3, slider) {
     var range;
 
     d3.select("#go").on("click", function () {
-      console.log("Dispatch", range);
       dispatch.range(range);
     });
 
@@ -13,6 +12,10 @@ define(['lib/d3/d3.v3', 'lib/d3/slider/d3.slider'], function (d3, slider) {
       q: function () { return '/spectrum/sweep/_search?size=1&q=config_id:' + values.config_id + '&fields=timestamp&sort=timestamp:desc' },
 
       update: function (resp) {
+        // update sweep count in UI
+        d3.select("#count span").text(resp.hits.total);
+        d3.select("#count").style("display", "initial");
+
         var start = values.start;
         var end = resp.hits.hits[0].fields.timestamp[0];
 

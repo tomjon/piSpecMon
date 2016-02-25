@@ -8,6 +8,14 @@ var LOG;
 var dispatch;
 var values = { config_id: null, config: null, range: null };
 var maxN = 10;
+var units = [' bytes', 'k', 'M', 'G'];
+
+function convertBytes(bytes, hideUnits) {
+  var m = Math.floor(Math.log2(bytes) / 10);
+  if (m >= units.length) m = units.length - 1;
+  var s = (bytes / Math.pow(2, 10 * m)).toFixed(1);
+  return hideUnits ? s : s + units[m];
+}
 
 define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config', 'sweep', 'rig', 'charts', 'error', 'range'],
        function (d3, util, stats, level, freq, waterfall, config, sweep, rig, charts, error, range) {
@@ -53,23 +61,27 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
     };
     widgets.charts = charts(widgets);
 
-    function update(id, callback) {
+    function update(id, callback, progress) {
       var widget = widgets[id];
       var path = widget.q ? widget.q() : '/' + id;
-      d3.json(path, function (error, resp) {
-        if (error) {
-          LOG(error);
-          if (resp && resp.responseText) {
-            alert(id + ": " + resp.responseText);
-          }
-        } else {
-          LOG("UPDATE", id, values, resp);
-          widget.update(resp);
-        }
-        if (callback) {
-          callback();
-        }
-      });
+      var xhr = d3.json(path)
+                  .on("load", function (json) {
+                    LOG("UPDATE", id, values, json);
+                    widget.update(json);
+                    if (callback) {
+                      callback();
+                    }
+                  })
+                  .on("error", function (error) {
+                    LOG(error);
+                    alert(id + ": " + (error.responseText ? error.responseText : error));
+                  });
+      if (progress) {
+        xhr.on("progress", function () {
+          progress(d3.event.loaded, d3.event.total);
+        });
+      }
+      xhr.get();
     }
 
     function checkRunning() {
@@ -85,16 +97,13 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
           update("stats");
           d3.select("#start").property("disabled", true);
           d3.select("#stop").property("disabled", false);
-          if (values.config_id == resp.config_id) {
-            update("charts");
-          }
         } else {
           // monitor not running
           d3.select("#start").property("disabled", false);
           d3.select("#stop").property("disabled", true);
           d3.select("#sweep_set select").property("disabled", false);
           if (values.config_id) {
-            update("error");
+            update("error"); //FIXME being called every time after /monitor... not good?
           }
         }
       });
@@ -154,7 +163,7 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
 
     dispatch.on("config_id", function (config_id, start) {
       d3.selectAll("#shield, #controls, #error").style("display", config_id ? "initial" : "none");
-      d3.selectAll("#charts").style("display", "none");
+      d3.selectAll("#charts, #progress, #count").style("display", "none");
       values.config_id = config_id;
       values.start = start;
       if (config_id) {
@@ -165,9 +174,15 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
 
     dispatch.on("range", function (range) {
       values.range = range;
-      console.log(values);
-      d3.selectAll("#charts").style("display", "initial");
-      update("charts");
+      d3.selectAll("#charts").style("display", "none");
+      d3.select("#go").property("disabled", true);
+      update("charts", function () {
+        d3.select("#go").property("disabled", false);
+      }, function (progress, total) {
+        d3.selectAll("#progress").style("display", "initial");
+        d3.select("#n").text(convertBytes(progress, true));
+        d3.select("#total").text(convertBytes(total));
+      });
     });
 
     dispatch.on("config", function (config) {
