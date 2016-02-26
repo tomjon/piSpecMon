@@ -9,6 +9,7 @@ var dispatch;
 var values = { config_id: null, config: null, range: null };
 var maxN = 10;
 var units = [' bytes', 'k', 'M', 'G'];
+var chartHeight = 400;
 
 function convertBytes(bytes, hideUnits) {
   var m = Math.floor(Math.log2(bytes) / 10);
@@ -55,9 +56,9 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
       config: config(),
       error: error(),
       range: range(),
-      frequency: freq({ y_axis: [-70, 70, 10], margin: { top: 50, left: 60, right: 50, bottom: 40 }, width: 1200, height: 400 }),
-      level: level({ y_axis: [-70, 70, 10], margin: { top: 50, left: 60, right: 85, bottom: 40 }, width: 1200, height: 400 }),
-      waterfall: waterfall({ heat: [-70, 0, 70], margin: { top: 50, left: 80, right: 50, bottom: 40 }, width: 1200, height: 400 })
+      frequency: freq({ y_axis: [-70, 70, 10], margin: { top: 50, left: 60, right: 50, bottom: 40 }, width: 1200, height: chartHeight }),
+      level: level({ y_axis: [-70, 70, 10], margin: { top: 50, left: 60, right: 85, bottom: 40 }, width: 1200, height: chartHeight }),
+      waterfall: waterfall({ heat: [-70, 0, 70], margin: { top: 50, left: 80, right: 50, bottom: 40 }, width: 1200, height: chartHeight })
     };
     widgets.charts = charts(widgets);
 

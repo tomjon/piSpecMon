@@ -1,16 +1,17 @@
 define(['lib/d3/d3.v3'], function (d3) {
   "use strict";
 
-  function nullArray() {
+  function fillArray(v, size) {
+    if (size == null) size = maxN;
     var a = [];
-    for (var n = 0; n < maxN; ++n) {
-      a.push(null);
+    for (var n = 0; n < size; ++n) {
+      a.push(v);
     }
     return a;
   }
 
   return function (widgets) {
-    var data, agg, freq_idxs;
+    var levels, agg, freq_idxs;
 
     return {
       q: function () {
@@ -24,10 +25,12 @@ define(['lib/d3/d3.v3'], function (d3) {
       update: function (resp) {
         d3.selectAll("#charts").style("display", "initial");
 
-        data = resp.hits.hits;
+        var data = resp.hits.hits;
+        var interval = data.length / chartHeight;
 
+        levels = [];
         agg = { latest: [], min: [], max: [], avg: [] };
-        freq_idxs = { 'min': nullArray(), 'max': nullArray(), 'avg': nullArray() };
+        freq_idxs = { 'min': fillArray(), 'max': fillArray(), 'avg': fillArray() };
 
         /* also compute sweep time */
         var total_time = 0.0;
@@ -38,8 +41,16 @@ define(['lib/d3/d3.v3'], function (d3) {
             var level = data[data.length - 1].fields.level[freq_idx];
             agg['latest'][freq_idx] = { idx: freq_idx, v: level != -128 ? level : null };
           }
+          var level_idx = 0, count = 0;
           for (var sweep_idx in data) {
             total_time += data[sweep_idx].fields.totaltime[0];
+
+            if (! levels[level_idx]) {
+              levels[level_idx] = { fields: { } };
+              levels[level_idx].fields.level = fillArray(0, data[sweep_idx].fields.level.length);
+              levels[level_idx].fields.timestamp = data[sweep_idx].fields.timestamp;
+            }
+            ++count;
 
             for (var freq_idx in data[sweep_idx].fields.level) {
               var level = data[sweep_idx].fields.level[freq_idx];
@@ -58,6 +69,17 @@ define(['lib/d3/d3.v3'], function (d3) {
                 agg['avg'][freq_idx] = { idx: freq_idx, v: 0 };
               }
               agg['avg'][freq_idx].v += level / data.length;
+
+              levels[level_idx].fields.level[freq_idx] += level;
+            }
+
+            if (sweep_idx >= (level_idx + 1) * interval - 1) {
+              for (var freq_idx in data[sweep_idx].fields.level) {
+                levels[level_idx].fields.level[freq_idx] /= count;
+              }
+
+              ++level_idx;
+              count = 0;
             }
           }
 
@@ -105,19 +127,19 @@ define(['lib/d3/d3.v3'], function (d3) {
         }
 
         widgets.frequency.update(agg);
-        widgets.level.update(data, agg, freq_idxs);
-        widgets.waterfall.update(data);
+        widgets.level.update(levels, agg, freq_idxs);
+        widgets.waterfall.update(levels);
       },
 
       updateFreq: function () {
-        if (data != null) {
+        if (levels != null) {
           widgets.frequency.update(agg);
         }
       },
 
       updateLevel: function () {
-        if (data != null) {
-          widgets.level.update(data, agg, freq_idxs);
+        if (levels != null) {
+          widgets.level.update(levels, agg, freq_idxs);
         }
       }
     };

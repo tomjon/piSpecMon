@@ -16,6 +16,8 @@ define(['lib/d3/d3.v3', 'lib/d3/slider/d3.slider'], function (d3, slider) {
         d3.select("#count span").text(resp.hits.total);
         d3.select("#count").style("display", "initial");
 
+        if (resp.hits.hits == 0) return;
+
         var start = values.start;
         var end = resp.hits.hits[0].fields.timestamp[0];
 
