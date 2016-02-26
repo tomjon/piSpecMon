@@ -146,8 +146,6 @@ def search(path):
     r = requests.post(''.join([ELASTICSEARCH + 'spectrum/', path]), params=request.args, data=request.get_data())
   elif request.method == 'GET':
     r = requests.get(''.join([ELASTICSEARCH + 'spectrum/', path]), params=request.args)
-    if 'sort' in request.args and request.args['sort'] == 'timestamp':
-      sleep(5)
   else:
     r = requests.delete(''.join([ELASTICSEARCH + 'spectrum/', path]), params=request.args)
   return r.text, r.status_code

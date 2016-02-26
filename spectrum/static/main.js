@@ -66,15 +66,20 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
       var path = widget.q ? widget.q() : '/' + id;
       var xhr = d3.json(path)
                   .on("load", function (json) {
-                    LOG("UPDATE", id, values, json);
-                    widget.update(json);
-                    if (callback) {
-                      callback();
+                    if (progress) {
+                      progress();
                     }
+                    LOG("UPDATE", id, values, json);
+                    setTimeout(function () {
+                      widget.update(json);
+                      if (callback) {
+                        callback();
+                      }
+                    }, 0);
                   })
                   .on("error", function (error) {
                     LOG(error);
-                    alert(id + ": " + (error.responseText ? error.responseText : error));
+                    alert("Server error while updating " + id);
                   });
       if (progress) {
         xhr.on("progress", function () {
@@ -174,14 +179,18 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
 
     dispatch.on("range", function (range) {
       values.range = range;
-      d3.selectAll("#charts").style("display", "none");
+      d3.selectAll("#charts, #progress").style("display", "none");
       d3.select("#go").property("disabled", true);
       update("charts", function () {
         d3.select("#go").property("disabled", false);
       }, function (progress, total) {
-        d3.selectAll("#progress").style("display", "initial");
-        d3.select("#n").text(convertBytes(progress, true));
-        d3.select("#total").text(convertBytes(total));
+        if (progress) {
+          d3.selectAll("#progress").style("display", "initial");
+          d3.select("#n span").text(convertBytes(progress, true));
+          d3.select("#total").text(convertBytes(total));
+        } else {
+          d3.select("#n").style("display", "none");
+        }
       });
     });
 
