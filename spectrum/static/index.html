@@ -61,7 +61,7 @@
       <button id="start">Start</button>
       <button id="stop">Stop</button>
       <p/>
-      <label for="lock">Lock config to running monitor</label><input type="checkbox" id="lock" checked />
+      <div id="current"><span></span> sweeps in total</div>
     </div>
     <div id="stats">
       <h2>Elasticsearch Index</h2>
@@ -77,14 +77,14 @@
       </select>
       <p/>
       <div id="controls">
-        <div id="count"><span></span> sweeps in total</div>
+        <div id="count"><span></span> sweeps in total <button id="update">Update</button></div>
         <p/>
         <button id="delete">Delete</button>
         <button id="export">Export</button>
         <button id="download">Download</button>
         <p/>
         <div id="slider"></div>
-        <button id="go">Go</button>
+        <button id="go">Fetch Data</button>
         <div id="progress"><span id="n"><span></span> of </span><span id="total"></span></div>
       </div>
       <p/>

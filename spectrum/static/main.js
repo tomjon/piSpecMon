@@ -74,7 +74,7 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
                     setTimeout(function () {
                       widget.update(json);
                       if (callback) {
-                        callback();
+                        callback(widget);
                       }
                     }, 0);
                   })
@@ -94,23 +94,24 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
       d3.json('/monitor', function (error, resp) {
         if (resp != null) {
           // monitor running
-          if (d3.select("#lock").property("checked") && values.confid_id != resp.config_id) {
-            update("sweep", function () {
-              d3.select("#sweep_set select").property({ value: resp.config_id, disabled: true });
-              dispatch.config_id(resp.config_id);
-            });
-          }
-          update("stats");
+          values.current_id = resp.config_id;
           d3.select("#start").property("disabled", true);
           d3.select("#stop").property("disabled", false);
+          d3.select("#current").style("display", "initial");
+          update("stats");
+
+          // current number of sweeps
+          d3.json('/spectrum/sweep/_search?size=0&q=config_id:' + resp.config_id, function (e, r) {
+            if (e == null) {
+              d3.select("#current span").text(r.hits.total);
+            }
+          });
         } else {
           // monitor not running
+          values.current_id = null;
           d3.select("#start").property("disabled", false);
           d3.select("#stop").property("disabled", true);
-          d3.select("#sweep_set select").property("disabled", false);
-          if (values.config_id) {
-            update("error"); //FIXME being called every time after /monitor... not good?
-          }
+          d3.select("#current").style("display", "none");
         }
       });
     }
@@ -121,8 +122,11 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
       d3.xhr('/monitor')
         .header("Content-Type", "application/json")
         .send('PUT', JSON.stringify(conf), function (error, xhr) {
-          update("sweep");
-          checkRunning();
+          setTimeout(function () {
+            update("sweep", function (sweep) {
+              sweep.selectLatest();
+            });
+          }, 500);
         });
       d3.select(this).property("disabled", true);
     });
@@ -197,6 +201,12 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
 
     dispatch.on("config", function (config) {
       values.config = config;
+      if (values.config_id) {
+        update("range");
+      }
+    });
+
+    d3.select("#update").on("click", function () {
       if (values.config_id) {
         update("range");
       }

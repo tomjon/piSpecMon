@@ -99,6 +99,10 @@ svg {
   margin-top: 50px;
 }
 
+#current {
+  display: none;
+}
+
 button {
   cursor: pointer;
 }

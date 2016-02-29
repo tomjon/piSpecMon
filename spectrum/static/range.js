@@ -15,6 +15,8 @@ define(['lib/d3/d3.v3', 'lib/d3/slider/d3.slider'], function (d3, slider) {
         // update sweep count in UI
         d3.select("#count span").text(resp.hits.total);
         d3.select("#count").style("display", "initial");
+        d3.select("#update").style("display", values.current_id == values.config_id ? "initial" : "none");
+        d3.select("#delete").property("disabled", values.current_id == values.config_id);
 
         if (resp.hits.hits == 0) return;
 

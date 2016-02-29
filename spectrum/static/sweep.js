@@ -44,6 +44,13 @@ define(['lib/d3/d3.v3'], function (d3) {
                .attr("class", "set")
                .text(formatBucket)
                .attr('value', function (d) { times[d._id] = d.fields.timestamp[0]; return d._id })
+      },
+
+      selectLatest: function () {
+        var options = d3.selectAll("#sweep_set select option");
+        var value = options[0][options[0].length - 1].value;
+        d3.select("#sweep_set select").property("value", value);
+        dispatch.config_id(value, times[value]);
       }
     };
   };
