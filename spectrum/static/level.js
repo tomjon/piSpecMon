@@ -34,6 +34,13 @@ define(['lib/d3/d3.v3'], function (d3) {
         var top = d3.select("#top").property("value");
         var N = d3.select("#N").property("value");
         agg = agg[top];
+    
+        for (var i = 0; i < N; ++i) {
+          if (freq_idxs[top][i] == undefined) {
+            N = i;
+            break;
+          }
+        }
         freq_idxs = freq_idxs[top].slice(0, N);
 
         x.domain(d3.extent(data, function (d) { return d.fields.timestamp }));
