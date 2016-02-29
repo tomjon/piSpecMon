@@ -41,16 +41,17 @@ define(['lib/d3/d3.v3'], function (d3) {
             var level = data[data.length - 1].fields.level[freq_idx];
             agg['latest'][freq_idx] = { idx: freq_idx, v: level != -128 ? level : null };
           }
-          var level_idx = 0, count = 0;
+          var level_idx = 0, count = null;
           for (var sweep_idx in data) {
+            var length = data[sweep_idx].fields.level.length;
             total_time += data[sweep_idx].fields.totaltime[0];
 
             if (! levels[level_idx]) {
               levels[level_idx] = { fields: { } };
-              levels[level_idx].fields.level = fillArray(0, data[sweep_idx].fields.level.length);
+              levels[level_idx].fields.level = fillArray(0, length);
               levels[level_idx].fields.timestamp = data[sweep_idx].fields.timestamp;
+              count = fillArray(0, data[sweep_idx].fields.level.length);
             }
-            ++count;
 
             for (var freq_idx in data[sweep_idx].fields.level) {
               var level = data[sweep_idx].fields.level[freq_idx];
@@ -71,15 +72,20 @@ define(['lib/d3/d3.v3'], function (d3) {
               agg['avg'][freq_idx].v += level / data.length;
 
               levels[level_idx].fields.level[freq_idx] += level;
+              ++count[freq_idx];
             }
 
-            if (sweep_idx >= (level_idx + 1) * interval - 1) {
+            if (sweep_idx >= (level_idx + 1) * interval - 1 || sweep_idx == length - 1) {
               for (var freq_idx in data[sweep_idx].fields.level) {
-                levels[level_idx].fields.level[freq_idx] /= count;
+                if (count[freq_idx] > 0) {
+                  levels[level_idx].fields.level[freq_idx] /= count[freq_idx];
+                } else {
+                  levels[level_idx].fields.level[freq_idx] = -128; // no reading
+                }
               }
 
               ++level_idx;
-              count = 0;
+              count = null;
             }
           }
 
