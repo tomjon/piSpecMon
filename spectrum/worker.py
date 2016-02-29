@@ -68,30 +68,30 @@ class Worker:
     with open(self.init.monitor_file, 'w') as f:
       f.write(config_id)
 
-    convert(config['rig'])
-    convert(config['monitor'])
-    convert(config['scan'])
-
-    rig = config['rig']
-    period = config['monitor'].get('period', 1.0)
-
-    # scan settings
-    scan = config['scan']
-    for x in config['freqs']:
-      # x is either 'range' or 'freqs'
-      if x == 'range':
-        exp = int(config['freqs']['exp'])
-        scan[x] = [ 10 ** exp * float(f) for f in config['freqs'][x] ]
-      elif x == 'freqs':
-        scan[x] = [ 10 ** int(f['exp']) * float(f['f']) for f in config['freqs'][x] ]
-      else:
-        raise ValueError("Bad key in config.freqs")
-      break
-    else:
-      raise ValueError("No frequencies in config")
-
-    timestamp = None
     try:
+      convert(config['rig'])
+      convert(config['monitor'])
+      convert(config['scan'])
+
+      rig = config['rig']
+      period = config['monitor'].get('period', 1.0)
+
+      # scan settings
+      scan = config['scan']
+      for x in config['freqs']:
+        # x is either 'range' or 'freqs'
+        if x == 'range':
+          exp = int(config['freqs']['exp'])
+          scan[x] = [ 10 ** exp * float(f) for f in config['freqs'][x] ]
+        elif x == 'freqs':
+          scan[x] = [ 10 ** int(f['exp']) * float(f['f']) for f in config['freqs'][x] ]
+        else:
+          raise ValueError("Bad key in config.freqs")
+        break
+      else:
+        raise ValueError("No frequencies in config")
+
+      timestamp = None
       with Monitor(**rig) as scanner:
         n = 0
         while not self._stop:
