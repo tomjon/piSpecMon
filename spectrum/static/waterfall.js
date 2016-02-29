@@ -72,8 +72,8 @@ define(['lib/d3/d3.v3'], function (d3) {
          .data(function (d) { return d.fields.level })
          .enter().append('rect')
          .attr('x', function (d, i) { return 1 + rw * i })
-         .attr('width', rw)
-         .attr('height', rh)
+         .attr('width', rw + 1)
+         .attr('height', rh + 1)
          .attr('style', function (d, i) { return d != null ? 'fill:' + heat(d) : 'display:none' });
       }
     };
