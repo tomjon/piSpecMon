@@ -157,6 +157,7 @@ class WorkerClient:
 if __name__ == "__main__":
   import Hamlib
 
-  print os.getpid()
+  with open('.pid', 'w') as f:
+    f.write(str(os.getpid()))
   Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
   WorkerInit().worker().start()
