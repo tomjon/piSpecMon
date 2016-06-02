@@ -1,3 +1,4 @@
+from config import *
 import requests
 import json
 from monitor import Monitor, get_capabilities, frange
@@ -157,7 +158,7 @@ class WorkerClient:
 if __name__ == "__main__":
   import Hamlib
 
-  with open('.pid', 'w') as f:
+  with open(PID_FILE, 'w') as f:
     f.write(str(os.getpid()))
   Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
   WorkerInit().worker().start()

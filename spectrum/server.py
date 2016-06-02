@@ -1,21 +1,16 @@
+from config import *
 from flask import Flask, redirect, url_for, request, send_from_directory, Response, abort
 from functools import wraps
 import requests
 import json
 import os
 from time import sleep, time, strftime, localtime
-from md5 import md5
 import Hamlib
 import math
 from datetime import datetime
 from worker import WorkerInit, WorkerClient
 import signal
 from monitor import get_capabilities, frange
-
-
-ELASTICSEARCH = 'http://localhost:9200/'
-EXPORT_DIRECTORY = '/tmp'
-USERS_FILE = 'users.passwords'
 
 
 class SecuredStaticFlask (Flask):
@@ -201,12 +196,20 @@ def get_stats():
 
 
 if __name__ == "__main__":
-  import sys
+  import sys, errno
 
-  if len(sys.argv) < 2:
-    print "Missing worker pid"
+  with open(PID_FILE) as f:
+    worker_pid = f.read().strip()
+  try:
+    os.kill(int(worker_pid), 0)
+  except ValueError:
+    print "Bad worker PID: {0}".format(worker_pid)
     sys.exit(1)
-  app.worker = WorkerClient(WorkerInit(), int(sys.argv[1]))
-  if len(sys.argv) > 2 and sys.argv[2] == 'debug':
+  except OSError as e:
+    print "Bad worker PID ({0}): {1}".format(errno.errorcode[e.errno], worker_pid)
+    sys.exit(1)
+
+  app.worker = WorkerClient(WorkerInit(), worker_pid)
+  if 'debug' in sys.argv:
     app.debug = True
   app.run(host='0.0.0.0', port=8080)
