@@ -92,7 +92,14 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
 
     function checkRunning() {
       d3.json('/monitor', function (error, resp) {
-        if (resp != null) {
+        d3.select("#worker_error").text(resp.error != null ? resp.error : '');
+        if (resp.error != null) {
+          d3.select("#start").property("disabled", true);
+          d3.select("#stop").property("disabled", true);
+          d3.select("#current").style("display", "none");
+          return;
+        }
+        if (resp.config_id != null) {
           // monitor running
           values.current_id = resp.config_id;
           d3.select("#start").property("disabled", true);

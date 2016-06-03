@@ -5,6 +5,23 @@ from monitor import Monitor, get_capabilities, frange
 from time import sleep, time
 import os, os.path
 import signal
+import common
+import errno
+
+""" The worker process can be signalled to start and stop operation.
+
+    When signalled to start, it checks for a .monitor file; if there is one, it contains the ElasticSearch config_id
+    which is used to look up the config.
+    
+    Otherwise, it checks for a .config file, and if there is one, config JSON is read from it, and uploaded
+    to ES and a config_id obtained, which is written to the .monitor file. The .config file is removed.
+    
+    Thus, .monitor file is used in preference to .config - if both exist, .config is ignored and not consumed.
+    
+    The .monitor file is touched at the start of each sweep.
+    
+    The worker runs until stopped by another signal, and the .monitor file is removed.
+"""
 
 
 def convert(d):
@@ -31,7 +48,8 @@ def now():
 
 class WorkerInit:
 
-  def __init__(self, elasticsearch='http://localhost:9200/', config_file='.config', monitor_file='.monitor', signum=signal.SIGUSR1):
+  # the _file parameters here would be prefices if more than one worker needs to run concurrently
+  def __init__(self, elasticsearch=ELASTICSEARCH, config_file=WORKER_CONFIG, monitor_file=WORKER_MONITOR, signum=signal.SIGUSR1):
     self.elasticsearch = elasticsearch
     self.config_file = config_file
     self.monitor_file = monitor_file
@@ -51,23 +69,37 @@ class Worker:
     self._stop = False
 
   def run(self):
+    """ Uses files .config and .monitor to communicate state. (The .pid file is managed elsewhere.)
+        
+        If .monitor exists, it contains the ElasticSearch config_id, look up config in ES
+        If not, read config JSON from .config and insert into ES - remove .config and create .monitor
+        
+        Whilst running, the .monitor file is touched to indicate the last sweep time
+
+        If stopped normally, removes .monitor (otherwise .monitor remains)
+    """
     self._stop = False
 
-    if not os.path.isfile(self.init.config_file):
-      return
-    with open(self.init.config_file) as f:
-      config = json.loads(f.read())
+    if os.path.isfile(self.init.monitor_file):
+      with open(self.init.monitor_file) as f:
+        config_id = f.read()
+      config = common.get_config(config_id)
+    else:
+      if not os.path.isfile(self.init.config_file):
+        return
+      with open(self.init.config_file) as f:
+        config = json.loads(f.read())
 
-    data = { 'timestamp': now(), 'json': json.dumps(config) }
-    r = requests.post(self.init.elasticsearch + 'spectrum/config/', params={ 'refresh': 'true' }, data=json.dumps(data))
-    if r.status_code != 201:
-      print "Can not post config:", r.status_code, config
-      return
-    config_id = r.json()['_id']
-    os.remove(self.init.config_file)
+      data = { 'timestamp': now(), 'json': json.dumps(config) }
+      r = requests.post(self.init.elasticsearch + 'spectrum/config/', params={ 'refresh': 'true' }, data=json.dumps(data))
+      if r.status_code != 201:
+        print "Can not post config:", r.status_code, config
+        return
+      config_id = r.json()['_id']
+      os.remove(self.init.config_file)
 
-    with open(self.init.monitor_file, 'w') as f:
-      f.write(config_id)
+      with open(self.init.monitor_file, 'w') as f:
+        f.write(config_id)
 
     try:
       convert(config['rig'])
@@ -120,7 +152,7 @@ class Worker:
       data = { 'timestamp': now(), 'config_id': config_id, 'json': json.dumps(str(e)) }
       params = { 'refresh': 'true' }
       requests.post(self.init.elasticsearch + 'spectrum/error/', params=params, data=json.dumps(data))
-    finally:
+    else:
       os.remove(self.init.monitor_file)
 
   def stop(self, *args):
@@ -129,36 +161,62 @@ class Worker:
   def start(self):
     signal.signal(self.init.signum, self.stop)
     while True:
-      signal.pause()
       self.run()
+      signal.pause()
 
 
 class WorkerClient:
 
-  def __init__(self, init, worker_pid):
-    self.worker_pid = worker_pid
+  def __init__(self, init):
     self.init = init
+    self.error = None
+
+  def read_pid(self):
+    self.worker_pid = None
+    self.error = None
+    try:
+      with open(PID_FILE) as f:
+        worker_pid = f.read().strip()
+      self.worker_pid = int(worker_pid)
+      os.kill(self.worker_pid, 0)
+      self.error = None
+    except IOError:
+      self.error = "No worker process"
+    except ValueError:
+      self.error = "Bad worker PID: {0}".format(worker_pid)
+    except OSError as e:
+      self.error = "Bad worker PID ({0}): {1}".format(errno.errorcode[e.errno], worker_pid)
+    return self.worker_pid
 
   def status(self):
-    if not os.path.isfile(self.init.monitor_file):
-      return None
-    stat = os.stat(self.init.monitor_file)
-    with open(self.init.monitor_file) as f:
-      return { 'config_id': f.read(), 'last_sweep': stat.st_mtime }
+    result = { }
+    self.read_pid()
+    if self.error is not None:
+      result['error'] = self.error
+    if os.path.isfile(self.init.monitor_file):
+      stat = os.stat(self.init.monitor_file)
+      with open(self.init.monitor_file) as f:
+        result.update({ 'config_id': f.read(), 'last_sweep': stat.st_mtime })
+    return result
 
-  def sweep(self, config):
-    with open(self.init.config_file, 'w') as f:
-      f.write(config)
-    os.kill(self.worker_pid, self.init.signum)
+  def start(self, config):
+    if self.read_pid() is not None:
+      with open(self.init.config_file, 'w') as f:
+        f.write(config)
+      os.kill(self.worker_pid, self.init.signum)
 
   def stop(self):
-    os.kill(self.worker_pid, self.init.signum)
+    if self.read_pid() is not None:
+      os.kill(self.worker_pid, self.init.signum)
 
 
 if __name__ == "__main__":
-  import Hamlib
+  import Hamlib, sys
 
-  with open(PID_FILE, 'w') as f:
-    f.write(str(os.getpid()))
   Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
-  WorkerInit().worker().start()
+  try:
+    with open(PID_FILE, 'w') as f:
+      f.write(str(os.getpid()))
+    WorkerInit().worker().start()
+  except KeyboardInterrupt:
+    os.remove(PID_FILE)

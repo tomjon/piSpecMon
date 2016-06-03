@@ -11,6 +11,7 @@ from datetime import datetime
 from worker import WorkerInit, WorkerClient
 import signal
 from monitor import get_capabilities, frange
+import common
 
 
 class SecuredStaticFlask (Flask):
@@ -118,14 +119,14 @@ def rig():
 @requires_auth
 def monitor():
   if request.method == 'PUT':
-    if app.worker.status() is not None:
-      return "Thread already running", 400
-    app.worker.sweep(request.get_data())
+    if 'config_id' in app.worker.status():
+      return "Worker already running", 400
+    app.worker.start(request.get_data())
     return "OK"
   if request.method == 'DELETE':
     # stop process
-    if app.worker.status() is None:
-      return "Thread not running", 400
+    if 'config_id' not in app.worker.status():
+      return "Worker not running", 400
     app.worker.stop()
     return "OK"
   if request.method == 'GET':
@@ -165,13 +166,7 @@ def _iter_export(config, hits):
 @app.route('/export/<config_id>', methods=['GET', 'POST'])
 @requires_auth
 def export(config_id):
-  r = requests.get('%s/spectrum/config/_search?fields=*&q=_id:%s' % (ELASTICSEARCH, config_id))
-  if r.status_code != 200:
-    return r.text, r.status_code
-  hits = r.json()['hits']['hits']
-  if len(hits) == 0:
-    return 'No such config id', 404
-  config = json.loads(hits[0]['fields']['json'][0])
+  config = common.get_config(config_id)
   r = requests.get('%s/spectrum/sweep/_search?size=1000000&sort=timestamp&fields=*&q=config_id:%s' % (ELASTICSEARCH, config_id))
   if r.status_code != 200:
     return r.text, r.status_code
@@ -196,20 +191,9 @@ def get_stats():
 
 
 if __name__ == "__main__":
-  import sys, errno
+  import sys
 
-  with open(PID_FILE) as f:
-    worker_pid = f.read().strip()
-  try:
-    os.kill(int(worker_pid), 0)
-  except ValueError:
-    print "Bad worker PID: {0}".format(worker_pid)
-    sys.exit(1)
-  except OSError as e:
-    print "Bad worker PID ({0}): {1}".format(errno.errorcode[e.errno], worker_pid)
-    sys.exit(1)
-
-  app.worker = WorkerClient(WorkerInit(), worker_pid)
+  app.worker = WorkerClient(WorkerInit())
   if 'debug' in sys.argv:
     app.debug = True
   app.run(host='0.0.0.0', port=8080)
