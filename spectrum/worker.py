@@ -149,7 +149,7 @@ class Worker:
 
             sleep(max(period - sweep['totaltime'], 0))
     except Exception as e:
-      traceback.print_stack()
+      print e
       data = { 'timestamp': now(), 'config_id': config_id, 'json': json.dumps(str(e)) }
       params = { 'refresh': 'true' }
       requests.post(self.init.elasticsearch + 'spectrum/error/', params=params, data=json.dumps(data))
