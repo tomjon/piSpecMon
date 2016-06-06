@@ -7,6 +7,7 @@ Type=idle
 ExecStart=/usr/bin/python -u /home/ses/spectrum/piSpecMon/spectrum/worker.py
 Restart=always
 RestartSec=1
+WorkingDirectory=/home/ses/spectrum/piSpecMon/spectrum
 
 [Install]
 WantedBy=multi-user.target
