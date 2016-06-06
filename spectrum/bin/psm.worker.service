@@ -4,7 +4,7 @@ After=multi-user.target
 
 [Service]
 Type=idle
-ExecStart=/usr/bin/python -u /home/pi/piSpecMon/worker.py
+ExecStart=/usr/bin/python -u /home/ses/spectrum/piSpecMon/spectrum/worker.py
 Restart=always
 RestartSec=1
 
