@@ -175,6 +175,7 @@ class WorkerClient:
   def read_pid(self):
     try:
       self.worker_pid = read_pid_file()
+      self.error = None
     except ProcessError as e:
       self.error = e.message
     if self.worker_pid is None:

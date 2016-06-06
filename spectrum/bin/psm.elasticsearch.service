@@ -1,0 +1,43 @@
+[Unit]
+Description=Elasticsearch for PiSpecMon
+Documentation=http://www.elastic.co
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Environment=JAVA_HOME=/usr/lib/jvm/java-8-openjdk-armhf/jre
+Environment=ES_HOME=/home/ses/elasticsearch
+Environment=PID_DIR=/home/ses/elasticsearch
+
+WorkingDirectory=/home/ses/elasticsearch
+
+User=ses
+Group=users
+
+ExecStart=/home/ses/elasticsearch/bin/elasticsearch -p ${PID_DIR}/elasticsearch.pid
+
+StandardOutput=journal
+StandardError=inherit
+
+# Specifies the maximum file descriptor number that can be opened by this process
+LimitNOFILE=65536
+
+# Specifies the maximum number of bytes of memory that may be locked into RAM
+# Set to "infinity" if you use the 'bootstrap.memory_lock: true' option
+# in elasticsearch.yml and 'MAX_LOCKED_MEMORY=unlimited' in ${path.env}
+#LimitMEMLOCK=infinity
+
+# Disable timeout logic and wait until process is stopped
+TimeoutStopSec=0
+
+# SIGTERM signal is used to stop the Java process
+KillSignal=SIGTERM
+
+# Java process is never killed
+SendSIGKILL=no
+
+# When a JVM receives a SIGTERM signal it exits with code 143
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target

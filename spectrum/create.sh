@@ -1,4 +1,4 @@
-curl -XPUT 'http://localhost:9200/spectrum' -d '{
+curl -XPUT 'http://127.0.0.1:9200/spectrum' -d '{
   "settings": {
     "number_of_shards": 1,
     "number_of_replicas": 0,
