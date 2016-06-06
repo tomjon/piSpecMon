@@ -172,20 +172,12 @@ class WorkerClient:
     self.error = None
 
   def read_pid(self):
-    self.worker_pid = None
-    self.error = None
     try:
-      with open(PID_FILE) as f:
-        worker_pid = f.read().strip()
-      self.worker_pid = int(worker_pid)
-      os.kill(self.worker_pid, 0)
-      self.error = None
-    except IOError:
+      self.worker_pid = read_pid_file()
+    except ProcessError as e:
+      self.error = e.message
+    if self.worker_pid is None:
       self.error = "No worker process"
-    except ValueError:
-      self.error = "Bad worker PID: {0}".format(worker_pid)
-    except OSError as e:
-      self.error = "Bad worker PID ({0}): {1}".format(errno.errorcode[e.errno], worker_pid)
     return self.worker_pid
 
   def status(self):
@@ -210,8 +202,41 @@ class WorkerClient:
       os.kill(self.worker_pid, self.init.signum)
 
 
+class ProcessError:
+
+  def __init__(self, message):
+    self.message = message
+
+
+def read_pid_file():
+  if not os.path.isfile(PID_FILE):
+    return None
+  try:
+    with open(PID_FILE) as f:
+      worker_pid = f.read().strip()
+    worker_pid = int(worker_pid)
+    os.kill(worker_pid, 0)
+    return worker_pid
+  except IOError:
+    raise ProcessError("Can not open PID file: {0}".format(PID_FILE))
+  except ValueError:
+    raise ProcessError("Bad worker PID: {0}".format(worker_pid))
+  except OSError as e:
+    raise ProcessError("Bad worker PID ({0}): {1}".format(errno.errorcode[e.errno], worker_pid))
+
+
 if __name__ == "__main__":
   import Hamlib, sys
+
+  signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
+
+  try:
+    pid = read_pid_file()
+    if pid is not None:
+      print "Worker process already exists: {0}".format(pid)
+      sys.exit(1)
+  except ProcessError:
+    pass
 
   Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
   try:
@@ -220,3 +245,6 @@ if __name__ == "__main__":
     WorkerInit().worker().start()
   except KeyboardInterrupt:
     os.remove(PID_FILE)
+  except SystemExit as e:
+    if e.code == 0:
+      os.remove(PID_FILE)
