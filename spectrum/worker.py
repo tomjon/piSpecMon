@@ -153,7 +153,7 @@ class Worker:
       data = { 'timestamp': now(), 'config_id': config_id, 'json': json.dumps(str(e)) }
       params = { 'refresh': 'true' }
       requests.post(self.init.elasticsearch + 'spectrum/error/', params=params, data=json.dumps(data))
-    else:
+    finally:
       os.remove(self.init.monitor_file)
 
   def stop(self, *args):
