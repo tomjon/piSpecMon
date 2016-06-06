@@ -1,0 +1,12 @@
+[Unit]
+Description=Pi Spectrum Monitor Worker Service
+After=multi-user.target
+
+[Service]
+Type=idle
+ExecStart=/usr/bin/python -u /home/pi/piSpecMon/worker.py
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target
