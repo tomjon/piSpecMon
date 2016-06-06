@@ -7,6 +7,7 @@ import os, os.path
 import signal
 import common
 import errno
+import traceback
 
 """ The worker process can be signalled to start and stop operation.
 
@@ -148,7 +149,7 @@ class Worker:
 
             sleep(max(period - sweep['totaltime'], 0))
     except Exception as e:
-      print e
+      traceback.print_stack()
       data = { 'timestamp': now(), 'config_id': config_id, 'json': json.dumps(str(e)) }
       params = { 'refresh': 'true' }
       requests.post(self.init.elasticsearch + 'spectrum/error/', params=params, data=json.dumps(data))
