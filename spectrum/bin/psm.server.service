@@ -1,6 +1,8 @@
 [Unit]
 Description=Pi Spectrum Monitor Web Server Service
 After=multi-user.target
+Wants=network-online.target psm.elasticsearch.service psm.worker.service
+After=network-online.target psm.elasticsearch.service
 
 [Service]
 Type=idle
