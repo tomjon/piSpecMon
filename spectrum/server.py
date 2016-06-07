@@ -194,6 +194,10 @@ def get_stats():
 if __name__ == "__main__":
   import sys
 
+  # create index (harmless if it already exists)
+  with open('create.json') as f:
+    requests.put('{0}/spectrum'.format(ELASTICSEARCH), data=f.read())
+
   app.worker = WorkerClient(WorkerInit())
   if 'debug' in sys.argv:
     app.debug = True
