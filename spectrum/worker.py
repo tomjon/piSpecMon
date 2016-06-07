@@ -1,4 +1,6 @@
 from config import *
+from common import *
+
 import requests
 import json
 from monitor import Monitor, get_capabilities, frange
@@ -94,7 +96,7 @@ class Worker:
       data = { 'timestamp': now(), 'json': json.dumps(config) }
       r = requests.post(self.init.elasticsearch + 'spectrum/config/', params={ 'refresh': 'true' }, data=json.dumps(data))
       if r.status_code != 201:
-        print "Can not post config:", r.status_code, config
+        log.error("Can not post config: {0} {1}".format(r.status_code, config))
         return
       config_id = r.json()['_id']
       os.remove(self.init.config_file)
@@ -129,7 +131,7 @@ class Worker:
       with Monitor(**rig) as scanner:
         n = 0
         while not self._stop:
-          print "Scan:", scan
+          log.debug("Scan: {0}".format(scan))
           t0 = now()
           sweep = { 'config_id': config_id, 'n': n, 'timestamp': t0, 'level': [] }
           n += 1
@@ -144,12 +146,12 @@ class Worker:
 
             r = requests.post(self.init.elasticsearch + '/spectrum/sweep/', params={ 'refresh': 'true' }, data=json.dumps(sweep))
             if r.status_code != 201:
-              print "Could not post to Elasticsearch (" + r.status_code + ")"
+              log.error("Could not post to Elasticsearch ({0})".format(r.status_code))
               return
 
             sleep(max(period - sweep['totaltime'], 0))
     except Exception as e:
-      print e
+      log.error(e)
       data = { 'timestamp': now(), 'config_id': config_id, 'json': json.dumps(str(e)) }
       params = { 'refresh': 'true' }
       requests.post(self.init.elasticsearch + 'spectrum/error/', params=params, data=json.dumps(data))
@@ -244,6 +246,7 @@ if __name__ == "__main__":
   try:
     with open(PID_FILE, 'w') as f:
       f.write(str(os.getpid()))
+    print "Starting worker process"
     WorkerInit().worker().start()
   except KeyboardInterrupt:
     os.remove(PID_FILE)

@@ -1,4 +1,6 @@
 from config import *
+from common import *
+
 from flask import Flask, redirect, url_for, request, send_from_directory, Response, abort
 from functools import wraps
 import requests
@@ -11,7 +13,6 @@ from datetime import datetime
 from worker import WorkerInit, WorkerClient
 import signal
 from monitor import get_capabilities, frange
-import common
 
 
 class SecuredStaticFlask (Flask):
@@ -34,7 +35,7 @@ def get_settings(id, new={}):
   params = { 'fields': 'json' }
   r = requests.get(ELASTICSEARCH + 'spectrum/settings/' + id, params=params)
   if r.status_code == 404:
-    print "Initialising settings: " + id
+    log.info("Initialising settings: {0}".format(id))
     set_settings(id, new)
     return new
   fields = r.json()['fields']
@@ -77,8 +78,8 @@ app.settings = get_settings('global', { 'batch': True })
 app.caps = get_capabilities()
 app.users = load_users()
 
-print "Global settings:", app.settings
-print len(app.caps['models']), "rig models"
+log.info("Global settings: {0}".format(app.settings))
+log.info("{0} rig models".format(len(app.caps['models'])))
 
 
 @app.route('/')
@@ -166,7 +167,7 @@ def _iter_export(config, hits):
 @app.route('/export/<config_id>', methods=['GET', 'POST'])
 @requires_auth
 def export(config_id):
-  config = common.get_config(config_id)
+  config = get_config(config_id)
   r = requests.get('%s/spectrum/sweep/_search?size=1000000&sort=timestamp&fields=*&q=config_id:%s' % (ELASTICSEARCH, config_id))
   if r.status_code != 200:
     return r.text, r.status_code
