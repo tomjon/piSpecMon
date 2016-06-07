@@ -12,7 +12,7 @@ Environment=PID_DIR=/home/ses/elasticsearch
 WorkingDirectory=/home/ses/elasticsearch
 
 User=ses
-Group=users
+Group=pi
 
 ExecStart=/home/ses/elasticsearch/bin/elasticsearch -p ${PID_DIR}/elasticsearch.pid
 

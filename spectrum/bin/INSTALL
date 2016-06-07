@@ -1,16 +1,17 @@
 To install service:
 
-sudo cp psm.server.service psm.worker.service /lib/systemd/system
+sudo cp psm.server.service psm.worker.service psm.elasticsearch.service /lib/systemd/system
 sudo systemctl daemon-reload
 sudo systemctl enable psm.server.service
 sudo systemctl enable psm.worker.service
+sudo systemctl enable psm.elasticsearch.service
 
 To start/stop service:
 
-sudo systemctl start psm.[server|worker].service
-sudo systemctl stop psm.[server|worker].service
-sudo systemctl restart psm.[server|worker].service
+sudo systemctl start psm.[server|worker|elasticsearch].service
+sudo systemctl stop psm.[server|worker|elasticsearch].service
+sudo systemctl restart psm.[server|worker|elasticsearch].service
 
 To check status:
 
-sudo systemctl status psm.[server|worker].service
+sudo systemctl status psm.[server|worker|elasticsearch].service
