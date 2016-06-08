@@ -157,6 +157,7 @@ class Worker:
       requests.post(self.init.elasticsearch + 'spectrum/error/', params=params, data=json.dumps(data))
     finally:
       os.remove(self.init.monitor_file)
+      log.info('Scanning stopped')
 
   def stop(self, *args):
     self._stop = True
@@ -237,17 +238,20 @@ if __name__ == "__main__":
   try:
     pid = read_pid_file()
     if pid is not None:
-      print "Worker process already exists: {0}".format(pid)
+      log.error("Worker process already exists: {0}".format(pid))
       sys.exit(1)
   except ProcessError:
     pass
 
-  Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
   try:
     with open(PID_FILE, 'w') as f:
       f.write(str(os.getpid()))
-    print "Starting worker process"
-    WorkerInit().worker().start()
+    log.info("Starting worker process")
+
+    with open(common.log_filename, 'a') as f:
+      Hamlib.rig_set_debug_file(f)
+      Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
+      WorkerInit().worker().start()
   except KeyboardInterrupt:
     os.remove(PID_FILE)
   except SystemExit as e:

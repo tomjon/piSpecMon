@@ -16,8 +16,8 @@ log = logging.getLogger('werkzeug') # use this name so flask doesn't use its own
 log.setLevel(logging.DEBUG)
 
 # create file handler which logs even debug messages (these end up in log file)
-filename = 'logs/{0}'.format(os.path.basename(sys.argv[0]).replace('.py', '.log'))
-rfh = logging.handlers.RotatingFileHandler(filename, maxBytes=1 * 1024 * 1024, backupCount=0)
+log_filename = 'logs/{0}'.format(os.path.basename(sys.argv[0]).replace('.py', '.log'))
+rfh = logging.handlers.RotatingFileHandler(log_filename, maxBytes=1 * 1024 * 1024, backupCount=0)
 rfh.setLevel(logging.DEBUG)
 
 # create console handler with a higher log level (these end up in system journal)
@@ -25,7 +25,7 @@ ch = logging.StreamHandler()
 ch.setLevel(logging.ERROR)
 
 # create formatter and add it to the handlers
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 rfh.setFormatter(formatter)
 ch.setFormatter(formatter)
 
