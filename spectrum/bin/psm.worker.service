@@ -11,5 +11,8 @@ Restart=always
 RestartSec=1
 WorkingDirectory=/home/ses/spectrum/piSpecMon/spectrum
 
+User=ses
+Group=pi
+
 [Install]
 WantedBy=multi-user.target
