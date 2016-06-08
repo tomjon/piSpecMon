@@ -73,10 +73,16 @@ def requires_auth(f):
   return decorated
 
 
+# create index (harmless if it already exists)
+with open('create.json') as f:
+  requests.put('{0}spectrum'.format(ELASTICSEARCH), data=f.read())
+
+
 app = SecuredStaticFlask(__name__)
 app.settings = get_settings('global', { 'batch': True })
 app.caps = get_capabilities()
 app.users = load_users()
+app.worker = WorkerClient(WorkerInit())
 
 log.info("Global settings: {0}".format(app.settings))
 log.info("{0} rig models".format(len(app.caps['models'])))
@@ -194,11 +200,6 @@ def get_stats():
 if __name__ == "__main__":
   import sys
 
-  # create index (harmless if it already exists)
-  with open('create.json') as f:
-    requests.put('{0}/spectrum'.format(ELASTICSEARCH), data=f.read())
-
-  app.worker = WorkerClient(WorkerInit())
   if 'debug' in sys.argv:
     app.debug = True
   app.run(host='0.0.0.0', port=8080)
