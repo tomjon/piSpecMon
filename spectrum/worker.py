@@ -84,13 +84,13 @@ class Worker:
     self._stop = False
 
     if os.path.isfile(self.init.monitor_file):
-      with open(self.init.monitor_file) as f:
+      with open_local(self.init.monitor_file) as f:
         config_id = f.read()
       config = common.get_config(config_id)
     else:
       if not os.path.isfile(self.init.config_file):
         return
-      with open(self.init.config_file) as f:
+      with open_local(self.init.config_file) as f:
         config = json.loads(f.read())
 
       data = { 'timestamp': now(), 'json': json.dumps(config) }
@@ -101,7 +101,7 @@ class Worker:
       config_id = r.json()['_id']
       os.remove(self.init.config_file)
 
-      with open(self.init.monitor_file, 'w') as f:
+      with open_local(self.init.monitor_file, 'w') as f:
         f.write(config_id)
 
     try:
@@ -192,13 +192,13 @@ class WorkerClient:
       result['error'] = self.error
     if os.path.isfile(self.init.monitor_file):
       stat = os.stat(self.init.monitor_file)
-      with open(self.init.monitor_file) as f:
+      with open_local(self.init.monitor_file) as f:
         result.update({ 'config_id': f.read(), 'last_sweep': stat.st_mtime })
     return result
 
   def start(self, config):
     if self.read_pid() is not None:
-      with open(self.init.config_file, 'w') as f:
+      with open_local(self.init.config_file, 'w') as f:
         f.write(config)
       os.kill(self.worker_pid, self.init.signum)
 
@@ -217,7 +217,7 @@ def read_pid_file():
   if not os.path.isfile(PID_FILE):
     return None
   try:
-    with open(PID_FILE) as f:
+    with open_local(PID_FILE) as f:
       worker_pid = f.read().strip()
     worker_pid = int(worker_pid)
     os.kill(worker_pid, 0)
@@ -244,11 +244,11 @@ if __name__ == "__main__":
     pass
 
   try:
-    with open(PID_FILE, 'w') as f:
+    with open_local(PID_FILE, 'w') as f:
       f.write(str(os.getpid()))
     log.info("Starting worker process")
 
-    with open(common.log_filename, 'a') as f:
+    with open_local(common.log_filename, 'a') as f:
       Hamlib.rig_set_debug_file(f)
       Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
       WorkerInit().worker().start()

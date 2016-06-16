@@ -47,7 +47,7 @@ def load_users():
   """ For now, usernames / passwords are stored plain-text
       in a file, one pair per line separated by a tab.
   """
-  with open(USERS_FILE) as f:
+  with open_local(USERS_FILE) as f:
     return dict(line[:-1].split('\t') for line in f)
 
 def check_auth(username, password):
@@ -75,7 +75,7 @@ def requires_auth(f):
 
 
 # create index (harmless if it already exists)
-with open('create.json') as f:
+with open_local('create.json') as f:
   requests.put('{0}spectrum'.format(ELASTICSEARCH), data=f.read())
 
 

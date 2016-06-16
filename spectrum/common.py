@@ -34,6 +34,11 @@ log.addHandler(rfh)
 log.addHandler(ch)
 
 
+def open_local(filename, mode='r'):
+  dir = os.path.dirname(__file__)
+  return open(os.path.join(dir, filename), mode)
+
+
 def get_config(config_id):
   r = requests.get('%s/spectrum/config/_search?fields=*&q=_id:%s' % (ELASTICSEARCH, config_id))
   if r.status_code != 200:
