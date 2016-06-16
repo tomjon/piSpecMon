@@ -84,7 +84,7 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
                     if (progress) {
                       progress();
                     }
-                    LOG("UPDATE", id, values, json);
+                    LOG("UPDATE", id, values, path, json);
                     setTimeout(function () {
                       widget.update(json);
                       if (callback) {
