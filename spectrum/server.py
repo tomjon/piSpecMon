@@ -82,6 +82,10 @@ app.rig = get_settings('rig', { 'model': 1 }) #FIXME is this a Hamlib constant? 
 app.users = load_users()
 app.worker = WorkerClient(WorkerInit())
 
+# Also add log handlers to Flask's logger for cases where Werkzeug isn't used as the underlying WSGI server
+app.logger.addHandler(rfh)
+app.logger.addHandler(ch)
+
 log.info("Global settings: {0}".format(app.settings))
 log.info("{0} rig models".format(len(app.caps['models'])))
 

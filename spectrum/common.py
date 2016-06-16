@@ -47,10 +47,6 @@ ch.setFormatter(formatter)
 log.addHandler(rfh)
 log.addHandler(ch)
 
-# Also add the handler to Flask's logger for cases where Werkzeug isn't used as the underlying WSGI server
-app.logger.addHandler(rfh)
-app.logger.addHandler(ch)
-
 
 def get_config(config_id):
   r = requests.get('%s/spectrum/config/_search?fields=*&q=_id:%s' % (ELASTICSEARCH, config_id))
