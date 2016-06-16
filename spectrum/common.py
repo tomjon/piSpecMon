@@ -34,9 +34,17 @@ log.addHandler(rfh)
 log.addHandler(ch)
 
 
-def open_local(filename, mode='r'):
+def _local_path(filename):
   dir = os.path.dirname(__file__)
-  return open(os.path.join(dir, filename), mode)
+  return os.path.join(dir, filename)
+
+
+def isfile_local(filename):
+  return os.path.isfile(_local_path(filename))
+
+
+def open_local(filename, mode='r'):
+  return open(_local_path(filename), mode)
 
 
 def get_config(config_id):

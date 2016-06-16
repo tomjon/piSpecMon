@@ -83,12 +83,12 @@ class Worker:
     """
     self._stop = False
 
-    if os.path.isfile(self.init.monitor_file):
+    if isfile_local(self.init.monitor_file):
       with open_local(self.init.monitor_file) as f:
         config_id = f.read()
       config = common.get_config(config_id)
     else:
-      if not os.path.isfile(self.init.config_file):
+      if not isfile_local(self.init.config_file):
         return
       with open_local(self.init.config_file) as f:
         config = json.loads(f.read())
@@ -190,7 +190,7 @@ class WorkerClient:
     self.read_pid()
     if self.error is not None:
       result['error'] = self.error
-    if os.path.isfile(self.init.monitor_file):
+    if isfile_local(self.init.monitor_file):
       stat = os.stat(self.init.monitor_file)
       with open_local(self.init.monitor_file) as f:
         result.update({ 'config_id': f.read(), 'last_sweep': stat.st_mtime })
@@ -214,8 +214,6 @@ class ProcessError:
 
 
 def read_pid_file():
-  if not os.path.isfile(PID_FILE):
-    return None
   try:
     with open_local(PID_FILE) as f:
       worker_pid = f.read().strip()
