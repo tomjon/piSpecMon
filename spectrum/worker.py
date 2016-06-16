@@ -31,6 +31,8 @@ def convert(d):
   """ Auto-convert empty strings into None, and number strings into numbers.
   """
   for k, v in d.iteritems():
+    if not isinstance(v, basestring):
+      continue
     if v.strip() == '':
       d[k] = None
       continue
