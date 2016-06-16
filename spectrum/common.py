@@ -30,7 +30,7 @@ log = logging.getLogger('werkzeug') # use this name so flask doesn't use its own
 log.setLevel(logging.DEBUG)
 
 # create file handler which logs even debug messages (these end up in log file)
-log_filename = _local_path('logs/{0}'.format(os.path.basename(sys.argv[0]).replace('.py', '.log')))
+log_filename = _local_path('logs/{0}.log'.format(os.path.basename(sys.argv[0]).replace('.py', '')))
 rfh = logging.handlers.RotatingFileHandler(log_filename, maxBytes=1 * 1024 * 1024, backupCount=0)
 rfh.setLevel(logging.DEBUG)
 
