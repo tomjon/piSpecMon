@@ -216,6 +216,8 @@ class ProcessError:
 
 
 def read_pid_file():
+  if not isfile_local(PID_FILE):
+    return None
   try:
     with open_local(PID_FILE) as f:
       worker_pid = f.read().strip()
