@@ -11,7 +11,6 @@ import Hamlib
 import math
 from datetime import datetime
 from worker import WorkerInit, WorkerClient
-import signal
 from monitor import get_capabilities, frange
 
 
