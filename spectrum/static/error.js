@@ -3,7 +3,7 @@ define(['lib/d3/d3.v3'], function (d3) {
 
   return function () {
     return {
-      q: function () { return '/spectrum/error/_search?q=config_id:' + values.config_id + '&fields=json' },
+      q: function () { return '/spectrum/error/_search?q=config_id:' + values.data_set[0] + '&fields=json' },
 
       update: function (resp) {
         var hits = resp.hits ? resp.hits.hits : [];

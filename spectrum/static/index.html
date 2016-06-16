@@ -17,10 +17,10 @@
   </head>
   <body style="display: none">
     <h1>Spectrum Monitor</h1>
-    <div id="config">
-      <div id="shield"></div>
+    <div id="tabs"><span id="data">Data</span><span id="freqs">Frequencies</span><span id="admin">Admin</span></div>
+    <div id="rig" class="content admin">
       <h2>Rig Configuration</h2>
-      <table id="rig">
+      <table>
         <tr><td>Model</td><td><select id="model"></select></td></tr>
         <tr><td>Serial port path</td><td><input id="pathname" /></td></tr>
         <tr><td>Stop bits</td><td><input id="stop_bits" /></td></tr>
@@ -32,6 +32,15 @@
           <option value="3">Set and check up to three times</option>
         </select></td></tr>
       </table>
+    </div>
+    <div id="choice" class="content freqs">
+      <h2>Sweep sets</h2>
+      <select id="freqs_set">
+        <option value="">New</option>
+      </select>
+      <button id="delete" disabled="true">Delete</button>
+    </div>
+    <div id="config" class="content freqs">
       <h2>Monitor Configuration</h2>
       <table id="monitor">
         <tr><td>Minimum interval (s)</td><td><input id="period" /></td></tr>
@@ -56,7 +65,7 @@
         </table>
       </div>
     </div>
-    <div id="process">
+    <div id="process" class="content freqs">
       <h2>Monitor</h2>
       <button id="start">Start</button>
       <button id="stop">Stop</button>
@@ -64,23 +73,22 @@
       <div id="worker_error"></div>
       <div id="current"><span></span> sweeps in total</div>
     </div>
-    <div id="stats">
+    <div id="stats" class="content admin">
       <h2>Elasticsearch Index</h2>
       <table>
         <tr><td>Total index size</td><td id="totalSize"><td></td></tr>
         <tr><td>Number of records</td><td id="records"><td></td></tr>
       </table>
     </div>
-    <div id="sweep_set">
+    <div id="sweep_set" class="content data">
       <h2>Sweep sets</h2>
-      <select>
-        <option value="">New</option>
+      <select id="data_set">
+        <option value="">None</option>
       </select>
       <p/>
       <div id="controls">
         <div id="count"><span></span> sweeps in total <button id="update">Update</button></div>
         <p/>
-        <button id="delete">Delete</button>
         <button id="export">Export</button>
         <button id="download">Download</button>
         <p/>
@@ -89,10 +97,9 @@
         <div id="progress"><span id="n"><span></span> of </span><span id="total"></span></div>
       </div>
       <p/>
-      <div id="error">
-      </div>
+      <div id="error"></div>
     </div>
-    <div id="charts">
+    <div id="charts" class="content data">
       <p id="avg">Average time per sweep <span></span></p>
       <div id="frequency-chart">
         <h2>Level / frequency</h2>

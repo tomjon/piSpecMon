@@ -9,18 +9,17 @@ define(['lib/d3/d3.v3', 'lib/d3/slider/d3.slider'], function (d3, slider) {
     });
 
     return {
-      q: function () { return '/spectrum/sweep/_search?size=1&q=config_id:' + values.config_id + '&fields=timestamp&sort=timestamp:desc' },
+      q: function () { return '/spectrum/sweep/_search?size=1&q=config_id:' + values.data_set.config_id + '&fields=timestamp&sort=timestamp:desc' },
 
       update: function (resp) {
         // update sweep count in UI
         d3.select("#count span").text(resp.hits.total);
-        d3.select("#count").style("display", "initial");
-        d3.select("#update").style("display", values.current_id == values.config_id ? "initial" : "none");
-        d3.select("#delete").property("disabled", values.current_id == values.config_id);
+        d3.select("#count").style("visibility", "visible");
+        d3.select("#update").style("visibility", values.current_id == values.data_set.config_id ? "visible" : "hidden");
 
         if (resp.hits.hits == 0) return;
 
-        var start = values.start;
+        var start = values.data_set.start;
         var end = resp.hits.hits[0].fields.timestamp[0];
 
         var axis = d3.svg.axis().tickFormat(format).ticks(4);

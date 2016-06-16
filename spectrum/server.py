@@ -25,16 +25,17 @@ class SecuredStaticFlask (Flask):
 
 def set_settings(id, value):
   data = { 'timestamp': int(time()), 'json': json.dumps(value) }
-  r = requests.put(ELASTICSEARCH + 'spectrum/settings/' + id, data=json.dumps(data))
-  if r.status_code != 201:
+  r = requests.put(ELASTICSEARCH + 'spectrum/settings/' + id, params={ 'refresh': 'true' }, data=json.dumps(data))
+  if r.status_code != 200:
     raise Exception("Can not apply settings: %s (%d)" % (id, r.status_code))
+  return value
 
 def get_settings(id, new={}):
   """ Get the settings by id from Elasticsearch.
   """
   params = { 'fields': 'json' }
   r = requests.get(ELASTICSEARCH + 'spectrum/settings/' + id, params=params)
-  if r.status_code == 404:
+  if r.status_code == 404 or not r.json()['found']:
     log.info("Initialising settings: {0}".format(id))
     set_settings(id, new)
     return new
@@ -79,8 +80,9 @@ with open('create.json') as f:
 
 
 app = SecuredStaticFlask(__name__)
-app.settings = get_settings('global', { 'batch': True })
+app.settings = get_settings('settings', { 'batch': True })
 app.caps = get_capabilities()
+app.rig = get_settings('rig', { 'model': 1 }) #FIXME is this a Hamlib constant? (dummy rig)
 app.users = load_users()
 app.worker = WorkerClient(WorkerInit())
 
@@ -100,22 +102,22 @@ def favicon():
                              'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 
-# settings API
-@app.route('/settings/', methods=['GET', 'PUT'])
-@app.route('/settings', methods=['GET', 'PUT'])
-@requires_auth
-def setting():
-  if request.method == 'GET':
-    return json.dumps(app.settings)
-  elif request.method == 'PUT':
-    set_settings('global', request.get_json())
-    return 'OK'
-
-
 # rig capabilities API
-@app.route('/rig')
-def rig():
+@app.route('/caps')
+def caps():
   return json.dumps(app.caps)
+
+# settings API
+@app.route('/settings', methods=['GET', 'PUT'])
+@app.route('/rig', methods=['GET', 'PUT'])
+@requires_auth
+def settings():
+  rule = request.url_rule.rule[1:]
+  if request.method == 'GET':
+    return json.dumps(getattr(app, rule))
+  elif request.method == 'PUT':
+    setattr(app, rule, set_settings(rule, request.get_json()))
+    return 'OK'
 
 
 # API: GET /monitor - return process status
@@ -128,7 +130,9 @@ def monitor():
   if request.method == 'PUT':
     if 'config_id' in app.worker.status():
       return "Worker already running", 400
-    app.worker.start(request.get_data())
+    config = json.loads(request.get_data())
+    config['rig'] = app.rig
+    app.worker.start(json.dumps(config))
     return "OK"
   if request.method == 'DELETE':
     # stop process

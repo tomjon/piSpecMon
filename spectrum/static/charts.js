@@ -15,9 +15,9 @@ define(['lib/d3/d3.v3'], function (d3) {
 
     return {
       q: function () {
-        var q = 'config_id:' + values.config_id;
-        if (values.range) {
-          q += '+AND+timestamp:[' + values.range[0] + '+TO+' + values.range[1] + ']';
+        var q = 'config_id:' + values.data_set.config_id;
+        if (values.data_set.range) {
+          q += '+AND+timestamp:[' + values.data_set.range[0] + '+TO+' + values.data_set.range[1] + ']';
         }
         return '/spectrum/sweep/_search?size=1000000&q=' + q + '&fields=*&sort=timestamp'
       },

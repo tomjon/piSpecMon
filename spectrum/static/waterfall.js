@@ -26,15 +26,15 @@ define(['lib/d3/d3.v3'], function (d3) {
       update: function (data) {
         svg.selectAll("*").remove();
 
-        if (values.config.freqs.freqs || data.length == 0) {
+        if (values.data_set.config.freqs.freqs || data.length == 0) {
           parent.style("display", "none");
           return;
         }
         parent.style("display", "initial");
 
-        var f0 = +values.config.freqs.range[0];
-        var f1 = +values.config.freqs.range[1];
-        var df = +values.config.freqs.range[2];
+        var f0 = +values.data_set.config.freqs.range[0];
+        var f1 = +values.data_set.config.freqs.range[1];
+        var df = +values.data_set.config.freqs.range[2];
         x.domain([f0 - 0.5 * df, f1 + 0.5 * df]);
         y.domain(d3.extent(data, function (d) { return d.fields.timestamp }));
 
@@ -47,7 +47,7 @@ define(['lib/d3/d3.v3'], function (d3) {
            .attr("x", 40)
            .attr("y", 6)
            .style("text-anchor", "end")
-           .text(hz[values.config.freqs.exp]);
+           .text(hz[values.data_set.config.freqs.exp]);
 
         svg.append("g")
            .attr("class", "y axis")

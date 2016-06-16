@@ -26,59 +26,13 @@ h1 {
 	padding-left: 200px;
 }
 
-#config {
-	position: relative;
-	top: 20px;
-  width: 450px;
-}
-
-#shield {
-  display: none;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: lightgrey;
-  z-index: 10;
-  opacity: 0.4;
-}
-
 #config tr td:first-child {
   text-align: right;
-}
-
-#process {
-	position: absolute;
-	top: 80px;
-	left: 600px;
-}
-
-#stats {
-	position: absolute;
-	top: 200px;
-	left: 600px;
-}
-
-#sweep_set {
-	position: absolute;
-	top: 350px;	
-	left: 600px;
-}
-
-#controls {
-  display: none;
 }
 
 #count {
   display: inline;
   margin-right: 20px;
-}
-
-#charts {
-  display: none;
-	position: absolute;
-	top: 700px;
 }
 
 svg {
@@ -99,10 +53,22 @@ svg {
   margin-top: 50px;
 }
 
-#current {
-  display: none;
-}
-
 button {
   cursor: pointer;
+}
+
+/* tabs */
+
+#tabs span {
+  color: black;
+  cursor: pointer;
+  margin: 10px;
+  padding: 5px;
+  border-width: 1px 1px 0px 1px;
+  border-style: solid;
+  border-color: black;
+}
+
+#tabs span.selected {
+  color: blue;
 }

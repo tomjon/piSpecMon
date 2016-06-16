@@ -31,13 +31,13 @@ define(['lib/d3/d3.v3'], function (d3) {
         var sweep = d3.select("#sweep").property("value");
         agg = agg[sweep];
 
-        if (values.config.freqs.freqs || agg.length == 0) {
+        if (values.data_set.config.freqs.freqs || agg.length == 0) {
           parent.style("display", "none");
           return;
         }
         parent.style("display", "initial");
 
-        x.domain([values.config.freqs.range[0], values.config.freqs.range[1]]);
+        x.domain([values.data_set.config.freqs.range[0], values.data_set.config.freqs.range[1]]);
         if (params.y_axis) {
           y.domain([params.y_axis[0], params.y_axis[1]]);
           yAxis.tickValues(d3.range(params.y_axis[0], params.y_axis[1] + params.y_axis[2], params.y_axis[2]));
@@ -45,7 +45,7 @@ define(['lib/d3/d3.v3'], function (d3) {
           y.domain(d3.extent(agg, function (d) { return d.v }));
         }
 
-        line.x(function (d, i) { return x(+values.config.freqs.range[0] + i * values.config.freqs.range[2]) });
+        line.x(function (d, i) { return x(+values.data_set.config.freqs.range[0] + i * values.data_set.config.freqs.range[2]) });
 
         svg.append("g")
            .attr("class", "x axis")
@@ -56,7 +56,7 @@ define(['lib/d3/d3.v3'], function (d3) {
            .attr("x", 40)
            .attr("y", 6)
            .style("text-anchor", "end")
-           .text(hz[values.config.freqs.exp]);
+           .text(hz[values.data_set.config.freqs.exp]);
 
         svg.append("g")
            .attr("class", "y axis")

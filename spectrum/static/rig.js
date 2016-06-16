@@ -1,41 +1,18 @@
 define(['lib/d3/d3.v3'], function (d3) {
   "use strict";
 
-  function setSelect(id, data, text, value) {
-    var options = d3.select('#' + id)
-                    .selectAll('option')
-                    .data(data);
-    options.enter().append('option')
-           .text(text)
-           .attr('value', value);
-    options.exit().remove();
-  }
-
   return function (options) {
+    d3.select("#rig").selectAll("input, select").on("change", function() {
+      /* read rig config out of the UI */
+      var rig = { };
+      readUI("rig", rig);
+      dispatch.rig(rig);
+    });
+
     return {
-      update: function (data) {
-        data.models.sort(function (a, b) {
-          if (a.manufacturer == b.manufacturer) {
-            return a.name < b.name ? -1 : 1;
-          } else {
-            return a.manufacturer < b.manufacturer ? -1 : 1;
-          }
-        });
-
-        setSelect('model',
-                  data.models,
-                  function (d) { return d.manufacturer + ' ' + d.name +
-                                        ' v' + d.version + ' (' + d.status + ')' },
-                  function (d) { return d.model });
-
-        d3.select('#model').property("value", 1);
-
-        setSelect('mode',
-                  data.modes,
-                  function (d) { return d.name },
-                  function (d) { return d.mode });
-
-        //FIXME: ungrey the config panel
+      update: function (rig) {
+        /* render rig config in the UI */
+        updateUI(rig);
       }
     };
   };

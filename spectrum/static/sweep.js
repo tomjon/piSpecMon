@@ -27,10 +27,11 @@ define(['lib/d3/d3.v3'], function (d3) {
   return function () {
     var times = {};
 
-    var select = d3.select("#sweep_set select");
+    var select = d3.selectAll("#data_set, #freqs_set");
     select.on("change", function () {
+      var select_id = d3.select(this).attr('id');
       var id = d3.select(this).property('value');
-      dispatch.config_id(id, times[id]);
+      dispatch.config_id(select_id, id, times[id]);
     });
 
     return {
@@ -47,10 +48,11 @@ define(['lib/d3/d3.v3'], function (d3) {
       },
 
       selectLatest: function () {
-        var options = d3.selectAll("#sweep_set select option");
+        var options = select.selectAll("option");
         var value = options[0][options[0].length - 1].value;
-        d3.select("#sweep_set select").property("value", value);
-        dispatch.config_id(value, times[value]);
+        select.property("value", value);
+        dispatch.config_id("data_set", value, times[value]);
+        dispatch.config_id("freqs_set", value, times[value]);
       }
     };
   };

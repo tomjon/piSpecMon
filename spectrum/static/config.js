@@ -46,19 +46,6 @@ define(['lib/d3/d3.v3'], function (d3) {
     this.remove();
   }
 
-  function updateUI(conf) {
-    for (var id in conf) {
-      d3.select("#" + id).property("value", conf[id]);
-    }
-  }
-
-  function readUI(id, conf) {
-    d3.select("#" + id).selectAll("select, input").each(function () {
-      var d = d3.select(this);
-      conf[d.attr("id")] = d.property("value");
-    });
-  }
-
   return function () {
     // wire up range/discrete radio buttons and divs
     d3.select("#range").on("change", function () {
@@ -82,8 +69,7 @@ define(['lib/d3/d3.v3'], function (d3) {
     return {
       /* read config out of the UI */
       get: function () {
-        var conf = { rig: {}, monitor: {}, scan: {} };
-        readUI("rig", conf.rig);
+        var conf = { monitor: {}, scan: {} };
         readUI("monitor", conf.monitor);
         readUI("scan", conf.scan);
 
@@ -106,13 +92,12 @@ define(['lib/d3/d3.v3'], function (d3) {
         return conf;
       },
 
-      q: function () { return '/spectrum/config/' + values.config_id + '?fields=json' },
+      q: function () { return '/spectrum/config/' + values.freqs_set.config_id + '?fields=json' },
 
       update: function (resp) {
         var conf = JSON.parse(resp.fields.json[0]);
 
         /* render config in the UI */
-        updateUI(conf.rig);
         updateUI(conf.monitor);
         updateUI(conf.scan);
 
