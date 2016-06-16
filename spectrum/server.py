@@ -59,10 +59,8 @@ def check_auth(username, password):
 def authenticate():
   """ Sends a 401 response that enables basic authentication.
   """
-  return Response(
-    'Could not verify your access level for that URL.\n'
-    'You have to login with proper credentials', 401,
-    {'WWW-Authenticate': 'Basic realm="Login Required"'})
+  message = 'Could not verify your access level for that URL'
+  return Response(message, 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
 
 def requires_auth(f):
   @wraps(f)
@@ -72,7 +70,6 @@ def requires_auth(f):
       return authenticate()
     return f(*args, **kwargs)
   return decorated
-
 
 # create index (harmless if it already exists)
 with open_local('create.json') as f:
