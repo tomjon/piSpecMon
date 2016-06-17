@@ -9,20 +9,12 @@ import os, os.path
 """ Initialise logging and define shared functions.
 """
 
-def _local_path(filename):
+def local_path(filename):
   dir = os.path.dirname(__file__)
   return os.path.join(dir, filename)
 
 
-def isfile_local(filename):
-  return os.path.isfile(_local_path(filename))
-
-
-def open_local(filename, mode='r'):
-  return open(_local_path(filename), mode)
-
-
-log_dir = _local_path('logs')
+log_dir = local_path('logs')
 if not os.path.exists(log_dir):
   os.mkdir(log_dir)
 
@@ -30,7 +22,7 @@ log = logging.getLogger('werkzeug') # use this name so flask doesn't use its own
 log.setLevel(logging.DEBUG)
 
 # create file handler which logs even debug messages (these end up in log file)
-log_filename = _local_path('logs/{0}.log'.format(os.path.basename(sys.argv[0]).replace('.py', '')))
+log_filename = os.path.join(log_dir, '{0}.log'.format(os.path.basename(sys.argv[0]).replace('.py', '')))
 rfh = logging.handlers.RotatingFileHandler(log_filename, maxBytes=1 * 1024 * 1024, backupCount=0)
 rfh.setLevel(logging.DEBUG)
 

@@ -54,10 +54,11 @@ def now():
 class WorkerInit:
 
   # the _file parameters here would be prefices if more than one worker needs to run concurrently
-  def __init__(self, elasticsearch=ELASTICSEARCH, config_file=WORKER_CONFIG, monitor_file=WORKER_MONITOR, signum=signal.SIGUSR1):
+  def __init__(self, elasticsearch=ELASTICSEARCH, pid_file=PID_FILE, config_file=WORKER_CONFIG, monitor_file=WORKER_MONITOR, signum=signal.SIGUSR1):
     self.elasticsearch = elasticsearch
-    self.config_file = config_file
-    self.monitor_file = monitor_file
+    self.pid_file = local_path(pid_file)
+    self.config_file = local_path(config_file)
+    self.monitor_file = local_path(monitor_file)
     self.signum = signum
 
   def worker(self):
@@ -65,6 +66,22 @@ class WorkerInit:
 
   def client(self):
     return Client(self)
+
+  def read_pid_file(self):
+    if not os.path.isfile(self.pid_file):
+      return None
+    try:
+      with open(self.pid_file) as f:
+        worker_pid = f.read().strip()
+      worker_pid = int(worker_pid)
+      os.kill(worker_pid, 0)
+      return worker_pid
+    except IOError:
+      raise ProcessError("Can not open PID file: {0}".format(self.pid_file))
+    except ValueError:
+      raise ProcessError("Bad worker PID: {0}".format(worker_pid))
+    except OSError as e:
+      raise ProcessError("Bad worker PID ({0}): {1}".format(errno.errorcode[e.errno], worker_pid))
 
 
 class Worker:
@@ -85,14 +102,14 @@ class Worker:
     """
     self._stop = False
 
-    if isfile_local(self.init.monitor_file):
-      with open_local(self.init.monitor_file) as f:
+    if os.path.isfile(self.init.monitor_file):
+      with open(self.init.monitor_file) as f:
         config_id = f.read()
       config = common.get_config(config_id)
     else:
-      if not isfile_local(self.init.config_file):
+      if not os.path.isfile(self.init.config_file):
         return
-      with open_local(self.init.config_file) as f:
+      with open(self.init.config_file) as f:
         config = json.loads(f.read())
 
       data = { 'timestamp': now(), 'json': json.dumps(config) }
@@ -103,7 +120,7 @@ class Worker:
       config_id = r.json()['_id']
       os.remove(self.init.config_file)
 
-      with open_local(self.init.monitor_file, 'w') as f:
+      with open(self.init.monitor_file, 'w') as f:
         f.write(config_id)
 
     try:
@@ -179,7 +196,7 @@ class WorkerClient:
 
   def read_pid(self):
     try:
-      self.worker_pid = read_pid_file()
+      self.worker_pid = self.init.read_pid_file()
       self.error = None
     except ProcessError as e:
       self.error = e.message
@@ -192,15 +209,15 @@ class WorkerClient:
     self.read_pid()
     if self.error is not None:
       result['error'] = self.error
-    if isfile_local(self.init.monitor_file):
+    if os.path.isfile(self.init.monitor_file):
       stat = os.stat(self.init.monitor_file)
-      with open_local(self.init.monitor_file) as f:
+      with open(self.init.monitor_file) as f:
         result.update({ 'config_id': f.read(), 'last_sweep': stat.st_mtime })
     return result
 
   def start(self, config):
     if self.read_pid() is not None:
-      with open_local(self.init.config_file, 'w') as f:
+      with open(self.init.config_file, 'w') as f:
         f.write(config)
       os.kill(self.worker_pid, self.init.signum)
 
@@ -215,30 +232,14 @@ class ProcessError:
     self.message = message
 
 
-def read_pid_file():
-  if not isfile_local(PID_FILE):
-    return None
-  try:
-    with open_local(PID_FILE) as f:
-      worker_pid = f.read().strip()
-    worker_pid = int(worker_pid)
-    os.kill(worker_pid, 0)
-    return worker_pid
-  except IOError:
-    raise ProcessError("Can not open PID file: {0}".format(PID_FILE))
-  except ValueError:
-    raise ProcessError("Bad worker PID: {0}".format(worker_pid))
-  except OSError as e:
-    raise ProcessError("Bad worker PID ({0}): {1}".format(errno.errorcode[e.errno], worker_pid))
-
-
 if __name__ == "__main__":
   import Hamlib, sys
 
   signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
 
+  init = WorkerInit()
   try:
-    pid = read_pid_file()
+    pid = init.read_pid_file()
     if pid is not None:
       log.error("Worker process already exists: {0}".format(pid))
       sys.exit(1)
@@ -246,14 +247,14 @@ if __name__ == "__main__":
     pass
 
   try:
-    with open_local(PID_FILE, 'w') as f:
+    with open(init.pid_file, 'w') as f:
       f.write(str(os.getpid()))
     log.info("Starting worker process")
 
-    with open_local(common.log_filename, 'a') as f:
+    with open(common.log_filename, 'a') as f:
       Hamlib.rig_set_debug_file(f)
       Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
-      WorkerInit().worker().start()
+      init.worker().start()
   except KeyboardInterrupt:
     os.remove(PID_FILE)
   except SystemExit as e:
