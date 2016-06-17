@@ -40,11 +40,19 @@
       </select>
       <button id="delete" disabled="true">Delete</button>
     </div>
-    <div id="config" class="content freqs">
-      <h2>Monitor Configuration</h2>
+    <div id="process" class="content freqs">
+      <h2>Monitor</h2>
       <table id="monitor">
         <tr><td>Minimum interval (s)</td><td><input id="period" /></td></tr>
       </table>
+      <p/>
+      <button id="start">Start</button>
+      <button id="stop">Stop</button>
+      <p/>
+      <div id="worker_error"></div>
+      <div id="current"><span></span> sweeps in total</div>
+    </div>
+    <div id="config" class="content freqs">
       <h2>Scan Configuration</h2>
       <table id="scan">
         <tr><td>Mode</td><td><select id="mode"></select></td></tr>
@@ -64,14 +72,6 @@
           <tr><td>Units</td><td><select class="hz" /></td></tr>
         </table>
       </div>
-    </div>
-    <div id="process" class="content freqs">
-      <h2>Monitor</h2>
-      <button id="start">Start</button>
-      <button id="stop">Stop</button>
-      <p/>
-      <div id="worker_error"></div>
-      <div id="current"><span></span> sweeps in total</div>
     </div>
     <div id="stats" class="content admin">
       <h2>Elasticsearch Index</h2>
