@@ -10,6 +10,7 @@ To start/stop service:
 sudo systemctl start psm.[worker|elasticsearch].service
 sudo systemctl stop psm.[worker|elasticsearch].service
 sudo systemctl restart psm.[worker|elasticsearch].service
+sudo service apache2 restart
 
 To check status:
 

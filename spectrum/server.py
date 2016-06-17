@@ -53,7 +53,7 @@ def check_auth(username, password):
   """ This function is called to check if a username /
       password combination is valid.
   """
-  return username in app.users and app.users[username] == password
+  return username in application.users and application.users[username] == password
 
 def authenticate():
   """ Sends a 401 response that enables basic authentication.
@@ -75,48 +75,48 @@ with open(local_path('create.json')) as f:
   requests.put('{0}spectrum'.format(ELASTICSEARCH), data=f.read())
 
 
-app = SecuredStaticFlask(__name__)
-app.settings = get_settings('settings', { 'batch': True })
-app.caps = get_capabilities()
-app.rig = get_settings('rig', { 'model': 1 }) #FIXME is this a Hamlib constant? (dummy rig)
-app.users = load_users()
-app.worker = WorkerClient(WorkerInit())
+application = SecuredStaticFlask(__name__)
+application.settings = get_settings('settings', { 'batch': True })
+application.caps = get_capabilities()
+application.rig = get_settings('rig', { 'model': 1 }) #FIXME is this a Hamlib constant? (dummy rig)
+application.users = load_users()
+application.worker = WorkerClient(WorkerInit())
 
 # Also add log handlers to Flask's logger for cases where Werkzeug isn't used as the underlying WSGI server
-app.logger.addHandler(rfh)
-app.logger.addHandler(ch)
+application.logger.addHandler(rfh)
+application.logger.addHandler(ch)
 
-log.info("Global settings: {0}".format(app.settings))
-log.info("{0} rig models".format(len(app.caps['models'])))
+log.info("Global settings: {0}".format(application.settings))
+log.info("{0} rig models".format(len(application.caps['models'])))
 
 
-@app.route('/')
+@application.route('/')
 @requires_auth
 def main():
   return redirect("/static/index.html")
 
 
-@app.route('/favicon.ico')
+@application.route('/favicon.ico')
 def favicon():
-  return send_from_directory(os.path.join(app.root_path, 'static'),
+  return send_from_directory(os.path.join(application.root_path, 'static'),
                              'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 
 # rig capabilities API
-@app.route('/caps')
+@application.route('/caps')
 def caps():
-  return json.dumps(app.caps)
+  return json.dumps(application.caps)
 
 # settings API
-@app.route('/settings', methods=['GET', 'PUT'])
-@app.route('/rig', methods=['GET', 'PUT'])
+@application.route('/settings', methods=['GET', 'PUT'])
+@application.route('/rig', methods=['GET', 'PUT'])
 @requires_auth
 def settings():
   rule = request.url_rule.rule[1:]
   if request.method == 'GET':
-    return json.dumps(getattr(app, rule))
+    return json.dumps(getattr(application, rule))
   elif request.method == 'PUT':
-    setattr(app, rule, set_settings(rule, request.get_json()))
+    setattr(application, rule, set_settings(rule, request.get_json()))
     return 'OK'
 
 
@@ -124,29 +124,29 @@ def settings():
 #      HEAD /monitor - minimal process status
 #      PUT /monitor - start process with supplied config as request body
 #      DELETE /monitor - stop process
-@app.route('/monitor', methods=['HEAD', 'GET', 'PUT', 'DELETE'])
+@application.route('/monitor', methods=['HEAD', 'GET', 'PUT', 'DELETE'])
 @requires_auth
 def monitor():
   if request.method == 'PUT':
-    if 'config_id' in app.worker.status():
+    if 'config_id' in application.worker.status():
       return "Worker already running", 400
     config = json.loads(request.get_data())
-    config['rig'] = app.rig
-    app.worker.start(json.dumps(config))
+    config['rig'] = application.rig
+    application.worker.start(json.dumps(config))
     return "OK"
   if request.method == 'DELETE':
     # stop process
-    if 'config_id' not in app.worker.status():
+    if 'config_id' not in application.worker.status():
       return "Worker not running", 400
-    app.worker.stop()
+    application.worker.stop()
     return "OK"
   if request.method == 'GET':
     # monitor status
-    return json.dumps(app.worker.status())
+    return json.dumps(application.worker.status())
 
 
 # forward Elasticsearch queries verbatim
-@app.route('/spectrum/<path:path>', methods=['GET', 'POST', 'DELETE'])
+@application.route('/spectrum/<path:path>', methods=['GET', 'POST', 'DELETE'])
 @requires_auth
 def search(path):
   if request.method == 'POST':
@@ -174,7 +174,7 @@ def _iter_export(config, hits):
     yield '\n'
 
 # writes file locally (POST) or stream the output (GET)
-@app.route('/export/<config_id>', methods=['GET', 'POST'])
+@application.route('/export/<config_id>', methods=['GET', 'POST'])
 @requires_auth
 def export(config_id):
   config = get_config(config_id)
@@ -192,7 +192,7 @@ def export(config_id):
     return path
 
 
-@app.route('/stats')
+@application.route('/stats')
 def get_stats():
   r = requests.get(ELASTICSEARCH + 'spectrum/_stats/docs,store')
   if r.status_code != 200:
@@ -205,5 +205,5 @@ if __name__ == "__main__":
   import sys
 
   if 'debug' in sys.argv:
-    app.debug = True
-  app.run(host='0.0.0.0', port=8080)
+    application.debug = True
+  application.run(host='0.0.0.0', port=8080)
