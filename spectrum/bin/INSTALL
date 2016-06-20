@@ -1,3 +1,11 @@
+To install elasticsearch:
+
+sudo apt-get install openjdk-8-jre
+* obtain elasticsearch-2.1.0.tgz
+sudo apt-get remove elasticsearch
+tar xvfz elasticsearch-2.1.0.tgz
+ln -s elasticsearch-2.1.0.tgz elasticsearch
+
 To install service:
 
 sudo cp psm.worker.service psm.elasticsearch.service /lib/systemd/system
