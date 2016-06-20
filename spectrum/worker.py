@@ -201,7 +201,7 @@ class WorkerClient:
       self.error = None
     except ProcessError as e:
       self.error = e.message
-    if self.worker_pid is None:
+    if self.worker_pid is None and self.error is None:
       self.error = "No worker process"
     return self.worker_pid
 
