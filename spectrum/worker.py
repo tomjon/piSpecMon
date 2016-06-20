@@ -129,7 +129,7 @@ class Worker:
       convert(config['scan'])
 
       rig = config['rig']
-      period = config['monitor'].get('period', 1.0)
+      period = config['monitor'].get('period', 0)
 
       # scan settings
       scan = config['scan']
@@ -168,7 +168,7 @@ class Worker:
               log.error("Could not post to Elasticsearch ({0})".format(r.status_code))
               return
 
-            sleep(max(period - sweep['totaltime'], 0))
+            sleep(max(period - sweep['totaltime'], 0) / 1000.0)
     except Exception as e:
       log.error(e)
       data = { 'timestamp': now(), 'config_id': config_id, 'json': json.dumps(str(e)) }

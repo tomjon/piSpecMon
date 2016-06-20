@@ -24,13 +24,20 @@
         <tr><td>Model</td><td><select id="model"></select></td></tr>
         <tr><td>Serial port path</td><td><input id="pathname" /></td></tr>
         <tr><td>Stop bits</td><td><input id="stop_bits" /></td></tr>
-        <tr><td>Write delay</td><td><input id="write_delay" /></td></tr>
-        <tr><td>Set freq. attempts</td><td><select id="set_check">
+        <tr><td>Write delay (ms)</td><td><input id="write_delay" /></td></tr>
+        <tr><td>Set frequency attempts</td><td><select id="set_check">
           <option value="0">Set once only</option>
           <option value="1">Set once and check</option>
           <option value="2">Set and check up to twice</option>
           <option value="3">Set and check up to three times</option>
         </select></td></tr>
+        <tr><td>Error handling</td><td><select id="retries">
+          <option value="0">Fail on error</option>
+          <option value="1">Wait and retry once</option>
+          <option value="2">Wait and retry twice</option>
+          <option value="3">Wait and retry three times</option>
+        </select></td></tr>
+        <tr><td>Retry interval (ms)</td><td><input id="retry_delay" /></td></tr>
       </table>
     </div>
     <div id="choice" class="content freqs">
@@ -43,7 +50,7 @@
     <div id="process" class="content freqs">
       <h2>Monitor</h2>
       <table id="monitor">
-        <tr><td>Minimum interval (s)</td><td><input id="period" /></td></tr>
+        <tr><td>Minimum interval (ms)</td><td><input id="period" /></td></tr>
       </table>
       <p/>
       <button id="start">Start</button>

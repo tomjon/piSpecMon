@@ -53,18 +53,28 @@ def get_capabilities():
 
 class RigError (Exception):
 
-  def __init__(self, rig=None, call='?'):
+  def __init__(self, rig=None, call='?', tries=0):
     self.message = Hamlib.rigerror(rig.error_status) if rig is not None else "Model not found"
     self.call = call
+    self.tries = tries
 
   def __str__(self):
-    return "Hamlib rig error in %s: %s" % (self.call, self.message)
+    return "Hamlib rig error in %s: %s (tried %s time%s)" % (self.call, self.message, self.tries + 1, "" if self.tries == 1 else "s")
 
 
 class Monitor:
 
-  # set_check 0 - set frequency and hope. set_check N - set/check N times before giving up
-  def __init__(self, model=1, stop_bits=None, write_delay=None, pathname=None, set_check=0):
+  def __init__(self, model=1, stop_bits=None, write_delay=None, pathname=None, set_check=0, retries=0, interval=0):
+    """ Arguments:
+    
+        model - hamlib model number, defaults to dummy implementation
+        stop_bits - if not None, set stop bits on the rig port
+        write_delay - if not None, set write delay on the rig port (ms)
+        pathname - is not None, set path name on the rig port
+        set_check - 0 = set frequency and hope, N = set/check N times before failing
+        retries - retry after error or timeout this many times
+        interval - if > 0, pause this many ms before retrying (doubles each retry)
+    """
     self.rig = Hamlib.Rig(model)
     if self.rig.this is None:
       raise RigError()
@@ -75,6 +85,8 @@ class Monitor:
     if pathname is not None:
       self.rig.state.rigport.pathname = str(pathname)
     self.set_check = set_check
+    self.retries = retries
+    self.interval = interval
 
   def __enter__(self):
     self._check(self.rig.open)
@@ -83,12 +95,17 @@ class Monitor:
   def __exit__(self, *args):
     self.rig.close()
 
+  # handle errors and retries for hamlib calls
   def _check(self, fn, *args):
-    try:
-      return fn(*args)
-    finally:
-      if self.rig.error_status != Hamlib.RIG_OK:
-        raise RigError(self.rig, fn.__name__)
+    tries = 0
+    while tries <= self.retries:
+      v = fn(*args)
+      if self.rig.error_status == Hamlib.RIG_OK:
+        return v
+      time.sleep(self.interval * 2 ** tries / 1000.0)
+      tries += 1
+    else:
+      raise RigError(self.rig, fn.__name__, tries)
 
   # return strength, or None if the freq can't be set
   def _get_strength(self, freq):
