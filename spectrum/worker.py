@@ -192,6 +192,7 @@ class WorkerClient:
 
   def __init__(self, init):
     self.init = init
+    self.worker_pid = None
     self.error = None
 
   def read_pid(self):
