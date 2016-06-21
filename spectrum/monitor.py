@@ -59,7 +59,7 @@ class RigError (Exception):
     self.tries = tries
 
   def __str__(self):
-    return "Hamlib rig error in %s: %s (tried %s time%s)" % (self.call, self.message, self.tries + 1, "" if self.tries == 1 else "s")
+    return "Hamlib rig error in %s: %s%s" % (self.call, self.message, " (tried %s times)" % self.tries if self.tries > 1 else "")
 
 
 class Monitor:
@@ -90,7 +90,7 @@ class Monitor:
 
   def __enter__(self):
     self._check(self.rig.open)
-    return self._scan
+    return self
 
   def __exit__(self, *args):
     self.rig.close()
@@ -104,8 +104,7 @@ class Monitor:
         return v
       time.sleep(self.interval * 2 ** tries / 1000.0)
       tries += 1
-    else:
-      raise RigError(self.rig, fn.__name__, tries)
+    raise RigError(self.rig, fn.__name__, tries)
 
   # return strength, or None if the freq can't be set
   def _get_strength(self, freq):
@@ -120,7 +119,7 @@ class Monitor:
         return None
     return self._check(self.rig.get_strength, Hamlib.RIG_VFO_CURR)
 
-  def _scan(self, freqs=[], range=None, mode=None):
+  def scan(self, freqs=[], range=None, mode=None):
     if mode is not None and mode != Hamlib.RIG_MODE_NONE:
       width = self._check(self.rig.passband_normal, mode)
       self._check(self.rig.set_mode, mode, width, Hamlib.RIG_VFO_CURR)
@@ -130,6 +129,14 @@ class Monitor:
       for freq in frange(*range):
         yield freq, self._get_strength(freq)
 
+  def power(self, value=None):
+    """ With no argument (or value None), return the power state of the rig.
+        Otherwise, set the power state of the rig.
+    """
+    if value is None:
+      return self.rig.get_powerstat()
+    else:
+      self.rig_set_powerstat(value)
 
 if __name__ == "__main__":
   import sys
@@ -141,6 +148,6 @@ if __name__ == "__main__":
     sys.exit(1)
 
   model = int(sys.argv[1])
-  with Monitor(model=model, pathname="/dev/ttyUSB0", stop_bits=1, write_delay=5) as scan:
-    for x in scan(range=(88E6, 108E6, 0.1E6), mode=Hamlib.RIG_MODE_WFM):
+  with Monitor(model=model, pathname="/dev/ttyUSB0", stop_bits=1, write_delay=5) as monitor:
+    for x in monitor.scan(range=(88E6, 108E6, 0.1E6), mode=Hamlib.RIG_MODE_WFM):
       print x

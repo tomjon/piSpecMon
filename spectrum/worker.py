@@ -147,7 +147,7 @@ class Worker:
         raise ValueError("No frequencies in config")
 
       timestamp = None
-      with Monitor(**rig) as scanner:
+      with Monitor(**rig) as monitor:
         n = 0
         while not self._stop:
           log.debug("Scan: {0}".format(scan))
@@ -156,7 +156,7 @@ class Worker:
           n += 1
 
           os.utime(self.init.monitor_file, None)
-          for x in scanner(**scan):
+          for x in monitor.scan(**scan):
             if self._stop:
               break
             sweep['level'].append(x[1] if x[1] is not None else -128)
