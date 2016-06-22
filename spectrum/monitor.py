@@ -54,12 +54,17 @@ def get_capabilities():
 class RigError (Exception):
 
   def __init__(self, rig=None, call='?', tries=0):
-    self.message = Hamlib.rigerror(rig.error_status) if rig is not None else "Model not found"
+    self.status = rig.error_status
+    self.message = Hamlib.rigerror(self.status) if rig is not None else "Model not found"
     self.call = call
     self.tries = tries
 
   def __str__(self):
     return "Hamlib rig error in %s: %s%s" % (self.call, self.message, " (tried %s times)" % self.tries if self.tries > 1 else "")
+
+
+class TimeoutError (RigError):
+  pass
 
 
 class Monitor:
@@ -104,6 +109,8 @@ class Monitor:
         return v
       time.sleep(self.interval * 2 ** tries / 1000.0)
       tries += 1
+    if self.error_status == Hamlib.RIG_ETIMEOUT:
+      raise TimeoutError(self.rig, fn.__name__, tries)
     raise RigError(self.rig, fn.__name__, tries)
 
   # return strength, or None if the freq can't be set
@@ -129,14 +136,6 @@ class Monitor:
       for freq in frange(*range):
         yield freq, self._get_strength(freq)
 
-  def power(self, value=None):
-    """ With no argument (or value None), return the power state of the rig.
-        Otherwise, set the power state of the rig.
-    """
-    if value is None:
-      return self.rig.get_powerstat()
-    else:
-      self.rig_set_powerstat(value)
 
 if __name__ == "__main__":
   import sys
