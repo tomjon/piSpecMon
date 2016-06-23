@@ -4,7 +4,7 @@ import json
 import logging, logging.handlers
 import sys
 import os, os.path
-
+from time import sleep
 
 """ Initialise logging and define shared functions.
 """
@@ -59,6 +59,7 @@ def wait_for_elasticsearch():
       else:
         status = r.json()['status']
         if status == 'green':
+          log.info("Elasticsearch up and running")
           return
         log.warn("Elasticsearch cluster health status: %s" % status)
     except requests.exceptions.ConnectionError:
