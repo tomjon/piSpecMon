@@ -48,3 +48,19 @@ def get_config(config_id):
   if len(hits) == 0:
     return 'No such config id', 404
   return json.loads(hits[0]['fields']['json'][0])
+
+
+def wait_for_elasticsearch():
+  while True:
+    try:
+      r = requests.get('%s/_cluster/health/spectrum' % ELASTICSEARCH)
+      if r.status_code != 200:
+        log.warn("Elasticsearch status %s" % r.status_code)
+      else:
+        status = r.json()['status']
+        if status == 'green':
+          return
+        log.warn("Elasticsearch cluster health status: %s" % status)
+    except requests.exceptions.ConnectionError:
+      log.warn("No elasticsearch... waiting")
+    sleep(2)

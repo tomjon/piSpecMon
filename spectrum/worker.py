@@ -260,6 +260,8 @@ if __name__ == "__main__":
   with open(init.pid_file, 'w') as f:
     f.write(str(os.getpid()))
 
+  wait_for_elasticsearch()
+
   worker = init.worker()
   worker.set_signal('SIGTERM', exit=True, tidy=False)
   worker.set_signal('SIGINT', exit=True)
