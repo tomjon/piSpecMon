@@ -26,7 +26,6 @@ import traceback
     The worker runs until stopped by another signal, and the .monitor file is removed.
 """
 
-
 def convert(d):
   """ Auto-convert empty strings into None, and number strings into numbers.
   """
@@ -54,12 +53,11 @@ def now():
 class WorkerInit:
 
   # the _file parameters here would be prefices if more than one worker needs to run concurrently
-  def __init__(self, elasticsearch=ELASTICSEARCH, pid_file=PID_FILE, config_file=WORKER_CONFIG, monitor_file=WORKER_MONITOR, signum=signal.SIGUSR1):
+  def __init__(self, elasticsearch=ELASTICSEARCH, pid_file=PID_FILE, config_file=WORKER_CONFIG, monitor_file=WORKER_MONITOR):
     self.elasticsearch = elasticsearch
     self.pid_file = local_path(pid_file)
     self.config_file = local_path(config_file)
     self.monitor_file = local_path(monitor_file)
-    self.signum = signum
 
   def worker(self):
     return Worker(self)
@@ -88,7 +86,14 @@ class Worker:
 
   def __init__(self, init):
     self.init = init
-    self._stop = False
+    self._exit = False
+    self._tidy = True
+    self.set_signal('SIGUSR1')
+
+  def set_signal(self, signame, exit=False, tidy=True):
+    """ Define signal handler for given signal in order to exit cleanly.
+    """
+    signal.signal(getattr(signal, signame), lambda *_: self.stop(signame, exit, tidy))
 
   def run(self):
     """ Uses files .config and .monitor to communicate state. (The .pid file is managed elsewhere.)
@@ -100,8 +105,6 @@ class Worker:
 
         If stopped normally, removes .monitor (otherwise .monitor remains)
     """
-    self._stop = False
-
     if os.path.isfile(self.init.monitor_file):
       with open(self.init.monitor_file) as f:
         config_id = f.read()
@@ -148,6 +151,7 @@ class Worker:
 
       timestamp = None
       with Monitor(**rig) as monitor:
+        log.info('Scanning started')
         n = 0
         while not self._stop:
           log.debug("Scan: {0}".format(scan))
@@ -175,16 +179,21 @@ class Worker:
       params = { 'refresh': 'true' }
       requests.post(self.init.elasticsearch + 'spectrum/error/', params=params, data=json.dumps(data))
     finally:
-      os.remove(self.init.monitor_file)
       log.info('Scanning stopped')
 
-  def stop(self, *args):
+  def stop(self, signame, exit, tidy):
     self._stop = True
+    self._exit = exit
+    self._tidy = tidy
 
   def start(self):
-    signal.signal(self.init.signum, self.stop)
     while True:
+      self._stop = False
       self.run()
+      if self._tidy and os.path.isfile(self.init.monitor_file):
+        os.remove(self.init.monitor_file)
+      if self._exit:
+        break
       signal.pause()
 
 
@@ -234,9 +243,10 @@ class ProcessError:
 
 
 if __name__ == "__main__":
+  """ PID file is a hint and not definitive of whether we will start a new process. We only abort
+      if there is a .pid file and the indicated process exists (and we have permission to signal it).
+  """
   import Hamlib, sys
-
-  signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
 
   init = WorkerInit()
   try:
@@ -247,19 +257,21 @@ if __name__ == "__main__":
   except ProcessError:
     pass
 
-  try:
-    with open(init.pid_file, 'w') as f:
-      f.write(str(os.getpid()))
-    log.info("Starting worker process")
+  with open(init.pid_file, 'w') as f:
+    f.write(str(os.getpid()))
 
+  worker = init.worker()
+  worker.set_signal('SIGTERM', exit=True, tidy=False)
+  worker.set_signal('SIGINT', exit=True)
+  worker.set_signal('SIGHUP', exit=True)
+
+  try:
     with open(common.log_filename, 'a') as f:
       Hamlib.rig_set_debug_file(f)
       Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
-      init.worker().start()
-  except KeyboardInterrupt:
-    os.remove(PID_FILE)
-  except SystemExit as e:
-    if e.code == 0:
-      os.remove(PID_FILE)
-    else:
-      raise
+
+      log.info("Starting worker process")
+      worker.start()
+  finally:
+    log.info("Stopping worker process")
+    os.remove(init.pid_file)
