@@ -229,11 +229,11 @@ class WorkerClient:
     if self.read_pid() is not None:
       with open(self.init.config_file, 'w') as f:
         f.write(config)
-      os.kill(self.worker_pid, self.init.signum)
+      os.kill(self.worker_pid, signal.SIGUSR1)
 
   def stop(self):
     if self.read_pid() is not None:
-      os.kill(self.worker_pid, self.init.signum)
+      os.kill(self.worker_pid, signal.SIGUSR1)
 
 
 class ProcessError:

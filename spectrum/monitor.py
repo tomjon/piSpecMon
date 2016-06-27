@@ -109,7 +109,7 @@ class Monitor:
         return v
       time.sleep(self.interval * 2 ** tries / 1000.0)
       tries += 1
-    if self.error_status == Hamlib.RIG_ETIMEOUT:
+    if self.rig.error_status == Hamlib.RIG_ETIMEOUT:
       raise TimeoutError(self.rig, fn.__name__, tries)
     raise RigError(self.rig, fn.__name__, tries)
 
