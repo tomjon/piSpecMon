@@ -136,6 +136,9 @@ class Monitor:
       for freq in frange(*range):
         yield freq, self._get_strength(freq)
 
+  def power_off(self):
+    self.rig.set_powerstat(Hamlib.RIG_POWER_OFF)
+
 
 if __name__ == "__main__":
   import sys

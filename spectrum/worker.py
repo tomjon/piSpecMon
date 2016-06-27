@@ -89,12 +89,14 @@ class Worker:
     self.init = init
     self._exit = False
     self._tidy = True
+    self._power_off = False
     self.set_signal('SIGUSR1')
+    self.set_signal('SIGUSR2', power_off=True)
 
-  def set_signal(self, signame, exit=False, tidy=True):
+  def set_signal(self, signame, exit=False, tidy=True, power_off=False):
     """ Define signal handler for given signal in order to exit cleanly.
     """
-    signal.signal(getattr(signal, signame), lambda *_: self.stop(signame, exit, tidy))
+    signal.signal(getattr(signal, signame), lambda *_: self.stop(signame, exit, tidy, power_off))
 
   def _init_config(self):
     if os.path.isfile(self.init.monitor_file):
@@ -190,6 +192,9 @@ class Worker:
         log.info('Scanning started')
         try:
           self._scan(config_id, rig, period, scan)
+          if self._power_off:
+            monitor.power_off()
+            self._stop = False
           timeout_count = 0
         except TimeoutError as e:
           timeout_count += 1
@@ -203,10 +208,11 @@ class Worker:
       params = { 'refresh': 'true' }
       requests.post(self.init.elasticsearch + 'spectrum/error/', params=params, data=json.dumps(data))
 
-  def stop(self, signame, exit, tidy):
+  def stop(self, signame, exit, tidy, power_off):
     self._stop = True
     self._exit = exit
     self._tidy = tidy
+    self._power_off = power_off
 
   def start(self):
     while True:
