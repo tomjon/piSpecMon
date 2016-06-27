@@ -60,7 +60,7 @@ class RigError (Exception):
     self.tries = tries
 
   def __str__(self):
-    return "Hamlib rig error in %s: %s%s" % (self.call, self.message, " (tried %s times)" % self.tries if self.tries > 1 else "")
+    return "%s (%s) in %s: %s%s" % (self.__class__.__name__, self.status, self.call, self.message, " (tried %s times)" % self.tries if self.tries > 1 else "")
 
 
 class TimeoutError (RigError):
@@ -109,7 +109,7 @@ class Monitor:
         return v
       time.sleep(self.interval * 2 ** tries / 1000.0)
       tries += 1
-    if self.rig.error_status == Hamlib.RIG_ETIMEOUT:
+    if -self.rig.error_status == Hamlib.RIG_ETIMEOUT:
       raise TimeoutError(self.rig, fn.__name__, tries)
     raise RigError(self.rig, fn.__name__, tries)
 

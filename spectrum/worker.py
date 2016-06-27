@@ -3,7 +3,7 @@ from common import *
 
 import requests
 import json
-from monitor import Monitor, get_capabilities, frange
+from monitor import Monitor, TimeoutError, get_capabilities, frange
 from power import power_on
 from time import sleep, time
 import os, os.path
@@ -90,6 +90,7 @@ class Worker:
     self._exit = False
     self._tidy = True
     self._power_off = False
+    self._timeout_count = 0
     self.set_signal('SIGUSR1')
     self.set_signal('SIGUSR2', power_off=True)
 
@@ -148,6 +149,7 @@ class Worker:
 
   def _scan(self, config_id, rig, period, scan):
     with Monitor(**rig) as monitor:
+      self._timeout_count = 0
       n = 0
       while not self._stop:
         log.debug("Scan: {0}".format(scan))
@@ -169,6 +171,9 @@ class Worker:
             return
 
           sleep(max(period - sweep['totaltime'], 0) / 1000.0)
+      if self._power_off:
+        monitor.power_off()
+        self._stop = False
 
   def run(self):
     """ Uses files .config and .monitor to communicate state. (The .pid file is managed elsewhere.)
@@ -187,21 +192,22 @@ class Worker:
     try:
       rig, period, radio_on, scan = self._read_config(config)
 
-      timeout_count = 0
-      while timeout_count <= radio_on and not self._stop:
-        log.info('Scanning started')
+      while True:
         try:
-          self._scan(config_id, rig, period, scan)
-          if self._power_off:
-            monitor.power_off()
-            self._stop = False
-          timeout_count = 0
+          try:
+            log.info('Scanning started')
+            self._scan(config_id, rig, period, scan)
+          finally:
+            log.info('Scanning stopped')
+          break
         except TimeoutError as e:
-          timeout_count += 1
-          log.error(e)
-          power_on()
-        finally:
-          log.info('Scanning stopped')
+          if self._timeout_count < radio_on:
+            self._timeout_count += 1
+            log.error(e)
+            log.info("Attempting to power on")
+            power_on()
+          else:
+            raise e
     except Exception as e:
       log.error(e)
       data = { 'timestamp': now(), 'config_id': config_id, 'json': json.dumps(str(e)) }
