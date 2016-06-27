@@ -205,6 +205,7 @@ class Worker:
             log.error(e)
             log.info("Attempting to power on")
             power_on()
+            sleep(RADIO_ON_SLEEP_SECS) # give the rig chance to power up
           else:
             raise e
     except Exception as e:
