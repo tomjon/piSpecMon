@@ -4,7 +4,7 @@ from common import *
 import requests
 import json
 from monitor import Monitor, get_capabilities, frange
-from power import radio_on
+from power import power_on
 from time import sleep, time
 import os, os.path
 import signal
@@ -194,7 +194,7 @@ class Worker:
         except TimeoutError as e:
           timeout_count += 1
           log.error(e)
-          radio_on()
+          power_on()
         finally:
           log.info('Scanning stopped')
     except Exception as e:
