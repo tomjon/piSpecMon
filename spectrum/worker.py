@@ -4,6 +4,7 @@ from common import *
 import requests
 import json
 from monitor import Monitor, get_capabilities, frange
+from power import radio_on
 from time import sleep, time
 import os, os.path
 import signal
@@ -95,23 +96,14 @@ class Worker:
     """
     signal.signal(getattr(signal, signame), lambda *_: self.stop(signame, exit, tidy))
 
-  def run(self):
-    """ Uses files .config and .monitor to communicate state. (The .pid file is managed elsewhere.)
-        
-        If .monitor exists, it contains the ElasticSearch config_id, look up config in ES
-        If not, read config JSON from .config and insert into ES - remove .config and create .monitor
-        
-        Whilst running, the .monitor file is touched to indicate the last sweep time
-
-        If stopped normally, removes .monitor (otherwise .monitor remains)
-    """
+  def _init_config(self):
     if os.path.isfile(self.init.monitor_file):
       with open(self.init.monitor_file) as f:
         config_id = f.read()
       config = common.get_config(config_id)
     else:
       if not os.path.isfile(self.init.config_file):
-        return
+        return None, None
       with open(self.init.config_file) as f:
         config = json.loads(f.read())
 
@@ -126,60 +118,90 @@ class Worker:
       with open(self.init.monitor_file, 'w') as f:
         f.write(config_id)
 
-    try:
-      convert(config['rig'])
-      convert(config['monitor'])
-      convert(config['scan'])
+    return config_id, config
 
-      rig = config['rig']
-      period = config['monitor'].get('period', 0)
+  def _read_config(self, config):
+    convert(config['rig'])
+    convert(config['monitor'])
+    convert(config['scan'])
 
-      # scan settings
-      scan = config['scan']
-      for x in config['freqs']:
-        # x is either 'range' or 'freqs'
-        if x == 'range':
-          exp = int(config['freqs']['exp'])
-          scan[x] = [ 10 ** exp * float(f) for f in config['freqs'][x] ]
-        elif x == 'freqs':
-          scan[x] = [ 10 ** int(f['exp']) * float(f['f']) for f in config['freqs'][x] ]
-        else:
-          raise ValueError("Bad key in config.freqs")
-        break
+    rig = config['rig']
+    period = config['monitor'].get('period', 0)
+    radio_on = config['monitor'].get('radio_on', 0)
+    scan = config['scan']
+    for x in config['freqs']:
+      # x is either 'range' or 'freqs'
+      if x == 'range':
+        exp = int(config['freqs']['exp'])
+        scan[x] = [ 10 ** exp * float(f) for f in config['freqs'][x] ]
+      elif x == 'freqs':
+        scan[x] = [ 10 ** int(f['exp']) * float(f['f']) for f in config['freqs'][x] ]
       else:
-        raise ValueError("No frequencies in config")
+        raise ValueError("Bad key in config.freqs")
+      break
+    else:
+      raise ValueError("No frequencies in config")
 
-      timestamp = None
-      with Monitor(**rig) as monitor:
+    return rig, period, radio_on, scan
+
+  def _scan(self, config_id, rig, period, scan):
+    with Monitor(**rig) as monitor:
+      n = 0
+      while not self._stop:
+        log.debug("Scan: {0}".format(scan))
+        t0 = now()
+        sweep = { 'config_id': config_id, 'n': n, 'timestamp': t0, 'level': [] }
+        n += 1
+
+        os.utime(self.init.monitor_file, None)
+        for x in monitor.scan(**scan):
+          if self._stop:
+            break
+          sweep['level'].append(x[1] if x[1] is not None else -128)
+        else:
+          sweep['totaltime'] = now() - t0
+
+          r = requests.post(self.init.elasticsearch + '/spectrum/sweep/', params={ 'refresh': 'true' }, data=json.dumps(sweep))
+          if r.status_code != 201:
+            log.error("Could not post to Elasticsearch ({0})".format(r.status_code))
+            return
+
+          sleep(max(period - sweep['totaltime'], 0) / 1000.0)
+
+  def run(self):
+    """ Uses files .config and .monitor to communicate state. (The .pid file is managed elsewhere.)
+        
+        If .monitor exists, it contains the ElasticSearch config_id, look up config in ES
+        If not, read config JSON from .config and insert into ES - remove .config and create .monitor
+        
+        Whilst running, the .monitor file is touched to indicate the last sweep time
+
+        If stopped normally, removes .monitor (otherwise .monitor remains)
+    """
+    config_id, config = self._init_config()
+    if config_id is None:
+      return
+
+    try:
+      rig, period, radio_on, scan = self._read_config(config)
+
+      timeout_count = 0
+      while timeout_count <= radio_on and not self._stop:
         log.info('Scanning started')
-        n = 0
-        while not self._stop:
-          log.debug("Scan: {0}".format(scan))
-          t0 = now()
-          sweep = { 'config_id': config_id, 'n': n, 'timestamp': t0, 'level': [] }
-          n += 1
-
-          os.utime(self.init.monitor_file, None)
-          for x in monitor.scan(**scan):
-            if self._stop:
-              break
-            sweep['level'].append(x[1] if x[1] is not None else -128)
-          else:
-            sweep['totaltime'] = now() - t0
-
-            r = requests.post(self.init.elasticsearch + '/spectrum/sweep/', params={ 'refresh': 'true' }, data=json.dumps(sweep))
-            if r.status_code != 201:
-              log.error("Could not post to Elasticsearch ({0})".format(r.status_code))
-              return
-
-            sleep(max(period - sweep['totaltime'], 0) / 1000.0)
+        try:
+          self._scan(config_id, rig, period, scan)
+          timeout_count = 0
+        except TimeoutError as e:
+          timeout_count += 1
+          log.error(e)
+          radio_on()
+        finally:
+          log.info('Scanning stopped')
     except Exception as e:
       log.error(e)
       data = { 'timestamp': now(), 'config_id': config_id, 'json': json.dumps(str(e)) }
       params = { 'refresh': 'true' }
       requests.post(self.init.elasticsearch + 'spectrum/error/', params=params, data=json.dumps(data))
-    finally:
-      log.info('Scanning stopped')
 
   def stop(self, signame, exit, tidy):
     self._stop = True
