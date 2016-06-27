@@ -192,14 +192,13 @@ class Worker:
     try:
       rig, period, radio_on, scan = self._read_config(config)
 
-      while True:
+      while not self._stop:
         try:
           try:
             log.info('Scanning started')
             self._scan(config_id, rig, period, scan)
           finally:
             log.info('Scanning stopped')
-          break
         except TimeoutError as e:
           if self._timeout_count < radio_on:
             self._timeout_count += 1
