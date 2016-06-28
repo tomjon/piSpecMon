@@ -296,6 +296,16 @@ define(['lib/d3/d3.v3', 'util', 'stats', 'level', 'freq', 'waterfall', 'config',
       setTimeout(widgets.charts.updateFreq, 1);
     });
 
+    // set defaults in sweep configuration
+    d3.json('/defaults', function (error, conf) {
+      if (error) {
+        LOG(error);
+        alert(error);
+      } else {
+        widgets["config"].set(conf);
+      }
+    });
+
     setInterval(checkRunning, 1000);
 
     d3.selectAll("#charts, #progress, #count, #controls").style("visibility", "hidden");

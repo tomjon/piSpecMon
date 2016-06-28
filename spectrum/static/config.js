@@ -46,6 +46,34 @@ define(['lib/d3/d3.v3'], function (d3) {
     this.remove();
   }
 
+  function renderUI(conf) {
+    /* render config in the UI */
+    updateUI(conf.monitor);
+    updateUI(conf.scan);
+
+    if (conf.freqs) {
+      if (conf.freqs.range) {
+        d3.select("#rangeSet").style("display", "initial");
+        d3.select("#discreteSet").style("display", "none");
+        d3.select("#range").property("checked", true);
+        freqOutput(conf.freqs.range[0], d3.select("#f0"));
+        freqOutput(conf.freqs.range[1], d3.select("#f1"));
+        freqOutput(conf.freqs.range[2], d3.select("#df"));
+        d3.select("#rangeSet select").property("value", conf.freqs.exp);
+      } else if (conf.freqs.freqs) {
+        d3.select("#rangeSet").style("display", "none");
+        d3.select("#discreteSet").style("display", "initial");
+        d3.select("#discrete").property("checked", true);
+        d3.selectAll("#discreteSet tr").remove();
+        for (var idx in conf.freqs.freqs) {
+          freqOutput(conf.freqs.freqs[idx], addRow());
+        }
+      }
+    }
+
+    d3.select("#" + conf.mode).property("checked", true);
+  }
+
   return function () {
     // wire up range/discrete radio buttons and divs
     d3.select("#range").on("change", function () {
@@ -92,37 +120,16 @@ define(['lib/d3/d3.v3'], function (d3) {
         return conf;
       },
 
+      set: function (conf) {
+        renderUI(conf);
+        dispatch.config(conf);
+      },
+
       q: function () { return '/spectrum/config/' + values.freqs_set.config_id + '?fields=json' },
 
       update: function (resp) {
         var conf = JSON.parse(resp.fields.json[0]);
-
-        /* render config in the UI */
-        updateUI(conf.monitor);
-        updateUI(conf.scan);
-
-        if (conf.freqs) {
-          if (conf.freqs.range) {
-            d3.select("#rangeSet").style("display", "initial");
-            d3.select("#discreteSet").style("display", "none");
-            d3.select("#range").property("checked", true);
-            freqOutput(conf.freqs.range[0], d3.select("#f0"));
-            freqOutput(conf.freqs.range[1], d3.select("#f1"));
-            freqOutput(conf.freqs.range[2], d3.select("#df"));
-            d3.select("#rangeSet select").property("value", conf.freqs.exp);
-          } else if (conf.freqs.freqs) {
-            d3.select("#rangeSet").style("display", "none");
-            d3.select("#discreteSet").style("display", "initial");
-            d3.select("#discrete").property("checked", true);
-            d3.selectAll("#discreteSet tr").remove();
-            for (var idx in conf.freqs.freqs) {
-              freqOutput(conf.freqs.freqs[idx], addRow());
-            }
-          }
-        }
-
-        d3.select("#" + conf.mode).property("checked", true);
-
+        renderUI(conf);
         dispatch.config(conf);
       }
     };

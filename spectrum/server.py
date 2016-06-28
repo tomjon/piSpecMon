@@ -74,12 +74,15 @@ def requires_auth(f):
 with open(local_path('create.json')) as f:
   requests.put('{0}spectrum'.format(ELASTICSEARCH), data=f.read())
 
-
 application = SecuredStaticFlask(__name__)
 application.caps = get_capabilities()
 application.rig = get_settings('rig', { 'model': 1 }) #FIXME is this a Hamlib constant? (dummy rig)
 application.users = load_users()
 application.worker = WorkerClient(WorkerInit())
+
+# get default default scan configuration from defaults.json
+with open(local_path('defaults.json')) as f:
+  application.defaults = get_settings('defaults', json.loads(f.read()))
 
 # Also add log handlers to Flask's logger for cases where Werkzeug isn't used as the underlying WSGI server
 application.logger.addHandler(rfh)
@@ -106,6 +109,7 @@ def caps():
   return json.dumps(application.caps)
 
 # settings API
+@application.route('/defaults', methods=['GET', 'PUT'])
 @application.route('/rig', methods=['GET', 'PUT'])
 @requires_auth
 def settings():
