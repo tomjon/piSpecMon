@@ -25,7 +25,7 @@ class SecuredStaticFlask (Flask):
 def set_settings(id, value):
   data = { 'timestamp': int(time()), 'json': json.dumps(value) }
   r = requests.put(ELASTICSEARCH + 'spectrum/settings/' + id, params={ 'refresh': 'true' }, data=json.dumps(data))
-  if r.status_code != 200:
+  if r.status_code != 201:
     raise Exception("Can not apply settings: %s (%d)" % (id, r.status_code))
   return value
 
@@ -76,7 +76,6 @@ with open(local_path('create.json')) as f:
 
 
 application = SecuredStaticFlask(__name__)
-application.settings = get_settings('settings', { 'batch': True })
 application.caps = get_capabilities()
 application.rig = get_settings('rig', { 'model': 1 }) #FIXME is this a Hamlib constant? (dummy rig)
 application.users = load_users()
@@ -86,7 +85,6 @@ application.worker = WorkerClient(WorkerInit())
 application.logger.addHandler(rfh)
 application.logger.addHandler(ch)
 
-log.info("Global settings: {0}".format(application.settings))
 log.info("{0} rig models".format(len(application.caps['models'])))
 
 
