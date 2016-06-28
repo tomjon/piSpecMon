@@ -106,7 +106,6 @@ def caps():
   return json.dumps(application.caps)
 
 # settings API
-@application.route('/settings', methods=['GET', 'PUT'])
 @application.route('/rig', methods=['GET', 'PUT'])
 @requires_auth
 def settings():
