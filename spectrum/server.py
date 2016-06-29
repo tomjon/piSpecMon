@@ -1,5 +1,6 @@
 from config import *
 from common import *
+from users import *
 
 from flask import Flask, redirect, url_for, request, send_from_directory, Response, abort
 from functools import wraps
@@ -41,32 +42,13 @@ def get_settings(id, new={}):
   fields = r.json()['fields']
   return json.loads(fields['json'][0])
 
-
-def load_users():
-  """ For now, usernames / passwords are stored plain-text
-      in a file, one pair per line separated by a tab.
-  """
-  with open(local_path(USERS_FILE)) as f:
-    return dict(line[:-1].split('\t') for line in f)
-
-def check_auth(username, password):
-  """ This function is called to check if a username /
-      password combination is valid.
-  """
-  return username in application.users and application.users[username] == password
-
-def authenticate():
-  """ Sends a 401 response that enables basic authentication.
-  """
-  message = 'Could not verify your access level for that URL'
-  return Response(message, 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
-
 def requires_auth(f):
   @wraps(f)
   def decorated(*args, **kwargs):
     auth = request.authorization
-    if not auth or not check_auth(auth.username, auth.password):
-      return authenticate()
+    if not auth or not check_user(auth.username, auth.password):
+      message = 'Could not verify your access level for that URL'
+      return Response(message, 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
     return f(*args, **kwargs)
   return decorated
 
@@ -77,7 +59,6 @@ with open(local_path('create.json')) as f:
 application = SecuredStaticFlask(__name__)
 application.caps = get_capabilities()
 application.rig = get_settings('rig', { 'model': 1 }) #FIXME is this a Hamlib constant? (dummy rig)
-application.users = load_users()
 application.worker = WorkerClient(WorkerInit())
 
 # get default default scan configuration from defaults.json

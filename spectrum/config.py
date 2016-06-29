@@ -6,7 +6,9 @@ PID_FILE = ".pid"
 
 ELASTICSEARCH = 'http://localhost:9200/'
 EXPORT_DIRECTORY = '/tmp'
+
 USERS_FILE = 'users.passwords'
+ROUNDS = 10 ** 5
 
 WORKER_CONFIG = '.config'
 WORKER_MONITOR = '.monitor'
