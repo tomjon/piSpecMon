@@ -140,6 +140,42 @@ def search(path):
   return r.text, r.status_code
 
 
+@application.route('/users')
+@requires_auth
+def users():
+  def _namise_data(name, data):
+    data['name'] = name
+    return data
+  users = [_namise_data(name, data) for name, data in iter_users()]
+  return json.dumps(users)
+
+@application.route('/user/<name>', methods=['GET', 'PUT', 'DELETE'])
+@requires_auth
+def user(name):
+  try:
+    if request.method == 'GET':
+      data = get_user(name)
+      if data is None:
+        return "No such user '{0}'".format(name), 404
+      data['name'] = name
+      return json.dumps(data)
+    if request.method == 'PUT':
+      data = request.get_json()
+      if data is None:
+        return "No user data", 400
+      if set_user(name, data):
+        return "OK", 200
+      password = request.args.get('password', None)
+      if password is None:
+        return "No password parameter", 400
+      create_user(name, password, data)
+      return "Created", 201
+    if request.method == 'DELETE':
+      return "OK", 200 if delete_user(name) else "No such user '{0}'".format(name), 404
+  except UsersError as e:
+    return e.message, 400
+
+
 def _iter_export(config, hits):
   yield '#TimeDate,'
   if 'freqs' in config['freqs']:
