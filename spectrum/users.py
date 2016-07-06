@@ -156,14 +156,14 @@ def set_user(username, data):
       exists. If data contains the key 'name', it is used to reset the
       stored username.
   """
-  _rewrite_users(username, lambda user: user.set_data(data))
+  return _rewrite_users(username, lambda user: user.set_data(data))
 
 
 def delete_user(username):
   """ Delete the entry for the given user name. Returns whether that name
       existed.
   """
-  _rewrite_users(username)
+  return _rewrite_users(username)
 
 
 def set_password(username, old_password, new_password):
@@ -174,7 +174,7 @@ def set_password(username, old_password, new_password):
       is done).
   """
   check_user(username, old_password)
-  _rewrite_users(username, lambda user: _new_user(username, new_password, user.data))
+  return _rewrite_users(username, lambda user: _new_user(username, new_password, user.data))
 
 
 if __name__ == "__main__":

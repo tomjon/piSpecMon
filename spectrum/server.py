@@ -147,7 +147,7 @@ def users():
     data['name'] = name
     return data
   users = [_namise_data(name, data) for name, data in iter_users()]
-  return json.dumps(users)
+  return json.dumps({ 'data': users })
 
 @application.route('/user/<name>', methods=['GET', 'PUT', 'DELETE'])
 @requires_auth
@@ -158,7 +158,7 @@ def user(name):
       if data is None:
         return "No such user '{0}'".format(name), 404
       data['name'] = name
-      return json.dumps(data)
+      return json.dumps({ 'data': data })
     if request.method == 'PUT':
       data = request.get_json()
       if data is None:
@@ -171,7 +171,10 @@ def user(name):
       create_user(name, password, data)
       return "Created", 201
     if request.method == 'DELETE':
-      return "OK", 200 if delete_user(name) else "No such user '{0}'".format(name), 404
+      if delete_user(name):
+        return "OK", 200
+      else:
+        return "No such user '{0}'".format(name), 404
   except UsersError as e:
     return e.message, 400
 
