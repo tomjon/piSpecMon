@@ -49,6 +49,11 @@ class _UserEntry:
   def check_name(self, name):
     return self.name == name
 
+  def set_name(self, name):
+    if name is not None:
+      self.name = name
+    return self
+
   def set_data(self, data):
     self.data = data
     return self
@@ -156,7 +161,11 @@ def set_user(username, data):
       exists. If data contains the key 'name', it is used to reset the
       stored username.
   """
-  return _rewrite_users(username, lambda user: user.set_data(data))
+  name = None
+  if 'name' in data:
+    name = data['name']
+    del data['name']
+  return _rewrite_users(username, lambda user: user.set_data(data).set_name(name))
 
 
 def delete_user(username):
