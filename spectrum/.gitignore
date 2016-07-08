@@ -2,3 +2,5 @@
 .*
 logs/
 users.passwords
+angular2/app/*.js
+angular2/app/*.map

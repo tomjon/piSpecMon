@@ -1,0 +1,37 @@
+<h1>{{title}}</h1>
+<h2 *ngIf="errorMessage">{{errorMessage}}</h2>
+<table>
+    <tr>
+        <th>Role</th><th>User name</th><th>Real name</th><th>Email address</th><th>Telephone number</th><th></th>
+    </tr>
+    <tr [class.disabled]="user._loading" *ngFor="let user of users">
+        <td>
+            <psm-input>
+                <select #input [disabled]="user._loading" [(ngModel)]="user.role" (ngModelChange)="onChange(user)">
+                    <option value="admin">Administrator</option>
+                    <option value="freq">Frequency setter</option>
+                    <option value="data">Data viewer</option>
+                </select>
+            </psm-input>
+        </td>
+        <td><psm-input [disabled]="user._loading"><input #input [(ngModel)]="user.name" (change)="onChange(user)"></psm-input></td>
+        <td><psm-input [disabled]="user._loading"><input #input [(ngModel)]="user.real" (change)="onChange(user)"></psm-input></td>
+        <td><psm-input [disabled]="user._loading"><input #input [(ngModel)]="user.email" (change)="onChange(user)"></psm-input></td>
+        <td><psm-input [disabled]="user._loading"><input #input [(ngModel)]="user.tel" (change)="onChange(user)"></psm-input></td>
+        <td><button [disabled]="user._loading" (click)="onDelete(user)">Delete</button></td>
+    </tr>
+    <tr [class.disabled]="newUser._loading">
+        <td>
+            <select [disabled]="newUser._loading" [(ngModel)]="newUser.role">
+                <option value="admin">Administrator</option>
+                <option value="freq">Frequency setter</option>
+                <option value="data">Data viewer</option>
+            </select>
+        </td>
+        <td><input [disabled]="newUser._loading" [(ngModel)]="newUser.name"></td>
+        <td><input [disabled]="newUser._loading" [(ngModel)]="newUser.real"></td>
+        <td><input [disabled]="newUser._loading" [(ngModel)]="newUser.email"></td>
+        <td><input [disabled]="newUser._loading" [(ngModel)]="newUser.tel"></td>
+        <td><button [disabled]="newUser._loading" (click)="onAdd(newUser)">Add</button></td>
+    </tr>
+</table>
