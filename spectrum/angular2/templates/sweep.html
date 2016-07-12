@@ -1,0 +1,6 @@
+<h2 *ngIf="errorMessage">{{errorMessage}}</h2>
+<select [(ngModel)]="config_id">
+  <option value="">Select...</option>
+  <option *ngFor="let set of sets" value="{{set.config_id}}">{{format(set)}}</option>
+</select>
+<button [disabled]="config_id === ''" (click)="onDelete()">Delete</button>

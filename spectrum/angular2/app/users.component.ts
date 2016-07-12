@@ -1,48 +1,48 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
+import { ErrorComponent } from './error.component';
 import { InputComponent } from './input.component';
 import { User } from './user';
-import { UserService } from './user.service';
+import { DataService } from './data.service';
 
 @Component({
   selector: 'psm-users',
   templateUrl: 'templates/users.html',
   directives: [ InputComponent ],
-  providers: [ UserService ],
+  providers: [ DataService ],
   styles: [ `.disabled { background: lightgrey }` ]
 })
 export class UsersComponent {
-  title = "Users Component";
   users: User[];
   newUser: User = new User();
-  errorMessage: string;
+  @Input('error') errorComponent: ErrorComponent;
 
-  constructor(private userService: UserService) { }
+  constructor(private dataService: DataService) { }
 
   ngOnInit() {
-    this.userService.getUsers()
+    this.dataService.getUsers()
                     .subscribe(
                       users => this.users = users,
-                      error => this.errorMessage = <any>error
+                      error => this.errorComponent.add(error)
                     );
   }
 
   onChange(user) {
     ++user._count;
     setTimeout(() => { if (--user._count == 0) {
-      this.userService.saveUser(user)
+      this.dataService.saveUser(user)
                       .subscribe(
                         () => delete user._name,
-                        error => this.errorMessage = <any>error
+                        error => this.errorComponent.add(error)
                       );
     }}, 5000);
   }
 
   onDelete(user) {
     user._loading = true;
-    this.userService.deleteUser(user)
+    this.dataService.deleteUser(user)
                     .subscribe(
                       () => { user._loading = false; this.users.splice(this.users.indexOf(user), 1) },
-                      error => { user._loading = false; this.errorMessage = <any>error }
+                      error => { user._loading = false; this.errorComponent.add(error) }
                     );
   }
 
@@ -52,10 +52,10 @@ export class UsersComponent {
       return;
     }
     user._loading = true;
-    this.userService.saveUser(user, password)
+    this.dataService.saveUser(user, password)
                     .subscribe(
                        () => { user._loading = false; this.users.push(user); this.newUser = new User() },
-                       error => { user._loading = false; this.errorMessage = <any>error }
+                       error => { user._loading = false; this.errorComponent.add(error) }
                     );
   }
 }

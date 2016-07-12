@@ -26,7 +26,7 @@ class SecuredStaticFlask (Flask):
 def set_settings(id, value):
   data = { 'timestamp': int(time()), 'json': json.dumps(value) }
   r = requests.put(ELASTICSEARCH + 'spectrum/settings/' + id, params={ 'refresh': 'true' }, data=json.dumps(data))
-  if r.status_code != 201:
+  if r.status_code != 200 and r.status_code != 201:
     raise Exception("Can not apply settings: %s (%d)" % (id, r.status_code))
   return value
 

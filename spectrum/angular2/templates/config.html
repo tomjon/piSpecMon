@@ -1,0 +1,43 @@
+<form (change)="onChange()" (ngSubmit)="onSubmit()">
+  <table>
+    <tr>
+      <td>Mode</td>
+      <td>
+        <select [(ngModel)]="config.scan.mode" name="mode">
+          <option *ngFor="let mode of modes" value="{{mode.mode}}">{{mode.name}}</option>
+        </select>
+      </td>
+    </tr>
+    <tr><td>Start frequency</td><td><input [(ngModel)]="config.freqs.range[0]" name="start"></td></tr>
+    <tr><td>End frequency</td><td><input [(ngModel)]="config.freqs.range[1]" name="end"></td></tr>
+    <tr><td>Step</td><td><input [(ngModel)]="config.freqs.range[2]" name="step"></td></tr>
+    <tr>
+      <td>Units</td>
+      <td>
+        <select [(ngModel)]="config.freqs.exp" name="units">
+          <option value="0">Hz</option>
+          <option value="3">kHz</option>
+          <option value="6">MHz</option>
+          <option value="9">GHz</option>
+        </select>
+      </td>
+    </tr>
+    <tr><td>Minimum interval (ms)</td><td><input [(ngModel)]="config.monitor.period" name="interval"></td></tr>
+    <tr>
+      <td>Radio-on attempts</td>
+      <td>
+        <select [(ngModel)]="config.monitor.radio_on" name="attempts">
+          <option value="0">Don&apos;t try</option>
+          <option value="1">Try once only</option>
+          <option value="2">Try up to twice</option>
+          <option value="3">Try up to three times</option>
+        </select>
+      </td>
+    </tr>
+  </table>
+  <div>
+    <button>Start</button>
+    <button [disabled]="true">Stop</button>
+  </div>
+  <div>{{worker_status}}</div>
+</form>

@@ -39,7 +39,8 @@ export class InputComponent {
 
   getValue() {
     if (this.input.nativeElement.nodeName == 'SELECT') {
-      return this.input.nativeElement.selectedOptions[0].label;
+      let options = this.input.nativeElement.selectedOptions;
+      return options.length > 0 ? options[0].label : undefined;
     }
     return this.input.nativeElement.value;
   }

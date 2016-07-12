@@ -1,1 +1,10 @@
-<psm-users></psm-users>
+<psm-error #error></psm-error>
+<h1>User Management</h1>
+<psm-users [error]="error"></psm-users>
+<h1>Elasticsearch Stats</h1>
+<psm-stats [error]="error"></psm-stats>
+<h1>Rig Configuration</h1>
+<psm-rig [error]="error"></psm-rig>
+<h1>Scan Configuration</h1>
+<psm-sweep #sweep [error]="error"></psm-sweep>
+<psm-config [error]="error" [config_id]="sweep.config_id"></psm-config>
