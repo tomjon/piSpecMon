@@ -8,13 +8,16 @@ var options = { y_axis: [-70, 70, 10], margin: { top: 50, left: 60, right: 50, b
 
 @Component({
   selector: 'psm-frequency',
-  template: `<select [(ngModel)]="sweep" (ngModelChange)="ngOnChanges()">
-               <option default value="latest">Latest sweep</option>
-               <option value="avg">Average</option>
-               <option value="max">Maximum</option>
-               <option value="min">Minimum</option>
-             </select>
-             <div #chart></div>`
+  template: `<div [hidden]="isHidden()">
+               <h2>Level / Frequency</h2>
+               <select [(ngModel)]="sweep" (ngModelChange)="ngOnChanges()">
+                 <option default value="latest">Latest sweep</option>
+                 <option value="avg">Average</option>
+                 <option value="max">Maximum</option>
+                 <option value="min">Minimum</option>
+               </select>
+               <div #chart></div>
+             </div>`
 })
 export class FrequencyComponent {
   sweep: string = 'latest';
@@ -59,15 +62,18 @@ export class FrequencyComponent {
                      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
   }
 
+  isHidden() {
+    return this.data == undefined || this.config.freqs.freqs || this.data[this.sweep].length == 0;
+  }
+
   ngOnChanges() {
     if (! this.svg) return; // ngOnChanges() happens before ngOnInit()!
 
     this.svg.selectAll("*").remove();
 
-    if (this.data == undefined) return;
+    if (this.isHidden()) return;
 
     let agg = this.data[this.sweep];
-    if (this.config.freqs.freqs || agg.length == 0) return;
 
     this.x.domain([this.config.freqs.range[0], this.config.freqs.range[1]]);
     if (options.y_axis) {

@@ -9,7 +9,10 @@ var options = { heat: [-70, 0, 70], margin: { top: 50, left: 80, right: 50, bott
 
 @Component({
   selector: 'psm-waterfall',
-  template: `<div #chart></div>`
+  template: `<div [hidden]="isHidden()">
+               <h2>Waterfall</h2>
+               <div #chart>
+             </div>`
 })
 export class WaterfallComponent {
   svg: any;
@@ -50,14 +53,16 @@ export class WaterfallComponent {
                      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
   }
 
+  isHidden() {
+    return this.data == undefined || this.config.freqs.freqs || this.data.length == 0;
+  }
+
   ngOnChanges() {
     if (! this.svg) return; // ngOnChanges() happens before ngOnInit()!
 
     this.svg.selectAll("*").remove();
 
-    if (this.data == undefined || this.config.freqs.freqs || this.data.length == 0) {
-      return;
-    }
+    if (this.isHidden()) return;
 
     let f0 = +this.config.freqs.range[0];
     let f1 = +this.config.freqs.range[1];

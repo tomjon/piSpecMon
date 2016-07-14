@@ -11,15 +11,18 @@ var maxN = 10; //FIXME repeat from charts component
 
 @Component({
   selector: 'psm-level',
-  template: `<label>Top</label>
-             <select #selectN [(ngModel)]="N" (ngModelChange)="ngOnChanges()"></select>
-             <label>by</label>
-             <select [(ngModel)]="top" (ngModelChange)="ngOnChanges()">
-               <option value="avg">Average</option>
-               <option value="max">Maximum</option>
-               <option value="min">Minimum</option>
-             </select>
-             <div #chart></div>`
+  template: `<div [hidden]="isHidden()">
+               <h2>Level / Time</h2>
+               <label>Top</label>
+               <select #selectN [(ngModel)]="N" (ngModelChange)="ngOnChanges()"></select>
+               <label>by</label>
+               <select [(ngModel)]="top" (ngModelChange)="ngOnChanges()">
+                 <option value="avg">Average</option>
+                 <option value="max">Maximum</option>
+                 <option value="min">Minimum</option>
+               </select>
+               <div #chart></div>
+             </div>`
 })
 export class LevelComponent {
   top: string = 'avg';
@@ -71,18 +74,20 @@ export class LevelComponent {
       .text(d => d);
   }
 
+  isHidden() {
+    return this.data.levels == undefined || this.data.levels.length == 0;
+  }
+
   ngOnChanges() {
     if (! this.svg) return; // ngOnChanges() happens before ngOnInit()!
 
     this.svg.selectAll("*").remove();
 
+    if (this.isHidden()) return;
+
     let data = this.data.levels;
-    let agg = this.data.agg;
+    let agg = this.data.agg[this.top];
     let freq_idxs = this.data.freq_idxs;
-
-    if (data == undefined || data.length == 0) return;
-
-    agg = agg[this.top]; //FIXME looks ugly, now. Have data be undefined or fully defined, one or the other.
 
     for (let i = 0; i < this.N; ++i) {
       if (freq_idxs[this.top][i] == undefined) {

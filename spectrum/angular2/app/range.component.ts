@@ -56,6 +56,7 @@ export class RangeComponent {
 
     var start = this.sweepComponent.getTimestamp();
     var end = data.hits.hits[0].fields.timestamp[0];
+    this.range = [start, end];
 
     let sliderEl = this.slider.nativeElement;
     var axis = d3.svg.axis().tickFormat(this.format).ticks(4);
