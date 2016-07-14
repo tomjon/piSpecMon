@@ -1,0 +1,8 @@
+<psm-range #range [sweep]="sweepComponent" [config_id]="config_id" (onRange)="show($event)"></psm-range>
+<p>Average sweep time {{avg_time}}</p>
+<h2>Level / Frequency</h2>
+<psm-frequency [data]="data.agg" [config]="config"></psm-frequency>
+<h2>Level / Time</h2>
+<psm-level [data]="data" [config]="config"></psm-level>
+<h2>Waterfall</h2>
+<psm-waterfall [data]="data.levels" [config]="config"></psm-waterfall>

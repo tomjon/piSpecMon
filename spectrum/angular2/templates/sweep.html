@@ -3,4 +3,6 @@
   <option value="">Select...</option>
   <option *ngFor="let set of sets" value="{{set.config_id}}">{{format(set)}}</option>
 </select>
-<button [disabled]="config_id === ''" (click)="onDelete()">Delete</button>
+<button [disabled]="waiting || config_id === ''" (click)="onDelete()">Delete</button>
+<button [disabled]="waiting || config_id === ''" (click)="onExport()">Export</button>
+<button [disabled]="waiting || config_id === ''" (click)="onDownload()">Download</button>

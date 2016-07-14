@@ -31,8 +31,8 @@ export class DataService {
     let body = JSON.stringify(rig);
     let headers = new Headers({ 'Content-Type': 'application/json' });
     let options = new RequestOptions({ headers: headers });
-
     return this.http.put(this.baseUrl + 'rig', body, options)
+                    .map(res => res.json())
                     .catch(this.handleError);
   }
 
@@ -67,8 +67,8 @@ export class DataService {
     if (password) {
        url += '?password=' + password;
     }
-
     return this.http.put(url, body, options)
+                    .map(res => res.json())
                     .catch(this.handleError);
   }
 
@@ -107,6 +107,48 @@ export class DataService {
                });
     }
     return sets;
+  }
+
+  getMonitor(): Observable<any> {
+    return this.http.get(this.baseUrl + 'monitor')
+                    .map(res => res.json())
+                    .catch(this.handleError);
+  }
+
+  startMonitor(config: any): Observable<void> {
+    let body = JSON.stringify(config);
+    let headers = new Headers({ 'Content-Type': 'application/json' });
+    let options = new RequestOptions({ headers: headers });
+    return this.http.put(this.baseUrl + 'monitor', body, options)
+                    .map(res => res.json())
+                    .catch(this.handleError);
+  }
+
+  stopMonitor(): Observable<void> {
+    return this.http.delete(this.baseUrl + 'monitor')
+                    .map(res => res.json())
+                    .catch(this.handleError);
+  }
+
+  exportData(config_id): Observable<string> {
+    return this.http.post(this.baseUrl + 'export/' + config_id, null, null)
+                    .map(res => res.json().path)
+                    .catch(this.handleError);
+  }
+
+  getRange(config_id): Observable<any> {
+    let url = 'spectrum/sweep/_search?size=1&q=config_id:' + config_id + '&fields=timestamp&sort=timestamp:desc';
+    return this.http.get(this.baseUrl + url)
+                    .map(res => res.json())
+                    .catch(this.handleError);
+  }
+
+  getData(config_id, range): Observable<any> {
+    let q = 'config_id:' + config_id + '+AND+timestamp:[' + range[0] + '+TO+' + range[1] + ']';
+    let url = 'spectrum/sweep/_search?size=1000000&q=' + q + '&fields=*&sort=timestamp';
+    return this.http.get(this.baseUrl + url)
+                    .map(res => res.json().hits.hits)
+                    .catch(this.handleError);
   }
 
   private handleError(error: any) {

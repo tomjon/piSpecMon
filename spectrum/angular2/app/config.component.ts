@@ -16,7 +16,6 @@ var DEFAULTS = {
 export class ConfigComponent {
   modes: any = [ ];
   config: any = DEFAULTS;
-  worker_status: string = "Worker OK"; //FIXME should detect worker status
 
   @Input('error') errorComponent: ErrorComponent;
   @Input('config_id') config_id : string;

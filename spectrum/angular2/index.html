@@ -4,14 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="styles.css">
-    <!-- FIXME: use local version -->
-    <script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="d3/slider/d3.slider.css" />
+    <script type="text/javascript" src="d3/d3.v3.min.js"></script>
+    <script type="text/javascript" src="d3/slider/d3.slider.js"></script>
     <!-- 1. Load libraries -->
     <!-- Polyfill(s) for older browsers -->
     <script src="node_modules/core-js/client/shim.min.js"></script>
     <script src="node_modules/zone.js/dist/zone.js"></script>
     <script src="node_modules/reflect-metadata/Reflect.js"></script>
     <script src="node_modules/systemjs/dist/system.src.js"></script>
+    <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=Intl.~locale.en"></script>
     <!-- 2. Configure SystemJS -->
     <script src="systemjs.config.js"></script>
     <script>
