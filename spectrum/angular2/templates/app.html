@@ -11,6 +11,5 @@
 <psm-config #config [error]="error" [config_id]="sweep.config_id"></psm-config>
 <h1>Worker</h1>
 <psm-worker [error]="error" [config]="config.config" [sweep]="sweep"></psm-worker>
-<h1>Data View</h1>
 //FIXME if 'config' was a class containing the config_id as well, wouldn't need to pass both in here
 <psm-charts [sweep]="sweep" [config]="config.config" [config_id]="sweep.config_id"></psm-charts>
