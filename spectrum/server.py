@@ -115,13 +115,13 @@ def monitor():
     config = json.loads(request.get_data())
     config['rig'] = application.rig
     application.worker.start(json.dumps(config))
-    return "OK"
+    return json.dumps({ 'status': 'OK' })
   if request.method == 'DELETE':
     # stop process
     if 'config_id' not in application.worker.status():
       return "Worker not running", 400
     application.worker.stop()
-    return "OK"
+    return json.dumps({ 'status': 'OK' })
   if request.method == 'GET':
     # monitor status
     return json.dumps(application.worker.status())
@@ -210,7 +210,7 @@ def export(config_id):
     with open(path, 'w') as f:
       for x in export:
         f.write(x)
-    return path
+    return json.dumps({ 'path': path })
 
 
 @application.route('/stats')
