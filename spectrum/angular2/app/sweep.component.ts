@@ -1,10 +1,8 @@
 import { Component, Input } from '@angular/core';
 import { DataService } from './data.service';
 import { ErrorService } from './error.service';
-
-declare var d3: any;
-
-var hz = { 0: 'Hz', 3: 'kHz', 6: 'MHz', 9: 'GHz' };
+import { HZ_LABELS } from './constants';
+import { dt_format } from './d3_import';
 
 @Component({
   selector: 'psm-sweep',
@@ -13,12 +11,9 @@ var hz = { 0: 'Hz', 3: 'kHz', 6: 'MHz', 9: 'GHz' };
 export class SweepComponent {
   config_id: string = ''; // currently selected sweep set
   sets: any[] = [ ];
-  date_format: Function;
   waiting: boolean = false; // true when waiting for server interaction to complete
 
-  constructor(private dataService: DataService, private errorService: ErrorService) {
-    this.date_format = d3.time.format('%d/%m/%Y %X'); //FIXME use a date pipe instead
-  }
+  constructor(private dataService: DataService, private errorService: ErrorService) { }
 
   ngOnInit() {
     this.reload(false);
@@ -36,8 +31,9 @@ export class SweepComponent {
     this.waiting = true;
     this.dataService.exportData(this.config_id)
                     .subscribe(
-                      path => { this.waiting = false; alert('CSV written to ' + path) },
-                      error => { this.waiting = false; this.errorService.logError(this, error) }
+                      path => alert('CSV written to ' + path),
+                      error => this.errorService.logError(this, error),
+                      () => this.waiting = false
                     );
   }
 
@@ -49,9 +45,10 @@ export class SweepComponent {
   onDelete() {
     this.waiting = true;
     this.dataService.deleteSweepSet(this.config_id)
-                    .subscribe( //FIXME is there any way to do { waiting = false } more elegantly? appears lots in different files
-                      () => { this.waiting = false; this.removeSet(this.config_id) },
-                      error => { this.waiting = false; this.errorService.logError(this, error) }
+                    .subscribe(
+                      () => this.removeSet(this.config_id),
+                      error => this.errorService.logError(this, error),
+                      () => this.waiting = false
                     );
   }
 
@@ -80,15 +77,15 @@ export class SweepComponent {
 
   private format(set): string {
     let time = new Date(set.timestamp);
-    let s = this.date_format(time) + '   ';
+    let s = dt_format(time) + '   ';
     let config = set.fields;
     if (config.freqs.range) {
-      let u = hz[config.freqs.exp];
+      let u = HZ_LABELS[config.freqs.exp];
       s += config.freqs.range[0] + u + ' - ' + config.freqs.range[1] + u;
     } else if (config.freqs.freqs) {
       let freqs = config.freqs.freqs;
       for (let idx = 0; idx < freqs.length; ++idx) {
-        s += freqs[idx].f + hz[freqs[idx].exp];
+        s += freqs[idx].f + HZ_LABELS[freqs[idx].exp];
         if (idx < config.freqs.freqs.length - 1) {
           s += ', ';
         }

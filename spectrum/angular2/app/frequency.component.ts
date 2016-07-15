@@ -1,9 +1,6 @@
 import { Component, Input, ViewChild } from '@angular/core';
-
-declare var d3: any;
-
-var hz = { 0: 'Hz', 3: 'kHz', 6: 'MHz', 9: 'GHz' }; //FIXME constant used elsewhere
-var options = { y_axis: [-70, 70, 10], margin: { top: 50, left: 60, right: 50, bottom: 40 }, width: 1200, height: 400 };
+import { FREQUENCY_CHART_OPTIONS, HZ_LABELS } from './constants';
+import { _d3 as d3 } from './d3_import';
 
 @Component({
   selector: 'psm-frequency',
@@ -30,7 +27,7 @@ export class FrequencyComponent {
   height: number;
   width: number;
 
-  @Input() config: any; //FIXME combine with the config_id, if you need it (or might happen anyway)
+  @Input() config: any;
   @Input() data: any;
 
   @ViewChild('chart') chart;
@@ -38,9 +35,9 @@ export class FrequencyComponent {
   constructor() { }
 
   ngOnInit() {
-    let margin = options.margin;
-    this.width = options.width - margin.left - margin.right,
-    this.height = options.height - margin.top - margin.bottom;
+    let margin = FREQUENCY_CHART_OPTIONS.margin;
+    this.width = FREQUENCY_CHART_OPTIONS.width - margin.left - margin.right,
+    this.height = FREQUENCY_CHART_OPTIONS.height - margin.top - margin.bottom;
 
     this.x = d3.scale.linear().range([0, this.width]);
     this.y = d3.scale.linear().range([this.height, 0]);
@@ -74,9 +71,9 @@ export class FrequencyComponent {
     let agg = this.data[this.sweep];
 
     this.x.domain([this.config.freqs.range[0], this.config.freqs.range[1]]);
-    if (options.y_axis) {
-      this.y.domain([options.y_axis[0], options.y_axis[1]]);
-      this.yAxis.tickValues(d3.range(options.y_axis[0], options.y_axis[1] + options.y_axis[2], options.y_axis[2]));
+    if (FREQUENCY_CHART_OPTIONS.y_axis) {
+      this.y.domain([FREQUENCY_CHART_OPTIONS.y_axis[0], FREQUENCY_CHART_OPTIONS.y_axis[1]]);
+      this.yAxis.tickValues(d3.range(FREQUENCY_CHART_OPTIONS.y_axis[0], FREQUENCY_CHART_OPTIONS.y_axis[1] + FREQUENCY_CHART_OPTIONS.y_axis[2], FREQUENCY_CHART_OPTIONS.y_axis[2]));
     } else {
       this.y.domain(d3.extent(agg, d => d.v));
     }
@@ -92,7 +89,7 @@ export class FrequencyComponent {
         .attr("x", 40)
         .attr("y", 6)
         .style("text-anchor", "end")
-        .text(hz[this.config.freqs.exp]);
+        .text(HZ_LABELS[this.config.freqs.exp]);
 
     this.svg.append("g")
         .attr("class", "y axis")

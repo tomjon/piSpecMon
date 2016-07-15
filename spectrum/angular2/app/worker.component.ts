@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { SweepComponent } from './sweep.component';
 import { DataService } from './data.service';
 import { ErrorService } from './error.service';
+import { TICK_INTERVAL } from './constants';
 
 @Component({
   selector: 'psm-worker',
@@ -19,8 +20,7 @@ export class WorkerComponent {
   constructor(private dataService: DataService, private errorService: ErrorService) { }
 
   ngOnInit() {
-    //FIXME is there some angular2 helper for this kind of thing? though, this seems simple enough
-    setInterval(this.monitor.bind(this), 1000); //FIXME constant
+    setInterval(this.monitor.bind(this), TICK_INTERVAL);
   }
 
   monitor() {
@@ -47,8 +47,9 @@ export class WorkerComponent {
     this.waiting = true;
     this.dataService.startMonitor(this.config)
                     .subscribe(
-                      () => { this.waiting = false; this.sweepComponent.reload(true) }, //FIXME can this be done in the UI - i.e. add a row to the select?
-                      error => { this.waiting = false; this.errorService.logError(this, error) }
+                      () => this.sweepComponent.reload(true),
+                      error => this.errorService.logError(this, error),
+                      () => this.waiting = false
                     );
   }
 
@@ -56,8 +57,9 @@ export class WorkerComponent {
     this.waiting = true;
     this.dataService.stopMonitor()
                     .subscribe(
-                      () => this.waiting = false,
-                      error => { this.waiting = false; this.errorService.logError(this, error) }
+                      () => { },
+                      error => this.errorService.logError(this, error),
+                      () => this.waiting = false
                     );
   }
 }

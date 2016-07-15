@@ -78,9 +78,9 @@ export class DataService {
   }
 
   getConfig(config_id: string): Observable<any> {
-    let url = this.baseUrl + 'spectrum/config/' + config_id + '?fields=json';
+    let url = this.baseUrl + 'spectrum/config/' + config_id + '?fields=*';
     return this.http.get(url)
-                    .map(res => JSON.parse(res.json().fields.json[0]))
+                    .map(res => { JSON.parse(res.json().fields.json[0]) })
                     .catch(this.handleError);
   }
 

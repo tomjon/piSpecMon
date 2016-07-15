@@ -2,11 +2,7 @@ import { Component, Input, Output, EventEmitter, ViewChild } from '@angular/core
 import { SweepComponent } from './sweep.component';
 import { DataService } from './data.service';
 import { ErrorService } from './error.service';
-
-declare var d3: any;
-declare var slider: any;
-
-var format = d3.time.format("%d/%m/%Y %X");
+import { _d3 as d3, dt_format, insertLineBreaks } from './d3_import';
 
 @Component({
   selector: 'psm-range',
@@ -15,7 +11,6 @@ var format = d3.time.format("%d/%m/%Y %X");
 export class RangeComponent {
   count: number;
   range: number[];
-  format: Function; //FIXME eh? this is never initialised, but seems to work?
 
   @Input() config_id: string;
   @Input('sweep') sweepComponent: SweepComponent; //FIXME feels odd, this is so we can call getTimestamp()
@@ -35,19 +30,6 @@ export class RangeComponent {
                     );
   }
 
-  insertLineBreaks(d) {
-    var el = d3.select(this);
-    var words = format(d).split(' ');
-    el.text('');
-
-    for (var i = 0; i < words.length; i++) {
-      var tspan = el.append('tspan').text(words[i]);
-      if (i > 0) {
-        tspan.attr('x', 0).attr('dy', '15');
-      }
-    }
-  }
-
   private update(data) {
     this.count = data.hits.total;
     if (this.count == 0) return;
@@ -57,11 +39,11 @@ export class RangeComponent {
     this.range = [start, end];
 
     let sliderEl = this.slider.nativeElement;
-    var axis = d3.svg.axis().tickFormat(this.format).ticks(4);
+    var axis = d3.svg.axis().tickFormat(dt_format).ticks(4);
     d3.select(sliderEl).selectAll("*").remove();
     var scale = d3.time.scale().domain([new Date(start), new Date(end)]);
     d3.select(sliderEl).call(d3.slider().scale(scale).value([start, end]).axis(axis).on("slide", this.onSlide.bind(this)));
-    d3.select(sliderEl).selectAll('g.tick text').each(this.insertLineBreaks);
+    d3.select(sliderEl).selectAll('g.tick text').each(insertLineBreaks);
   }
 
   onSlide(evt, value) {

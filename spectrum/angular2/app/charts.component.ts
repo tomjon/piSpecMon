@@ -6,10 +6,7 @@ import { LevelComponent } from './level.component';
 import { WaterfallComponent } from './waterfall.component';
 import { DataService } from './data.service';
 import { ErrorService } from './error.service';
-
-//FIXME constants
-var chartHeight = 400;
-var maxN = 10; //FIXME is this the maximum number of 'top N'? YES I think so. Repeats in level.component.ts
+import { MAX_N, CHART_HEIGHT } from './constants';
 
 @Component({
   selector: 'psm-charts',
@@ -23,8 +20,6 @@ export class ChartsComponent {
   @Input() config: any;
   @Input('config_id') config_id: string;
   @Input('sweep') sweepComponent: SweepComponent; //FIXME just to pass access to getTimestamp through to RangeComponent - well, if you passed around a Config class instead of just config_id.....
-
-  @ViewChild('range') rangeComponent; //FIXME unused!
 
   constructor(private dataService: DataService, private errorService: ErrorService) { }
 
@@ -41,7 +36,7 @@ export class ChartsComponent {
   }
 
   private fillArray(v?: any, size?: number) {
-    if (size == null) size = maxN;
+    if (size == null) size = MAX_N;
     let a = [];
     for (let n = 0; n < size; ++n) {
       a.push(v);
@@ -50,7 +45,7 @@ export class ChartsComponent {
   }
 
   update(data) {
-    var interval = data.length / chartHeight;
+    var interval = data.length / CHART_HEIGHT;
 
     this.data = {
                   levels: [],
@@ -132,7 +127,7 @@ export class ChartsComponent {
 
           let i = idx; //FIXME needed??
           // try slotting in our value
-          for (let n = 0; n < maxN; ++n) {
+          for (let n = 0; n < MAX_N; ++n) {
             let slot_idx = this.data.freq_idxs[x][n];
             // if we find an empty slot, just use it and quit
             if (slot_idx == null) {

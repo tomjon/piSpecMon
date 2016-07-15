@@ -1,12 +1,6 @@
 import { Component, Input, ViewChild } from '@angular/core';
-
-declare var d3: any;
-
-var hz = { 0: 'Hz', 3: 'kHz', 6: 'MHz', 9: 'GHz' }; //FIXME constant used elsewhere
-var format = d3.time.format("%d/%m/%Y %X"); //FIXME repeat from range component
-var options = { y_axis: [-70, 70, 10], margin: { top: 50, left: 60, right: 85, bottom: 40 }, width: 1200, height: 400 };
-
-var maxN = 10; //FIXME repeat from charts component
+import { LEVEL_CHART_OPTIONS, HZ_LABELS, MAX_N } from './constants';
+import { _d3 as d3, dt_format, insertLineBreaks } from './d3_import';
 
 @Component({
   selector: 'psm-level',
@@ -36,7 +30,7 @@ export class LevelComponent {
   height: number;
   width: number;
 
-  @Input() config: any; //FIXME combine with the config_id, if you need it (or might happen anyway)
+  @Input() config: any;
   @Input() data: any;
 
   @ViewChild('chart') chart;
@@ -45,14 +39,14 @@ export class LevelComponent {
   constructor() { }
 
   ngOnInit() {
-    let margin = options.margin;
-    this.width = options.width - margin.left - margin.right,
-    this.height = options.height - margin.top - margin.bottom;
+    let margin = LEVEL_CHART_OPTIONS.margin;
+    this.width = LEVEL_CHART_OPTIONS.width - margin.left - margin.right,
+    this.height = LEVEL_CHART_OPTIONS.height - margin.top - margin.bottom;
 
     this.x = d3.time.scale().range([0, this.width]);
     this.y = d3.scale.linear().range([this.height, 0]);
 
-    this.xAxis = d3.svg.axis().scale(this.x).orient("bottom").tickFormat(format);
+    this.xAxis = d3.svg.axis().scale(this.x).orient("bottom").tickFormat(dt_format);
     this.yAxis = d3.svg.axis().scale(this.y).orient("left");
 
     this.colour = d3.scale.category10();
@@ -64,10 +58,9 @@ export class LevelComponent {
                      .append("g")
                      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    //FIXME surely there's an angular way to do this?
     d3.select(this.selectN.nativeElement)
       .selectAll("option")
-      .data(d3.range(1, maxN + 1))
+      .data(d3.range(1, MAX_N + 1))
       .enter().append("option")
       .text(d => d);
   }
@@ -96,9 +89,9 @@ export class LevelComponent {
     freq_idxs = freq_idxs[this.top].slice(0, this.N);
 
     this.x.domain(d3.extent(data, d => d.fields.timestamp));
-    if (options.y_axis) {
-      this.y.domain([options.y_axis[0], options.y_axis[1]]);
-      this.yAxis.tickValues(d3.range(options.y_axis[0], options.y_axis[1] + options.y_axis[2], options.y_axis[2]));
+    if (LEVEL_CHART_OPTIONS.y_axis) {
+      this.y.domain([LEVEL_CHART_OPTIONS.y_axis[0], LEVEL_CHART_OPTIONS.y_axis[1]]);
+      this.yAxis.tickValues(d3.range(LEVEL_CHART_OPTIONS.y_axis[0], LEVEL_CHART_OPTIONS.y_axis[1] + LEVEL_CHART_OPTIONS.y_axis[2], LEVEL_CHART_OPTIONS.y_axis[2]));
     } else {
       this.y.domain([
         d3.min(data, function (d) { return d3.min(d.timestamp.buckets, function (v) { return v.level.value }) }),
@@ -117,7 +110,7 @@ export class LevelComponent {
         .style("text-anchor", "end")
         .text("Time");
 
-    this.svg.selectAll('g.x.axis g text').each(this.insertLineBreaks);
+    this.svg.selectAll('g.x.axis g text').each(insertLineBreaks);
 
     this.svg.append("g")
         .attr("class", "y axis")
@@ -145,13 +138,13 @@ export class LevelComponent {
 
     let discreteFn = idx => {
       let freq = this.config.freqs.freqs[idx];
-      return (+freq.f).toFixed(3) + ' ' + hz[freq.exp];
+      return (+freq.f).toFixed(3) + ' ' + HZ_LABELS[freq.exp];
     };
 
     let rangeFn = idx => {
       var range = this.config.freqs.range;
       var f = +range[0] + idx * +range[2];
-      return +f.toFixed(3) + ' ' + hz[this.config.freqs.exp];
+      return +f.toFixed(3) + ' ' + HZ_LABELS[this.config.freqs.exp];
     };
 
     freq.append("text")
@@ -160,18 +153,5 @@ export class LevelComponent {
         .attr("dy", 12)
         .text(this.config.freqs.freqs ? discreteFn : rangeFn)
         .style("stroke", idx => this.colour(idx));
-  }
-
-  insertLineBreaks(d) { //FIXME Repeated in RangeComponent
-    var el = d3.select(this);
-    var words = format(d).split(' ');
-    el.text('');
-
-    for (var i = 0; i < words.length; i++) {
-      var tspan = el.append('tspan').text(words[i]);
-      if (i > 0) {
-        tspan.attr('x', 0).attr('dy', '15');
-      }
-    }
   }
 }

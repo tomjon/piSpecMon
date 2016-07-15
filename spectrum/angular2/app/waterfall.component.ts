@@ -1,10 +1,6 @@
 import { Component, Input, ViewChild } from '@angular/core';
-
-declare var d3: any;
-
-var hz = { 0: 'Hz', 3: 'kHz', 6: 'MHz', 9: 'GHz' }; //FIXME constant used elsewhere
-var format = d3.time.format("%d/%m/%Y %X"); //FIXME repeat from range component
-var options = { heat: [-70, 0, 70], margin: { top: 50, left: 80, right: 50, bottom: 40 }, width: 1200, height: 400 };
+import { WATERFALL_CHART_OPTIONS, HZ_LABELS } from './constants';
+import { _d3 as d3, dt_format, insertLineBreaks } from './d3_import';
 
 @Component({
   selector: 'psm-waterfall',
@@ -23,7 +19,7 @@ export class WaterfallComponent {
   height: number;
   width: number;
 
-  @Input() config: any; //FIXME combine with the config_id, if you need it (or might happen anyway)
+  @Input() config: any;
   @Input() data: any;
 
   @ViewChild('chart') chart;
@@ -31,17 +27,17 @@ export class WaterfallComponent {
   constructor() { }
 
   ngOnInit() {
-    let margin = options.margin;
-    this.width = options.width - margin.left - margin.right,
-    this.height = options.height - margin.top - margin.bottom;
+    let margin = WATERFALL_CHART_OPTIONS.margin;
+    this.width = WATERFALL_CHART_OPTIONS.width - margin.left - margin.right,
+    this.height = WATERFALL_CHART_OPTIONS.height - margin.top - margin.bottom;
 
     this.x = d3.scale.linear().range([0, this.width]);
     this.y = d3.time.scale().range([0, this.height]);
 
     this.xAxis = d3.svg.axis().scale(this.x).orient("bottom");
-    this.yAxis = d3.svg.axis().scale(this.y).orient("left").tickFormat(format);
+    this.yAxis = d3.svg.axis().scale(this.y).orient("left").tickFormat(dt_format);
 
-    this.heat = d3.scale.linear().domain(options.heat).range(["blue", "yellow", "red"]).clamp(true);
+    this.heat = d3.scale.linear().domain(WATERFALL_CHART_OPTIONS.heat).range(["blue", "yellow", "red"]).clamp(true);
 
     let parent = d3.select(this.chart.nativeElement);
     this.svg = parent.append("svg")
@@ -77,7 +73,7 @@ export class WaterfallComponent {
         .attr("x", 40)
         .attr("y", 6)
         .style("text-anchor", "end")
-        .text(hz[this.config.freqs.exp]);
+        .text(HZ_LABELS[this.config.freqs.exp]);
 
     this.svg.append("g")
         .attr("class", "y axis")
@@ -88,7 +84,7 @@ export class WaterfallComponent {
         .style("text-anchor", "end")
         .text("Time");
 
-     this.svg.selectAll('g.y.axis g text').each(this.insertLineBreaks);
+     this.svg.selectAll('g.y.axis g text').each(insertLineBreaks);
 
      let rw = this.width / this.data[0].fields.level.length;
      let rh = this.height / this.data.length;
@@ -105,18 +101,5 @@ export class WaterfallComponent {
          .attr('width', rw + 1)
          .attr('height', rh + 1)
          .attr('style', (d, i) => d != null ? 'fill:' + this.heat(d) : 'display:none');
-  }
-
-  insertLineBreaks(d) { //FIXME Repeated in RangeComponent
-    var el = d3.select(this);
-    var words = format(d).split(' ');
-    el.text('');
-
-    for (var i = 0; i < words.length; i++) {
-      var tspan = el.append('tspan').text(words[i]);
-      if (i > 0) {
-        tspan.attr('x', 0).attr('dy', '15');
-      }
-    }
   }
 }
