@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
-import { ErrorComponent } from './error.component';
 import { DataService } from './data.service';
+import { ErrorService } from './error.service';
 
 declare var d3: any;
 
@@ -16,9 +16,7 @@ export class SweepComponent {
   date_format: Function;
   waiting: boolean = false; // true when waiting for server interaction to complete
 
-  @Input('error') errorComponent: ErrorComponent;
-
-  constructor(private dataService: DataService) {
+  constructor(private dataService: DataService, private errorService: ErrorService) {
     this.date_format = d3.time.format('%d/%m/%Y %X'); //FIXME use a date pipe instead
   }
 
@@ -30,7 +28,7 @@ export class SweepComponent {
     this.dataService.getSweepSets()
                     .subscribe(
                       sets => { this.sets = sets; if (selectLast) this.selectLast() },
-                      error => this.errorComponent.add(error)
+                      error => this.errorService.logError(this, error)
                     );
   }
 
@@ -39,7 +37,7 @@ export class SweepComponent {
     this.dataService.exportData(this.config_id)
                     .subscribe(
                       path => { this.waiting = false; alert('CSV written to ' + path) },
-                      error => { this.waiting = false; this.errorComponent.add(error) }
+                      error => { this.waiting = false; this.errorService.logError(this, error) }
                     );
   }
 
@@ -53,7 +51,7 @@ export class SweepComponent {
     this.dataService.deleteSweepSet(this.config_id)
                     .subscribe( //FIXME is there any way to do { waiting = false } more elegantly? appears lots in different files
                       () => { this.waiting = false; this.removeSet(this.config_id) },
-                      error => { this.waiting = false; this.errorComponent.add(error) }
+                      error => { this.waiting = false; this.errorService.logError(this, error) }
                     );
   }
 

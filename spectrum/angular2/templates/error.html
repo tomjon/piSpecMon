@@ -1,1 +1,5 @@
-<h2>{{errorMessage}}</h2>
+<div *ngIf="errors.length > 0">
+  <ul>
+    <li *ngFor="let error of errors; let i = index">{{error.source.constructor.name}}: {{error.message}}<button (click)="onClear(i)">x</button></li>
+  </ul>
+</div>

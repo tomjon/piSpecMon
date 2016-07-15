@@ -1,8 +1,8 @@
 import { Component, Input } from '@angular/core';
-import { ErrorComponent } from './error.component';
 import { InputComponent } from './input.component';
 import { User } from './user';
 import { DataService } from './data.service';
+import { ErrorService } from './error.service';
 
 @Component({
   selector: 'psm-users',
@@ -13,15 +13,14 @@ import { DataService } from './data.service';
 export class UsersComponent {
   users: User[];
   newUser: User = new User();
-  @Input('error') errorComponent: ErrorComponent;
 
-  constructor(private dataService: DataService) { }
+  constructor(private dataService: DataService, private errorService: ErrorService) { }
 
   ngOnInit() {
     this.dataService.getUsers()
                     .subscribe(
                       users => this.users = users,
-                      error => this.errorComponent.add(error)
+                      error => this.errorService.logError(this, error)
                     );
   }
 
@@ -31,7 +30,7 @@ export class UsersComponent {
       this.dataService.saveUser(user)
                       .subscribe(
                         () => delete user._name,
-                        error => this.errorComponent.add(error)
+                        error => this.errorService.logError(this, error)
                       );
     }}, 5000);
   }
@@ -41,7 +40,7 @@ export class UsersComponent {
     this.dataService.deleteUser(user)
                     .subscribe(
                       () => { user._loading = false; this.users.splice(this.users.indexOf(user), 1) },
-                      error => { user._loading = false; this.errorComponent.add(error) }
+                      error => { user._loading = false; this.errorService.logError(this, error) }
                     );
   }
 
@@ -54,7 +53,7 @@ export class UsersComponent {
     this.dataService.saveUser(user, password)
                     .subscribe(
                        () => { user._loading = false; this.users.push(user); this.newUser = new User() },
-                       error => { user._loading = false; this.errorComponent.add(error) }
+                       error => { user._loading = false; this.errorService.logError(this, error) }
                     );
   }
 }

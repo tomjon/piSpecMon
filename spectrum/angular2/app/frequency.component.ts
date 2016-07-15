@@ -1,5 +1,4 @@
 import { Component, Input, ViewChild } from '@angular/core';
-import { ErrorComponent } from './error.component';
 
 declare var d3: any;
 
@@ -33,7 +32,6 @@ export class FrequencyComponent {
 
   @Input() config: any; //FIXME combine with the config_id, if you need it (or might happen anyway)
   @Input() data: any;
-  @Input('error') errorComponent: ErrorComponent;
 
   @ViewChild('chart') chart;
 

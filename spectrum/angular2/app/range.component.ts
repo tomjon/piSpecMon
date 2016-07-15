@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, ViewChild } from '@angular/core';
-import { ErrorComponent } from './error.component';
 import { SweepComponent } from './sweep.component';
 import { DataService } from './data.service';
+import { ErrorService } from './error.service';
 
 declare var d3: any;
 declare var slider: any;
@@ -19,20 +19,19 @@ export class RangeComponent {
 
   @Input() config_id: string;
   @Input('sweep') sweepComponent: SweepComponent; //FIXME feels odd, this is so we can call getTimestamp()
-  @Input('error') errorComponent: ErrorComponent;
 
   @Output() onRange = new EventEmitter<number[]>();
 
   @ViewChild('slider') slider;
 
-  constructor(private dataService: DataService) { }
+  constructor(private dataService: DataService, private errorService: ErrorService) { }
 
   ngOnChanges() {
     if (this.config_id == '') return;
     this.dataService.getRange(this.config_id)
                     .subscribe(
                       data => this.update(data),
-                      error => this.errorComponent.add(error)
+                      error => this.errorService.logError(this, error)
                     );
   }
 

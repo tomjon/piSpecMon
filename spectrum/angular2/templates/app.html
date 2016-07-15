@@ -1,15 +1,14 @@
-//FIXME use a service to communicate between error component and all the child components of app (see https://angular.io/docs/ts/latest/cookbook/component-communication.html#!#bidirectional-service)
-<psm-error #error></psm-error>
+<psm-error></psm-error>
 <h1>User Management</h1>
-<psm-users [error]="error"></psm-users>
+<psm-users></psm-users>
 <h1>Elasticsearch Stats</h1>
-<psm-stats [error]="error"></psm-stats>
+<psm-stats></psm-stats>
 <h1>Rig Configuration</h1>
-<psm-rig [error]="error"></psm-rig>
+<psm-rig></psm-rig>
 <h1>Scan Configuration</h1>
-<psm-sweep #sweep [error]="error"></psm-sweep>
-<psm-config #config [error]="error" [config_id]="sweep.config_id"></psm-config>
+<psm-sweep #sweep></psm-sweep>
+<psm-config #config [config_id]="sweep.config_id"></psm-config>
 <h1>Worker</h1>
-<psm-worker [error]="error" [config]="config.config" [sweep]="sweep"></psm-worker>
+<psm-worker [config]="config.config" [sweep]="sweep"></psm-worker>
 //FIXME if 'config' was a class containing the config_id as well, wouldn't need to pass both in here
 <psm-charts [sweep]="sweep" [config]="config.config" [config_id]="sweep.config_id"></psm-charts>

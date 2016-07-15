@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { SweepComponent } from './sweep.component';
-import { ErrorComponent } from './error.component';
 import { DataService } from './data.service';
+import { ErrorService } from './error.service';
 
 @Component({
   selector: 'psm-worker',
@@ -15,9 +15,8 @@ export class WorkerComponent {
 
   @Input('config') config: any;
   @Input('sweep') sweepComponent: SweepComponent;
-  @Input('error') errorComponent: ErrorComponent;
 
-  constructor(private dataService: DataService) { }
+  constructor(private dataService: DataService, private errorService: ErrorService) { }
 
   ngOnInit() {
     //FIXME is there some angular2 helper for this kind of thing? though, this seems simple enough
@@ -32,7 +31,7 @@ export class WorkerComponent {
                         this.config_id = data.config_id;
                         this.last_sweep = 1000 * data.last_sweep;
                       },
-                      error => this.errorComponent.add(error)
+                      error => this.errorService.logError(this, error)
                     );
   }
 
@@ -48,8 +47,8 @@ export class WorkerComponent {
     this.waiting = true;
     this.dataService.startMonitor(this.config)
                     .subscribe(
-                      () => { this.waiting = false; this.sweepComponent.reload(true) },
-                      error => { this.waiting = false; this.errorComponent.add(error) } //FIXME can this be done in the UI - i.e. add a row to the select?
+                      () => { this.waiting = false; this.sweepComponent.reload(true) }, //FIXME can this be done in the UI - i.e. add a row to the select?
+                      error => { this.waiting = false; this.errorService.logError(this, error) }
                     );
   }
 
@@ -58,7 +57,7 @@ export class WorkerComponent {
     this.dataService.stopMonitor()
                     .subscribe(
                       () => this.waiting = false,
-                      error => { this.waiting = false; this.errorComponent.add(error) }
+                      error => { this.waiting = false; this.errorService.logError(this, error) }
                     );
   }
 }

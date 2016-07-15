@@ -1,13 +1,29 @@
 import { Component } from '@angular/core';
+import { ErrorService } from './error.service';
+import { Error } from './error';
 
 @Component({
   selector: 'psm-error',
   templateUrl: 'templates/error.html'
 })
 export class ErrorComponent {
-  errorMessage: string;
+  private errors: Error[] = new Array<Error>();
 
-  add(error) {
-    this.errorMessage = error; //FIXME develop a stack of errors that disappear after a while?
+  constructor(private errorService: ErrorService) {
+    this.errorService.message$.subscribe(
+      error => {
+        for (let i in this.errors) {
+          if (this.errors[i].source == error.source) {
+            this.errors[i] = error;
+            return;
+          }
+        }
+        this.errors.push(error)
+      }
+    );
+  }
+
+  onClear(i: number) {
+    this.errors.splice(i, 1);
   }
 }

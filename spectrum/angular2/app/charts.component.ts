@@ -1,11 +1,11 @@
 import { Component, Input, ViewChild } from '@angular/core';
-import { ErrorComponent } from './error.component';
 import { SweepComponent } from './sweep.component';
 import { RangeComponent } from './range.component';
 import { FrequencyComponent } from './frequency.component';
 import { LevelComponent } from './level.component';
 import { WaterfallComponent } from './waterfall.component';
 import { DataService } from './data.service';
+import { ErrorService } from './error.service';
 
 //FIXME constants
 var chartHeight = 400;
@@ -23,11 +23,10 @@ export class ChartsComponent {
   @Input() config: any;
   @Input('config_id') config_id: string;
   @Input('sweep') sweepComponent: SweepComponent; //FIXME just to pass access to getTimestamp through to RangeComponent - well, if you passed around a Config class instead of just config_id.....
-  @Input('error') errorComponent: ErrorComponent; //FIXME will use a 'global'
 
   @ViewChild('range') rangeComponent; //FIXME unused!
 
-  constructor(private dataService: DataService) { }
+  constructor(private dataService: DataService, private errorService: ErrorService) { }
 
   ngOnChanges() {
     this.data = { };
@@ -37,7 +36,7 @@ export class ChartsComponent {
     this.dataService.getData(this.config_id, range)
                     .subscribe(
                       data => this.update(data),
-                      error => this.errorComponent.add(error)
+                      error => this.errorService.logError(this, error)
                     );
   }
 
