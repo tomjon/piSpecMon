@@ -10,8 +10,7 @@ var DEFAULTS = {
 
 @Component({
   selector: 'psm-config',
-  templateUrl: 'templates/config.html',
-  providers: [ DataService ]
+  templateUrl: 'templates/config.html'
 })
 export class ConfigComponent {
   modes: any = [ ];

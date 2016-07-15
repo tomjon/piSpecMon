@@ -6,7 +6,6 @@ import { BytesPipe } from './bytes.pipe';
 @Component({
   selector: 'psm-stats',
   templateUrl: 'templates/stats.html',
-  providers: [ DataService ],
   pipes: [ BytesPipe ]
 })
 export class StatsComponent {

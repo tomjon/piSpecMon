@@ -8,8 +8,7 @@ var hz = { 0: 'Hz', 3: 'kHz', 6: 'MHz', 9: 'GHz' };
 
 @Component({
   selector: 'psm-sweep',
-  templateUrl: 'templates/sweep.html',
-  providers: [ DataService ]
+  templateUrl: 'templates/sweep.html'
 })
 export class SweepComponent {
   config_id: string = ''; // currently selected sweep set

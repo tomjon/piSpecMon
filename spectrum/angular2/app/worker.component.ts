@@ -5,8 +5,7 @@ import { DataService } from './data.service';
 
 @Component({
   selector: 'psm-worker',
-  templateUrl: 'templates/worker.html',
-  providers: [ DataService ]
+  templateUrl: 'templates/worker.html'
 })
 export class WorkerComponent {
   error: string;

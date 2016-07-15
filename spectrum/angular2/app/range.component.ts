@@ -10,8 +10,7 @@ var format = d3.time.format("%d/%m/%Y %X");
 
 @Component({
   selector: 'psm-range',
-  templateUrl: 'templates/range.html',
-  providers: [ DataService ]
+  templateUrl: 'templates/range.html'
 })
 export class RangeComponent {
   count: number;

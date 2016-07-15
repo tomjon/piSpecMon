@@ -8,7 +8,6 @@ import { DataService } from './data.service';
   selector: 'psm-users',
   templateUrl: 'templates/users.html',
   directives: [ InputComponent ],
-  providers: [ DataService ],
   styles: [ `.disabled { background: lightgrey }` ]
 })
 export class UsersComponent {

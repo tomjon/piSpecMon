@@ -14,7 +14,6 @@ var maxN = 10; //FIXME is this the maximum number of 'top N'? YES I think so. Re
 @Component({
   selector: 'psm-charts',
   templateUrl: 'templates/charts.html',
-  providers: [ DataService ],
   directives: [ RangeComponent, FrequencyComponent, LevelComponent, WaterfallComponent ]
 })
 export class ChartsComponent {

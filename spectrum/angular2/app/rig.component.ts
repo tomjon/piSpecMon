@@ -12,8 +12,7 @@ let modelSort = function (a, b) {
 
 @Component({
   selector: 'psm-rig',
-  templateUrl: 'templates/rig.html',
-  providers: [ DataService ]
+  templateUrl: 'templates/rig.html'
 })
 export class RigComponent {
   title = "Rig Configuration";

@@ -7,6 +7,7 @@ import { SweepComponent } from './sweep.component';
 import { ErrorComponent } from './error.component';
 import { WorkerComponent } from './worker.component';
 import { ChartsComponent } from './charts.component';
+import { DataService } from './data.service';
 import { HTTP_PROVIDERS } from '@angular/http';
 
 // Add the RxJS Observable operators we need in this app
@@ -16,7 +17,6 @@ import './rxjs-operators';
   selector: 'psm-app',
   templateUrl: 'templates/app.html',
   directives: [ ErrorComponent, UsersComponent, StatsComponent, RigComponent, ConfigComponent, SweepComponent, WorkerComponent, ChartsComponent ],
-  providers: [ HTTP_PROVIDERS ]
+  providers: [ DataService, HTTP_PROVIDERS ]
 })
-export class AppComponent {
-}
+export class AppComponent { }
