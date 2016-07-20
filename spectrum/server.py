@@ -26,7 +26,7 @@ class SecuredStaticFlask (Flask):
 def set_settings(id, value):
   data = { 'timestamp': int(time()), 'json': json.dumps(value) }
   r = requests.put(ELASTICSEARCH + 'spectrum/settings/' + id, params={ 'refresh': 'true' }, data=json.dumps(data))
-  if r.status_code != 201:
+  if r.status_code != 200 and r.status_code != 201:
     raise Exception("Can not apply settings: %s (%d)" % (id, r.status_code))
   return value
 
@@ -115,13 +115,13 @@ def monitor():
     config = json.loads(request.get_data())
     config['rig'] = application.rig
     application.worker.start(json.dumps(config))
-    return "OK"
+    return json.dumps({ 'status': 'OK' })
   if request.method == 'DELETE':
     # stop process
     if 'config_id' not in application.worker.status():
       return "Worker not running", 400
     application.worker.stop()
-    return "OK"
+    return json.dumps({ 'status': 'OK' })
   if request.method == 'GET':
     # monitor status
     return json.dumps(application.worker.status())
@@ -138,6 +138,45 @@ def search(path):
   else:
     r = requests.delete(''.join([ELASTICSEARCH + 'spectrum/', path]), params=request.args)
   return r.text, r.status_code
+
+
+@application.route('/users')
+@requires_auth
+def users():
+  def _namise_data(name, data):
+    data['name'] = name
+    return data
+  users = [_namise_data(name, data) for name, data in iter_users()]
+  return json.dumps({ 'data': users })
+
+@application.route('/user/<name>', methods=['GET', 'PUT', 'DELETE'])
+@requires_auth
+def user(name):
+  try:
+    if request.method == 'GET':
+      data = get_user(name)
+      if data is None:
+        return "No such user '{0}'".format(name), 404
+      data['name'] = name
+      return json.dumps({ 'data': data })
+    if request.method == 'PUT':
+      data = request.get_json()
+      if data is None:
+        return "No user data", 400
+      if set_user(name, data):
+        return "OK", 200
+      password = request.args.get('password', None)
+      if password is None:
+        return "No password parameter", 400
+      create_user(name, password, data)
+      return "Created", 201
+    if request.method == 'DELETE':
+      if delete_user(name):
+        return "OK", 200
+      else:
+        return "No such user '{0}'".format(name), 404
+  except UsersError as e:
+    return e.message, 400
 
 
 def _iter_export(config, hits):
@@ -171,7 +210,7 @@ def export(config_id):
     with open(path, 'w') as f:
       for x in export:
         f.write(x)
-    return path
+    return json.dumps({ 'path': path })
 
 
 @application.route('/stats')

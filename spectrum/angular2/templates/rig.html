@@ -1,0 +1,28 @@
+<form (change)="onChange()" (ngSubmit)="onSubmit()">
+  <table>
+    <tr>
+      <td>Model</td>
+      <td>
+        <select [(ngModel)]="rig.model" name="model">
+          <option *ngFor="let model of models" value="{{model.model}}">{{model.manufacturer}} {{model.name}} v{{model.version}} ({{model.status}})</option>
+        </select>
+      </td>
+    </tr>
+    <tr><td>Serial port path</td><td><input [(ngModel)]="rig.pathname" name="pathname"></td></tr>
+    <tr><td>Stop bits</td><td><input [(ngModel)]="rig.stop_bits" name="stop_bits"></td></tr>
+    <tr><td>Write delay (ms)</td><td><input [(ngModel)]="rig.write_delay" name="write_delay"></td></tr>
+    <tr><td>Set frequency attempts</td><td><select [(ngModel)]="rig.set_check" name="set_check">
+      <option value="0">Set once only</option>
+      <option value="1">Set once and check</option>
+      <option value="2">Set and check up to twice</option>
+      <option value="3">Set and check up to three times</option>
+    </select></td></tr>
+    <tr><td>Error handling</td><td><select [(ngModel)]="rig.retries" name="retries">
+      <option value="0">Fail on error</option>
+      <option value="1">Wait and retry once</option>
+      <option value="2">Wait and retry twice</option>
+      <option value="3">Wait and retry three times</option>
+    </select></td></tr>
+    <tr><td>Retry interval (ms)</td><td><input [(ngModel)]="rig.interval" name="interval"></td></tr>
+  </table>
+</form>

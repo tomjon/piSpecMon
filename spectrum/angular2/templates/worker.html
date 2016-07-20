@@ -1,0 +1,6 @@
+<div>
+  <button (click)="onStart()" [disabled]="! mayStart()">Start</button>
+  <button (click)="onStop()" [disabled]="! mayStop()">Stop</button>
+</div>
+<div *ngIf="error">{{error}}</div>
+<div *ngIf="last_sweep">{{last_sweep | date:"dd/MM/yyyy hh:ss"}}</div>
