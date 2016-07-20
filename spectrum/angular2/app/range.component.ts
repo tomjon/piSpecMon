@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter, ViewChild } from '@angular/core
 import { SweepComponent } from './sweep.component';
 import { DataService } from './data.service';
 import { ErrorService } from './error.service';
+import { Config } from './config';
 import { _d3 as d3, dt_format, insertLineBreaks } from './d3_import';
 
 @Component({
@@ -12,8 +13,7 @@ export class RangeComponent {
   count: number;
   range: number[];
 
-  @Input() config_id: string;
-  @Input('sweep') sweepComponent: SweepComponent; //FIXME feels odd, this is so we can call getTimestamp()
+  @Input() config: Config;
 
   @Output() onRange = new EventEmitter<number[]>();
 
@@ -22,8 +22,8 @@ export class RangeComponent {
   constructor(private dataService: DataService, private errorService: ErrorService) { }
 
   ngOnChanges() {
-    if (this.config_id == '') return;
-    this.dataService.getRange(this.config_id)
+    if (this.config.config_id == '') return;
+    this.dataService.getRange(this.config.config_id)
                     .subscribe(
                       data => this.update(data),
                       error => this.errorService.logError(this, error)
@@ -34,7 +34,7 @@ export class RangeComponent {
     this.count = data.hits.total;
     if (this.count == 0) return;
 
-    var start = this.sweepComponent.getTimestamp();
+    var start = this.config.timestamp;
     var end = data.hits.hits[0].fields.timestamp[0];
     this.range = [start, end];
 

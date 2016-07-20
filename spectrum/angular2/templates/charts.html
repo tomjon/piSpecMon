@@ -1,6 +1,6 @@
 <div *ngIf="config_id != ''">
   <h1>Data View</h1>
-  <psm-range [sweep]="sweepComponent" [config_id]="config_id" (onRange)="show($event)"></psm-range>
+  <psm-range [config]="config" (onRange)="show($event)"></psm-range>
   <p *ngIf="avg_time != undefined">Average sweep time {{avg_time}}</p>
   <psm-frequency [data]="data.agg" [config]="config"></psm-frequency>
   <psm-level [data]="data" [config]="config"></psm-level>

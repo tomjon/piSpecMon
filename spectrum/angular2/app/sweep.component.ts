@@ -62,15 +62,6 @@ export class SweepComponent {
     this.config_id = '';
   }
 
-  public getTimestamp() {
-    for (let set of this.sets) {
-      if (set.config_id == this.config_id) {
-        return set.timestamp;
-      }
-    }
-    return undefined;
-  }
-
   private selectLast() {
     this.config_id = this.sets[this.sets.length - 1].config_id;
   }

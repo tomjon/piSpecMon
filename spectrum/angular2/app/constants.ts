@@ -7,3 +7,9 @@ export var CHART_HEIGHT = 400;
 export var FREQUENCY_CHART_OPTIONS = { y_axis: [-70, 70, 10], margin: { top: 50, left: 60, right: 50, bottom: 40 }, width: CHART_WIDTH, height: CHART_HEIGHT };
 export var LEVEL_CHART_OPTIONS = { y_axis: [-70, 70, 10], margin: { top: 50, left: 60, right: 85, bottom: 40 }, width: CHART_WIDTH, height: CHART_HEIGHT };
 export var WATERFALL_CHART_OPTIONS = { heat: [-70, 0, 70], margin: { top: 50, left: 80, right: 50, bottom: 40 }, width: CHART_WIDTH, height: CHART_HEIGHT };
+
+export var DEFAULTS = {
+                        freqs: { range: [87.5, 108, 0.1], exp: 6 },
+                        monitor: { period: 0, radio_on: 1 },
+                        scan: { mode: 64 }
+                      };

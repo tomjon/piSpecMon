@@ -1,12 +1,10 @@
 import { Component, Input } from '@angular/core';
 import { DataService } from './data.service';
 import { ErrorService } from './error.service';
+import { Config } from './config';
+import { DEFAULTS } from './constants';
 
-var DEFAULTS = {
-                 freqs: { range: [87.5, 108, 0.1], exp: 6 },
-                 monitor: { period: 0, radio_on: 1 },
-                 scan: { mode: 64 }
-               };
+var DEFAULT_CONFIG = new Config('', 0, DEFAULTS);
 
 @Component({
   selector: 'psm-config',
@@ -14,7 +12,7 @@ var DEFAULTS = {
 })
 export class ConfigComponent {
   modes: any = [ ];
-  config: any = DEFAULTS;
+  config: Config;
 
   @Input('config_id') config_id : string;
 
@@ -32,11 +30,11 @@ export class ConfigComponent {
     if (this.config_id) {
       this.dataService.getConfig(this.config_id)
                       .subscribe(
-                        config => { delete config.rig; this.config = config },
+                        config => { delete config.config.rig; this.config = config },
                         error => this.errorService.logError(this, error)
                       );
     } else {
-      this.config = DEFAULTS;
+      this.config = DEFAULT_CONFIG;
     }
   }
 

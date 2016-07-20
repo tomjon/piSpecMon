@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Headers, Http, RequestOptions, Response } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import { User } from './user';
+import { Config } from './config';
 
 @Injectable()
 export class DataService {
@@ -77,10 +78,10 @@ export class DataService {
                     .catch(this.handleError);
   }
 
-  getConfig(config_id: string): Observable<any> {
+  getConfig(config_id: string): Observable<Config> {
     let url = this.baseUrl + 'spectrum/config/' + config_id + '?fields=*';
     return this.http.get(url)
-                    .map(res => { JSON.parse(res.json().fields.json[0]) })
+                    .map(res => new Config(config_id, +res.json().fields.timestamp[0], JSON.parse(res.json().fields.json[0])))
                     .catch(this.handleError);
   }
 

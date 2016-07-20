@@ -6,6 +6,7 @@ import { LevelComponent } from './level.component';
 import { WaterfallComponent } from './waterfall.component';
 import { DataService } from './data.service';
 import { ErrorService } from './error.service';
+import { Config } from './config';
 import { MAX_N, CHART_HEIGHT } from './constants';
 
 @Component({
@@ -17,9 +18,7 @@ export class ChartsComponent {
   data: any = { }; //FIXME replace with a SpectrumData object? (new class)
   avg_time: number;
 
-  @Input() config: any;
-  @Input('config_id') config_id: string;
-  @Input('sweep') sweepComponent: SweepComponent; //FIXME just to pass access to getTimestamp through to RangeComponent - well, if you passed around a Config class instead of just config_id.....
+  @Input() config: Config;
 
   constructor(private dataService: DataService, private errorService: ErrorService) { }
 
@@ -28,7 +27,7 @@ export class ChartsComponent {
   }
 
   show(range: number[]) {
-    this.dataService.getData(this.config_id, range)
+    this.dataService.getData(this.config.config_id, range)
                     .subscribe(
                       data => this.update(data),
                       error => this.errorService.logError(this, error)
