@@ -9,5 +9,5 @@
 <psm-sweep #sweep></psm-sweep>
 <psm-config #config [config_id]="sweep.config_id"></psm-config>
 <h1>Worker</h1>
-<psm-worker [config]="config.config" [sweep]="sweep"></psm-worker>
+<psm-worker [config]="config.config.config" [sweep]="sweep"></psm-worker>
 <psm-charts [config]="config.config"></psm-charts>

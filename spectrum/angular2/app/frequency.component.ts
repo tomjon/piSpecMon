@@ -27,7 +27,7 @@ export class FrequencyComponent {
   height: number;
   width: number;
 
-  @Input() config: any;
+  @Input() freqs: any;
   @Input() data: any;
 
   @ViewChild('chart') chart;
@@ -58,7 +58,7 @@ export class FrequencyComponent {
   }
 
   isHidden() {
-    return this.data == undefined || this.config.freqs.freqs || this.data[this.sweep].length == 0;
+    return this.data == undefined || this.freqs.freqs || this.data[this.sweep].length == 0;
   }
 
   ngOnChanges() {
@@ -70,7 +70,7 @@ export class FrequencyComponent {
 
     let agg = this.data[this.sweep];
 
-    this.x.domain([this.config.freqs.range[0], this.config.freqs.range[1]]);
+    this.x.domain([this.freqs.range[0], this.freqs.range[1]]);
     if (FREQUENCY_CHART_OPTIONS.y_axis) {
       this.y.domain([FREQUENCY_CHART_OPTIONS.y_axis[0], FREQUENCY_CHART_OPTIONS.y_axis[1]]);
       this.yAxis.tickValues(d3.range(FREQUENCY_CHART_OPTIONS.y_axis[0], FREQUENCY_CHART_OPTIONS.y_axis[1] + FREQUENCY_CHART_OPTIONS.y_axis[2], FREQUENCY_CHART_OPTIONS.y_axis[2]));
@@ -78,7 +78,7 @@ export class FrequencyComponent {
       this.y.domain(d3.extent(agg, d => d.v));
     }
 
-    this.line.x((d, i) => this.x(+this.config.freqs.range[0] + i * this.config.freqs.range[2]));
+    this.line.x((d, i) => this.x(+this.freqs.range[0] + i * this.freqs.range[2]));
 
     this.svg.append("g")
         .attr("class", "x axis")
@@ -89,7 +89,7 @@ export class FrequencyComponent {
         .attr("x", 40)
         .attr("y", 6)
         .style("text-anchor", "end")
-        .text(HZ_LABELS[this.config.freqs.exp]);
+        .text(HZ_LABELS[this.freqs.exp]);
 
     this.svg.append("g")
         .attr("class", "y axis")

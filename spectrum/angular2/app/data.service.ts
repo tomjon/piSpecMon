@@ -79,10 +79,15 @@ export class DataService {
   }
 
   getConfig(config_id: string): Observable<Config> {
-    let url = this.baseUrl + 'spectrum/config/' + config_id + '?fields=*';
+    let url = this.baseUrl + 'spectrum/config/' + config_id + '?fields=json,timestamp';
     return this.http.get(url)
-                    .map(res => new Config(config_id, +res.json().fields.timestamp[0], JSON.parse(res.json().fields.json[0])))
+                    .map(res => this.extractConfigSet(config_id, res))
                     .catch(this.handleError);
+  }
+
+  private extractConfigSet(config_id: string, res: Response): Config {
+    let fields: any = res.json().fields;
+    return new Config(config_id, +fields.timestamp[0], JSON.parse(fields.json[0]));
   }
 
   getSweepSets(): Observable<any> {

@@ -30,7 +30,7 @@ export class LevelComponent {
   height: number;
   width: number;
 
-  @Input() config: any;
+  @Input() freqs: any;
   @Input() data: any;
 
   @ViewChild('chart') chart;
@@ -137,21 +137,21 @@ export class LevelComponent {
         .style("stroke", d => this.colour(d));
 
     let discreteFn = idx => {
-      let freq = this.config.freqs.freqs[idx];
+      let freq = this.freqs.freqs[idx];
       return (+freq.f).toFixed(3) + ' ' + HZ_LABELS[freq.exp];
     };
 
     let rangeFn = idx => {
-      var range = this.config.freqs.range;
+      var range = this.freqs.range;
       var f = +range[0] + idx * +range[2];
-      return +f.toFixed(3) + ' ' + HZ_LABELS[this.config.freqs.exp];
+      return +f.toFixed(3) + ' ' + HZ_LABELS[this.freqs.exp];
     };
 
     freq.append("text")
         .attr("x", this.width + 10)
         .attr("y", (idx, i) => 16 * i)
         .attr("dy", 12)
-        .text(this.config.freqs.freqs ? discreteFn : rangeFn)
+        .text(this.freqs.freqs ? discreteFn : rangeFn)
         .style("stroke", idx => this.colour(idx));
   }
 }

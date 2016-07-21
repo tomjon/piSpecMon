@@ -12,7 +12,7 @@ var DEFAULT_CONFIG = new Config('', 0, DEFAULTS);
 })
 export class ConfigComponent {
   modes: any = [ ];
-  config: Config;
+  config: Config = DEFAULT_CONFIG;
 
   @Input('config_id') config_id : string;
 

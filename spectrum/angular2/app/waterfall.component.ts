@@ -19,7 +19,7 @@ export class WaterfallComponent {
   height: number;
   width: number;
 
-  @Input() config: any;
+  @Input() freqs: any;
   @Input() data: any;
 
   @ViewChild('chart') chart;
@@ -48,7 +48,7 @@ export class WaterfallComponent {
   }
 
   isHidden() {
-    return this.data == undefined || this.config.freqs.freqs || this.data.length == 0;
+    return this.data == undefined || this.freqs.freqs || this.data.length == 0;
   }
 
   ngOnChanges() {
@@ -58,9 +58,9 @@ export class WaterfallComponent {
 
     if (this.isHidden()) return;
 
-    let f0 = +this.config.freqs.range[0];
-    let f1 = +this.config.freqs.range[1];
-    let df = +this.config.freqs.range[2];
+    let f0 = +this.freqs.range[0];
+    let f1 = +this.freqs.range[1];
+    let df = +this.freqs.range[2];
     this.x.domain([f0 - 0.5 * df, f1 + 0.5 * df]);
     this.y.domain(d3.extent(this.data, d => d.fields.timestamp));
 
@@ -73,7 +73,7 @@ export class WaterfallComponent {
         .attr("x", 40)
         .attr("y", 6)
         .style("text-anchor", "end")
-        .text(HZ_LABELS[this.config.freqs.exp]);
+        .text(HZ_LABELS[this.freqs.exp]);
 
     this.svg.append("g")
         .attr("class", "y axis")
