@@ -1,6 +1,8 @@
 <psm-error></psm-error>
+<h1>Login</h1>
+<psm-login #login></psm-login>
 <h1>User Management</h1>
-<psm-users></psm-users>
+<psm-users [user]="login.user"></psm-users>
 <h1>Elasticsearch Stats</h1>
 <psm-stats></psm-stats>
 <h1>Rig Configuration</h1>

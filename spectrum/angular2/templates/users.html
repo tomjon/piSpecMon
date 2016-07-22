@@ -6,9 +6,7 @@
         <td>
             <psm-input>
                 <select #input [disabled]="user._loading" [(ngModel)]="user.role" (ngModelChange)="onChange(user)">
-                    <option value="admin">Administrator</option>
-                    <option value="freq">Frequency setter</option>
-                    <option value="data">Data viewer</option>
+                    <option *ngFor="let role of roles" value="{{role.role}}">{{role.label}}</option>
                 </select>
             </psm-input>
         </td>
@@ -21,9 +19,7 @@
     <tr [class.disabled]="newUser._loading">
         <td>
             <select [disabled]="newUser._loading" [(ngModel)]="newUser.role">
-                <option value="admin">Administrator</option>
-                <option value="freq">Frequency setter</option>
-                <option value="data">Data viewer</option>
+                <option *ngFor="let role of roles" value="{{role.role}}">{{role.label}}</option>
             </select>
         </td>
         <td><input [disabled]="newUser._loading" [(ngModel)]="newUser.name"></td>

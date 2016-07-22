@@ -3,6 +3,7 @@ import { InputComponent } from './input.component';
 import { User } from './user';
 import { DataService } from './data.service';
 import { ErrorService } from './error.service';
+import { CHANGE_TIMEOUT } from './constants';
 
 @Component({
   selector: 'psm-users',
@@ -11,36 +12,49 @@ import { ErrorService } from './error.service';
   styles: [ `.disabled { background: lightgrey }` ]
 })
 export class UsersComponent {
+  @Input() user: User; // the logged in user
   users: User[];
   newUser: User = new User();
+  roles: any = User.ROLES;
 
   constructor(private dataService: DataService, private errorService: ErrorService) { }
 
   ngOnInit() {
     this.dataService.getUsers()
                     .subscribe(
-                      users => this.users = users,
+                      users => { this.users = users; this.replaceUser() },
                       error => this.errorService.logError(this, error)
                     );
   }
 
+  private replaceUser() {
+    for (let i = 0; i < this.users.length; ++i) {
+      if (this.users[i].name == this.user.name) {
+        this.users[i] = this.user;
+      }
+    }
+  }
+
   onChange(user) {
     ++user._count;
-    setTimeout(() => { if (--user._count == 0) {
-      this.dataService.saveUser(user)
-                      .subscribe(
-                        () => delete user._name,
-                        error => this.errorService.logError(this, error)
-                      );
-    }}, 5000);
+    setTimeout(() => {
+      if (--user._count == 0) {
+        this.dataService.saveUser(user)
+                        .subscribe(
+                          () => user._name = user.name,
+                          error => this.errorService.logError(this, error)
+                        );
+      }
+    }, CHANGE_TIMEOUT);
   }
 
   onDelete(user) {
     user._loading = true;
     this.dataService.deleteUser(user)
                     .subscribe(
-                      () => { user._loading = false; this.users.splice(this.users.indexOf(user), 1) },
-                      error => { user._loading = false; this.errorService.logError(this, error) }
+                      () => this.users.splice(this.users.indexOf(user), 1),
+                      error => this.errorService.logError(this, error),
+                      () => user._loading = false
                     );
   }
 
@@ -52,8 +66,9 @@ export class UsersComponent {
     user._loading = true;
     this.dataService.saveUser(user, password)
                     .subscribe(
-                       () => { user._loading = false; this.users.push(user); this.newUser = new User() },
-                       error => { user._loading = false; this.errorService.logError(this, error) }
+                       () => { this.users.push(user); user._name = user.name; this.newUser = new User() },
+                       error => this.errorService.logError(this, error),
+                       () => user._loading = false
                     );
   }
 }

@@ -13,3 +13,5 @@ export var DEFAULTS = {
                         monitor: { period: 0, radio_on: 1 },
                         scan: { mode: 64 }
                       };
+
+export var CHANGE_TIMEOUT = 5000;

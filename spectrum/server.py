@@ -46,7 +46,14 @@ def requires_auth(f):
   @wraps(f)
   def decorated(*args, **kwargs):
     auth = request.authorization
-    if not auth or not check_user(auth.username, auth.password):
+    ok = False
+    if auth is not None:
+      try:
+        check_user(auth.username, auth.password)
+        ok = True
+      except IncorrectPasswordError:
+        pass
+    if not ok:
       message = 'Could not verify your access level for that URL'
       return Response(message, 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
     return f(*args, **kwargs)
@@ -161,23 +168,43 @@ def user(name):
       return json.dumps({ 'data': data })
     if request.method == 'PUT':
       data = request.get_json()
-      if data is None:
+      if data is None or 'user' not in data is None:
         return "No user data", 400
-      if set_user(name, data):
-        return "OK", 200
-      password = request.args.get('password', None)
+      if set_user(name, data['user']):
+        return json.dumps({ 'status': 'OK' }), 200
+      password = data.get('password')
       if password is None:
         return "No password parameter", 400
-      create_user(name, password, data)
-      return "Created", 201
+      create_user(name, password, data['user'])
+      return json.dumps({ 'status': 'Created' }), 201
     if request.method == 'DELETE':
       if delete_user(name):
-        return "OK", 200
+        return json.dumps({ 'status': 'OK' }), 200
       else:
         return "No such user '{0}'".format(name), 404
   except UsersError as e:
     return e.message, 400
 
+@application.route('/login', methods=['GET', 'POST'])
+@requires_auth
+def login():
+  username = request.authorization.username
+  if request.method == 'GET':
+    return user(username)
+  if request.method == 'POST':
+    data = request.get_json()
+    if 'oldPassword' not in data or 'newPassword' not in data:
+      return "Missing password parameter", 400
+    try:
+      print "OLD", type(data['oldPassword'])
+      set_password(username, data['oldPassword'], data['newPassword'])
+    except IncorrectPasswordError:
+      return "Bad password", 403
+    return json.dumps({ 'status': 'OK' })
+
+@application.route('/logout')
+def logout():
+    return "Logged out", 401, {'WWW-Authenticate': 'Basic realm="Login required"'}
 
 def _iter_export(config, hits):
   yield '#TimeDate,'

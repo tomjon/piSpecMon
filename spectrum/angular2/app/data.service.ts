@@ -52,29 +52,47 @@ export class DataService {
   private extractUserData(res: Response) {
     let data = res.json().data || [ ];
     let users = [ ];
-    for (let user of data) {
-      user._name = user.name; // store original name in _name
-      user._count = 0; // otherwise this is unitialised
-      users.push(user)
+    for (let raw of data) {
+      users.push(new User(raw));
     }
     return users;
   }
 
   saveUser(user: User, password?: string): Observable<void> {
-    let body = JSON.stringify(user, (k, v) => { return (! k || k[0] != '_') ? v : undefined });
     let headers = new Headers({ 'Content-Type': 'application/json' });
     let options = new RequestOptions({ headers: headers });
     let url = this.baseUrl + 'user/' + (user._name || user.name);
+    let data: any = { user: user.data() };
     if (password) {
-       url += '?password=' + password;
+      data.password = password;
     }
-    return this.http.put(url, body, options)
+    return this.http.put(url, JSON.stringify(data), options)
                     .map(res => res.json())
                     .catch(this.handleError);
   }
 
   deleteUser(user: User): Observable<void> {
-    return this.http.delete(this.baseUrl + 'users/' + user.name)
+    return this.http.delete(this.baseUrl + 'user/' + user.name)
+                    .catch(this.handleError);
+  }
+
+  getLogin(): Observable<User> {
+    return this.http.get(this.baseUrl + 'login')
+                    .map(res => new User(res.json().data))
+                    .catch(this.handleError);
+  }
+
+  setPassword(oldPassword, newPassword): Observable<User> {
+    let headers = new Headers({ 'Content-Type': 'application/json' });
+    let options = new RequestOptions({ headers: headers });
+    let body = JSON.stringify({ oldPassword: oldPassword, newPassword: newPassword });
+    return this.http.post(this.baseUrl + "login", body, options)
+                    .map(res => res.json())
+                    .catch(this.handleError);
+  }
+
+  logout(): Observable<void> {
+    return this.http.get(this.baseUrl + 'logout')
                     .catch(this.handleError);
   }
 
@@ -158,10 +176,6 @@ export class DataService {
   }
 
   private handleError(error: any) {
-    // In a real world app, we might use a remote logging infrastructure
-    // We'd also dig deeper into the error to get a better message
-    let errMsg = (error.message) ? error.message :
-      error.status ? `${error.status} - ${error.statusText}` : 'Server error';
-    return Observable.throw(errMsg);
+    return Observable.throw(`${error.status} ${error.statusText} - ${error._body}`);
   }
 }

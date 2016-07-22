@@ -97,6 +97,8 @@ def create_user(username, password, data):
       
       If the user already exists, raises UserAlreadyExistsError.
   """
+  username = unicode(username)
+  password = unicode(password)
   if not username.isalnum():
     raise InvalidUsername()
   user = _new_user(username, password, data)
@@ -109,6 +111,8 @@ def check_user(username, password):
   """ Check the given password guess against salt and hash. Returns user
       data if successful, or raises IncorrectPasswordError if unsuccessful.
   """
+  username = unicode(username)
+  password = unicode(password)
   if not username.isalnum():
     raise InvalidUsername()
   for user in _iter_users():
@@ -132,6 +136,7 @@ def get_user(username):
   """ Return data for the given username, or None if that username does
       not exist.
   """
+  username = unicode(username)
   for user in _iter_users():
     if user.name == username:
       return user.data
@@ -139,6 +144,7 @@ def get_user(username):
 
 
 def _rewrite_users(username, user_fn=None):
+  username = unicode(username)
   temp_path = local_path(USERS_FILE + '.tmp')
   try:
     with open(temp_path, 'w') as f:
@@ -161,6 +167,7 @@ def set_user(username, data):
       exists. If data contains the key 'name', it is used to reset the
       stored username.
   """
+  username = unicode(username)
   name = None
   if 'name' in data:
     name = data['name']
@@ -172,6 +179,7 @@ def delete_user(username):
   """ Delete the entry for the given user name. Returns whether that name
       existed.
   """
+  username = unicode(username)
   return _rewrite_users(username)
 
 
@@ -182,6 +190,9 @@ def set_password(username, old_password, new_password):
       Returns whether a user with the given name existed (if not, nothing
       is done).
   """
+  username = unicode(username)
+  old_password = unicode(old_password)
+  new_password = unicode(new_password)
   check_user(username, old_password)
   return _rewrite_users(username, lambda user: _new_user(username, new_password, user.data))
 
