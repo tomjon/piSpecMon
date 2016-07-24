@@ -8,11 +8,12 @@ export class User {
   real: string;
   email: string;
   tel: string;
+  _login: boolean; // whether this user is the one logged in
   _name: string; // original name as obtained from server
   _count: number = 0; // change counter
   _loading: boolean; // whether there is server iteraction occurring
 
-  constructor(raw?: any) {
+  constructor(raw?: any, login?: boolean) {
     if (raw) {
       this.role = raw.role;
       this.name = raw.name;
@@ -20,6 +21,7 @@ export class User {
       this.email = raw.email;
       this.tel = raw.tel;
     }
+    this._login = login || false;
     this._name = this.name;
     this._count = 0;
     this._loading = false;

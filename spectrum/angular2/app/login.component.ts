@@ -17,7 +17,7 @@ import { CHANGE_TIMEOUT } from './constants';
       <tr><th>Telephone number</th><td><psm-input><input #input [(ngModel)]="user.tel" (change)="onChange()"></psm-input></td></tr>
       <tr><td><button [disabled]="loading" (click)="onSubmit()">Change Password</button></td><td><input [disabled]="loading" [(ngModel)]="password" type="password"></td></tr>
     </table>
-    <button (click)="onLogout()">Log out</button>
+    <!-- button (click)="onLogout()">Log out</button -->
   </div>`
 })
 export class LoginComponent {

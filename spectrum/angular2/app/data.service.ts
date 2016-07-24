@@ -78,7 +78,7 @@ export class DataService {
 
   getLogin(): Observable<User> {
     return this.http.get(this.baseUrl + 'login')
-                    .map(res => new User(res.json().data))
+                    .map(res => new User(res.json().data, true))
                     .catch(this.handleError);
   }
 

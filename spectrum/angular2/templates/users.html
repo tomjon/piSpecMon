@@ -4,7 +4,7 @@
     </tr>
     <tr [class.disabled]="user._loading" *ngFor="let user of users">
         <td>
-            <psm-input>
+            <psm-input [disabled]="user._login">
                 <select #input [disabled]="user._loading" [(ngModel)]="user.role" (ngModelChange)="onChange(user)">
                     <option *ngFor="let role of roles" value="{{role.role}}">{{role.label}}</option>
                 </select>
@@ -14,7 +14,7 @@
         <td><psm-input [disabled]="user._loading"><input #input [(ngModel)]="user.real" (change)="onChange(user)"></psm-input></td>
         <td><psm-input [disabled]="user._loading"><input #input [(ngModel)]="user.email" (change)="onChange(user)"></psm-input></td>
         <td><psm-input [disabled]="user._loading"><input #input [(ngModel)]="user.tel" (change)="onChange(user)"></psm-input></td>
-        <td><button [disabled]="user._loading" (click)="onDelete(user)">Delete</button></td>
+        <td><button [disabled]="user._loading || user._login" (click)="onDelete(user)">Delete</button></td>
     </tr>
     <tr [class.disabled]="newUser._loading">
         <td>
