@@ -1,8 +1,11 @@
+<div *ngIf="details.user">
+  Logged in as <b>{{details.user.name}}</b> <a href="/logout">Log out</a>
+</div>
 <psm-error></psm-error>
-<h1>Login</h1>
-<psm-login #login></psm-login>
+<h1>User Details</h1>
+<psm-details #details></psm-details>
 <h1>User Management</h1>
-<psm-users [user]="login.user"></psm-users>
+<psm-users [user]="details.user"></psm-users>
 <h1>Elasticsearch Stats</h1>
 <psm-stats></psm-stats>
 <h1>Rig Configuration</h1>

@@ -6,21 +6,20 @@ import { ErrorService } from './error.service';
 import { CHANGE_TIMEOUT } from './constants';
 
 @Component({
-  selector: 'psm-login',
+  selector: 'psm-details',
   directives: [ InputComponent ],
   template: `<div *ngIf="user">
     <table>
-      <tr><th>Role</th><td>{{user.roleLabel}}</td></tr>
+      <tr><th>Role</th><td>{{user.roleLabel()}}</td></tr>
       <tr><th>User name</th><td>{{user.name}}</td></tr>
       <tr><th>Real name</th><td><psm-input><input #input [(ngModel)]="user.real" (change)="onChange()"></psm-input></td></tr>
       <tr><th>Email address</th><td><psm-input><input #input [(ngModel)]="user.email" (change)="onChange()"></psm-input></td></tr>
       <tr><th>Telephone number</th><td><psm-input><input #input [(ngModel)]="user.tel" (change)="onChange()"></psm-input></td></tr>
       <tr><td><button [disabled]="loading" (click)="onSubmit()">Change Password</button></td><td><input [disabled]="loading" [(ngModel)]="password" type="password"></td></tr>
     </table>
-    <!-- button (click)="onLogout()">Log out</button -->
   </div>`
 })
-export class LoginComponent {
+export class DetailsComponent {
   user: User;
   password: string = "";
   loading: boolean = false;
@@ -28,7 +27,7 @@ export class LoginComponent {
   constructor(private dataService: DataService, private errorService: ErrorService) { }
 
   ngOnInit() {
-    this.dataService.getLogin()
+    this.dataService.getUserDetails()
                     .subscribe(
                       user => this.user = user,
                       error => this.errorService.logError(this, error)
@@ -59,14 +58,6 @@ export class LoginComponent {
                       () => { },
                       error => this.errorService.logError(this, error),
                       () => this.loading = false
-                    );
-  }
-
-  onLogout() {
-    this.dataService.logout()
-                    .subscribe(
-                      () => { },
-                      error => this.errorService.logError(this, error)
                     );
   }
 }

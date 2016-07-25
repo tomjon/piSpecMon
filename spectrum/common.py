@@ -28,7 +28,7 @@ rfh.setLevel(logging.DEBUG)
 
 # create console handler with a higher log level (these end up in system journal)
 ch = logging.StreamHandler()
-ch.setLevel(logging.ERROR)
+ch.setLevel(logging.DEBUG if 'debug' in sys.argv else logging.ERROR)
 
 # create formatter and add it to the handlers
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')

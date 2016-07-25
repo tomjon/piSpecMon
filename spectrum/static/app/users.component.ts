@@ -28,6 +28,7 @@ export class UsersComponent {
   }
 
   private replaceUser() {
+    if (! this.user) return;
     for (let i = 0; i < this.users.length; ++i) {
       if (this.users[i].name == this.user.name) {
         this.users[i] = this.user;

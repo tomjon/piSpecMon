@@ -1,6 +1,9 @@
 # configuration settings used by worker.py and server.py
 #FIXME use yaml
 
+# path where Flask's secret key is stored
+SECRET_KEY = 'secret.key'
+
 # path to the file worker.py writes its PID to
 PID_FILE = ".pid"
 

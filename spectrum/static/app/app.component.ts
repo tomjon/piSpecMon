@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { LoginComponent } from './login.component';
+import { DetailsComponent } from './details.component';
 import { UsersComponent } from './users.component';
 import { StatsComponent } from './stats.component';
 import { RigComponent } from './rig.component';
@@ -18,7 +18,7 @@ import './rxjs-operators';
 @Component({
   selector: 'psm-app',
   templateUrl: 'templates/app.html',
-  directives: [ ErrorComponent, LoginComponent, UsersComponent, StatsComponent, RigComponent, ConfigComponent, SweepComponent, WorkerComponent, ChartsComponent ],
+  directives: [ ErrorComponent, DetailsComponent, UsersComponent, StatsComponent, RigComponent, ConfigComponent, SweepComponent, WorkerComponent, ChartsComponent ],
   providers: [ DataService, ErrorService, HTTP_PROVIDERS ]
 })
 export class AppComponent { }

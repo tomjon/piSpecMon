@@ -37,7 +37,7 @@ export class User {
     return data;
   }
 
-  get roleLabel(): string {
+  roleLabel(): string {
     for (let r of User.ROLES) {
       if (r.role == this.role) {
         return r.label;

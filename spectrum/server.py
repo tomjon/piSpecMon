@@ -3,10 +3,11 @@ from common import *
 from users import *
 
 from flask import Flask, redirect, url_for, request, send_from_directory, Response, abort
+from flask.ext.login import LoginManager, login_user, login_required, current_user, logout_user
 from functools import wraps
 import requests
 import json
-import os
+import os, os.path
 from time import sleep, time, strftime, localtime
 import Hamlib
 import math
@@ -17,10 +18,27 @@ from monitor import get_capabilities, frange
 
 class SecuredStaticFlask (Flask):
   def send_static_file(self, filename):
-    if request.authorization:
+    if filename == 'login.html' or (current_user is not None and not current_user.is_anonymous() and current_user.is_authenticated()):
       return super(SecuredStaticFlask, self).send_static_file(filename)
     else:
       abort(403)
+
+class User:
+  def __init__(self, username, data):
+    self.name = username
+    self.data = data
+
+  def is_authenticated(self):
+    return True
+
+  def is_active(self):
+    return True
+
+  def is_anonymous(self):
+    return False
+
+  def get_id(self):
+    return self.name
 
 
 def set_settings(id, value):
@@ -42,31 +60,28 @@ def get_settings(id, new={}):
   fields = r.json()['fields']
   return json.loads(fields['json'][0])
 
-def requires_auth(f):
-  @wraps(f)
-  def decorated(*args, **kwargs):
-    auth = request.authorization
-    ok = False
-    if auth is not None:
-      try:
-        check_user(auth.username, auth.password)
-        ok = True
-      except IncorrectPasswordError:
-        pass
-    if not ok:
-      message = 'Could not verify your access level for that URL'
-      return Response(message, 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
-    return f(*args, **kwargs)
-  return decorated
-
 # create index (harmless if it already exists)
 with open(local_path('create.json')) as f:
   requests.put('{0}spectrum'.format(ELASTICSEARCH), data=f.read())
 
 application = SecuredStaticFlask(__name__)
+application.login_manager = LoginManager()
+application.secret_key = 'mordor' #FIXME how to generate, where to keep?
 application.caps = get_capabilities()
 application.rig = get_settings('rig', { 'model': 1 }) #FIXME is this a Hamlib constant? (dummy rig)
 application.worker = WorkerClient(WorkerInit())
+
+# set up secret key for sessions
+if not os.path.exists(SECRET_KEY):
+  application.secret_key = os.urandom(24)
+  with open(SECRET_KEY, 'w') as f:
+    f.write(application.secret_key)
+else:
+  with open(SECRET_KEY) as f:
+    application.secret_key = f.read()
+
+# initialise login manager
+application.login_manager.init_app(application)
 
 # get default default scan configuration from defaults.json
 with open(local_path('defaults.json')) as f:
@@ -79,13 +94,15 @@ application.logger.addHandler(ch)
 log.info("{0} rig models".format(len(application.caps['models'])))
 
 
-@application.route('/')
-@requires_auth
+@application.route('/', methods=['GET', 'POST'])
 def main():
-  return redirect("/static/index.html")
+  if current_user is not None and not current_user.is_anonymous() and current_user.is_authenticated():
+    return redirect("/static/index.html")
+  else:
+    return redirect("/static/login.html")
 
 
-@application.route('/favicon.ico')
+@application.route('/favicon.ico') #FIXME can use send_file, or abolish static/
 def favicon():
   return send_from_directory(os.path.join(application.root_path, 'static'),
                              'favicon.ico', mimetype='image/vnd.microsoft.icon')
@@ -99,7 +116,7 @@ def caps():
 # settings API
 @application.route('/defaults', methods=['GET', 'PUT'])
 @application.route('/rig', methods=['GET', 'PUT'])
-@requires_auth
+@login_required
 def settings():
   rule = request.url_rule.rule[1:]
   if request.method == 'GET':
@@ -114,7 +131,7 @@ def settings():
 #      PUT /monitor - start process with supplied config as request body
 #      DELETE /monitor - stop process
 @application.route('/monitor', methods=['HEAD', 'GET', 'PUT', 'DELETE'])
-@requires_auth
+@login_required
 def monitor():
   if request.method == 'PUT':
     if 'config_id' in application.worker.status():
@@ -136,7 +153,7 @@ def monitor():
 
 # forward Elasticsearch queries verbatim
 @application.route('/spectrum/<path:path>', methods=['GET', 'POST', 'DELETE'])
-@requires_auth
+@login_required
 def search(path):
   if request.method == 'POST':
     r = requests.post(''.join([ELASTICSEARCH + 'spectrum/', path]), params=request.args, data=request.get_data())
@@ -148,8 +165,8 @@ def search(path):
 
 
 @application.route('/users')
-@requires_auth
-def users():
+@login_required
+def user_list():
   def _namise_data(name, data):
     data['name'] = name
     return data
@@ -157,8 +174,8 @@ def users():
   return json.dumps({ 'data': users })
 
 @application.route('/user/<name>', methods=['GET', 'PUT', 'DELETE'])
-@requires_auth
-def user(name):
+@login_required
+def user_management(name):
   try:
     if request.method == 'GET':
       data = get_user(name)
@@ -185,26 +202,45 @@ def user(name):
   except UsersError as e:
     return e.message, 400
 
-@application.route('/login', methods=['GET', 'POST'])
-@requires_auth
-def login():
-  username = request.authorization.username
+
+@application.login_manager.user_loader
+def load_user(username):
+  return User(username, get_user(username))
+
+@application.route('/user', methods=['GET', 'POST'])
+@login_required
+def user_details():
   if request.method == 'GET':
-    return user(username)
+    data = get_user(current_user.name)
+    data['name'] = current_user.name
+    return json.dumps(data)
   if request.method == 'POST':
     data = request.get_json()
     if 'oldPassword' not in data or 'newPassword' not in data:
       return "Missing password parameter", 400
     try:
-      print "OLD", type(data['oldPassword'])
       set_password(username, data['oldPassword'], data['newPassword'])
     except IncorrectPasswordError:
       return "Bad password", 403
     return json.dumps({ 'status': 'OK' })
 
+
+@application.route('/login', methods=['POST'])
+def login():
+  username = request.form['username']
+  password = request.form['password']
+  try:
+    user = User(username, check_user(username, password))
+    login_user(user)
+  except IncorrectPasswordError:
+    pass
+  return redirect('/')
+
 @application.route('/logout')
 def logout():
-    return "Logged out", 401, {'WWW-Authenticate': 'Basic realm="Login required"'}
+    logout_user()
+    return redirect('/')
+
 
 def _iter_export(config, hits):
   yield '#TimeDate,'
@@ -223,7 +259,7 @@ def _iter_export(config, hits):
 
 # writes file locally (POST) or stream the output (GET)
 @application.route('/export/<config_id>', methods=['GET', 'POST'])
-@requires_auth
+@login_required
 def export(config_id):
   config = get_config(config_id)
   r = requests.get('%s/spectrum/sweep/_search?size=1000000&sort=timestamp&fields=*&q=config_id:%s' % (ELASTICSEARCH, config_id))
@@ -241,6 +277,7 @@ def export(config_id):
 
 
 @application.route('/stats')
+@login_required
 def get_stats():
   r = requests.get(ELASTICSEARCH + 'spectrum/_stats/docs,store')
   if r.status_code != 200:

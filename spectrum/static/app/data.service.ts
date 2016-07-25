@@ -76,9 +76,9 @@ export class DataService {
                     .catch(this.handleError);
   }
 
-  getLogin(): Observable<User> {
-    return this.http.get(this.baseUrl + 'login')
-                    .map(res => new User(res.json().data, true))
+  getUserDetails(): Observable<User> {
+    return this.http.get(this.baseUrl + 'user')
+                    .map(res => new User(res.json(), true))
                     .catch(this.handleError);
   }
 
@@ -86,7 +86,7 @@ export class DataService {
     let headers = new Headers({ 'Content-Type': 'application/json' });
     let options = new RequestOptions({ headers: headers });
     let body = JSON.stringify({ oldPassword: oldPassword, newPassword: newPassword });
-    return this.http.post(this.baseUrl + "login", body, options)
+    return this.http.post(this.baseUrl + 'user', body, options)
                     .map(res => res.json())
                     .catch(this.handleError);
   }
