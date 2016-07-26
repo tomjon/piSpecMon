@@ -1,3 +1,5 @@
+secret.key
+example_queries/
 *.pyc
 .*
 logs/
