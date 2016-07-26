@@ -12,10 +12,15 @@ import { CHANGE_TIMEOUT } from './constants';
   styles: [ `.disabled { background: lightgrey }` ]
 })
 export class UsersComponent {
-  @Input() user: User; // the logged in user
+  //FIXME edge case: a user can log in after an administrator, so the UI should reflect that (shouldn't be able to edit them) - also should reflect any changes they make
+  //FIXME show logged in users in a different background style
+  //FIXME unsaved changes should be apparent to the user, maybe with a button/click to manually trigger a save. Same on details component
+
   users: User[];
   newUser: User = new User();
   roles: any = User.ROLES;
+
+  @Input() user: User; // the logged in user
 
   constructor(private dataService: DataService, private errorService: ErrorService) { }
 
@@ -42,7 +47,7 @@ export class UsersComponent {
       if (--user._count == 0) {
         this.dataService.saveUser(user)
                         .subscribe(
-                          () => user._name = user.name,
+                          () => { },
                           error => this.errorService.logError(this, error)
                         );
       }
@@ -59,17 +64,23 @@ export class UsersComponent {
                     );
   }
 
-  onAdd(user) {
+  onAdd() {
+    for (let user of this.users) {
+      if (user.name == this.newUser.name) {
+        alert("User already exists");
+        return;
+      }
+    }
     let password = prompt("Please supply an initial password");
     if (password == undefined || password == null || password == "") {
       return;
     }
-    user._loading = true;
-    this.dataService.saveUser(user, password)
+    this.newUser._loading = true;
+    this.dataService.saveUser(this.newUser, password)
                     .subscribe(
-                       () => { this.users.push(user); user._name = user.name; this.newUser = new User() },
+                       () => { this.users.push(this.newUser); this.newUser = new User() },
                        error => this.errorService.logError(this, error),
-                       () => user._loading = false
+                       () => this.newUser._loading = false
                     );
   }
 }

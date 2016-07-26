@@ -21,7 +21,7 @@ class SecuredStaticFlask (Flask):
     if filename == 'login.html' or (current_user is not None and not current_user.is_anonymous() and current_user.is_authenticated()):
       return super(SecuredStaticFlask, self).send_static_file(filename)
     else:
-      abort(403)
+      return redirect('/')
 
 class User:
   def __init__(self, username, data):
@@ -39,6 +39,16 @@ class User:
 
   def get_id(self):
     return self.name
+
+def role_required(roles):
+  def role_decorator(func):
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+      if hasattr(current_user, 'data') and current_user.data['role'] in roles:
+        return login_required(func)(*args, **kwargs)
+      return application.login_manager.unauthorized()
+    return decorated_view
+  return role_decorator
 
 
 def set_settings(id, value):
@@ -66,7 +76,7 @@ with open(local_path('create.json')) as f:
 
 application = SecuredStaticFlask(__name__)
 application.login_manager = LoginManager()
-application.secret_key = 'mordor' #FIXME how to generate, where to keep?
+application.logged_in_users = []
 application.caps = get_capabilities()
 application.rig = get_settings('rig', { 'model': 1 }) #FIXME is this a Hamlib constant? (dummy rig)
 application.worker = WorkerClient(WorkerInit())
@@ -116,7 +126,7 @@ def caps():
 # settings API
 @application.route('/defaults', methods=['GET', 'PUT'])
 @application.route('/rig', methods=['GET', 'PUT'])
-@login_required
+@role_required(['admin'])
 def settings():
   rule = request.url_rule.rule[1:]
   if request.method == 'GET':
@@ -131,7 +141,7 @@ def settings():
 #      PUT /monitor - start process with supplied config as request body
 #      DELETE /monitor - stop process
 @application.route('/monitor', methods=['HEAD', 'GET', 'PUT', 'DELETE'])
-@login_required
+@role_required(['admin', 'freq'])
 def monitor():
   if request.method == 'PUT':
     if 'config_id' in application.worker.status():
@@ -153,7 +163,7 @@ def monitor():
 
 # forward Elasticsearch queries verbatim
 @application.route('/spectrum/<path:path>', methods=['GET', 'POST', 'DELETE'])
-@login_required
+@role_required(['admin', 'freq', 'data'])
 def search(path):
   if request.method == 'POST':
     r = requests.post(''.join([ELASTICSEARCH + 'spectrum/', path]), params=request.args, data=request.get_data())
@@ -163,18 +173,19 @@ def search(path):
     r = requests.delete(''.join([ELASTICSEARCH + 'spectrum/', path]), params=request.args)
   return r.text, r.status_code
 
-
 @application.route('/users')
-@login_required
+@role_required([ 'admin' ])
 def user_list():
   def _namise_data(name, data):
     data['name'] = name
+    if name in application.logged_in_users:
+      data['logged_in'] = True
     return data
   users = [_namise_data(name, data) for name, data in iter_users()]
   return json.dumps({ 'data': users })
 
 @application.route('/user/<name>', methods=['GET', 'PUT', 'DELETE'])
-@login_required
+@role_required(['admin'])
 def user_management(name):
   try:
     if request.method == 'GET':
@@ -182,10 +193,14 @@ def user_management(name):
       if data is None:
         return "No such user '{0}'".format(name), 404
       data['name'] = name
+      if name in application.logged_in_users:
+        data['logged_in'] = True
       return json.dumps({ 'data': data })
     if request.method == 'PUT':
+      if name in application.logged_in_users:
+        return "User is logged in", 403
       data = request.get_json()
-      if data is None or 'user' not in data is None:
+      if data is None or 'user' not in data:
         return "No user data", 400
       if set_user(name, data['user']):
         return json.dumps({ 'status': 'OK' }), 200
@@ -204,25 +219,53 @@ def user_management(name):
 
 
 @application.login_manager.user_loader
-def load_user(username):
-  return User(username, get_user(username))
+def load_user(username, password=None):
+  if password is not None:
+    user = User(username, check_user(username, password))
+  else:
+    if username not in application.logged_in_users:
+      return None # log out this user, who was logged in before server restart
+    user = User(username, get_user(username))
+  if user.data['role'] != 'data':
+    for name in application.logged_in_users:
+      if name == user.name:
+        break
+      data = get_user(name)
+      if data['role'] != 'data':
+        user.data['role'] = 'data'
+        user.data['superior'] = data
+        break
+  return user
 
 @application.route('/user', methods=['GET', 'POST'])
-@login_required
+@role_required(['admin', 'freq', 'data'])
 def user_details():
+  """ End point for the logged in user to get their details, change their details, or password.
+  """
   if request.method == 'GET':
-    data = get_user(current_user.name)
+    data = current_user.data
     data['name'] = current_user.name
+    data['logged_in'] = True
     return json.dumps(data)
   if request.method == 'POST':
     data = request.get_json()
-    if 'oldPassword' not in data or 'newPassword' not in data:
-      return "Missing password parameter", 400
-    try:
-      set_password(username, data['oldPassword'], data['newPassword'])
-    except IncorrectPasswordError:
-      return "Bad password", 403
-    return json.dumps({ 'status': 'OK' })
+    print data
+    if data is None:
+      return "No user data", 400
+    if 'oldPassword' in data and 'newPassword' in data:
+      try:
+        set_password(username, data['oldPassword'], data['newPassword'])
+      except IncorrectPasswordError:
+        return "Bad password", 403
+      del data['oldPassword'], data['newPassword']
+    if 'oldPassword' in data or 'newPassword' in data:
+      return "Bad password parameters", 400
+    if 'user' in data:
+      if 'role' in data['user']:
+        del data['user']['role'] # a user cannot change their own role
+      if not update_user(current_user.name, data['user']):
+        return "Logged in user does not exist", 500
+    return json.dumps({ 'status': 'OK' }), 200
 
 
 @application.route('/login', methods=['POST'])
@@ -230,16 +273,21 @@ def login():
   username = request.form['username']
   password = request.form['password']
   try:
-    user = User(username, check_user(username, password))
+    user = load_user(username, password)
     login_user(user)
+    application.logged_in_users.append(user.name)
   except IncorrectPasswordError:
     pass
   return redirect('/')
 
 @application.route('/logout')
+@role_required(['admin', 'freq', 'data'])
 def logout():
-    logout_user()
-    return redirect('/')
+  name = getattr(current_user, 'name', None)
+  if name is not None and name in application.logged_in_users:
+    application.logged_in_users.remove(name)
+  logout_user()
+  return redirect('/')
 
 
 def _iter_export(config, hits):
@@ -259,7 +307,7 @@ def _iter_export(config, hits):
 
 # writes file locally (POST) or stream the output (GET)
 @application.route('/export/<config_id>', methods=['GET', 'POST'])
-@login_required
+@role_required(['admin', 'freq', 'data'])
 def export(config_id):
   config = get_config(config_id)
   r = requests.get('%s/spectrum/sweep/_search?size=1000000&sort=timestamp&fields=*&q=config_id:%s' % (ELASTICSEARCH, config_id))
@@ -277,7 +325,7 @@ def export(config_id):
 
 
 @application.route('/stats')
-@login_required
+@role_required(['admin'])
 def get_stats():
   r = requests.get(ELASTICSEARCH + 'spectrum/_stats/docs,store')
   if r.status_code != 200:

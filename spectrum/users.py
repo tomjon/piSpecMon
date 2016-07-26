@@ -58,6 +58,10 @@ class _UserEntry:
     self.data = data
     return self
 
+  def update_data(self, data):
+    self.data.update(data)
+    return self
+
 
 # yield user entries from the users file, and append a user if there is one
 def _iter_users(append_user=None):
@@ -164,15 +168,18 @@ def _rewrite_users(username, user_fn=None):
 
 def set_user(username, data):
   """ Set the data for the given username and returns whether the username
-      exists. If data contains the key 'name', it is used to reset the
-      stored username.
+      exists.
   """
   username = unicode(username)
-  name = None
-  if 'name' in data:
-    name = data['name']
-    del data['name']
-  return _rewrite_users(username, lambda user: user.set_data(data).set_name(name))
+  return _rewrite_users(username, lambda user: user.set_data(data))
+
+
+def update_user(username, data):
+  """ Update the data for the given username and returns whether the username
+      exists.
+  """
+  username = unicode(username)
+  return _rewrite_users(username, lambda user: user.update_data(data))
 
 
 def delete_user(username):

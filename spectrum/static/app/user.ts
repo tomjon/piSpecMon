@@ -1,28 +1,29 @@
 export class User {
   static ROLES = [ { role: "admin", label: "Administrator" },
-                   { role: "freq", label: "Frequency setter" },
-                   { role: "data", label: "Data viewer" } ];
+                   { role: "freq", label: "Frequency Setter" },
+                   { role: "data", label: "Data Viewer" } ];
 
+  //FIXME create a 'data' property that stores role, name, etc so that we don't need to jump through the _... hoops
   role: string = User.ROLES[0].role;
   name: string;
   real: string;
   email: string;
   tel: string;
-  _login: boolean; // whether this user is the one logged in
-  _name: string; // original name as obtained from server
+  _logged_in: boolean; // whether this user is logged in
   _count: number = 0; // change counter
   _loading: boolean; // whether there is server iteraction occurring
+  _superior: User; // the prior logged in administrator, if any
 
-  constructor(raw?: any, login?: boolean) {
+  constructor(raw?: any) {
     if (raw) {
       this.role = raw.role;
       this.name = raw.name;
       this.real = raw.real;
       this.email = raw.email;
       this.tel = raw.tel;
+      this._logged_in = raw.logged_in;
+      this._superior = raw.superior ? new User(raw.superior) : undefined;
     }
-    this._login = login || false;
-    this._name = this.name;
     this._count = 0;
     this._loading = false;
   }
@@ -37,7 +38,7 @@ export class User {
     return data;
   }
 
-  roleLabel(): string {
+  get _roleLabel(): string {
     for (let r of User.ROLES) {
       if (r.role == this.role) {
         return r.label;

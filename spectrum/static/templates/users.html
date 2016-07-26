@@ -1,31 +1,32 @@
+<h1>User Management</h1>
 <table>
     <tr>
-        <th>Role</th><th>User name</th><th>Real name</th><th>Email address</th><th>Telephone number</th><th></th>
+        <th>User name</th><th>Role</th><th>Real name</th><th>Email address</th><th>Telephone number</th><th></th>
     </tr>
     <tr [class.disabled]="user._loading" *ngFor="let user of users">
+        <td>{{user.name}}</td>
         <td>
-            <psm-input [disabled]="user._login">
-                <select #input [disabled]="user._loading" [(ngModel)]="user.role" (ngModelChange)="onChange(user)">
+            <psm-input [disabled]="user._logged_in">
+                <select #input [disabled]="user._loading || user._logged_in" [(ngModel)]="user.role" (ngModelChange)="onChange(user)">
                     <option *ngFor="let role of roles" value="{{role.role}}">{{role.label}}</option>
                 </select>
             </psm-input>
         </td>
-        <td><psm-input [disabled]="user._loading"><input #input [(ngModel)]="user.name" (change)="onChange(user)"></psm-input></td>
-        <td><psm-input [disabled]="user._loading"><input #input [(ngModel)]="user.real" (change)="onChange(user)"></psm-input></td>
-        <td><psm-input [disabled]="user._loading"><input #input [(ngModel)]="user.email" (change)="onChange(user)"></psm-input></td>
-        <td><psm-input [disabled]="user._loading"><input #input [(ngModel)]="user.tel" (change)="onChange(user)"></psm-input></td>
-        <td><button [disabled]="user._loading || user._login" (click)="onDelete(user)">Delete</button></td>
+        <td><psm-input [disabled]="user._loading || user._logged_in"><input #input [(ngModel)]="user.real" (change)="onChange(user)"></psm-input></td>
+        <td><psm-input [disabled]="user._loading || user._logged_in"><input #input [(ngModel)]="user.email" (change)="onChange(user)"></psm-input></td>
+        <td><psm-input [disabled]="user._loading || user._logged_in"><input #input [(ngModel)]="user.tel" (change)="onChange(user)"></psm-input></td>
+        <td><button [disabled]="user._loading || user._logged_in" (click)="onDelete(user)">Delete</button></td>
     </tr>
     <tr [class.disabled]="newUser._loading">
+        <td><input [disabled]="newUser._loading" [(ngModel)]="newUser.name"></td>
         <td>
             <select [disabled]="newUser._loading" [(ngModel)]="newUser.role">
                 <option *ngFor="let role of roles" value="{{role.role}}">{{role.label}}</option>
             </select>
         </td>
-        <td><input [disabled]="newUser._loading" [(ngModel)]="newUser.name"></td>
         <td><input [disabled]="newUser._loading" [(ngModel)]="newUser.real"></td>
         <td><input [disabled]="newUser._loading" [(ngModel)]="newUser.email"></td>
         <td><input [disabled]="newUser._loading" [(ngModel)]="newUser.tel"></td>
-        <td><button [disabled]="newUser._loading" (click)="onAdd(newUser)">Add</button></td>
+        <td><button [disabled]="newUser._loading" (click)="onAdd()">Add</button></td>
     </tr>
 </table>

@@ -8,16 +8,15 @@ import { CHANGE_TIMEOUT } from './constants';
 @Component({
   selector: 'psm-details',
   directives: [ InputComponent ],
-  template: `<div *ngIf="user">
-    <table>
-      <tr><th>Role</th><td>{{user.roleLabel()}}</td></tr>
+  template: `<h1>User Details</h1>
+    <table *ngIf="user">
+      <tr><th>Role</th><td>{{user._roleLabel}}</td></tr>
       <tr><th>User name</th><td>{{user.name}}</td></tr>
       <tr><th>Real name</th><td><psm-input><input #input [(ngModel)]="user.real" (change)="onChange()"></psm-input></td></tr>
       <tr><th>Email address</th><td><psm-input><input #input [(ngModel)]="user.email" (change)="onChange()"></psm-input></td></tr>
       <tr><th>Telephone number</th><td><psm-input><input #input [(ngModel)]="user.tel" (change)="onChange()"></psm-input></td></tr>
       <tr><td><button [disabled]="loading" (click)="onSubmit()">Change Password</button></td><td><input [disabled]="loading" [(ngModel)]="password" type="password"></td></tr>
-    </table>
-  </div>`
+    </table>`
 })
 export class DetailsComponent {
   user: User;
@@ -27,20 +26,27 @@ export class DetailsComponent {
   constructor(private dataService: DataService, private errorService: ErrorService) { }
 
   ngOnInit() {
-    this.dataService.getUserDetails()
+    this.dataService.getCurrentUser()
                     .subscribe(
-                      user => this.user = user,
+                      user => { this.user = user; this.checkSuperior() },
                       error => this.errorService.logError(this, error)
                     );
+  }
+
+  private checkSuperior() {
+    if (this.user._superior) {
+      let s = this.user._superior;
+      this.errorService.logError(this, `Downgraded to Data Viewer: ${s.real} is logged in as ${s._roleLabel} - contact them at ${s.email} or on ${s.tel}`);
+    }
   }
 
   onChange() {
     ++this.user._count;
     setTimeout(() => {
       if (--this.user._count == 0) {
-        this.dataService.saveUser(this.user)
+        this.dataService.setCurrentUser(this.user)
                         .subscribe(
-                          () => delete this.user._name,
+                          () => { },
                           error => this.errorService.logError(this, error)
                         );
       }
@@ -53,7 +59,7 @@ export class DetailsComponent {
       return;
     }
     this.loading = true;
-    this.dataService.setPassword(oldPassword, this.password)
+    this.dataService.setCurrentUser(null, oldPassword, this.password)
                     .subscribe(
                       () => { },
                       error => this.errorService.logError(this, error),

@@ -61,7 +61,7 @@ export class DataService {
   saveUser(user: User, password?: string): Observable<void> {
     let headers = new Headers({ 'Content-Type': 'application/json' });
     let options = new RequestOptions({ headers: headers });
-    let url = this.baseUrl + 'user/' + (user._name || user.name);
+    let url = this.baseUrl + 'user/' + user.name;
     let data: any = { user: user.data() };
     if (password) {
       data.password = password;
@@ -76,18 +76,24 @@ export class DataService {
                     .catch(this.handleError);
   }
 
-  getUserDetails(): Observable<User> {
+  getCurrentUser(): Observable<User> {
     return this.http.get(this.baseUrl + 'user')
-                    .map(res => new User(res.json(), true))
+                    .map(res => new User(res.json()))
                     .catch(this.handleError);
   }
 
-  setPassword(oldPassword, newPassword): Observable<User> {
+  setCurrentUser(user: User, oldPassword?: string, newPassword?: string): Observable<void> {
     let headers = new Headers({ 'Content-Type': 'application/json' });
     let options = new RequestOptions({ headers: headers });
-    let body = JSON.stringify({ oldPassword: oldPassword, newPassword: newPassword });
-    return this.http.post(this.baseUrl + 'user', body, options)
-                    .map(res => res.json())
+    let data: any = { };
+    if (user) {
+      data.user = user.data();
+    }
+    if (oldPassword && newPassword) {
+      data.oldPassword = oldPassword;
+      data.newPassword = newPassword;
+    }
+    return this.http.post(this.baseUrl + 'user', JSON.stringify(data), options)
                     .catch(this.handleError);
   }
 
@@ -176,6 +182,7 @@ export class DataService {
   }
 
   private handleError(error: any) {
-    return Observable.throw(`${error.status} ${error.statusText} - ${error._body}`);
+    //FIXME surely you should invoke the error service here, rather than throwing/catching AGAIN? simplifies a lot
+    return Observable.throw(`${error.status} ${error.statusText}`);
   }
 }
