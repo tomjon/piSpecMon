@@ -1,7 +1,6 @@
 import { Component, Input, Output, EventEmitter, ViewChild } from '@angular/core';
 import { SweepComponent } from './sweep.component';
 import { DataService } from './data.service';
-import { ErrorService } from './error.service';
 import { Config } from './config';
 import { _d3 as d3, dt_format, insertLineBreaks } from './d3_import';
 
@@ -19,14 +18,14 @@ export class RangeComponent {
 
   @ViewChild('slider') slider;
 
-  constructor(private dataService: DataService, private errorService: ErrorService) { }
+  constructor(private dataService: DataService) { }
 
   ngOnChanges() {
     if (this.config.config_id == '') return;
     this.dataService.getRange(this.config.config_id)
                     .subscribe(
                       data => this.update(data),
-                      error => this.errorService.logError(this, error)
+                      () => { }
                     );
   }
 

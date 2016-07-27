@@ -29,14 +29,14 @@ export class DetailsComponent {
     this.dataService.getCurrentUser()
                     .subscribe(
                       user => { this.user = user; this.checkSuperior() },
-                      error => this.errorService.logError(this, error)
+                      () => { }
                     );
   }
 
   private checkSuperior() {
     if (this.user._superior) {
       let s = this.user._superior;
-      this.errorService.logError(this, `Downgraded to Data Viewer: ${s.real} is logged in as ${s._roleLabel} - contact them at ${s.email} or on ${s.tel}`);
+      this.errorService.logError("Log in", `Downgraded to Data Viewer. ${s.real} is logged in as ${s._roleLabel} - contact them at ${s.email} or on ${s.tel}`);
     }
   }
 
@@ -47,7 +47,7 @@ export class DetailsComponent {
         this.dataService.setCurrentUser(this.user)
                         .subscribe(
                           () => { },
-                          error => this.errorService.logError(this, error)
+                          () => { }
                         );
       }
     }, CHANGE_TIMEOUT);
@@ -62,7 +62,7 @@ export class DetailsComponent {
     this.dataService.setCurrentUser(null, oldPassword, this.password)
                     .subscribe(
                       () => { },
-                      error => this.errorService.logError(this, error),
+                      () => { },
                       () => this.loading = false
                     );
   }

@@ -8,7 +8,8 @@ export class ErrorService {
 
   message$ = this.messageSource.asObservable();
 
-  public logError(source: any, message: string): void {
+  public logError(source: string, message: string): void {
+    console.log("ERROR", source + ": " + message);
     this.messageSource.next(new Error(source, message));
   }
 }

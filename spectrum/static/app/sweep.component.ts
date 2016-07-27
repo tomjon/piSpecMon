@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { DataService } from './data.service';
-import { ErrorService } from './error.service';
 import { HZ_LABELS } from './constants';
 import { dt_format } from './d3_import';
 
@@ -13,7 +12,7 @@ export class SweepComponent {
   sets: any[] = [ ];
   waiting: boolean = false; // true when waiting for server interaction to complete
 
-  constructor(private dataService: DataService, private errorService: ErrorService) { }
+  constructor(private dataService: DataService) { }
 
   ngOnInit() {
     this.reload(false);
@@ -23,7 +22,7 @@ export class SweepComponent {
     this.dataService.getSweepSets()
                     .subscribe(
                       sets => { this.sets = sets; if (selectLast) this.selectLast() },
-                      error => this.errorService.logError(this, error)
+                      () => { }
                     );
   }
 
@@ -32,7 +31,7 @@ export class SweepComponent {
     this.dataService.exportData(this.config_id)
                     .subscribe(
                       path => alert('CSV written to ' + path),
-                      error => this.errorService.logError(this, error),
+                      () => { },
                       () => this.waiting = false
                     );
   }
@@ -47,7 +46,7 @@ export class SweepComponent {
     this.dataService.deleteSweepSet(this.config_id)
                     .subscribe(
                       () => this.removeSet(this.config_id),
-                      error => this.errorService.logError(this, error),
+                      () => { },
                       () => this.waiting = false
                     );
   }

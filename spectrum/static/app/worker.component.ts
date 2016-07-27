@@ -1,7 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { SweepComponent } from './sweep.component';
 import { DataService } from './data.service';
-import { ErrorService } from './error.service';
 import { TICK_INTERVAL } from './constants';
 
 @Component({
@@ -17,7 +16,7 @@ export class WorkerComponent {
   @Input('config') config: any;
   @Input('sweep') sweepComponent: SweepComponent;
 
-  constructor(private dataService: DataService, private errorService: ErrorService) { }
+  constructor(private dataService: DataService) { }
 
   ngOnInit() {
     setInterval(this.monitor.bind(this), TICK_INTERVAL);
@@ -48,7 +47,7 @@ export class WorkerComponent {
     this.dataService.startMonitor(this.config)
                     .subscribe(
                       () => this.sweepComponent.reload(true),
-                      error => this.errorService.logError(this, error),
+                      () => { },
                       () => this.waiting = false
                     );
   }
@@ -58,7 +57,7 @@ export class WorkerComponent {
     this.dataService.stopMonitor()
                     .subscribe(
                       () => { },
-                      error => this.errorService.logError(this, error),
+                      () => { },
                       () => this.waiting = false
                     );
   }

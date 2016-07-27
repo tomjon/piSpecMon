@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { DataService } from './data.service';
-import { ErrorService } from './error.service';
 import { BytesPipe } from './bytes.pipe';
 
 @Component({
@@ -12,13 +11,13 @@ export class StatsComponent {
   title = "Elasticsearch Index";
   stats: any = { };
 
-  constructor(private dataService: DataService, private errorService: ErrorService) { }
+  constructor(private dataService: DataService) { }
 
   ngOnInit() {
     this.dataService.getStats()
                     .subscribe(
                       stats => this.stats = stats,
-                      error => this.errorService.logError(this, error)
+                      () => { }
                     );
   }
 }

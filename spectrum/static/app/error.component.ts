@@ -2,6 +2,8 @@ import { Component } from '@angular/core';
 import { ErrorService } from './error.service';
 import { Error } from './error';
 
+//FIXME standardize how errors are reported from the server API so that we can display a nice message
+
 @Component({
   selector: 'psm-error',
   templateUrl: 'templates/error.html'

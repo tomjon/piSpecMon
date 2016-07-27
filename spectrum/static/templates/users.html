@@ -27,6 +27,6 @@
         <td><input [disabled]="newUser._loading" [(ngModel)]="newUser.real"></td>
         <td><input [disabled]="newUser._loading" [(ngModel)]="newUser.email"></td>
         <td><input [disabled]="newUser._loading" [(ngModel)]="newUser.tel"></td>
-        <td><button [disabled]="newUser._loading" (click)="onAdd()">Add</button></td>
+        <td><button [disabled]="newUser._loading" (click)="onAdd(newUser)">Add</button></td>
     </tr>
 </table>

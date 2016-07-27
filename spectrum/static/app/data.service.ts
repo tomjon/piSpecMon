@@ -3,29 +3,30 @@ import { Headers, Http, RequestOptions, Response } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import { User } from './user';
 import { Config } from './config';
+import { ErrorService } from './error.service';
 
 @Injectable()
 export class DataService {
   private baseUrl = 'http://localhost:8080/';
 
-  constructor(private http: Http) { }
+  constructor(private http: Http, private errorService: ErrorService) { }
 
   getModels(): Observable<any> {
     return this.http.get(this.baseUrl + 'caps')
                     .map(res => res.json().models)
-                    .catch(this.handleError);
+                    .catch(this.errorHandler("get rig models"));
   }
 
   getModes(): Observable<any> {
     return this.http.get(this.baseUrl + 'caps')
                     .map(res => res.json().modes)
-                    .catch(this.handleError);
+                    .catch(this.errorHandler("get available modes"));
   }
 
   getRig(): Observable<any> {
     return this.http.get(this.baseUrl + 'rig')
                     .map(res => res.json())
-                    .catch(this.handleError);
+                    .catch(this.errorHandler("get rig configuration"));
   }
 
   setRig(rig: any): Observable<void> {
@@ -34,19 +35,19 @@ export class DataService {
     let options = new RequestOptions({ headers: headers });
     return this.http.put(this.baseUrl + 'rig', body, options)
                     .map(res => res.json())
-                    .catch(this.handleError);
+                    .catch(this.errorHandler("set rig configuration"));
   }
 
   getStats(): Observable<any> {
     return this.http.get(this.baseUrl + 'stats')
                     .map(res => res.json())
-                    .catch(this.handleError);
+                    .catch(this.errorHandler("get data storage statistics"));
   }
 
   getUsers(): Observable<User[]> {
     return this.http.get(this.baseUrl + 'users')
                     .map(this.extractUserData)
-                    .catch(this.handleError);
+                    .catch(this.errorHandler("get all user details"));
   }
 
   private extractUserData(res: Response) {
@@ -68,18 +69,18 @@ export class DataService {
     }
     return this.http.put(url, JSON.stringify(data), options)
                     .map(res => res.json())
-                    .catch(this.handleError);
+                    .catch(this.errorHandler("save user details"));
   }
 
   deleteUser(user: User): Observable<void> {
     return this.http.delete(this.baseUrl + 'user/' + user.name)
-                    .catch(this.handleError);
+                    .catch(this.errorHandler("delete user"));
   }
 
   getCurrentUser(): Observable<User> {
     return this.http.get(this.baseUrl + 'user')
                     .map(res => new User(res.json()))
-                    .catch(this.handleError);
+                    .catch(this.errorHandler("get current user details"));
   }
 
   setCurrentUser(user: User, oldPassword?: string, newPassword?: string): Observable<void> {
@@ -94,19 +95,19 @@ export class DataService {
       data.newPassword = newPassword;
     }
     return this.http.post(this.baseUrl + 'user', JSON.stringify(data), options)
-                    .catch(this.handleError);
+                    .catch(this.errorHandler("set current user details"));
   }
 
   logout(): Observable<void> {
     return this.http.get(this.baseUrl + 'logout')
-                    .catch(this.handleError);
+                    .catch(this.errorHandler("log out"));
   }
 
   getConfig(config_id: string): Observable<Config> {
     let url = this.baseUrl + 'spectrum/config/' + config_id + '?fields=json,timestamp';
     return this.http.get(url)
                     .map(res => this.extractConfigSet(config_id, res))
-                    .catch(this.handleError);
+                    .catch(this.errorHandler("get scan configuration"));
   }
 
   private extractConfigSet(config_id: string, res: Response): Config {
@@ -117,12 +118,12 @@ export class DataService {
   getSweepSets(): Observable<any> {
     return this.http.get(this.baseUrl + 'spectrum/config/_search?size=10000&fields=*')
                     .map(this.extractSweepData)
-                    .catch(this.handleError);
+                    .catch(this.errorHandler("get scans"));
   }
 
   deleteSweepSet(config_id): Observable<void> {
     return this.http.delete(this.baseUrl + 'spectrum/config/' + config_id)
-                    .catch(this.handleError);
+                    .catch(this.errorHandler("delete scan"));
     //FIXME doesn't delete sweep data!  But all these spectrum/** requests should use a dedicated server API anyway
   }
 
@@ -142,7 +143,7 @@ export class DataService {
   getMonitor(): Observable<any> {
     return this.http.get(this.baseUrl + 'monitor')
                     .map(res => res.json())
-                    .catch(this.handleError);
+                    .catch(this.errorHandler("get monitor status"));
   }
 
   startMonitor(config: any): Observable<void> {
@@ -151,26 +152,26 @@ export class DataService {
     let options = new RequestOptions({ headers: headers });
     return this.http.put(this.baseUrl + 'monitor', body, options)
                     .map(res => res.json())
-                    .catch(this.handleError);
+                    .catch(this.errorHandler("start monitor"));
   }
 
   stopMonitor(): Observable<void> {
     return this.http.delete(this.baseUrl + 'monitor')
                     .map(res => res.json())
-                    .catch(this.handleError);
+                    .catch(this.errorHandler("stop monitor"));
   }
 
   exportData(config_id): Observable<string> {
     return this.http.post(this.baseUrl + 'export/' + config_id, null, null)
                     .map(res => res.json().path)
-                    .catch(this.handleError);
+                    .catch(this.errorHandler("export spectrum data"));
   }
 
   getRange(config_id): Observable<any> {
     let url = 'spectrum/sweep/_search?size=1&q=config_id:' + config_id + '&fields=timestamp&sort=timestamp:desc';
     return this.http.get(this.baseUrl + url)
                     .map(res => res.json())
-                    .catch(this.handleError);
+                    .catch(this.errorHandler("get sweep range"));
   }
 
   getData(config_id, range): Observable<any> {
@@ -178,11 +179,13 @@ export class DataService {
     let url = 'spectrum/sweep/_search?size=1000000&q=' + q + '&fields=*&sort=timestamp';
     return this.http.get(this.baseUrl + url)
                     .map(res => res.json().hits.hits)
-                    .catch(this.handleError);
+                    .catch(this.errorHandler("get spectrum data"));
   }
 
-  private handleError(error: any) {
-    //FIXME surely you should invoke the error service here, rather than throwing/catching AGAIN? simplifies a lot
-    return Observable.throw(`${error.status} ${error.statusText}`);
+  private errorHandler(source: any) {
+    return function (error: any): Observable<any> {
+      this.errorService.logError(source, `${error.status} ${error.statusText}`);
+      return Observable.throw(error);
+    };
   }
 }

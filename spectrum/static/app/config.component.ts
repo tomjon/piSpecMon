@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { DataService } from './data.service';
-import { ErrorService } from './error.service';
 import { Config } from './config';
 import { DEFAULTS } from './constants';
 
@@ -16,13 +15,13 @@ export class ConfigComponent {
 
   @Input('config_id') config_id : string;
 
-  constructor(private dataService: DataService, private errorService: ErrorService) { }
+  constructor(private dataService: DataService) { }
 
   ngOnInit() {
     this.dataService.getModes()
                     .subscribe(
                       modes => { this.modes = modes },
-                      error => this.errorService.logError(this, error)
+                      () => { }
                     );
   }
 
@@ -31,7 +30,7 @@ export class ConfigComponent {
       this.dataService.getConfig(this.config_id)
                       .subscribe(
                         config => { delete config.config.rig; this.config = config },
-                        error => this.errorService.logError(this, error)
+                        () => { }
                       );
     } else {
       this.config = DEFAULT_CONFIG;

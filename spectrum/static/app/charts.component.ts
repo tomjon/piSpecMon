@@ -5,7 +5,6 @@ import { FrequencyComponent } from './frequency.component';
 import { LevelComponent } from './level.component';
 import { WaterfallComponent } from './waterfall.component';
 import { DataService } from './data.service';
-import { ErrorService } from './error.service';
 import { Config } from './config';
 import { MAX_N, CHART_HEIGHT } from './constants';
 
@@ -20,7 +19,7 @@ export class ChartsComponent {
 
   @Input() config: Config;
 
-  constructor(private dataService: DataService, private errorService: ErrorService) { }
+  constructor(private dataService: DataService) { }
 
   ngOnChanges() {
     this.data = { };
@@ -30,7 +29,7 @@ export class ChartsComponent {
     this.dataService.getData(this.config.config_id, range)
                     .subscribe(
                       data => this.update(data),
-                      error => this.errorService.logError(this, error)
+                      () => { }
                     );
   }
 
