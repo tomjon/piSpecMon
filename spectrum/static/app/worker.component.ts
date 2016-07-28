@@ -28,7 +28,7 @@ export class WorkerComponent {
                       data => {
                         this.error = data.error;
                         this.config_id = data.config_id;
-                        this.last_sweep = 1000 * data.last_sweep;
+                        this.last_sweep = Math.floor(1000 * data.last_sweep);
                       },
                       error => window.location.assign('/') //FIXME handle the error as usual, then redirect? (this effectively logs out)
                     );

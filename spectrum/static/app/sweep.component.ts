@@ -62,7 +62,7 @@ export class SweepComponent {
   }
 
   private selectLast() {
-    this.config_id = this.sets[this.sets.length - 1].config_id;
+    //this.config_id = this.sets[this.sets.length - 1].config_id;
   }
 
   private format(set): string {

@@ -7,7 +7,7 @@ import { ErrorService } from './error.service';
 
 @Injectable()
 export class DataService {
-  private baseUrl = 'http://localhost:8080/';
+  private baseUrl = '/';
 
   constructor(private http: Http, private errorService: ErrorService) { }
 
