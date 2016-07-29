@@ -122,12 +122,13 @@ def caps():
 @application.route('/rig', methods=['GET', 'PUT'])
 @role_required(['admin'])
 def settings():
+  sleep(1)
   rule = request.url_rule.rule[1:]
   if request.method == 'GET':
     return json.dumps(getattr(application, rule))
   elif request.method == 'PUT':
     setattr(application, rule, set_settings(rule, request.get_json()))
-    return 'OK'
+    return json.dumps({ 'status': 'OK' })
 
 
 # API: GET /monitor - return process status

@@ -17,31 +17,42 @@ export class RigComponent {
   title = "Rig Configuration";
   models: any = [ ];
   rig: any = { };
+  _loading: number = 0;
+  show: boolean = true;
 
   constructor(private dataService: DataService) { }
 
+  toggle() {
+    this.show = ! this.show;
+  }
+
   ngOnInit() {
+    this._loading += 2;
     this.dataService.getModels()
                     .subscribe(
                       models => this.models = models.sort(modelSort),
-                      () => { }
+                      () => { },
+                      () => --this._loading
                     );
     this.dataService.getRig()
                     .subscribe(
-                      rig => { this.rig = rig },
-                      () => { }
-                    );
-  }
-
-  onChange() {
-    this.dataService.setRig(this.rig)
-                    .subscribe(
+                      rig => this.rig = rig,
                       () => { },
-                      () => { }
+                      () => --this._loading
                     );
   }
 
   onSubmit() {
-    // never called - no submit button, but ngSubmit supresses page reload
+    ++this._loading;
+    this.dataService.setRig(this.rig)
+                    .subscribe(
+                      () => { },
+                      () => { },
+                      () => --this._loading
+                    );
+  }
+
+  get loading(): boolean {
+    return this._loading > 0;
   }
 }

@@ -184,6 +184,7 @@ export class DataService {
 
   private errorHandler(source: any) {
     return function (error: any): Observable<any> {
+      console.log(error);
       this.errorService.logError(source, `${error.status} ${error.statusText}`);
       return Observable.throw(error);
     };

@@ -5,5 +5,5 @@ import { AppComponent } from './app.component';
 bootstrap(AppComponent, [
   disableDeprecatedForms(),
   provideForms()
- ])
- .catch((err: any) => console.error(err));
+])
+.catch((err: any) => console.error(err));

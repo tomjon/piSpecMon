@@ -1,29 +1,70 @@
-<h1>Rig Configuration</h1>
-<form (change)="onChange()" (ngSubmit)="onSubmit()">
-  <table>
-    <tr>
-      <td>Model</td>
-      <td>
-        <select [(ngModel)]="rig.model" name="model">
-          <option *ngFor="let model of models" value="{{model.model}}">{{model.manufacturer}} {{model.name}} v{{model.version}} ({{model.status}})</option>
-        </select>
-      </td>
-    </tr>
-    <tr><td>Serial port path</td><td><input [(ngModel)]="rig.pathname" name="pathname"></td></tr>
-    <tr><td>Stop bits</td><td><input [(ngModel)]="rig.stop_bits" name="stop_bits"></td></tr>
-    <tr><td>Write delay (ms)</td><td><input [(ngModel)]="rig.write_delay" name="write_delay"></td></tr>
-    <tr><td>Set frequency attempts</td><td><select [(ngModel)]="rig.set_check" name="set_check">
-      <option value="0">Set once only</option>
-      <option value="1">Set once and check</option>
-      <option value="2">Set and check up to twice</option>
-      <option value="3">Set and check up to three times</option>
-    </select></td></tr>
-    <tr><td>Error handling</td><td><select [(ngModel)]="rig.retries" name="retries">
-      <option value="0">Fail on error</option>
-      <option value="1">Wait and retry once</option>
-      <option value="2">Wait and retry twice</option>
-      <option value="3">Wait and retry three times</option>
-    </select></td></tr>
-    <tr><td>Retry interval (ms)</td><td><input [(ngModel)]="rig.interval" name="interval"></td></tr>
-  </table>
-</form>
+<div class="container">
+  <h1 (click)="toggle()">
+    Rig Configuration
+    <span *ngIf="show" class="toggle glyphicon glyphicon-collapse-down"></span>
+    <span *ngIf="! show" class="toggle glyphicon glyphicon-collapse-up"></span>
+    <span *ngIf="loading" class="busy glyphicon glyphicon-transfer"></span>
+  </h1>
+  <form *ngIf="show" (ngSubmit)="onSubmit()" #rigForm="ngForm">
+    <div class="form-group">
+      <label for="model">Model</label>
+      <select class="form-control" [disabled]="loading" [(ngModel)]="rig.model" name="model">
+        <option *ngFor="let model of models" value="{{model.model}}">{{model.manufacturer}} {{model.name}} v{{model.version}} ({{model.status}})</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="path">Serial port path</label>
+      <input [disabled]="loading" type="text" required class="form-control" required [(ngModel)]="rig.pathname" name="path" #path="ngModel">
+      <div [hidden]="path.valid || path.pristine" class="alert alert-danger">
+        Serial port path is a required parameter
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="data">Data bits</label>
+      <input [disabled]="loading" type="number" pattern="[0-9]+" min="1" max="8" step="1" class="form-control" required [(ngModel)]="rig.data_bits" name="data" #data="ngModel">
+      <div [hidden]="data.valid || data.pristine" class="alert alert-danger">
+        Data bits is a required parameter, and must be an integer
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="stop">Stop bits</label>
+      <input [disabled]="loading" type="number" min="1" max="2" step="0.5" class="form-control" required [(ngModel)]="rig.stop_bits" name="stop" #stop="ngModel">
+      <div [hidden]="stop.valid || stop.pristine" class="alert alert-danger">
+        Stop bits is a required parameter
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="delay">Write delay (ms)</label>
+      <input [disabled]="loading" type="number" min="0" pattern="[0-9]+" required class="form-control" [(ngModel)]="rig.write_delay" name="delay" #delay="ngModel">
+      <div [hidden]="data.valid || data.pristine" class="alert alert-danger">
+        Write delay is a required parameter, and must be an integer
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="attempts">Set frequency attempts</label>
+      <select [disabled]="loading" class="form-control" [(ngModel)]="rig.set_check" name="attempts">
+        <option value="0">Set once only</option>
+        <option value="1">Set once and check</option>
+        <option value="2">Set and check up to twice</option>
+        <option value="3">Set and check up to three times</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="retries">Error handling</label>
+      <select [disabled]="loading" class="form-control" [(ngModel)]="rig.retries" name="retries">
+        <option value="0">Fail on error</option>
+        <option value="1">Wait and retry once</option>
+        <option value="2">Wait and retry twice</option>
+        <option value="3">Wait and retry three times</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="interval">Retry interval (ms)</label>
+      <input [disabled]="loading" type="number" min="0" pattern="[0-9]+" required class="form-control" [(ngModel)]="rig.interval" name="interval" #interval="ngModel">
+      <div [hidden]="data.valid || data.pristine" class="alert alert-danger">
+        Retry interval is a required parameter, and must be an integer
+      </div>
+    </div>
+    <button type="submit" class="btn btn-default" [disabled]="loading || ! rigForm.form.valid">Submit</button>
+  </form>
+</div>
