@@ -3,7 +3,7 @@ from common import *
 from users import *
 
 from flask import Flask, redirect, url_for, request, send_from_directory, Response, abort
-from flask.ext.login import LoginManager, login_user, login_required, current_user, logout_user
+from flask_login import LoginManager, login_user, login_required, current_user, logout_user
 from functools import wraps
 import requests
 import json
