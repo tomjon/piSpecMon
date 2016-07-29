@@ -18,7 +18,7 @@ from monitor import get_capabilities, frange
 
 class SecuredStaticFlask (Flask):
   def send_static_file(self, filename):
-    if filename == 'login.html' or (current_user is not None and not current_user.is_anonymous() and current_user.is_authenticated()):
+    if filename == 'login.html' or (current_user is not None and not current_user.is_anonymous and current_user.is_authenticated):
       return super(SecuredStaticFlask, self).send_static_file(filename)
     else:
       return redirect('/')
@@ -27,15 +27,9 @@ class User:
   def __init__(self, username, data):
     self.name = username
     self.data = data
-
-  def is_authenticated(self):
-    return True
-
-  def is_active(self):
-    return True
-
-  def is_anonymous(self):
-    return False
+    self.is_authenticated = True
+    self.is_active = True
+    self.is_anonymous = False
 
   def get_id(self):
     return self.name
@@ -106,7 +100,7 @@ log.info("{0} rig models".format(len(application.caps['models'])))
 
 @application.route('/', methods=['GET', 'POST'])
 def main():
-  if current_user is not None and not current_user.is_anonymous() and current_user.is_authenticated():
+  if current_user is not None and not current_user.is_anonymous and current_user.is_authenticated:
     return redirect("/static/index.html")
   else:
     return redirect("/static/login.html")
