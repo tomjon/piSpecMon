@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ViewChild } from '@angular/core';
 import { DataService } from './data.service';
 
 let modelSort = function (a, b) {
@@ -20,6 +20,8 @@ export class RigComponent {
   _loading: number = 0;
   show: boolean = true;
 
+  @ViewChild('rigForm') rigForm;
+
   constructor(private dataService: DataService) { }
 
   toggle() {
@@ -27,19 +29,28 @@ export class RigComponent {
   }
 
   ngOnInit() {
-    this._loading += 2;
+    ++this._loading;
     this.dataService.getModels()
                     .subscribe(
                       models => this.models = models.sort(modelSort),
                       () => { },
                       () => --this._loading
                     );
+    this.onReset(false);
+  }
+
+  onReset(pristine?: boolean) {
+    ++this._loading;
     this.dataService.getRig()
                     .subscribe(
                       rig => this.rig = rig,
                       () => { },
                       () => --this._loading
                     );
+    if (pristine == undefined) {
+      this.rigForm.form['_touched'] = false;
+      this.rigForm.form['_pristine'] = true;
+    }
   }
 
   onSubmit() {

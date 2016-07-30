@@ -122,7 +122,6 @@ def caps():
 @application.route('/rig', methods=['GET', 'PUT'])
 @role_required(['admin'])
 def settings():
-  sleep(1)
   rule = request.url_rule.rule[1:]
   if request.method == 'GET':
     return json.dumps(getattr(application, rule))
