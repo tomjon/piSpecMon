@@ -1,36 +1,34 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { InputComponent } from './input.component';
+import { WidgetComponent } from './widget.component';
 import { User } from './user';
 import { DataService } from './data.service';
 import { ErrorService } from './error.service';
-import { CHANGE_TIMEOUT } from './constants';
 
 @Component({
   selector: 'psm-details',
-  directives: [ InputComponent ],
-  template: `<h1>User Details</h1>
-    <table *ngIf="user">
-      <tr><th>Role</th><td>{{user._roleLabel}}</td></tr>
-      <tr><th>User name</th><td>{{user.name}}</td></tr>
-      <tr><th>Real name</th><td><psm-input><input #input [(ngModel)]="user.real" (change)="onChange()"></psm-input></td></tr>
-      <tr><th>Email address</th><td><psm-input><input #input [(ngModel)]="user.email" (change)="onChange()"></psm-input></td></tr>
-      <tr><th>Telephone number</th><td><psm-input><input #input [(ngModel)]="user.tel" (change)="onChange()"></psm-input></td></tr>
-      <tr><td><button [disabled]="loading" (click)="onSubmit()">Change Password</button></td><td><input [disabled]="loading" [(ngModel)]="password" type="password"></td></tr>
-    </table>`
+  directives: [ WidgetComponent, InputComponent ],
+  templateUrl: 'templates/details.html'
 })
 export class DetailsComponent {
-  user: User;
-  password: string = "";
-  loading: boolean = false;
+  user: User = new User();
+  oldPassword: string = "";
+  newPassword: string = "";
+
+  @ViewChild(WidgetComponent) widgetComponent;
+  @ViewChild('form') form;
 
   constructor(private dataService: DataService, private errorService: ErrorService) { }
 
   ngOnInit() {
-    this.dataService.getCurrentUser()
-                    .subscribe(
-                      user => { this.user = user; this.checkSuperior() },
-                      () => { }
-                    );
+    this.widgetComponent.busy(this.dataService.getCurrentUser())
+                        .subscribe(user => { this.user = user; this.checkSuperior() });
+  }
+
+  onReset() {
+    this.widgetComponent.busy(this.dataService.getCurrentUser())
+                        .subscribe(user => this.user = user);
+    this._pristine();
   }
 
   private checkSuperior() {
@@ -40,30 +38,28 @@ export class DetailsComponent {
     }
   }
 
-  onChange() {
-    ++this.user._count;
-    setTimeout(() => {
-      if (--this.user._count == 0) {
-        this.dataService.setCurrentUser(this.user)
-                        .subscribe(
-                          () => { },
-                          () => { }
-                        );
-      }
-    }, CHANGE_TIMEOUT);
+  onSubmit() {
+    this.widgetComponent.busy(this.dataService.setCurrentUser(this.user))
+                        .subscribe();
+    this._pristine();
   }
 
-  onSubmit() {
-    let oldPassword = prompt("Enter your current password");
-    if (oldPassword == undefined || oldPassword == null || oldPassword == "") {
-      return;
-    }
-    this.loading = true;
-    this.dataService.setCurrentUser(null, oldPassword, this.password)
-                    .subscribe(
-                      () => { },
-                      () => { },
-                      () => this.loading = false
-                    );
+  private _pristine(): void {
+    this.form.form['_touched'] = false;
+    this.form.form['_pristine'] = true;
+  }
+
+  resetPasswords() {
+    this.oldPassword = "";
+    this.newPassword = "";
+  }
+
+  onPassword() {
+    this.widgetComponent.busy(this.dataService.setCurrentUser(null, this.oldPassword, this.newPassword))
+                        .subscribe();
+  }
+
+  get loading() {
+    return this.widgetComponent.loading;
   }
 }

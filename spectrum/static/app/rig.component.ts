@@ -46,4 +46,8 @@ export class RigComponent {
     this.rigForm.form['_touched'] = false;
     this.rigForm.form['_pristine'] = true;
   }
+
+  get loading() {
+    return this.widgetComponent.loading;
+  }
 }

@@ -248,7 +248,7 @@ def user_details():
       return "No user data", 400
     if 'oldPassword' in data and 'newPassword' in data:
       try:
-        set_password(username, data['oldPassword'], data['newPassword'])
+        set_password(current_user.name, data['oldPassword'], data['newPassword'])
       except IncorrectPasswordError:
         return "Bad password", 403
       del data['oldPassword'], data['newPassword']

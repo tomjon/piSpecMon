@@ -28,7 +28,9 @@
 .container .busy {
   float: right;
 }
-
+psm-widget[title="User Details"] .btn-link {
+  float: right;
+}
 
 /* forms */
 .ng-valid[required] {
