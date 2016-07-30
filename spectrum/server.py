@@ -318,6 +318,7 @@ def export(config_id):
     return json.dumps({ 'path': path })
 
 
+#FIXME should return labels and values, not just values - might use various back ends
 @application.route('/stats')
 @role_required(['admin'])
 def get_stats():

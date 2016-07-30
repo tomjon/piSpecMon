@@ -15,6 +15,7 @@
 .container {
   width: 400px;
 	background: lightgoldenrodyellow;
+  margin: 5px;
 }
 .container h1 {
 	font-size: 24px;
