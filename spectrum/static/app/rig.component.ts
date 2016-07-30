@@ -1,5 +1,6 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { DataService } from './data.service';
+import { WidgetComponent } from './widget.component';
 
 let modelSort = function (a, b) {
   if (a.manufacturer == b.manufacturer) {
@@ -11,59 +12,38 @@ let modelSort = function (a, b) {
 
 @Component({
   selector: 'psm-rig',
-  templateUrl: 'templates/rig.html'
+  templateUrl: 'templates/rig.html',
+  directives: [ WidgetComponent ]
 })
 export class RigComponent {
-  title = "Rig Configuration";
   models: any = [ ];
   rig: any = { };
-  _loading: number = 0;
-  show: boolean = true;
 
+  @ViewChild(WidgetComponent) widgetComponent;
   @ViewChild('rigForm') rigForm;
 
   constructor(private dataService: DataService) { }
 
-  toggle() {
-    this.show = ! this.show;
-  }
-
   ngOnInit() {
-    ++this._loading;
-    this.dataService.getModels()
-                    .subscribe(
-                      models => this.models = models.sort(modelSort),
-                      () => { },
-                      () => --this._loading
-                    );
-    this.onReset(false);
+    this.widgetComponent.busy(this.dataService.getModels())
+                        .subscribe(models => this.models = models.sort(modelSort));
+    this.onReset();
   }
 
-  onReset(pristine?: boolean) {
-    ++this._loading;
-    this.dataService.getRig()
-                    .subscribe(
-                      rig => this.rig = rig,
-                      () => { },
-                      () => --this._loading
-                    );
-    if (pristine == undefined) {
-      this.rigForm.form['_touched'] = false;
-      this.rigForm.form['_pristine'] = true;
-    }
+  onReset() {
+    this.widgetComponent.busy(this.dataService.getRig())
+                        .subscribe(rig => this.rig = rig);
+    if (this.rigForm) this._pristine();
   }
 
   onSubmit() {
-    ++this._loading;
-    this.dataService.setRig(this.rig)
-                    .subscribe(
-                      () => { },
-                      () => { },
-                      () => --this._loading
-                    );
+    this.widgetComponent.busy(this.dataService.setRig(this.rig))
+                        .subscribe();
+    this._pristine();
   }
 
-  get loading(): boolean {
-    return this._loading > 0;
+  private _pristine(): void {
+    this.rigForm.form['_touched'] = false;
+    this.rigForm.form['_pristine'] = true;
   }
 }

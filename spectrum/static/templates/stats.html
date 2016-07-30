@@ -1,11 +1,5 @@
-<div class="container">
-  <h1 (click)="toggle()">
-    Data Storage Statistics
-    <span *ngIf="show" class="toggle glyphicon glyphicon-collapse-down"></span>
-    <span *ngIf="! show" class="toggle glyphicon glyphicon-collapse-up"></span>
-    <span *ngIf="loading" class="busy glyphicon glyphicon-transfer"></span>
-  </h1>
-  <form *ngIf="show">
+<psm-widget title="Data Storage Statistics">
+  <form>
     <div class="form-group">
       <label for="path">Total index size</label>
       <input readonly type="text" class="form-control" value="{{stats.size_in_bytes | bytes}}">
@@ -15,4 +9,4 @@
       <input readonly type="text" class="form-control" value="{{stats.doc_count}}">
     </div>
   </form>
-</div>
+</psm-widget>

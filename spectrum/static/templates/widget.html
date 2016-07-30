@@ -1,0 +1,11 @@
+<div class="container">
+  <h1 (click)="toggle()">
+    {{title}}
+    <span *ngIf="show" class="toggle glyphicon glyphicon-collapse-down"></span>
+    <span *ngIf="! show" class="toggle glyphicon glyphicon-collapse-up"></span>
+    <span *ngIf="loading" class="busy glyphicon glyphicon-transfer"></span>
+  </h1>
+  <div *ngIf="show">
+    <ng-content></ng-content>
+  </div>
+</div>
