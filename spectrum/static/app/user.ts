@@ -4,7 +4,7 @@ export class User {
                    { role: "data", label: "Data Viewer" } ];
 
   //FIXME create a 'data' property that stores role, name, etc so that we don't need to jump through the _... hoops
-  role: string = User.ROLES[0].role;
+  role: string = User.ROLES[2].role;
   name: string;
   real: string;
   email: string;

@@ -1,7 +1,6 @@
 import { Component, ViewChild } from '@angular/core';
 import { LoginComponent } from './login.component';
 import { DetailsComponent } from './details.component';
-import { UsersComponent } from './users.component';
 import { StatsComponent } from './stats.component';
 import { RigComponent } from './rig.component';
 import { ConfigComponent } from './config.component';
@@ -21,7 +20,7 @@ import './rxjs-operators';
 @Component({
   selector: 'psm-app',
   templateUrl: 'templates/app.html',
-  directives: [ LoginComponent, ErrorComponent, DetailsComponent, UsersComponent, StatsComponent, RigComponent, ConfigComponent, SweepComponent, WorkerComponent, ChartsComponent ],
+  directives: [ LoginComponent, ErrorComponent, DetailsComponent, StatsComponent, RigComponent, ConfigComponent, SweepComponent, WorkerComponent, ChartsComponent ],
   providers: [ DataService, ErrorService, MessageService, HTTP_PROVIDERS ]
 })
 export class AppComponent {
