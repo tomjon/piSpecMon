@@ -1,12 +1,30 @@
 <psm-widget title="User Details">
+  <div class="form-group">
+    <label for="name">User name</label>
+    <input *ngIf="! users" [disabled]="loading" type="text" readonly class="form-control" [(ngModel)]="user.name">
+    <select *ngIf="users" [disabled]="loading" class="form-control" [(ngModel)]="username" (ngModelChange)="changeUser()">
+      <option>{{current.name}}</option>
+      <option *ngIf="usersWithRole('admin').length > 0" disabled>&nbsp;</option>
+      <optgroup *ngIf="usersWithRole('admin').length > 0" label="Administrators">
+        <option *ngFor="let u of usersWithRole('admin')">{{u.name}}</option>
+      </optgroup>
+      <option *ngIf="usersWithRole('freq').length > 0" disabled>&nbsp;</option>
+      <optgroup *ngIf="usersWithRole('freq').length > 0" label="Frequency Setters">
+        <option *ngFor="let u of usersWithRole('freq')">{{u.name}}</option>
+      </optgroup>
+      <option *ngIf="usersWithRole('data').length > 0" disabled>&nbsp;</option>
+      <optgroup *ngIf="usersWithRole('data').length > 0" label="Data Viewers">
+        <option *ngFor="let u of usersWithRole('data')">{{u.name}}</option>
+      </optgroup>
+    </select>
+  </div>
   <form role="form" (ngSubmit)="onSubmit()" #form="ngForm">
     <div class="form-group">
       <label for="role">Role</label>
-      <input [disabled]="loading" type="text" readonly class="form-control" [(ngModel)]="user._roleLabel" name="role">
-    </div>
-    <div class="form-group">
-      <label for="name">User name</label>
-      <input [disabled]="loading" type="text" readonly class="form-control" [(ngModel)]="user.name" name="name">
+      <input *ngIf="user == current" [disabled]="loading" type="text" readonly class="form-control" [(ngModel)]="user._roleLabel" name="role">
+      <select *ngIf="user != current" [disabled]="loading" class="form-control" [(ngModel)]="user.role" name="role">
+        <option *ngFor="let r of roles" [ngValue]="r.role">{{r.label}}</option>
+      </select>
     </div>
     <div class="form-group">
       <label for="real">Real name</label>
@@ -31,7 +49,9 @@
     </div>
     <button type="button" (click)="onReset()" class="btn btn-default" [disabled]="loading || form.form.pristine">Reset</button>
     <button type="submit" class="btn btn-default" [disabled]="loading || ! form.form.valid || form.form.pristine">Submit</button>
-    <button type="button" (click)="resetPasswords()" class="btn btn-link" [disabled]="loading" data-toggle="modal" data-target="#passwordModal">Change Password</button>
+    <button *ngIf="users" type="button" (click)="onDeleteUser()" class="btn btn-default" [disabled]="loading || user == current">Delete</button>
+    <button *ngIf="user == current" type="button" (click)="resetPasswordForm()" class="btn btn-link" [disabled]="loading" data-toggle="modal" data-target="#passwordModal">Change Password</button>
+    <button *ngIf="users" type="button" (click)="resetAddUserForm()" class="btn btn-link" [disabled]="loading" data-toggle="modal" data-target="#newModal">New</button>
   </form>
   <div id="passwordModal" class="modal fade" role="dialog">
     <form role="form" #passwordForm="ngForm">
@@ -44,11 +64,17 @@
           <div class="modal-body">
               <div class="form-group">
                 <label for="old">Old password</label>
-                <input type="text" required class="form-control" [(ngModel)]="oldPassword" name="old">
+                <input type="text" required class="form-control" [(ngModel)]="oldPassword" name="old" #old="ngModel">
+                <div [hidden]="old.valid || old.pristine" class="alert alert-danger">
+                  Old password is a required parameter
+                </div>
               </div>
               <div class="form-group">
                 <label for="new">New password</label>
-                <input type="text" required class="form-control" [(ngModel)]="newPassword" name="new">
+                <input type="text" required class="form-control" [(ngModel)]="newPassword" name="new" #new="ngModel">
+                <div [hidden]="new.valid || new.pristine" class="alert alert-danger">
+                  New password is a required parameter
+                </div>
               </div>
           </div>
           <div class="modal-footer">
@@ -58,5 +84,50 @@
         </div>
       </div>
     </form>
+  </div>
+  <div id="newModal" class="modal fade" role="dialog">
+    <form role="form" #newForm="ngForm">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title">Add New User</h4>
+          </div>
+          <div class="modal-body">
+              <div class="form-group">
+                <label for="old">User name</label>
+                <input type="text" required pattern="[a-zA-Z0-9]+" class="form-control" [(ngModel)]="newUserName" name="name" #name="ngModel">
+                <div [hidden]="name.valid || name.pristine" class="alert alert-danger">
+                  User name is a required parameter, and must be alphanumeric
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="new">Initial password</label>
+                <input type="password" required class="form-control" [(ngModel)]="newUserPassword" name="password" #password="ngModel">
+                <div [hidden]="password.valid || password.pristine" class="alert alert-danger">
+                  Initial password is a required parameter
+                </div>
+              </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" (click)="onNewUser()" class="btn btn-default" data-dismiss="modal" [disabled]="! newForm.form.valid">Submit</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div id="messageModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">{{message}}</h4>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+        </div>
+      </div>
+    </div>
   </div>
 </psm-widget>

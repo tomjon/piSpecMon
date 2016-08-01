@@ -23,14 +23,19 @@ import './rxjs-operators';
   providers: [ DataService, ErrorService, HTTP_PROVIDERS ]
 })
 export class AppComponent {
-  @ViewChild(DetailsComponent) detailsComponent;
+  user: User = new User();
 
-  roleIn(roles: string[]): boolean {
-    if (! this.user) return false;
-    return roles.indexOf(this.user.role) != -1;
+  constructor(private dataService: DataService, private errorService: ErrorService) { }
+
+  ngOnInit() {
+    this.dataService.getCurrentUser()
+                    .subscribe(user => { this.user = user; this.checkSuperior() });
   }
 
-  get user(): User {
-    return this.detailsComponent.user;
+  private checkSuperior() {
+    if (this.user._superior) {
+      let s = this.user._superior;
+      this.errorService.logError("Log in", `Downgraded to Data Viewer. ${s.real} is logged in as ${s._roleLabel} - contact them at ${s.email} or on ${s.tel}`);
+    }
   }
 }

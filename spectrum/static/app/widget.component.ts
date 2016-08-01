@@ -22,11 +22,8 @@ export class WidgetComponent {
   busy(obs: Observable<any>): Observable<any> {
     ++this._loading;
     return Observable.create(observer => {
-        obs.subscribe(
-          value => observer.next(value),
-          error => observer.error(error),
-          () => { --this._loading; observer.complete() }
-        );
+      obs.subscribe(observer);
+      return () => --this._loading;
     });
   }
 }

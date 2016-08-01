@@ -2,11 +2,10 @@
   Logged in as <b>{{user.name}}</b> ({{user._roleLabel}}) <a href="/logout">Log out</a>
 </div>
 <psm-error></psm-error>
-<psm-details></psm-details>
-<psm-users *ngIf="roleIn(['admin'])" [user]="user"></psm-users>
-<psm-stats *ngIf="roleIn(['admin'])"></psm-stats>
-<psm-rig *ngIf="roleIn(['admin'])"></psm-rig>
+<psm-details [user]="user"></psm-details>
+<psm-stats *ngIf="user.roleIn(['admin'])"></psm-stats>
+<psm-rig *ngIf="user.roleIn(['admin'])"></psm-rig>
 <psm-sweep #sweep></psm-sweep>
 <psm-config #config [config_id]="sweep.config_id"></psm-config>
-<psm-worker *ngIf="roleIn(['admin', 'freq'])" [config]="config.config.config" [sweep]="sweep"></psm-worker>
+<psm-worker *ngIf="user.roleIn(['admin', 'freq'])" [config]="config.config.config" [sweep]="sweep"></psm-worker>
 <psm-charts [config]="config.config"></psm-charts>

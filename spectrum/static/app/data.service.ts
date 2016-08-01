@@ -59,6 +59,12 @@ export class DataService {
     return users;
   }
 
+  getUser(name: string): Observable<User> {
+    return this.http.get(this.baseUrl + 'user/' + name)
+                    .map(res => new User(res.json().data))
+                    .catch(this.errorHandler("get user details for " + name));
+  }
+
   saveUser(user: User, password?: string): Observable<void> {
     let headers = new Headers({ 'Content-Type': 'application/json' });
     let options = new RequestOptions({ headers: headers });
@@ -183,10 +189,10 @@ export class DataService {
   }
 
   private errorHandler(source: any) {
-    return function (error: any): Observable<any> {
-      console.log(error);
-      this.errorService.logError(source, `${error.status} ${error.statusText}`);
-      return Observable.throw(error);
+    let errors = this.errorService;
+    return function (error: any, caught: Observable<any>): Observable<any> {
+      errors.logError(source, `${error._body} - ${error.status} ${error.statusText}`);
+      return Observable.create(observer => { observer.error() });
     };
   }
 }

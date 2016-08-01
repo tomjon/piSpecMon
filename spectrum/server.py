@@ -192,7 +192,7 @@ def user_management(name):
       return json.dumps({ 'data': data })
     if request.method == 'PUT':
       if name in application.logged_in_users:
-        return "User is logged in", 403
+        return "User is logged in", 400
       data = request.get_json()
       if data is None or 'user' not in data:
         return "No user data", 400
@@ -250,7 +250,7 @@ def user_details():
       try:
         set_password(current_user.name, data['oldPassword'], data['newPassword'])
       except IncorrectPasswordError:
-        return "Bad password", 403
+        return "Bad password", 400
       del data['oldPassword'], data['newPassword']
     if 'oldPassword' in data or 'newPassword' in data:
       return "Bad password parameters", 400

@@ -46,4 +46,8 @@ export class User {
     }
     return this.role;
   }
+
+  roleIn(roles: string[]): boolean {
+    return roles.indexOf(this.role) != -1;
+  }
 }
