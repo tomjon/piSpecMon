@@ -37,7 +37,6 @@ export class SweepComponent {
   }
 
   onDownload() {
-    //FIXME note, this won't work until the app is being served by Apache / Flask (otherwise need different domain)
     window.open('/export/' + this.config_id, '_blank');
   }
 

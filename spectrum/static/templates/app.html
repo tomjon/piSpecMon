@@ -1,6 +1,4 @@
-<div *ngIf="user">
-  Logged in as <b>{{user.name}}</b> ({{user._roleLabel}}) <a href="/logout">Log out</a>
-</div>
+<psm-login [user]="user"></psm-login>
 <psm-error></psm-error>
 <psm-details [user]="user"></psm-details>
 <psm-stats *ngIf="user.roleIn(['admin'])"></psm-stats>
@@ -9,3 +7,17 @@
 <psm-config #config [config_id]="sweep.config_id"></psm-config>
 <psm-worker *ngIf="user.roleIn(['admin', 'freq'])" [config]="config.config.config" [sweep]="sweep"></psm-worker>
 <psm-charts [config]="config.config"></psm-charts>
+
+<div id="messageModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title"></h4>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+      </div>
+    </div>
+  </div>
+</div>

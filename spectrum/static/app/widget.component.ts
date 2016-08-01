@@ -26,4 +26,13 @@ export class WidgetComponent {
       return () => --this._loading;
     });
   }
+
+  pristine(form): void {
+    form.form['_touched'] = false;
+    form.form['_pristine'] = true;
+    for (let k in form.form.controls) {
+      form.form.controls[k]['_touched'] = false;
+      form.form.controls[k]['_pristine'] = true;
+    }
+  }
 }

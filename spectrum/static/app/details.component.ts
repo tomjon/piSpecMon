@@ -2,8 +2,7 @@ import { Component, Input, ViewChild } from '@angular/core';
 import { WidgetComponent } from './widget.component';
 import { User } from './user';
 import { DataService } from './data.service';
-
-declare var $;
+import { MessageService } from './message.service';
 
 @Component({
   selector: 'psm-details',
@@ -26,9 +25,6 @@ export class DetailsComponent {
 
   user: User;
 
-  // message for informative modal
-  message: string = "No message";
-
   // workaround for <select> not working with object values properly
   username: string;
 
@@ -37,7 +33,7 @@ export class DetailsComponent {
   @ViewChild('passwordForm') resetForm;
   @ViewChild('newForm') newUserForm;
 
-  constructor(private dataService: DataService) { }
+  constructor(private dataService: DataService, private messageService: MessageService) { }
 
   private setCurrent(user: User) {
     this.current = user;
@@ -74,7 +70,7 @@ export class DetailsComponent {
       this.widgetComponent.busy(this.dataService.getUser(this.user.name))
                           .subscribe(user => this.setUser(user));
     }
-    this._pristine(this.form);
+    this.widgetComponent.pristine(this.form);
   }
 
   onSubmit() {
@@ -85,7 +81,7 @@ export class DetailsComponent {
       this.widgetComponent.busy(this.dataService.saveUser(this.user))
                           .subscribe();
     }
-    this._pristine(this.form);
+    this.widgetComponent.pristine(this.form);
   }
 
   usersWithRole(role: string) {
@@ -100,45 +96,21 @@ export class DetailsComponent {
     return false;
   }
 
-  private _pristine(form): void {
-    form.form['_touched'] = false;
-    form.form['_pristine'] = true;
-  }
-
-  resetPasswordForm() {
-    this.oldPassword = "";
-    this.newPassword = "";
-    this._pristine(this.resetForm);
-  }
-
   resetAddUserForm() {
     this.newUserName = "";
     this.newUserPassword = "";
-    this._pristine(this.newUserForm);
-  }
-
-  private showMessage(message: string) {
-    this.message = message;
-    $("#messageModal").modal();
-  }
-
-  onPassword() {
-    this.widgetComponent.busy(this.dataService.setCurrentUser(null, this.oldPassword, this.newPassword))
-                        .subscribe(
-                          () => this.showMessage("Password changed"),
-                          () => this.showMessage("Incorrect password")
-                        );
+    this.widgetComponent.pristine(this.newUserForm);
   }
 
   onNewUser() {
     if (this.userExists(this.newUserName)) {
-      this.showMessage(`A user with the name '${this.newUserName}' already exists`);
+      this.messageService.show(`A user with the name '${this.newUserName}' already exists`);
       return;
     }
     let newUser = new User({ name: this.newUserName, role: "data" });
     this.widgetComponent.busy(this.dataService.saveUser(newUser, this.newUserPassword))
                         .subscribe(
-                          () => { this.showMessage("User '" + newUser.name + "' created"); this.users.push(newUser) }
+                          () => { this.messageService.show("User '" + newUser.name + "' created"); this.users.push(newUser) }
                         );
   }
 

@@ -1,4 +1,5 @@
 import { Component, ViewChild } from '@angular/core';
+import { LoginComponent } from './login.component';
 import { DetailsComponent } from './details.component';
 import { UsersComponent } from './users.component';
 import { StatsComponent } from './stats.component';
@@ -10,6 +11,7 @@ import { WorkerComponent } from './worker.component';
 import { ChartsComponent } from './charts.component';
 import { DataService } from './data.service';
 import { ErrorService } from './error.service';
+import { MessageService } from './message.service';
 import { User } from './user';
 import { HTTP_PROVIDERS } from '@angular/http';
 
@@ -19,8 +21,8 @@ import './rxjs-operators';
 @Component({
   selector: 'psm-app',
   templateUrl: 'templates/app.html',
-  directives: [ ErrorComponent, DetailsComponent, UsersComponent, StatsComponent, RigComponent, ConfigComponent, SweepComponent, WorkerComponent, ChartsComponent ],
-  providers: [ DataService, ErrorService, HTTP_PROVIDERS ]
+  directives: [ LoginComponent, ErrorComponent, DetailsComponent, UsersComponent, StatsComponent, RigComponent, ConfigComponent, SweepComponent, WorkerComponent, ChartsComponent ],
+  providers: [ DataService, ErrorService, MessageService, HTTP_PROVIDERS ]
 })
 export class AppComponent {
   user: User = new User();
