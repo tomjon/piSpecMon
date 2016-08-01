@@ -1,13 +1,20 @@
-<psm-login [user]="user"></psm-login>
-<psm-error></psm-error>
-<psm-details [user]="user"></psm-details>
-<psm-stats *ngIf="user.roleIn(['admin'])"></psm-stats>
-<psm-rig *ngIf="user.roleIn(['admin'])"></psm-rig>
-<psm-sweep #sweep></psm-sweep>
-<psm-config #config [config_id]="sweep.config_id"></psm-config>
-<psm-worker *ngIf="user.roleIn(['admin', 'freq'])" [config]="config.config.config" [sweep]="sweep"></psm-worker>
-<psm-charts [config]="config.config"></psm-charts>
-
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-lg-4">
+      <psm-login [user]="user"></psm-login>
+      <psm-error></psm-error>
+      <psm-details [user]="user"></psm-details>
+      <psm-stats *ngIf="user.roleIn(['admin'])"></psm-stats>
+      <psm-rig *ngIf="user.roleIn(['admin'])"></psm-rig>
+    </div>
+    <div class="col-lg-8">
+      <psm-sweep #sweep></psm-sweep>
+      <psm-config #config [config_id]="sweep.config_id"></psm-config>
+      <psm-worker *ngIf="user.roleIn(['admin', 'freq'])" [config]="config.config.config" [sweep]="sweep"></psm-worker>
+      <psm-charts [config]="config.config"></psm-charts>
+    </div>
+  </div>
+</div>
 <div id="messageModal" class="modal fade" role="dialog">
   <div class="modal-dialog">
     <div class="modal-content">

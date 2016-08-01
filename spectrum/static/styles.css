@@ -13,12 +13,12 @@
 
 /* containers */
 .container {
-  width: 400px;
+  width: 300px;
 	background: lightgoldenrodyellow;
   margin: 5px;
 }
 .container h1 {
-	font-size: 24px;
+	font-size: 16px;
 	margin-top: 10;
 }
 .container .toggle {
@@ -28,7 +28,7 @@
 .container .busy {
   float: right;
 }
-psm-widget[title="User Details"] .btn-link {
+psm-widget .btn-link {
   float: right;
 }
 

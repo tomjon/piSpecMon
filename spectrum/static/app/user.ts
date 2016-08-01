@@ -9,9 +9,6 @@ export class User {
   real: string;
   email: string;
   tel: string;
-  _logged_in: boolean; // whether this user is logged in
-  _count: number = 0; // change counter
-  _loading: boolean; // whether there is server iteraction occurring
   _superior: User; // the prior logged in administrator, if any
 
   constructor(raw?: any) {
@@ -21,11 +18,8 @@ export class User {
       this.real = raw.real;
       this.email = raw.email;
       this.tel = raw.tel;
-      this._logged_in = raw.logged_in;
       this._superior = raw.superior ? new User(raw.superior) : undefined;
     }
-    this._count = 0;
-    this._loading = false;
   }
 
   data(): any {

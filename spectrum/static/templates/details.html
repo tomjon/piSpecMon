@@ -50,7 +50,7 @@
     <button type="button" (click)="onReset()" class="btn btn-default" [disabled]="loading || form.form.pristine">Reset</button>
     <button type="submit" class="btn btn-default" [disabled]="loading || ! form.form.valid || form.form.pristine">Submit</button>
     <button *ngIf="users" type="button" (click)="onDeleteUser()" class="btn btn-default" [disabled]="loading || user == current">Delete</button>
-    <button *ngIf="users" type="button" (click)="resetAddUserForm()" class="btn btn-link" [disabled]="loading" data-toggle="modal" data-target="#newUserModal">New User</button>
+    <button *ngIf="users" type="button" (click)="resetAddUserForm()" class="btn btn-link" [disabled]="loading" data-toggle="modal" data-target="#newUserModal">New</button>
   </form>
   <div id="newUserModal" class="modal fade" role="dialog">
     <form role="form" #newForm="ngForm">

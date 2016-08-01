@@ -239,7 +239,6 @@ def user_details():
   if request.method == 'GET':
     data = current_user.data
     data['name'] = current_user.name
-    data['logged_in'] = True
     return json.dumps(data)
   if request.method == 'POST':
     data = request.get_json()

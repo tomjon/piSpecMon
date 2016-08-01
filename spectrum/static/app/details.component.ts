@@ -53,9 +53,6 @@ export class DetailsComponent {
   ngOnChanges() {
     this.user = this.current;
     this.username = this.user.name;
-  }
-
-  ngOnInit() {
     if (this.current.roleIn(['admin'])) {
       this.widgetComponent.busy(this.dataService.getUsers())
                           .subscribe(users => this.users = users.filter(user => user.name != this.current.name));
