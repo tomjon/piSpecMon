@@ -36,9 +36,6 @@
 tbody tr {
   cursor: pointer;
 }
-tbody tr:hover {
-  background: lightgreen;
-}
 .btn-selected {
   background: lightblue;
 }
