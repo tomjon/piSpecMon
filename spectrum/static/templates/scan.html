@@ -1,0 +1,47 @@
+<psm-widget title="Scan Configuration">
+  <form role="form" (ngSubmit)="onStart()" #form="ngForm">
+    <div class="form-group">
+      <label for="model">Mode</label>
+      <select class="form-control" [disabled]="loading" [(ngModel)]="scan.scan.mode" name="model">
+        <option *ngFor="let mode of modes" value="{{mode.mode}}">{{mode.name}}</option>
+      </select>
+    </div>
+    <div class="form-group psm-horizontal-form-group">
+      <label for="start">Frequency range</label>
+      <div class="psm-input-group">
+        <input [disabled]="loading" type="text" required class="form-control" [(ngModel)]="scan.freqs.range[0]" name="start" #start="ngModel">
+        <div class="help">start</div>
+      </div>
+      <div class="psm-input-group">
+        <input [disabled]="loading" type="text" required class="form-control" [(ngModel)]="scan.freqs.range[1]" name="end" #end="ngModel">
+        <div class="help">end</div>
+      </div>
+      <div class="psm-input-group">
+        <input [disabled]="loading" type="text" required class="form-control" [(ngModel)]="scan.freqs.range[2]" name="step" #step="ngModel">
+        <div class="help">step</div>
+      </div>
+      <div class="psm-input-group">
+        <select class="form-control" [disabled]="loading" [(ngModel)]="scan.freqs.exp" name="units">
+          <option *ngFor="let u of units" value="{{u.value}}">{{u.label}}</option>
+        </select>
+        <div class="help">units</div>
+      </div>
+      <div [hidden]="validNumber(start) && validNumber(end) && validNumber(step)" class="alert alert-danger">
+        Frequency range is a required parameter, and must consist of numbers
+      </div>
+      <div [hidden]="! validNumber(start) || ! validNumber(end) || ! validNumber(step) || validRange()" class="alert alert-danger">
+        Invalid range: end frequency must be greater than start frequency
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="attempts">Interval (ms)</label>
+      <input [disabled]="loading" type="number" min="0" step="100" required class="form-control" [(ngModel)]="scan.monitor.period" name="period" #period="ngModel">
+      <div [hidden]="period.valid || period.pristine" class="alert alert-danger">
+        Minimum interval is a required parameter, and must be a number
+      </div>
+    </div>
+    <button (click)="onReset()" class="btn btn-default" [disabled]="loading || form.form.pristine">Reset</button>
+    <button type="submit" class="btn btn-default" [disabled]="loading || ! form.form.valid || scan.freqs.range[0] >= scan.freqs.range[1] || form.form.pristine">Start</button>
+    <button type="submit" class="btn btn-default" [disabled]="loading">Stop</button>
+  </form>
+</psm-widget>

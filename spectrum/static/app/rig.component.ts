@@ -33,18 +33,13 @@ export class RigComponent {
   onReset() {
     this.widgetComponent.busy(this.dataService.getRig())
                         .subscribe(rig => this.rig = rig);
-    if (this.rigForm) this._pristine();
+    if (this.rigForm) this.widgetComponent.pristine(this.rigForm);
   }
 
   onSubmit() {
     this.widgetComponent.busy(this.dataService.setRig(this.rig))
                         .subscribe();
-    this._pristine();
-  }
-
-  private _pristine(): void {
-    this.rigForm.form['_touched'] = false;
-    this.rigForm.form['_pristine'] = true;
+    this.widgetComponent.pristine(this.rigForm);
   }
 
   get loading() {

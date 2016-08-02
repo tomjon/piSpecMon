@@ -17,6 +17,7 @@ export class DataService {
                     .catch(this.errorHandler("get rig models"));
   }
 
+  //FIXME combine with getModels() by moving getModels() call into app component
   getModes(): Observable<any> {
     return this.http.get(this.baseUrl + 'caps')
                     .map(res => res.json().modes)

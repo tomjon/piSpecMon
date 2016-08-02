@@ -1,17 +1,20 @@
 <div class="container-fluid">
   <div class="row">
-    <div class="col-lg-4">
+    <div class="col-lg-3">
       <psm-login [user]="user"></psm-login>
       <psm-error></psm-error>
       <psm-details [user]="user"></psm-details>
       <psm-stats *ngIf="user.roleIn(['admin'])"></psm-stats>
       <psm-rig *ngIf="user.roleIn(['admin'])"></psm-rig>
     </div>
-    <div class="col-lg-8">
-      <psm-sweep #sweep></psm-sweep>
-      <psm-config #config [config_id]="sweep.config_id"></psm-config>
-      <psm-worker *ngIf="user.roleIn(['admin', 'freq'])" [config]="config.config.config" [sweep]="sweep"></psm-worker>
-      <psm-charts [config]="config.config"></psm-charts>
+    <div class="col-lg-6">
+      <h1><img src="ofcom.gif" alt="Ofcom"> Spectrum Monitor</h1>
+      <psm-table [modes]="modes" (edit)="setEditConfig($event)"></psm-table>
+      <!--<psm-worker *ngIf="user.roleIn(['admin', 'freq'])" [config]="config.config.config" [sweep]="sweep"></psm-worker>
+      <psm-charts [config]="config.config"></psm-charts>-->
+    </div>
+    <div class="col-lg-3">
+      <psm-scan *ngIf="user.roleIn(['admin', 'freq'])" [modes]="modes" [scan]="editConfig"></psm-scan>
     </div>
   </div>
 </div>

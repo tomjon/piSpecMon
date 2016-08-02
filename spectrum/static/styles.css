@@ -10,16 +10,16 @@
   stroke-width: 1.5px;
 }
 
-
-/* containers */
+/* widget containers */
 .container {
-  width: 300px;
+  width: auto;
 	background: lightgoldenrodyellow;
   margin: 5px;
 }
 .container h1 {
-	font-size: 16px;
+	font-size: 20px;
 	margin-top: 10;
+  cursor: pointer;
 }
 .container .toggle {
   float: left;
@@ -28,8 +28,22 @@
 .container .busy {
   float: right;
 }
-psm-widget .btn-link {
-  float: right;
+.row-selected {
+  background: lightblue;
+}
+
+/* specials for the sweep table */
+tbody tr {
+  cursor: pointer;
+}
+tbody tr:hover {
+  background: lightgreen;
+}
+.btn-selected {
+  background: lightblue;
+}
+.btn-space {
+  margin-left: 30px;
 }
 
 /* forms */
@@ -38,4 +52,22 @@ psm-widget .btn-link {
 }
 .ng-invalid {
   border-left: 5px solid #a94442; /* red */
+}
+.psm-horizontal-form-group {
+  text-align: justify;
+}
+.psm-horizontal-form-group * {
+  text-align: initial;
+}
+.psm-horizontal-form-group label {
+  width: 100%;
+}
+.psm-input-group {
+  display: inline-block;
+  width: 23%;
+}
+.psm-horizontal-form-group:after {
+  display: inline-block;
+  width: 100%;
+  content: '';
 }
