@@ -30,7 +30,7 @@ export class AppComponent {
   modes: any[] = [ ];
 
   // sweep set currently being edited
-  editConfig: any;
+  selectConfig: any;
 
   constructor(private dataService: DataService, private messageService: MessageService) { }
 
@@ -41,8 +41,8 @@ export class AppComponent {
                     .subscribe(modes => this.modes = modes);
   }
 
-  setEditConfig(config) {
-    this.editConfig = config;
+  setSelectConfig(config) {
+    this.selectConfig = config;
   }
 
   private checkSuperior() {

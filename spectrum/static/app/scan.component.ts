@@ -23,19 +23,20 @@ export class ScanComponent {
 
   constructor(private dataService: DataService) { }
 
-  ngOnChanges() {
+  /*ngOnChanges() {
     if (this.input == undefined) this.input = DEFAULTS;
     this.scan = $.extend(true, { }, this.input);
-  }
+  }*/
 
   ngOnInit() {
     for (let value in HZ_LABELS) {
       this.units.push({ value: value, label: HZ_LABELS[value] });
     }
+    this.scan = $.extend(true, { }, DEFAULTS);
   }
 
-  onReset() {
-    this.ngOnChanges();
+  onRescan() {
+    this.scan = $.extend(true, { }, this.input);
     this.widgetComponent.pristine(this.form);
   }
 

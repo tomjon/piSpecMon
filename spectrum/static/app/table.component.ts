@@ -1,5 +1,6 @@
 import { Component, Input, Output, ViewChild, EventEmitter } from '@angular/core';
 import { WidgetComponent } from './widget.component';
+import { MessageService } from './message.service';
 import { DataService } from './data.service';
 import { dt_format } from './d3_import';
 import { HZ_LABELS } from './constants';
@@ -11,7 +12,7 @@ import { HZ_LABELS } from './constants';
 })
 export class TableComponent {
   @Input() modes: any[] = [ ];
-  @Output('edit') edit = new EventEmitter();
+  @Output('select') select = new EventEmitter();
 
   sets: any[] = [ ];
   checked: any = { };
@@ -19,7 +20,7 @@ export class TableComponent {
 
   @ViewChild(WidgetComponent) widgetComponent;
 
-  constructor(private dataService: DataService) { }
+  constructor(private dataService: DataService, private messageService: MessageService) { }
 
   ngOnInit() {
     this.widgetComponent.busy(this.dataService.getSweepSets())
@@ -29,6 +30,13 @@ export class TableComponent {
   onSelect(config_id, e) {
     if (e.target.tagName != 'INPUT') {
       this.selected = this.selected == config_id ? undefined : config_id;
+      for (let set of this.sets) {
+        if (set.config_id == this.selected) {
+          this.select.emit(set.fields);
+          return;
+        }
+      }
+      this.select.emit(null);
     }
   }
 
@@ -65,13 +73,13 @@ export class TableComponent {
 
   }
 
-  onEdit() {
-    for (let set of this.sets) {
-      if (set.config_id == this.selected) {
-        this.edit.emit(set.fields);
-      }
-    }
-    delete this.selected;
+  onExport() {
+    this.widgetComponent.busy(this.dataService.exportData(this.selected))
+                        .subscribe(path => this.messageService.show('CSV written to ' + path));
+  }
+
+  onDownload() {
+    window.open('/export/' + this.selected, '_blank');
   }
 
   formatTime(timestamp): string {
