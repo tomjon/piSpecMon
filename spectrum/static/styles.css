@@ -61,9 +61,13 @@ tbody tr {
   margin: -2px 0px 5px 10px;
 	display: inline-block;
 }
+.header {
+  float: left;
+}
 psm-login {
   float: right;
   margin-top: 10px;
+  min-width: 450px;
 }
 psm-login span {
   margin-right: 10px;
