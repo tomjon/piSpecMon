@@ -122,7 +122,7 @@ export class DataService {
     return new Config(config_id, +fields.timestamp[0], JSON.parse(fields.json[0]));
   }
 
-  getSweepSets(): Observable<any> {
+  getSweepSets(): Observable<Config[]> {
     return this.http.get(this.baseUrl + 'spectrum/config/_search?size=10000&fields=*')
                     .map(this.extractSweepData)
                     .catch(this.errorHandler("get scans"));
@@ -134,15 +134,11 @@ export class DataService {
     //FIXME doesn't delete sweep data!  But all these spectrum/** requests should use a dedicated server API anyway
   }
 
-  private extractSweepData(res: Response) {
+  private extractSweepData(res: Response): Config[] {
     let hits = res.json().hits.hits || [ ];
-    let sets = [ ];
+    let sets: Config[] = [ ];
     for (let hit of hits) {
-      sets.push({
-                  config_id: hit._id,
-                  timestamp: hit.fields.timestamp[0],
-                  fields: JSON.parse(hit.fields.json[0])
-               });
+      sets.push(new Config(hit._id, hit.fields.timestamp[0], JSON.parse(hit.fields.json[0])));
     }
     return sets;
   }

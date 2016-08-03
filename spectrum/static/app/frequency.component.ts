@@ -1,19 +1,27 @@
 import { Component, Input, ViewChild } from '@angular/core';
+import { WidgetComponent } from './widget.component';
 import { FREQUENCY_CHART_OPTIONS, HZ_LABELS } from './constants';
 import { _d3 as d3 } from './d3_import';
 
 @Component({
   selector: 'psm-frequency',
-  template: `<div [hidden]="isHidden()">
-               <h2>Level / Frequency</h2>
-               <select [(ngModel)]="sweep" (ngModelChange)="ngOnChanges()">
-                 <option default value="latest">Latest sweep</option>
-                 <option value="avg">Average</option>
-                 <option value="max">Maximum</option>
-                 <option value="min">Minimum</option>
-               </select>
-               <div #chart></div>
-             </div>`
+  directives: [ WidgetComponent ],
+  template: `<psm-widget [hidden]="isHidden()" title="Level / Frequency" class="chart">
+               <form class="form-inline" role="form">
+                 <div class="form-group">
+                   <select class="form-control" [(ngModel)]="sweep" (ngModelChange)="ngOnChanges()" name="sweep">
+                     <option default value="latest">Latest sweep</option>
+                     <option value="avg">Average</option>
+                     <option value="max">Maximum</option>
+                     <option value="min">Minimum</option>
+                   </select>
+                 </div>
+               </form>
+               <svg #chart
+                 viewBox="0 0 ${FREQUENCY_CHART_OPTIONS.width} ${FREQUENCY_CHART_OPTIONS.height}"
+                 preserveAspectRatio="xMidYMid meet">
+               </svg>
+             </psm-widget>`
 })
 export class FrequencyComponent {
   sweep: string = 'latest';
@@ -49,12 +57,9 @@ export class FrequencyComponent {
                   .y(d => this.y(d.v))
                   .defined(d => d.v != null);
 
-    let parent = d3.select(this.chart.nativeElement);
-    this.svg = parent.append("svg")
-                     .attr("width", this.width + margin.left + margin.right)
-                     .attr("height", this.height + margin.top + margin.bottom)
-                     .append("g")
-                     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    this.svg = d3.select(this.chart.nativeElement)
+                 .append("g")
+                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
   }
 
   isHidden() {

@@ -1,4 +1,4 @@
-<psm-widget title="Spectrum Sweeps">
+<psm-widget>
   <table class="table table-condensed">
     <thead>
       <tr>
@@ -23,19 +23,18 @@
       <tr *ngFor="let set of sets" (click)="onSelect(set.config_id, $event)" [ngClass]="{ 'row-selected': selected == set.config_id }">
         <td><input type="checkbox" [(ngModel)]="checked[set.config_id]"></td>
         <td>{{formatTime(set.timestamp)}}</td>
-        <td>{{mode(set.fields.scan.mode)}}</td>
-        <td>{{set.fields.freqs.range[0]}}</td>
-        <td>{{set.fields.freqs.range[1]}}</td>
-        <td>{{set.fields.freqs.range[2]}}</td>
-        <td>{{units(set.fields.freqs.exp)}}</td>
-        <td>{{set.fields.monitor.period}}</td>
+        <td>{{mode(set.config.scan.mode)}}</td>
+        <td>{{set.config.freqs.range[0]}}</td>
+        <td>{{set.config.freqs.range[1]}}</td>
+        <td>{{set.config.freqs.range[2]}}</td>
+        <td>{{units(set.config.freqs.exp)}}</td>
+        <td>{{set.config.monitor.period}}</td>
       </tr>
     </tbody>
   </table>
   <button type="button" (click)="onCheckAll()" class="btn btn-default" [disabled]="loading || checkedIds().length == sets.length">All</button>
   <button type="button" (click)="onCheckNone()" class="btn btn-default" [disabled]="loading || checkedIds().length == 0">None</button>
   <button type="button" (click)="onDelete()" class="btn btn-default" [disabled]="loading || checkedIds().length == 0"><input type="checkbox" onclick="return false" checked>&nbsp;Delete</button>
-  <button type="button" (click)="onView()" class="btn btn-default btn-selected btn-space" [disabled]="loading || ! selected">View</button>
-  <button type="button" (click)="onExport()" class="btn btn-default btn-selected" [disabled]="loading || ! selected">Export</button>
+  <button type="button" (click)="onExport()" class="btn btn-default btn-selected btn-space" [disabled]="loading || ! selected">Export</button>
   <button type="button" (click)="onDownload()" class="btn btn-default btn-selected" [disabled]="loading || ! selected">Download</button>
 </psm-widget>

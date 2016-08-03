@@ -2,6 +2,7 @@ import { Component, Input, Output, ViewChild, EventEmitter } from '@angular/core
 import { WidgetComponent } from './widget.component';
 import { MessageService } from './message.service';
 import { DataService } from './data.service';
+import { Config } from './config';
 import { dt_format } from './d3_import';
 import { HZ_LABELS } from './constants';
 
@@ -12,9 +13,9 @@ import { HZ_LABELS } from './constants';
 })
 export class TableComponent {
   @Input() modes: any[] = [ ];
-  @Output('select') select = new EventEmitter();
+  @Output('select') select = new EventEmitter<Config>();
 
-  sets: any[] = [ ];
+  sets: Config[] = [ ];
   checked: any = { };
   selected: string;
 
@@ -32,7 +33,7 @@ export class TableComponent {
       this.selected = this.selected == config_id ? undefined : config_id;
       for (let set of this.sets) {
         if (set.config_id == this.selected) {
-          this.select.emit(set.fields);
+          this.select.emit(set);
           return;
         }
       }
@@ -64,13 +65,9 @@ export class TableComponent {
       this.widgetComponent.busy(this.dataService.deleteSweepSet(id))
                           .subscribe(() => {
                             delete this.checked[id];
-                            this.sets.splice(this.sets.find(s => s.config_id == id), 1);
+                            this.sets.splice(this.sets.findIndex(s => s.config_id == id), 1);
                           });
     }
-  }
-
-  onView() {
-
   }
 
   onExport() {

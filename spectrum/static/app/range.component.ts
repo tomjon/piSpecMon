@@ -1,11 +1,12 @@
 import { Component, Input, Output, EventEmitter, ViewChild } from '@angular/core';
-import { SweepComponent } from './sweep.component';
+import { WidgetComponent } from './widget.component';
 import { DataService } from './data.service';
 import { Config } from './config';
 import { _d3 as d3, dt_format, insertLineBreaks } from './d3_import';
 
 @Component({
   selector: 'psm-range',
+  directives: [ WidgetComponent ],
   templateUrl: 'templates/range.html'
 })
 export class RangeComponent {
@@ -23,10 +24,7 @@ export class RangeComponent {
   ngOnChanges() {
     if (this.config.config_id == '') return;
     this.dataService.getRange(this.config.config_id)
-                    .subscribe(
-                      data => this.update(data),
-                      () => { }
-                    );
+                    .subscribe(data => this.update(data));
   }
 
   private update(data) {
@@ -49,7 +47,7 @@ export class RangeComponent {
     this.range = value;
   }
 
-  onFetch() {
+  onShow() {
     this.onRange.emit(this.range);
   }
 }

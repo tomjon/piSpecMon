@@ -1,21 +1,31 @@
 import { Component, Input, ViewChild } from '@angular/core';
+import { WidgetComponent } from './widget.component';
 import { LEVEL_CHART_OPTIONS, HZ_LABELS, MAX_N } from './constants';
 import { _d3 as d3, dt_format, insertLineBreaks } from './d3_import';
 
 @Component({
   selector: 'psm-level',
-  template: `<div [hidden]="isHidden()">
-               <h2>Level / Time</h2>
-               <label>Top</label>
-               <select #selectN [(ngModel)]="N" (ngModelChange)="ngOnChanges()"></select>
-               <label>by</label>
-               <select [(ngModel)]="top" (ngModelChange)="ngOnChanges()">
-                 <option value="avg">Average</option>
-                 <option value="max">Maximum</option>
-                 <option value="min">Minimum</option>
-               </select>
-               <div #chart></div>
-             </div>`
+  directives: [ WidgetComponent ],
+  template: `<psm-widget [hidden]="isHidden()" title="Level / Time" class="chart">
+               <form class="form-inline" role="form">
+                 <div class="form-group">
+                   <label for="top">Top</label>
+                   <select class="form-control" #selectN [(ngModel)]="N" (ngModelChange)="ngOnChanges()" name="top"></select>
+                 </div>
+                 <div class="form-group">
+                   <label for="by">by</label>
+                   <select class="form-control" [(ngModel)]="top" (ngModelChange)="ngOnChanges()" name="by">
+                     <option value="avg">Average</option>
+                     <option value="max">Maximum</option>
+                     <option value="min">Minimum</option>
+                   </select>
+                 </div>
+               </form>
+               <svg #chart
+                 viewBox="0 0 ${LEVEL_CHART_OPTIONS.width} ${LEVEL_CHART_OPTIONS.height}"
+                 preserveAspectRatio="xMidYMid meet">
+               </svg>
+             </psm-widget>`
 })
 export class LevelComponent {
   top: string = 'avg';
@@ -51,12 +61,9 @@ export class LevelComponent {
 
     this.colour = d3.scale.category10();
 
-    var parent = d3.select(this.chart.nativeElement);
-    this.svg = parent.append("svg")
-                     .attr("width", this.width + margin.left + margin.right)
-                     .attr("height", this.height + margin.top + margin.bottom)
-                     .append("g")
-                     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    this.svg = d3.select(this.chart.nativeElement)
+                 .append("g")
+                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     d3.select(this.selectN.nativeElement)
       .selectAll("option")

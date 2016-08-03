@@ -1,6 +1,11 @@
-<div *ngIf="config_id != ''">
-  <div #slider></div>
-  <p>&nbsp;</p>
-  Total {{count}} sweeps
-  <button (click)="onFetch()">Fetch Data</button>
-</div>
+<psm-widget class="container-fluid">
+  <div class="row">
+    <div class="col-lg-10">
+      <div #slider></div>
+    </div>
+    <div class="col-lg-2 range-controls">
+      <span>Total {{count}} sweeps</span>
+      <button (click)="onShow()">Show</button>
+    </div>
+  </div>
+</psm-widget>

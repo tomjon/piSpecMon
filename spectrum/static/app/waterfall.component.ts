@@ -1,13 +1,17 @@
 import { Component, Input, ViewChild } from '@angular/core';
+import { WidgetComponent } from './widget.component';
 import { WATERFALL_CHART_OPTIONS, HZ_LABELS } from './constants';
 import { _d3 as d3, dt_format, insertLineBreaks } from './d3_import';
 
 @Component({
   selector: 'psm-waterfall',
-  template: `<div [hidden]="isHidden()">
-               <h2>Waterfall</h2>
-               <div #chart>
-             </div>`
+  directives: [ WidgetComponent ],
+  template: `<psm-widget [hidden]="isHidden()" title="Waterfall" class="chart">
+               <svg #chart
+                 viewBox="0 0 ${WATERFALL_CHART_OPTIONS.width} ${WATERFALL_CHART_OPTIONS.height}"
+                 preserveAspectRatio="xMidYMid meet">
+               </svg>
+             </psm-widget>`
 })
 export class WaterfallComponent {
   svg: any;
@@ -39,12 +43,9 @@ export class WaterfallComponent {
 
     this.heat = d3.scale.linear().domain(WATERFALL_CHART_OPTIONS.heat).range(["blue", "yellow", "red"]).clamp(true);
 
-    let parent = d3.select(this.chart.nativeElement);
-    this.svg = parent.append("svg")
-                     .attr("width", this.width + margin.left + margin.right)
-                     .attr("height", this.height + margin.top + margin.bottom)
-                     .append("g")
-                     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    this.svg = d3.select(this.chart.nativeElement)
+                 .append("g")
+                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
   }
 
   isHidden() {

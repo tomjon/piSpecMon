@@ -9,6 +9,14 @@
   stroke: steelblue;
   stroke-width: 1.5px;
 }
+.chart h1 {
+  float: left;
+}
+.chart form {
+  float: right;
+  margin-top: 10px;
+	margin-bottom: 0px;
+}
 
 /* widget containers */
 .container {
@@ -28,6 +36,11 @@
 .container .busy {
   float: right;
 }
+.container-notitle {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background: initial;
+}
 .row-selected {
   background: lightblue;
 }
@@ -41,6 +54,19 @@ tbody tr {
 }
 .btn-space {
   margin-left: 30px;
+}
+
+/* specials for particular displays */
+.range-controls * {
+  margin: -2px 0px 5px 10px;
+	display: inline-block;
+}
+psm-login {
+  float: right;
+  margin-top: 10px;
+}
+psm-login span {
+  margin-right: 10px;
 }
 
 /* forms */

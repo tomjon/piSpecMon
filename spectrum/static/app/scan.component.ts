@@ -13,7 +13,7 @@ declare var $;
 })
 export class ScanComponent {
   @Input() modes: any[] = [ ];
-  @Input('scan') input: any;
+  @Input('config') input: any;
 
   units: any[] = [ ];
   scan: any;

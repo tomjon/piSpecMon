@@ -1,8 +1,4 @@
-<div *ngIf="config_id != ''">
-  <h1>Data View</h1>
-  <psm-range [config]="config" (onRange)="show($event)"></psm-range>
-  <p *ngIf="avg_time != undefined">Average sweep time {{avg_time}}</p>
-  <psm-frequency [data]="data.agg" [freqs]="config.config.freqs"></psm-frequency>
-  <psm-level [data]="data" [freqs]="config.config.freqs"></psm-level>
-  <psm-waterfall [data]="data.levels" [freqs]="config.config.freqs"></psm-waterfall>
-</div>
+<psm-range [config]="config" (onRange)="show($event)"></psm-range>
+<psm-frequency [data]="data.agg" [freqs]="config.config.freqs"></psm-frequency>
+<psm-level [data]="data" [freqs]="config.config.freqs"></psm-level>
+<psm-waterfall [data]="data.levels" [freqs]="config.config.freqs"></psm-waterfall>
