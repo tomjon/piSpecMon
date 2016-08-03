@@ -53,13 +53,13 @@ def get_config(config_id):
 def wait_for_elasticsearch():
   while True:
     try:
-      r = requests.get('%s/_cluster/health/spectrum' % ELASTICSEARCH)
+      r = requests.get('%s/_cluster/health' % ELASTICSEARCH)
       if r.status_code != 200:
         log.warn("Elasticsearch status %s" % r.status_code)
       else:
         status = r.json()['status']
-        if status == 'green':
-          log.info("Elasticsearch up and running")
+        if status != 'red':
+          log.info("Elasticsearch up and running ({0})".format(status))
           return
         log.warn("Elasticsearch cluster health status: %s" % status)
     except requests.exceptions.ConnectionError:

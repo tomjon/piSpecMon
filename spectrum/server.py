@@ -34,6 +34,7 @@ class User:
   def get_id(self):
     return self.name
 
+
 def role_required(roles):
   def role_decorator(func):
     @wraps(func)
@@ -57,7 +58,8 @@ def get_settings(id, new={}):
   """
   params = { 'fields': 'json' }
   r = requests.get(ELASTICSEARCH + 'spectrum/settings/' + id, params=params)
-  if r.status_code == 404 or not r.json()['found']:
+  log.debug("get_settings status code {0}: {1}".format(r.status_code, r.json()))
+  if r.status_code == 404:
     log.info("Initialising settings: {0}".format(id))
     set_settings(id, new)
     return new
@@ -65,8 +67,11 @@ def get_settings(id, new={}):
   return json.loads(fields['json'][0])
 
 # create index (harmless if it already exists)
+wait_for_elasticsearch()
 with open(local_path('create.json')) as f:
-  requests.put('{0}spectrum'.format(ELASTICSEARCH), data=f.read())
+  r = requests.put('{0}spectrum'.format(ELASTICSEARCH), data=f.read())
+  log.debug("Code {0} creating index".format(r.status_code))
+wait_for_elasticsearch()
 
 application = SecuredStaticFlask(__name__)
 application.login_manager = LoginManager()
