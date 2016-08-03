@@ -68,7 +68,6 @@ export class FrequencyComponent {
 
   ngOnChanges() {
     if (! this.svg) return; // ngOnChanges() happens before ngOnInit()!
-
     this.svg.selectAll("*").remove();
 
     if (this.isHidden()) return;

@@ -11,10 +11,10 @@
       <psm-details [user]="user"></psm-details>
       <psm-stats *ngIf="user.roleIn(['admin'])"></psm-stats>
       <psm-rig *ngIf="user.roleIn(['admin'])"></psm-rig>
-      <psm-scan *ngIf="user.roleIn(['admin', 'freq'])" [modes]="modes" [config]="config"></psm-scan>
+      <psm-scan *ngIf="user.roleIn(['admin', 'freq'])" [modes]="modes" [config]="fields" [status]="status"></psm-scan>
     </div>
     <div class="col-lg-9">
-      <psm-table [modes]="modes" (select)="setConfig($event)"></psm-table>
+      <psm-table [modes]="modes" (select)="setConfig($event)" [user]="user" [status]="status"></psm-table>
       <psm-charts *ngIf="config" [config]="config"></psm-charts>
     </div>
   </div>

@@ -17,11 +17,12 @@ export class ChartsComponent {
   data: any = { }; //FIXME replace with a SpectrumData object? (new class)
   avg_time: number;
 
-  @Input() config: Config;
+  config: Config;
 
   constructor(private dataService: DataService) { }
 
-  ngOnChanges() {
+  @Input('config') set _config(config: Config) {
+    this.config = config;
     this.data = { };
   }
 

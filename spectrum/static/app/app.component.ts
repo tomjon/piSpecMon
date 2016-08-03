@@ -13,6 +13,7 @@ import { ErrorService } from './error.service';
 import { MessageService } from './message.service';
 import { User } from './user';
 import { Config } from './config';
+import { TICK_INTERVAL } from './constants';
 import { HTTP_PROVIDERS } from '@angular/http';
 
 // Add the RxJS Observable operators we need in this app
@@ -28,8 +29,10 @@ export class AppComponent {
   user: User = new User();
   modes: any[] = [ ];
 
-  // sweep set currently selected in sweep table
+  // config set and config currently selected in sweep table
   config: Config;
+  fields: any;
+  status: any;
 
   constructor(private dataService: DataService, private messageService: MessageService) { }
 
@@ -38,10 +41,20 @@ export class AppComponent {
                     .subscribe(user => { this.user = user; this.checkSuperior() });
     this.dataService.getModes()
                     .subscribe(modes => this.modes = modes);
+    setInterval(this.monitor.bind(this), TICK_INTERVAL);
+  }
+
+  monitor() {
+    this.dataService.getMonitor()
+                    .subscribe(
+                      status => this.status = status,
+                      error => window.location.assign('/logout')
+                    );
   }
 
   setConfig(config: Config) {
     this.config = config;
+    this.fields = config ? config.config : undefined;
   }
 
   private checkSuperior() {

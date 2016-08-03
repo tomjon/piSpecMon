@@ -27,12 +27,15 @@ export class WidgetComponent {
     });
   }
 
-  pristine(form): void {
-    form.form['_touched'] = false;
-    form.form['_pristine'] = true;
+  pristine(form: any, value?: boolean): void {
+    if (value == undefined) value = true; // default argument value not working, weirdly
+    form['_touched'] = ! value;
+    form['_pristine'] = value;
+    form.form['_touched'] = ! value;
+    form.form['_pristine'] = value;
     for (let k in form.form.controls) {
-      form.form.controls[k]['_touched'] = false;
-      form.form.controls[k]['_pristine'] = true;
+      form.form.controls[k]['_touched'] = ! value;
+      form.form.controls[k]['_pristine'] = value;
     }
   }
 }

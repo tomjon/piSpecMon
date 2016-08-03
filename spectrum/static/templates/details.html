@@ -3,7 +3,7 @@
     <label for="name">User name</label>
     <input *ngIf="! users" [disabled]="loading" type="text" readonly class="form-control" [(ngModel)]="user.name">
     <select *ngIf="users" [disabled]="loading" class="form-control" id="psm-username" [(ngModel)]="username" (ngModelChange)="changeUser()">
-      <option>{{current.name}}</option>
+      <option>{{logged_in.name}}</option>
       <option *ngIf="usersWithRole('admin').length > 0" disabled>&nbsp;</option>
       <optgroup *ngIf="usersWithRole('admin').length > 0" label="Administrators">
         <option *ngFor="let u of usersWithRole('admin')">{{u.name}}</option>
@@ -21,8 +21,8 @@
   <form role="form" (ngSubmit)="onSubmit()" #form="ngForm">
     <div class="form-group">
       <label for="role">Role</label>
-      <input *ngIf="user == current" [disabled]="loading" type="text" readonly class="form-control" [(ngModel)]="user._roleLabel" name="role">
-      <select *ngIf="user != current" [disabled]="loading" class="form-control" [(ngModel)]="user.role" (ngModelChange)="changeRole()" name="role">
+      <input *ngIf="user == logged_in" [disabled]="loading" type="text" readonly class="form-control" [(ngModel)]="user._roleLabel" name="role">
+      <select *ngIf="user != logged_in" [disabled]="loading" class="form-control" [(ngModel)]="user.role" (ngModelChange)="_fix()" name="role">
         <option *ngFor="let r of roles" [ngValue]="r.role">{{r.label}}</option>
       </select>
     </div>
@@ -49,7 +49,7 @@
     </div>
     <button type="button" (click)="onReset()" class="btn btn-default" [disabled]="loading || form.form.pristine">Reset</button>
     <button type="submit" class="btn btn-default" [disabled]="loading || ! form.form.valid || form.form.pristine">Submit</button>
-    <button *ngIf="users" type="button" (click)="onDeleteUser()" class="btn btn-default" [disabled]="loading || user == current">Delete</button>
+    <button *ngIf="users" type="button" (click)="onDeleteUser()" class="btn btn-default" [disabled]="loading || user == logged_in">Delete</button>
     <button *ngIf="users" type="button" (click)="resetAddUserForm()" class="btn btn-link" [disabled]="loading" data-toggle="modal" data-target="#newUserModal">New</button>
   </form>
   <div id="newUserModal" class="modal fade" role="dialog">

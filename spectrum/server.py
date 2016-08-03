@@ -157,10 +157,21 @@ def monitor():
     return json.dumps({ 'status': 'OK' })
   if request.method == 'GET':
     # monitor status
-    return json.dumps(application.worker.status())
+    status = application.worker.status()
+    if 'config_id' in status:
+      r = requests.get(''.join([ELASTICSEARCH + 'spectrum/', 'config/', status['config_id']]), params='fields=timestamp,json')
+      if r.status_code != 200:
+        return "Elasticsearch error finding config", r.status_code
+      fields = r.json()['fields']
+      status['timestamp'] = fields['timestamp'][0]
+      status['config'] = json.loads(fields['json'][0])
+      del status['config']['rig']
+    return json.dumps(status)
 
 
 # forward Elasticsearch queries verbatim
+# FIXME noone should be able to delete a running sweep
+# FIXME only admin can delete data sets
 @application.route('/spectrum/<path:path>', methods=['GET', 'POST', 'DELETE'])
 @role_required(['admin', 'freq', 'data'])
 def search(path):

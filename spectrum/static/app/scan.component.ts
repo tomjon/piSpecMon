@@ -13,37 +13,53 @@ declare var $;
 })
 export class ScanComponent {
   @Input() modes: any[] = [ ];
-  @Input('config') input: any;
+
+  input: any;
 
   units: any[] = [ ];
-  scan: any;
+  config: any;
+  status: any;
 
   @ViewChild(WidgetComponent) widgetComponent;
   @ViewChild('form') form;
 
   constructor(private dataService: DataService) { }
 
-  /*ngOnChanges() {
-    if (this.input == undefined) this.input = DEFAULTS;
-    this.scan = $.extend(true, { }, this.input);
-  }*/
+  @Input('status') set _status(status: string) {
+    this.status = status;
+  }
+
+  @Input('config') set _config(config: Config) {
+    this.input = config;
+    if (this.input == undefined) {
+      this.widgetComponent.pristine(this.form, false);
+      return;
+    }
+    this.config = $.extend(true, { }, this.input);
+    this.widgetComponent.pristine(this.form);
+  }
 
   ngOnInit() {
     for (let value in HZ_LABELS) {
       this.units.push({ value: value, label: HZ_LABELS[value] });
     }
-    this.scan = $.extend(true, { }, DEFAULTS);
-  }
-
-  onRescan() {
-    this.scan = $.extend(true, { }, this.input);
+    this.config = $.extend(true, { }, DEFAULTS);
     this.widgetComponent.pristine(this.form);
   }
 
+  onReset() {
+    if (this.input == undefined) this.input = DEFAULTS;
+    this._config = this.input;
+  }
+
   onStart() {
+    this.widgetComponent.busy(this.dataService.startMonitor(this.config))
+                        .subscribe(() => { });
   }
 
   onStop() {
+    this.widgetComponent.busy(this.dataService.stopMonitor())
+                        .subscribe(() => { });
   }
 
   get loading() {
@@ -55,6 +71,6 @@ export class ScanComponent {
   }
 
   validRange(): boolean {
-    return +(this.scan.freqs.range[0]) + +(this.scan.freqs.range[2]) < +(this.scan.freqs.range[1]);
+    return +(this.config.freqs.range[0]) + +(this.config.freqs.range[2]) <= +(this.config.freqs.range[1]);
   }
 }

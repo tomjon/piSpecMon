@@ -12,7 +12,7 @@ declare var $;
   templateUrl: 'templates/details.html'
 })
 export class DetailsComponent {
-  @Input('user') current: User;
+  logged_in: User;
 
   roles: any = User.ROLES;
 
@@ -38,31 +38,34 @@ export class DetailsComponent {
   constructor(private dataService: DataService, private messageService: MessageService) { }
 
   private setCurrent(user: User) {
-    this.current = user;
-    this.user = this.current;
+    this.logged_in = user;
+    this.user = this.logged_in;
   }
 
   private setUser(user: User) {
     this.user = user;
+    this.username = user.name;
     for (let k in this.users) {
       if (this.users[k].name == user.name) {
         this.users[k] = user;
         break;
       }
     }
+    this._fix();
   }
 
-  ngOnChanges() {
-    this.user = this.current;
+  @Input('user') set _user(user: User) {
+    this.logged_in = user;
+    this.user = this.logged_in;
     this.username = this.user.name;
-    if (this.current.roleIn(['admin'])) {
+    if (user.roleIn(['admin'])) {
       this.widgetComponent.busy(this.dataService.getUsers())
-                          .subscribe(users => this.users = users.filter(user => user.name != this.current.name));
+                          .subscribe(users => this.users = users.filter(u => u.name != user.name));
     }
   }
 
-  // strange fix needed to stop username changing when role is changed
-  changeRole() {
+  // strange fix needed to stop username changing when role is changed or user is reset
+  _fix() {
     let name: string = this.username;
     setTimeout(() => {
       $("#psm-username").val(name);
@@ -70,7 +73,7 @@ export class DetailsComponent {
   }
 
   onReset() {
-    if (this.user == this.current) {
+    if (this.user == this.logged_in) {
       this.widgetComponent.busy(this.dataService.getCurrentUser())
                           .subscribe(user => this.setCurrent(user));
     } else {
@@ -81,7 +84,7 @@ export class DetailsComponent {
   }
 
   onSubmit() {
-    if (this.user == this.current) {
+    if (this.user == this.logged_in) {
       this.widgetComponent.busy(this.dataService.setCurrentUser(this.user))
                           .subscribe();
     } else {
@@ -125,7 +128,7 @@ export class DetailsComponent {
     this.widgetComponent.busy(this.dataService.deleteUser(this.user))
                         .subscribe(() => {
                           this.users.splice(this.users.indexOf(this.user), 1);
-                          this.user = this.current;
+                          this.user = this.logged_in;
                           this.username = this.user.name;
                         });
   }
@@ -136,6 +139,6 @@ export class DetailsComponent {
 
   // when the user name selection changes, change the modelled user (workaround for dodgy object values in select)
   changeUser() {
-    this.user = this.current.name == this.username ? this.current : this.users.find(u => u.name == this.username);
+    this.user = this.logged_in.name == this.username ? this.logged_in : this.users.find(u => u.name == this.username);
   }
 }

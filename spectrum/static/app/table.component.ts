@@ -2,6 +2,7 @@ import { Component, Input, Output, ViewChild, EventEmitter } from '@angular/core
 import { WidgetComponent } from './widget.component';
 import { MessageService } from './message.service';
 import { DataService } from './data.service';
+import { User } from './user';
 import { Config } from './config';
 import { dt_format } from './d3_import';
 import { HZ_LABELS } from './constants';
@@ -13,6 +14,7 @@ import { HZ_LABELS } from './constants';
 })
 export class TableComponent {
   @Input() modes: any[] = [ ];
+  @Input() user: User;
   @Output('select') select = new EventEmitter<Config>();
 
   sets: Config[] = [ ];
@@ -22,6 +24,12 @@ export class TableComponent {
   @ViewChild(WidgetComponent) widgetComponent;
 
   constructor(private dataService: DataService, private messageService: MessageService) { }
+
+  @Input('status') set _status(status) {
+    if (status && status.config_id && ! this.sets.find(set => set.config_id == status.config_id)) {
+      this.sets.push(new Config(status.config_id, status.timestamp, status.config));
+    }
+  }
 
   ngOnInit() {
     this.widgetComponent.busy(this.dataService.getSweepSets())

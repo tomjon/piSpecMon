@@ -52,8 +52,8 @@ tbody tr {
 .btn-selected {
   background: lightblue;
 }
-.btn-space {
-  margin-left: 30px;
+.btn-right {
+  float: right;
 }
 
 /* specials for particular displays */
