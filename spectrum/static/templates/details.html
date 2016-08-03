@@ -2,7 +2,7 @@
   <div class="form-group">
     <label for="name">User name</label>
     <input *ngIf="! users" [disabled]="loading" type="text" readonly class="form-control" [(ngModel)]="user.name">
-    <select *ngIf="users" [disabled]="loading" class="form-control" [(ngModel)]="username" (ngModelChange)="changeUser()">
+    <select *ngIf="users" [disabled]="loading" class="form-control" id="psm-username" [(ngModel)]="username" (ngModelChange)="changeUser()">
       <option>{{current.name}}</option>
       <option *ngIf="usersWithRole('admin').length > 0" disabled>&nbsp;</option>
       <optgroup *ngIf="usersWithRole('admin').length > 0" label="Administrators">
@@ -22,7 +22,7 @@
     <div class="form-group">
       <label for="role">Role</label>
       <input *ngIf="user == current" [disabled]="loading" type="text" readonly class="form-control" [(ngModel)]="user._roleLabel" name="role">
-      <select *ngIf="user != current" [disabled]="loading" class="form-control" [(ngModel)]="user.role" name="role">
+      <select *ngIf="user != current" [disabled]="loading" class="form-control" [(ngModel)]="user.role" (ngModelChange)="changeRole()" name="role">
         <option *ngFor="let r of roles" [ngValue]="r.role">{{r.label}}</option>
       </select>
     </div>

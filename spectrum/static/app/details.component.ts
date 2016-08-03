@@ -4,6 +4,8 @@ import { User } from './user';
 import { DataService } from './data.service';
 import { MessageService } from './message.service';
 
+declare var $;
+
 @Component({
   selector: 'psm-details',
   directives: [ WidgetComponent ],
@@ -57,6 +59,14 @@ export class DetailsComponent {
       this.widgetComponent.busy(this.dataService.getUsers())
                           .subscribe(users => this.users = users.filter(user => user.name != this.current.name));
     }
+  }
+
+  // strange fix needed to stop username changing when role is changed
+  changeRole() {
+    let name: string = this.username;
+    setTimeout(() => {
+      $("#psm-username").val(name);
+    });
   }
 
   onReset() {
