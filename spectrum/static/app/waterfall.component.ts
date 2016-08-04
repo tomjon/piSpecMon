@@ -49,7 +49,7 @@ export class WaterfallComponent {
   }
 
   isHidden() {
-    return this.data == undefined || this.freqs.freqs || this.data.length == 0;
+    return this.data.levels == undefined || this.freqs.freqs || this.data.levels.length == 0;
   }
 
   ngOnChanges() {
@@ -59,11 +59,13 @@ export class WaterfallComponent {
 
     if (this.isHidden()) return;
 
+    let data = this.data.levels;
+
     let f0 = +this.freqs.range[0];
     let f1 = +this.freqs.range[1];
     let df = +this.freqs.range[2];
     this.x.domain([f0 - 0.5 * df, f1 + 0.5 * df]);
-    this.y.domain(d3.extent(this.data, d => d.fields.timestamp));
+    this.y.domain(d3.extent(data, d => d.fields.timestamp));
 
     this.svg.append("g")
         .attr("class", "x axis")
@@ -87,11 +89,11 @@ export class WaterfallComponent {
 
      this.svg.selectAll('g.y.axis g text').each(insertLineBreaks);
 
-     let rw = this.width / this.data[0].fields.level.length;
-     let rh = this.height / this.data.length;
+     let rw = this.width / data[0].fields.level.length;
+     let rh = this.height / data.length;
 
      let g = this.svg.selectAll('g.row')
-                 .data(this.data)
+                 .data(data)
                  .enter().append('g').attr("class", 'row')
                  .attr('transform', (d, i) => 'translate(0, ' + (rh * i - 1) + ')');
 

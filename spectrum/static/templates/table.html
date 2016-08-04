@@ -28,14 +28,17 @@
         <td>{{set.config.freqs.range[2]}}</td>
         <td>{{units(set.config.freqs.exp)}}</td>
         <td>{{set.config.monitor.period}}</td>
-        <td *ngIf="user.roleIn(['admin'])"><input type="checkbox" [disabled]="standby || set.config_id == config_id" [(ngModel)]="checked[set.config_id]"></td>
+        <td *ngIf="user.roleIn(['admin'])">
+          <input *ngIf="set.config_id != config_id" type="checkbox" [disabled]="standby" [(ngModel)]="checked[set.config_id]">
+          <span *ngIf="set.config_id == config_id" class="running">&#x25FC;</span>
+        </td>
       </tr>
     </tbody>
   </table>
   <button type="button" (click)="onExport()" class="btn btn-default btn-selected" [disabled]="loading || ! selected">Export</button>
   <button type="button" (click)="onDownload()" class="btn btn-default btn-selected" [disabled]="loading || ! selected">Download</button>
   <div *ngIf="user.roleIn(['admin'])" class="btn-right">
-    <button type="button" (click)="onCheckAll()" class="btn btn-default" [disabled]="loading || standby || checkedIds().length == sets.length">All</button>
+    <button type="button" (click)="onCheckAll()" class="btn btn-default" [disabled]="loading || standby || checkedIds().length == maxChecked">All</button>
     <button type="button" (click)="onCheckNone()" class="btn btn-default" [disabled]="loading || standby || checkedIds().length == 0">None</button>
     <button type="button" (click)="onDelete()" class="btn btn-default" [disabled]="loading || standby || checkedIds().length == 0"><input type="checkbox" onclick="return false" checked>&nbsp;Delete</button>
   </div>

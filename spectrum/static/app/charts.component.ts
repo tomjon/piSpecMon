@@ -19,19 +19,22 @@ export class ChartsComponent {
 
   config: Config;
 
-  constructor(private dataService: DataService) { }
+  @Input() status: any;
 
   @Input('config') set _config(config: Config) {
     this.config = config;
     this.data = { };
   }
 
+  constructor(private dataService: DataService) { }
+
   show(range: number[]) {
-    this.dataService.getData(this.config.config_id, range)
-                    .subscribe(
-                      data => this.update(data),
-                      () => { }
-                    );
+    if (! range) {
+      this.data = { };
+    } else {
+      this.dataService.getData(this.config.config_id, range)
+                      .subscribe(data => this.update(data));
+    }
   }
 
   private fillArray(v?: any, size?: number) {

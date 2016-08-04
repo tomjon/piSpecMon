@@ -67,12 +67,16 @@ export class TableComponent {
 
   onCheckAll() {
     for (let s of this.sets) {
-      this.checked[s.config_id] = true;
+      if (s.config_id != this.config_id) this.checked[s.config_id] = true;
     }
   }
 
   onCheckNone() {
     this.checked = { };
+  }
+
+  get maxChecked(): number {
+    return this.sets.length - (this.config_id ? 1 : 0);
   }
 
   onDelete() {

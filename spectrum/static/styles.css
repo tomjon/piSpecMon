@@ -21,6 +21,9 @@
   margin-top: 10px;
 	margin-bottom: 0px;
 }
+psm-frequency span {
+  margin-right: 15px;
+}
 
 /* widget containers */
 .container {
@@ -58,7 +61,7 @@
 
 /* specials for the sweep table component */
 tbody tr {
-  cursor: pointer;
+  cursor: default;
 }
 .btn-selected {
   background: lightblue;
@@ -68,6 +71,9 @@ tbody tr {
 }
 .row-selected {
   background: lightblue;
+}
+.running {
+  color: green;
 }
 
 /* specials for range display */

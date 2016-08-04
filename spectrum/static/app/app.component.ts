@@ -48,7 +48,7 @@ export class AppComponent {
     this.dataService.getMonitor()
                     .subscribe(
                       status => this.status = status,
-                      error => window.location.assign('/logout')
+                      error => window.location.assign('/')
                     );
   }
 

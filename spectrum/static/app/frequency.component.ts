@@ -1,13 +1,14 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { WidgetComponent } from './widget.component';
 import { FREQUENCY_CHART_OPTIONS, HZ_LABELS } from './constants';
-import { _d3 as d3 } from './d3_import';
+import { _d3 as d3, dt_format } from './d3_import';
 
 @Component({
   selector: 'psm-frequency',
   directives: [ WidgetComponent ],
   template: `<psm-widget [hidden]="isHidden()" title="Level / Frequency" class="chart">
                <form class="form-inline" role="form">
+                 <span *ngIf="sweep == 'latest'">{{timestamp}}</span>
                  <div class="form-group">
                    <select class="form-control" [(ngModel)]="sweep" (ngModelChange)="ngOnChanges()" name="sweep">
                      <option default value="latest">Latest sweep</option>
@@ -25,6 +26,7 @@ import { _d3 as d3 } from './d3_import';
 })
 export class FrequencyComponent {
   sweep: string = 'latest';
+  timestamp: number;
 
   svg: any;
   line: any;
@@ -63,7 +65,7 @@ export class FrequencyComponent {
   }
 
   isHidden() {
-    return this.data == undefined || this.freqs.freqs || this.data[this.sweep].length == 0;
+    return this.data.agg == undefined || this.freqs.freqs || this.data.agg[this.sweep].length == 0;
   }
 
   ngOnChanges() {
@@ -72,7 +74,8 @@ export class FrequencyComponent {
 
     if (this.isHidden()) return;
 
-    let agg = this.data[this.sweep];
+    this.timestamp = dt_format(new Date(this.data.levels[this.data.levels.length - 1].fields.timestamp[0]));
+    let agg = this.data.agg[this.sweep];
 
     this.x.domain([this.freqs.range[0], this.freqs.range[1]]);
     if (FREQUENCY_CHART_OPTIONS.y_axis) {

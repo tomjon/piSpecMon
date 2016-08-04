@@ -166,6 +166,11 @@ def monitor():
       status['timestamp'] = fields['timestamp'][0]
       status['config'] = json.loads(fields['json'][0])
       del status['config']['rig']
+
+      r = requests.get(ELASTICSEARCH + 'spectrum/sweep/_search?size=0&q=config_id:' + status['config_id'])
+      if r.status_code != 200:
+        return "Elasticsearch error finding sweep count", r.status_code
+      status['count'] = r.json()['hits']['total']
     return json.dumps(status)
 
 

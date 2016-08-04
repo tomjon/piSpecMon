@@ -178,7 +178,8 @@ export class DataService {
   }
 
   getData(config_id, range): Observable<any> {
-    let q = 'config_id:' + config_id + '+AND+timestamp:[' + range[0] + '+TO+' + range[1] + ']';
+    let end = range[1] + 5;
+    let q = 'config_id:' + config_id + '+AND+timestamp:[' + range[0] + '+TO+' + end + ']';
     let url = 'spectrum/sweep/_search?size=1000000&q=' + q + '&fields=*&sort=timestamp';
     return this.http.get(this.baseUrl + url)
                     .map(res => res.json().hits.hits)

@@ -12,8 +12,9 @@ import { _d3 as d3, dt_format, insertLineBreaks } from './d3_import';
 export class RangeComponent {
   count: number;
   range: number[];
-
-  @Input() config: Config;
+  value: number[];
+  config: Config;
+  showing: boolean = false;
 
   @Output() onRange = new EventEmitter<number[]>();
 
@@ -21,33 +22,54 @@ export class RangeComponent {
 
   constructor(private dataService: DataService) { }
 
-  ngOnChanges() {
+  @Input('config') set _config(config: Config) {
+    this.config = config;
     if (this.config.config_id == '') return;
     this.dataService.getRange(this.config.config_id)
-                    .subscribe(data => this.update(data));
+                    .subscribe(data => {
+                      this.showing = false;
+                      this.count = data.hits.total;
+                      this.range = [this.config.timestamp, data.hits.hits[0].fields.timestamp[0]];
+                      this.value = [this.range[0], this.range[1]]; // need a literal copy
+                      if (this.count > 0) this.draw();
+                    });
   }
 
-  private update(data) {
-    this.count = data.hits.total;
-    if (this.count == 0) return;
+  @Input('status') set _status(status: any) {
+    if (status && status.config_id == this.config.config_id && status.count > this.count) {
+      this.count = status.count;
+      let atEnd = this.value[1] == this.range[1];
+      this.range[1] = status.last_sweep * 1000;
+      if (atEnd) {
+        this.value[1] = this.range[1];
+        if (this.showing) this.onShow();
+      }
+      this.draw();
+    }
+  }
 
-    var start = this.config.timestamp;
-    var end = data.hits.hits[0].fields.timestamp[0];
-    this.range = [start, end];
-
+  private draw() {
     let sliderEl = this.slider.nativeElement;
-    var axis = d3.svg.axis().tickFormat(dt_format).ticks(4);
+    let axis = d3.svg.axis().tickFormat(dt_format).ticks(4);
     d3.select(sliderEl).selectAll("*").remove();
-    var scale = d3.time.scale().domain([new Date(start), new Date(end)]);
-    d3.select(sliderEl).call(d3.slider().scale(scale).value([start, end]).axis(axis).on("slide", this.onSlide.bind(this)));
+    let scale = d3.time.scale().domain([new Date(this.range[0]), new Date(this.range[1])]);
+    let slider = d3.slider()
+                   .scale(scale)
+                   .axis(axis)
+                   .value(this.value)
+                   .on("slide", this.onSlide.bind(this));
+    d3.select(sliderEl).call(slider);
     d3.select(sliderEl).selectAll('g.tick text').each(insertLineBreaks);
   }
 
   onSlide(evt, value) {
-    this.range = value;
+    this.showing = false;
+    this.value = value;
+    this.onRange.emit(undefined);
   }
 
   onShow() {
-    this.onRange.emit(this.range);
+    this.showing = true;
+    this.onRange.emit(this.value);
   }
 }
