@@ -2,6 +2,7 @@ import { Component, Input, ViewChild } from '@angular/core';
 import { DataService } from './data.service';
 import { WidgetComponent } from './widget.component';
 import { Config } from './config';
+import { dt_format } from './d3_import';
 import { DEFAULTS, HZ_LABELS } from './constants';
 
 declare var $;
@@ -18,18 +19,28 @@ export class ScanComponent {
 
   units: any[] = [ ];
   config: any;
-  status: any;
+  status: any = { };
+
+  // true when waiting for (real) status after startup or start/stop buttons pressed
+  standby: boolean = true;
 
   @ViewChild(WidgetComponent) widgetComponent;
   @ViewChild('form') form;
 
   constructor(private dataService: DataService) { }
 
-  @Input('status') set _status(status: string) {
+  @Input('status') set _status(status: any) {
+    if (status == undefined) return;
+    this.standby = false;
     this.status = status;
+    if (status.config_id) {
+      // monitor is running
+      this.config = status.config;
+    }
   }
 
   @Input('config') set _config(config: Config) {
+    if (this.status.config_id) return;
     this.input = config;
     if (this.input == undefined) {
       this.widgetComponent.pristine(this.form, false);
@@ -53,11 +64,13 @@ export class ScanComponent {
   }
 
   onStart() {
+    this.standby = true;
     this.widgetComponent.busy(this.dataService.startMonitor(this.config))
                         .subscribe(() => { });
   }
 
   onStop() {
+    this.standby = true;
     this.widgetComponent.busy(this.dataService.stopMonitor())
                         .subscribe(() => { });
   }
@@ -72,5 +85,9 @@ export class ScanComponent {
 
   validRange(): boolean {
     return +(this.config.freqs.range[0]) + +(this.config.freqs.range[2]) <= +(this.config.freqs.range[1]);
+  }
+
+  get lastSweepTime(): string {
+    return dt_format(new Date(this.status.last_sweep * 1000));
   }
 }
