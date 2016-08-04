@@ -21,12 +21,20 @@ export class TableComponent {
   checked: any = { };
   selected: string;
 
+  // true when waiting for (real) status after startup
+  standby: boolean = true;
+
+  config_id: string;
+
   @ViewChild(WidgetComponent) widgetComponent;
 
   constructor(private dataService: DataService, private messageService: MessageService) { }
 
   @Input('status') set _status(status) {
-    if (status && status.config_id && ! this.sets.find(set => set.config_id == status.config_id)) {
+    if (status == undefined) return;
+    this.standby = false;
+    this.config_id = status.config_id;
+    if (status.config_id && ! this.sets.find(set => set.config_id == status.config_id)) {
       this.sets.push(new Config(status.config_id, status.timestamp, status.config));
     }
   }

@@ -123,7 +123,7 @@ export class DataService {
   }
 
   getSweepSets(): Observable<Config[]> {
-    return this.http.get(this.baseUrl + 'spectrum/config/_search?size=10000&fields=*')
+    return this.http.get(this.baseUrl + 'spectrum/config/_search?size=10000&fields=*&sort=timestamp')
                     .map(this.extractSweepData)
                     .catch(this.errorHandler("get scans"));
   }
