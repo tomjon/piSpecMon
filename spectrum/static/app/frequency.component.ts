@@ -3,6 +3,8 @@ import { WidgetComponent } from './widget.component';
 import { FREQUENCY_CHART_OPTIONS, HZ_LABELS } from './constants';
 import { _d3 as d3, dt_format } from './d3_import';
 
+declare var $;
+
 @Component({
   selector: 'psm-frequency',
   directives: [ WidgetComponent ],
@@ -18,9 +20,13 @@ import { _d3 as d3, dt_format } from './d3_import';
                    </select>
                  </div>
                </form>
-               <svg #chart
+               <svg #chart (click)="onClick($event)"
                  viewBox="0 0 ${FREQUENCY_CHART_OPTIONS.width} ${FREQUENCY_CHART_OPTIONS.height}"
                  preserveAspectRatio="xMidYMid meet">
+                 <svg:line class="horizontal" *ngIf="showLines" [attr.x1]="margin.left" [attr.x2]="width + margin.left" [attr.y1]="showY" [attr.y2]="showY" />
+                 <svg:line class="vertical" *ngIf="showLines" [attr.x1]="showX" [attr.x2]="showX" [attr.y1]="height + margin.top" [attr.y2]="showY" />
+                 <svg:rect class="info" *ngIf="showLines" [attr.x]="showX + 10" [attr.y]="showY - 30" [attr.width]="textWidth + 20" height=21 rx=5 ry=5 />
+                 <svg:text #text class="info" [attr.x]="showX + 20" [attr.y]="showY - 15">{{infoText}}</svg:text>
                </svg>
              </psm-widget>`
 })
@@ -36,18 +42,26 @@ export class FrequencyComponent {
   yAxis: any;
   height: number;
   width: number;
+  margin: any;
+
+  showLines: boolean = false;
+  showX: number;
+  showY: number;
+  infoText: string = "";
+  textWidth: number = 0;
 
   @Input() freqs: any;
   @Input() data: any;
 
   @ViewChild('chart') chart;
+  @ViewChild('text') text;
 
   constructor() { }
 
   ngOnInit() {
-    let margin = FREQUENCY_CHART_OPTIONS.margin;
-    this.width = FREQUENCY_CHART_OPTIONS.width - margin.left - margin.right,
-    this.height = FREQUENCY_CHART_OPTIONS.height - margin.top - margin.bottom;
+    this.margin = FREQUENCY_CHART_OPTIONS.margin;
+    this.width = FREQUENCY_CHART_OPTIONS.width - this.margin.left - this.margin.right,
+    this.height = FREQUENCY_CHART_OPTIONS.height - this.margin.top - this.margin.bottom;
 
     this.x = d3.scale.linear().range([0, this.width]);
     this.y = d3.scale.linear().range([this.height, 0]);
@@ -55,13 +69,13 @@ export class FrequencyComponent {
     this.xAxis = d3.svg.axis().scale(this.x).orient("bottom");
     this.yAxis = d3.svg.axis().scale(this.y).orient("left");
 
-    this.line = d3.svg.line().interpolate("monotone")
+    this.line = d3.svg.line()
                   .y(d => this.y(d.v))
                   .defined(d => d.v != null);
 
     this.svg = d3.select(this.chart.nativeElement)
                  .append("g")
-                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                 .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
   }
 
   isHidden() {
@@ -70,7 +84,7 @@ export class FrequencyComponent {
 
   ngOnChanges() {
     if (! this.svg) return; // ngOnChanges() happens before ngOnInit()!
-    this.svg.selectAll("*").remove();
+    this.svg.selectAll("g").remove();
 
     if (this.isHidden()) return;
 
@@ -110,5 +124,33 @@ export class FrequencyComponent {
         .datum(agg)
         .attr("class", "line")
         .attr("d", this.line);
+  }
+
+  onClick(e) {
+    let p = this.chart.nativeElement.createSVGPoint();
+    //FIXME let xy = $(this.chart.nativeElement).offset();
+    //p.x = e.pageX - xy.left;
+    //p.y = e.pageY - xy.top;
+    //console.log("Click", p.x, p.y);
+    //console.log("Compare", e.clientX, e.clientY); // which was a working p, but not when zoomed
+    p.x = e.clientX;
+    p.y = e.clientY;
+    let z = p.matrixTransform(this.chart.nativeElement.getScreenCTM().inverse());
+    //console.log("z.x=" + z.x);
+    let f = this.x.invert(z.x - this.margin.left);
+    let i = Math.round((f - this.freqs.range[0]) / this.freqs.range[2]);
+    f = +this.freqs.range[0] + i * this.freqs.range[2]; // 'snap' to an actual frequency value
+    this.showX = this.margin.left + this.x(f);
+    //console.log("i=" + i);
+    if (i < 0 || i >= this.data.agg[this.sweep].length) {
+      this.showLines = false;
+      this.infoText = "";
+      return;
+    }
+    let v = this.data.agg[this.sweep][i] ? this.data.agg[this.sweep][i].v : 0;
+    this.showY = this.y(v) + this.margin.top;
+    this.infoText = `${v}dB at ${f}${HZ_LABELS[this.freqs.exp]}`;
+    setTimeout(() => this.textWidth = this.text.nativeElement.getComputedTextLength());
+    this.showLines = true;
   }
 }

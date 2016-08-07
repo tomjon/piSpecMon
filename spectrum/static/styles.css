@@ -13,6 +13,11 @@
   stroke: steelblue;
   stroke-width: 1.5px;
 }
+line.vertical, line.horizontal {
+  fill: none;
+  stroke: lightgreen;
+  stroke-width: 1px;
+}
 .chart h1 {
   float: left;
 }
@@ -23,6 +28,10 @@
 }
 psm-frequency span {
   margin-right: 15px;
+}
+rect.info {
+	fill: black;
+	fill-opacity: 0.2;
 }
 
 /* widget containers */

@@ -22,6 +22,8 @@ export class WaterfallComponent {
   yAxis: any;
   height: number;
   width: number;
+  rh: number;
+  rw: number;
 
   @Input() freqs: any;
   @Input() data: any;
@@ -49,7 +51,7 @@ export class WaterfallComponent {
   }
 
   isHidden() {
-    return this.data.levels == undefined || this.freqs.freqs || this.data.levels.length == 0;
+    return this.data.levels == undefined || this.freqs.freqs || this.data.levels.length < 2;
   }
 
   ngOnChanges() {
@@ -61,8 +63,8 @@ export class WaterfallComponent {
 
     let data = this.data.levels;
 
-    let f0 = +this.freqs.range[0];
-    let f1 = +this.freqs.range[1];
+    var f0 = +this.freqs.range[0];
+    var f1 = +this.freqs.range[1];
     let df = +this.freqs.range[2];
     this.x.domain([f0 - 0.5 * df, f1 + 0.5 * df]);
     this.y.domain(d3.extent(data, d => d.fields.timestamp));
@@ -89,20 +91,26 @@ export class WaterfallComponent {
 
      this.svg.selectAll('g.y.axis g text').each(insertLineBreaks);
 
-     let rw = this.width / data[0].fields.level.length;
-     let rh = this.height / data.length;
+     this.rw = this.width / data[0].fields.level.length;
+     this.rh = this.height / data.length;
 
      let g = this.svg.selectAll('g.row')
                  .data(data)
                  .enter().append('g').attr("class", 'row')
-                 .attr('transform', (d, i) => 'translate(0, ' + (rh * i - 1) + ')');
+                 .attr('transform', (d, i) => 'translate(0, ' + (this.rh * i - 1) + ')');
 
      g.selectAll('rect')
-         .data(d => d.fields.level)
-         .enter().append('rect')
-         .attr('x', (d, i) => 1 + rw * i)
-         .attr('width', rw + 1)
-         .attr('height', rh + 1)
-         .attr('style', (d, i) => d != null ? 'fill:' + this.heat(d) : 'display:none');
+      .data((d, i) => d.fields.level.map(v => [v, i]))
+      .enter().append('rect')
+      .attr('x', (d, i) => 1 + this.rw * i)
+      .attr('width', this.rw + 1)
+      .attr('height', this.rh + 1)
+      .attr('style', (d, i) => d[0] != null ? 'fill:' + this.heat(d[0]) : 'display:none')
+      .append('title')
+      .text((d, i) => this.label(d, i));
+  }
+
+  label(d, i): string {
+    return `${dt_format(this.y.invert(this.rh * d[1] - 1))} ${this.x.invert(0.95 + this.rw * i).toFixed(2)}${HZ_LABELS[this.freqs.exp]} ${d[0]}dB`;
   }
 }

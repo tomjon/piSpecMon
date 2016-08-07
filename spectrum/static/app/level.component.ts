@@ -73,7 +73,7 @@ export class LevelComponent {
   }
 
   isHidden() {
-    return this.data.levels == undefined || this.data.levels.length == 0;
+    return this.data.levels == undefined || this.data.levels.length < 2;
   }
 
   ngOnChanges() {
