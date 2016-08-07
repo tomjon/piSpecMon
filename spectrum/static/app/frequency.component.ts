@@ -84,7 +84,7 @@ export class FrequencyComponent {
 
   ngOnChanges() {
     if (! this.svg) return; // ngOnChanges() happens before ngOnInit()!
-    this.svg.selectAll("g").remove();
+    this.svg.selectAll("g, path").remove();
 
     if (this.isHidden()) return;
 
@@ -127,22 +127,27 @@ export class FrequencyComponent {
   }
 
   onClick(e) {
+    if (e.target.tagName == "text" || e.target.tagName == "rect") {
+      // hide info text if it is clicked on
+      this.showLines = false;
+      this.infoText = "";
+      return;
+    }
+    // find SVG co-ordinates of click...
     let p = this.chart.nativeElement.createSVGPoint();
-    //FIXME let xy = $(this.chart.nativeElement).offset();
-    //p.x = e.pageX - xy.left;
-    //p.y = e.pageY - xy.top;
-    //console.log("Click", p.x, p.y);
-    //console.log("Compare", e.clientX, e.clientY); // which was a working p, but not when zoomed
     p.x = e.clientX;
     p.y = e.clientY;
     let z = p.matrixTransform(this.chart.nativeElement.getScreenCTM().inverse());
-    //console.log("z.x=" + z.x);
+
+    // find frequency of click...
     let f = this.x.invert(z.x - this.margin.left);
     let i = Math.round((f - this.freqs.range[0]) / this.freqs.range[2]);
     f = +this.freqs.range[0] + i * this.freqs.range[2]; // 'snap' to an actual frequency value
+
+    // decide where to show the info text and lines
     this.showX = this.margin.left + this.x(f);
-    //console.log("i=" + i);
     if (i < 0 || i >= this.data.agg[this.sweep].length) {
+      // out of bounds - hide info text
       this.showLines = false;
       this.infoText = "";
       return;
@@ -153,4 +158,5 @@ export class FrequencyComponent {
     setTimeout(() => this.textWidth = this.text.nativeElement.getComputedTextLength());
     this.showLines = true;
   }
+
 }

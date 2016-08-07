@@ -106,11 +106,10 @@ export class WaterfallComponent {
       .attr('width', this.rw + 1)
       .attr('height', this.rh + 1)
       .attr('style', (d, i) => d[0] != null ? 'fill:' + this.heat(d[0]) : 'display:none')
-      .append('title')
-      .text((d, i) => this.label(d, i));
+      .on("click", (d, i) => console.log(this.label(d, i)));
   }
 
-  label(d, i): string {
+  private label(d, i): string {
     return `${dt_format(this.y.invert(this.rh * d[1] - 1))} ${this.x.invert(0.95 + this.rw * i).toFixed(2)}${HZ_LABELS[this.freqs.exp]} ${d[0]}dB`;
   }
 }
