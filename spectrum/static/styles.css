@@ -32,6 +32,8 @@ psm-frequency span {
 rect.info {
 	fill: black;
 	fill-opacity: 0.2;
+}
+text.info {
   cursor: default;
 }
 

@@ -7,14 +7,18 @@ import { _d3 as d3, dt_format, insertLineBreaks } from './d3_import';
   selector: 'psm-waterfall',
   directives: [ WidgetComponent ],
   template: `<psm-widget [hidden]="isHidden()" title="Waterfall" class="chart">
-               <svg #chart
+               <svg #chart (click)="onClick($event)"
                  viewBox="0 0 ${WATERFALL_CHART_OPTIONS.width} ${WATERFALL_CHART_OPTIONS.height}"
                  preserveAspectRatio="xMidYMid meet">
+                 <svg:g #group />
+                 <svg:rect id="infoText" class="info" *ngIf="showInfo" [attr.x]="showX + 10" [attr.y]="showY - 30" [attr.width]="textWidth + 20" height=21 rx=5 ry=5 />
+                 <svg:text #text class="info" [attr.x]="showX + 20" [attr.y]="showY - 15">{{infoText}}</svg:text>
                </svg>
              </psm-widget>`
 })
 export class WaterfallComponent {
   svg: any;
+  g: any;
   heat: any;
   x: any;
   y: any;
@@ -24,18 +28,28 @@ export class WaterfallComponent {
   width: number;
   rh: number;
   rw: number;
+  margin: any;
+
+  //FIXME these attributes are copied from frequency chart... abstract?
+  showInfo: boolean;
+  showX: number;
+  showY: number;
+  infoText: string = "";
+  textWidth: number = 0;
 
   @Input() freqs: any;
   @Input() data: any;
 
   @ViewChild('chart') chart;
+  @ViewChild('text') text;
+  @ViewChild('group') group;
 
   constructor() { }
 
   ngOnInit() {
-    let margin = WATERFALL_CHART_OPTIONS.margin;
-    this.width = WATERFALL_CHART_OPTIONS.width - margin.left - margin.right,
-    this.height = WATERFALL_CHART_OPTIONS.height - margin.top - margin.bottom;
+    this.margin = WATERFALL_CHART_OPTIONS.margin;
+    this.width = WATERFALL_CHART_OPTIONS.width - this.margin.left - this.margin.right,
+    this.height = WATERFALL_CHART_OPTIONS.height - this.margin.top - this.margin.bottom;
 
     this.x = d3.scale.linear().range([0, this.width]);
     this.y = d3.time.scale().range([0, this.height]);
@@ -45,9 +59,9 @@ export class WaterfallComponent {
 
     this.heat = d3.scale.linear().domain(WATERFALL_CHART_OPTIONS.heat).range(["blue", "yellow", "red"]).clamp(true);
 
-    this.svg = d3.select(this.chart.nativeElement)
-                 .append("g")
-                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    this.svg = d3.select(this.chart.nativeElement);
+    this.g = this.svg.insert("g", ":first-child")
+                 .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
   }
 
   isHidden() {
@@ -57,7 +71,7 @@ export class WaterfallComponent {
   ngOnChanges() {
     if (! this.svg) return; // ngOnChanges() happens before ngOnInit()!
 
-    this.svg.selectAll("*").remove();
+    this.g.selectAll("g *").remove();
 
     if (this.isHidden()) return;
 
@@ -66,10 +80,10 @@ export class WaterfallComponent {
     var f0 = +this.freqs.range[0];
     var f1 = +this.freqs.range[1];
     let df = +this.freqs.range[2];
-    this.x.domain([f0 - 0.5 * df, f1 + 0.5 * df]);
+    this.x.domain([f0, f1]);
     this.y.domain(d3.extent(data, d => d.fields.timestamp));
 
-    this.svg.append("g")
+    this.g.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + this.height + ")")
         .call(this.xAxis)
@@ -80,7 +94,7 @@ export class WaterfallComponent {
         .style("text-anchor", "end")
         .text(HZ_LABELS[this.freqs.exp]);
 
-    this.svg.append("g")
+    this.g.append("g")
         .attr("class", "y axis")
         .call(this.yAxis)
         .append("text")
@@ -94,22 +108,64 @@ export class WaterfallComponent {
      this.rw = this.width / data[0].fields.level.length;
      this.rh = this.height / data.length;
 
-     let g = this.svg.selectAll('g.row')
+     let g = this.g.selectAll('g.row')
                  .data(data)
                  .enter().append('g').attr("class", 'row')
-                 .attr('transform', (d, i) => 'translate(0, ' + (this.rh * i - 1) + ')');
+                 .attr('transform', (d, i) => `translate(1, ${this.rh * i - 1})`);
 
      g.selectAll('rect')
-      .data((d, i) => d.fields.level.map(v => [v, i]))
+      .data(d => d.fields.level)
       .enter().append('rect')
-      .attr('x', (d, i) => 1 + this.rw * i)
+      .attr('x', (d, i) => this.rw * i)
       .attr('width', this.rw + 1)
       .attr('height', this.rh + 1)
-      .attr('style', (d, i) => d[0] != null ? 'fill:' + this.heat(d[0]) : 'display:none')
-      .on("click", (d, i) => console.log(this.label(d, i)));
+      .attr('style', (d, i) => d != null ? `fill:${this.heat(d)}` : 'display:none');
   }
 
-  private label(d, i): string {
-    return `${dt_format(this.y.invert(this.rh * d[1] - 1))} ${this.x.invert(0.95 + this.rw * i).toFixed(2)}${HZ_LABELS[this.freqs.exp]} ${d[0]}dB`;
+  //FIXME much copied from frequency chart, abstract?
+  onClick(e) {
+    if (e.target.tagName == "text" || (e.target.tagName == "rect" && e.target.id == "infoText")) {
+      // hide info text if it is clicked on
+      this.showInfo = false;
+      this.infoText = "";
+      return;
+    }
+    // find SVG co-ordinates of click...
+    let p = this.chart.nativeElement.createSVGPoint();
+    p.x = e.clientX;
+    p.y = e.clientY;
+    let z = p.matrixTransform(this.chart.nativeElement.getScreenCTM().inverse());
+
+    // find frequency of click...
+    let f = this.x.invert(z.x - this.margin.left);
+    let i = Math.round((f - this.freqs.range[0]) / this.freqs.range[2]);
+    f = +this.freqs.range[0] + i * this.freqs.range[2]; // 'snap' to an actual frequency value
+    if (i < 0 || i >= this.data.levels[0].fields.level.length) {
+      // out of bounds - hide info text
+      this.showInfo = false;
+      this.infoText = "";
+      return;
+    }
+
+    // find timestamp of click...
+    let j = Math.round(z.y / this.rh) - 1;
+    if (j < 0 || j >= this.data.levels.length) {
+      // out of bounds - hide info text
+      this.showInfo = false;
+      this.infoText = "";
+      return;
+    }
+    let t = this.data.levels[j].fields.timestamp;
+
+    // decide where to show the info text and lines
+    this.showX = this.margin.left + this.x(f);
+    if (z.x > this.width / 2) {
+      this.showX -= 300;
+    }
+    this.showY = (j + 1) * this.rh + this.margin.top;
+    let v = this.data.levels[j].fields.level[i];
+    this.infoText = `${v}dB at ${f}${HZ_LABELS[this.freqs.exp]} at ${dt_format(new Date(+t))}`;
+    setTimeout(() => this.textWidth = this.text.nativeElement.getComputedTextLength());
+    this.showInfo = true;
   }
 }

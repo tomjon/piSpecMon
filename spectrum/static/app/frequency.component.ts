@@ -23,10 +23,10 @@ declare var $;
                <svg #chart (click)="onClick($event)"
                  viewBox="0 0 ${FREQUENCY_CHART_OPTIONS.width} ${FREQUENCY_CHART_OPTIONS.height}"
                  preserveAspectRatio="xMidYMid meet">
-                 <svg:line class="horizontal" *ngIf="showLines" [attr.x1]="margin.left" [attr.x2]="width + margin.left" [attr.y1]="showY" [attr.y2]="showY" />
-                 <svg:line class="vertical" *ngIf="showLines" [attr.x1]="showX" [attr.x2]="showX" [attr.y1]="height + margin.top" [attr.y2]="showY" />
-                 <svg:rect class="info" *ngIf="showLines" [attr.x]="showX + 10" [attr.y]="showY - 30" [attr.width]="textWidth + 20" height=21 rx=5 ry=5 />
-                 <svg:text #text class="info" [attr.x]="showX + 20" [attr.y]="showY - 15">{{infoText}}</svg:text>
+                 <svg:line class="horizontal" *ngIf="showInfo" [attr.x1]="margin.left" [attr.x2]="width + margin.left" [attr.y1]="showY" [attr.y2]="showY" />
+                 <svg:line class="vertical" *ngIf="showInfo" [attr.x1]="showX" [attr.x2]="showX" [attr.y1]="height + margin.top" [attr.y2]="showY" />
+                 <svg:rect class="info" *ngIf="showInfo" [attr.x]="showX + 10 + adjustX" [attr.y]="showY - 30" [attr.width]="textWidth + 20" height=21 rx=5 ry=5 />
+                 <svg:text #text class="info" [attr.x]="showX + 20 + adjustX" [attr.y]="showY - 15">{{infoText}}</svg:text>
                </svg>
              </psm-widget>`
 })
@@ -44,11 +44,12 @@ export class FrequencyComponent {
   width: number;
   margin: any;
 
-  showLines: boolean = false;
+  showInfo: boolean = false;
   showX: number;
   showY: number;
   infoText: string = "";
   textWidth: number = 0;
+  adjustX: number = 0;
 
   @Input() freqs: any;
   @Input() data: any;
@@ -129,7 +130,7 @@ export class FrequencyComponent {
   onClick(e) {
     if (e.target.tagName == "text" || e.target.tagName == "rect") {
       // hide info text if it is clicked on
-      this.showLines = false;
+      this.showInfo = false;
       this.infoText = "";
       return;
     }
@@ -142,21 +143,22 @@ export class FrequencyComponent {
     // find frequency of click...
     let f = this.x.invert(z.x - this.margin.left);
     let i = Math.round((f - this.freqs.range[0]) / this.freqs.range[2]);
+    if (i < 0 || i >= this.data.agg[this.sweep].length) {
+      // out of bounds - hide info text
+      this.showInfo = false;
+      this.infoText = "";
+      return;
+    }
     f = +this.freqs.range[0] + i * this.freqs.range[2]; // 'snap' to an actual frequency value
 
     // decide where to show the info text and lines
     this.showX = this.margin.left + this.x(f);
-    if (i < 0 || i >= this.data.agg[this.sweep].length) {
-      // out of bounds - hide info text
-      this.showLines = false;
-      this.infoText = "";
-      return;
-    }
+    this.adjustX = z.x > this.width / 2 ? -150 : 0;
     let v = this.data.agg[this.sweep][i] ? this.data.agg[this.sweep][i].v : 0;
     this.showY = this.y(v) + this.margin.top;
     this.infoText = `${v}dB at ${f}${HZ_LABELS[this.freqs.exp]}`;
     setTimeout(() => this.textWidth = this.text.nativeElement.getComputedTextLength());
-    this.showLines = true;
+    this.showInfo = true;
   }
 
 }
