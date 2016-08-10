@@ -28,8 +28,8 @@ export class RangeComponent {
     this.dataService.getRange(this.config.config_id)
                     .subscribe(data => {
                       this.showing = false;
-                      this.count = data.hits.total;
-                      this.range = [this.config.timestamp, data.hits.hits[0].fields.timestamp[0]];
+                      this.count = data.count;
+                      this.range = [this.config.timestamp, data.range];
                       this.value = [this.range[0], this.range[1]]; // need a literal copy
                       if (this.count > 0) this.draw();
                     });

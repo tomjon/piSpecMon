@@ -173,20 +173,49 @@ def monitor():
       status['count'] = r.json()['hits']['total']
     return json.dumps(status)
 
-
-# forward Elasticsearch queries verbatim
-# FIXME noone should be able to delete a running sweep
-# FIXME only admin can delete data sets
-@application.route('/spectrum/<path:path>', methods=['GET', 'POST', 'DELETE'])
+@application.route('/config')
 @role_required(['admin', 'freq', 'data'])
-def search(path):
-  if request.method == 'POST':
-    r = requests.post(''.join([ELASTICSEARCH + 'spectrum/', path]), params=request.args, data=request.get_data())
-  elif request.method == 'GET':
-    r = requests.get(''.join([ELASTICSEARCH + 'spectrum/', path]), params=request.args)
-  else:
-    r = requests.delete(''.join([ELASTICSEARCH + 'spectrum/', path]), params=request.args)
-  return r.text, r.status_code
+def sweepSets():
+  r = requests.get(ELASTICSEARCH + 'spectrum/config/_search', params='size=10000&fields=*&sort=timestamp')
+  if r.status_code != 200:
+    return "Elasticsearch error finding config sets", r.status_code
+  hits = r.json()['hits']['hits'] if 'hits' in r.json()['hits'] else [ ]
+  return json.dumps({ 'data': [{ 'id': hit['_id'], 'config': json.loads(hit['fields']['json'][0]), 'timestamp': int(hit['fields']['timestamp'][0]) } for hit in hits] })
+
+# FIXME noone should be able to delete a running sweep
+@application.route('/config/<config_id>', methods=['DELETE'])
+@role_required(['admin'])
+def deleteConfig(config_id):
+  r = requests.delete(ELASTICSEARCH + 'spectrum/_query', params='refresh=true&q=config_id:' + config_id)
+  if r.status_code != 200:
+    return "Elasticsearch error deleting sweep data", r.status_code
+  r = requests.delete(ELASTICSEARCH + 'spectrum/config/' + config_id, params='refresh=true')
+  if r.status_code != 200:
+    return "Elasticsearch error deleting config set", r.status_code
+  #FIXME also delete all scan data with this config_id
+  return json.dumps({ 'status': 'OK' })
+
+@application.route('/range/<config_id>')
+@role_required(['admin', 'freq', 'data'])
+def range(config_id):
+  r = requests.get(ELASTICSEARCH + 'spectrum/sweep/_search', params='size=1&q=config_id:' + config_id + '&fields=timestamp&sort=timestamp:desc')
+  if r.status_code != 200:
+    return "Elasticsearch error getting range", r.status_code
+  ret = { 'count': r.json()['hits']['total'] }
+  if ret['count'] > 0:
+    ret['range'] = int(r.json()['hits']['hits'][0]['fields']['timestamp'][0])
+  return json.dumps(ret)
+
+@application.route('/data/<config_id>')
+@role_required(['admin', 'freq', 'data'])
+def data(config_id):
+  q ='config_id:' + config_id
+  if 'start' in request.args and 'end' in request.args:
+    q += '+AND+timestamp:[' + request.args['start'] + '+TO+' + request.args['end'] + ']'
+  r = requests.get(ELASTICSEARCH + 'spectrum/sweep/_search', params='size=1000000&q=' + q + '&fields=*&sort=timestamp')
+  if r.status_code != 200:
+    return "Elasticsearch error getting sweep data", r.status_code
+  return json.dumps({ 'data': r.json()['hits']['hits'] })
 
 @application.route('/users')
 @role_required([ 'admin' ])

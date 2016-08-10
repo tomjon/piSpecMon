@@ -110,37 +110,25 @@ export class DataService {
                     .catch(this.errorHandler("log out"));
   }
 
-  getConfig(config_id: string): Observable<Config> {
-    let url = this.baseUrl + 'spectrum/config/' + config_id + '?fields=json,timestamp';
+  fgetConfig(config_id: string): Observable<Config> {
+    let url = this.baseUrl + 'config/' + config_id;
     return this.http.get(url)
-                    .map(res => this.extractConfigSet(config_id, res))
+                    .map(res => {
+                      let data = res.json();
+                      return new Config(config_id, +data.timestamp, data.config);
+                    })
                     .catch(this.errorHandler("get scan configuration"));
   }
 
-  private extractConfigSet(config_id: string, res: Response): Config {
-    let fields: any = res.json().fields;
-    return new Config(config_id, +fields.timestamp[0], JSON.parse(fields.json[0]));
-  }
-
   getSweepSets(): Observable<Config[]> {
-    return this.http.get(this.baseUrl + 'spectrum/config/_search?size=10000&fields=*&sort=timestamp')
-                    .map(this.extractSweepData)
-                    .catch(this.errorHandler("get scans"));
+    return this.http.get(this.baseUrl + 'config')
+                    .map(res => res.json().data.map(c => new Config(c.id, c.timestamp, c.config)))
+                    .catch(this.errorHandler("get scan config sets"));
   }
 
   deleteSweepSet(config_id): Observable<void> {
-    return this.http.delete(this.baseUrl + 'spectrum/config/' + config_id)
+    return this.http.delete(this.baseUrl + 'config/' + config_id)
                     .catch(this.errorHandler("delete scan"));
-    //FIXME doesn't delete sweep data!  But all these spectrum/** requests should use a dedicated server API anyway
-  }
-
-  private extractSweepData(res: Response): Config[] {
-    let hits = res.json().hits.hits || [ ];
-    let sets: Config[] = [ ];
-    for (let hit of hits) {
-      sets.push(new Config(hit._id, hit.fields.timestamp[0], JSON.parse(hit.fields.json[0])));
-    }
-    return sets;
   }
 
   getMonitor(): Observable<any> {
@@ -171,18 +159,14 @@ export class DataService {
   }
 
   getRange(config_id): Observable<any> {
-    let url = 'spectrum/sweep/_search?size=1&q=config_id:' + config_id + '&fields=timestamp&sort=timestamp:desc';
-    return this.http.get(this.baseUrl + url)
+    return this.http.get(this.baseUrl + 'range/' + config_id)
                     .map(res => res.json())
                     .catch(this.errorHandler("get sweep range"));
   }
 
   getData(config_id, range): Observable<any> {
-    let end = range[1] + 5;
-    let q = 'config_id:' + config_id + '+AND+timestamp:[' + range[0] + '+TO+' + end + ']';
-    let url = 'spectrum/sweep/_search?size=1000000&q=' + q + '&fields=*&sort=timestamp';
-    return this.http.get(this.baseUrl + url)
-                    .map(res => res.json().hits.hits)
+    return this.http.get(`${this.baseUrl}data/${config_id}?start=${range[0]}&end=${range[1] + 5}`)
+                    .map(res => res.json().data)
                     .catch(this.errorHandler("get spectrum data"));
   }
 
