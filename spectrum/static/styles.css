@@ -36,8 +36,11 @@ rect.info {
 text.info {
   cursor: default;
 }
-.freqLabel {
+.freqLabel, .freqCheck {
   cursor: pointer;
+}
+.hidden {
+  opacity: 0;
 }
 
 /* widget containers */

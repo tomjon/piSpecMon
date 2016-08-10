@@ -53,6 +53,7 @@ export class LevelComponent {
   textWidth: number = 0;
   adjustX: number = 0;
   tick: any;
+  checked: any = { };
 
   @Input() freqs: any;
   @Input() data: any;
@@ -156,6 +157,7 @@ export class LevelComponent {
                        .defined(d => d.fields.level[idx] != null);
           return line(data);
         })
+        .attr("id", idx => `level_line_${idx}`)
         .style("stroke", d => this.colour(d));
 
     let discreteFn = idx => {
@@ -171,15 +173,35 @@ export class LevelComponent {
 
     // plot label for top frequency list
     freq.append("text")
-        .attr("x", this.width + 10)
+        .attr("x", this.width + 24)
         .attr("y", (idx, i) => 16 * i)
         .attr("dy", 12)
         .text(this.freqs.freqs ? discreteFn : rangeFn)
         .style("stroke", idx => this.colour(idx))
         .classed("freqLabel", true)
-        .on('click', idx => { this.freq_idx = idx; this.showText(); d3.event.stopPropagation() });
+        .on('click', idx => {
+          this.freq_idx = idx;
+          this.showText();
+          d3.event.stopPropagation();
+        });
+
+    // set up checked frequencies object and tick/cross icons
+    this.checked = { };
+    freq.append("text")
+        .attr("x", this.width + 10)
+        .attr("y", (idx, i) => 16 * i)
+        .attr("dy", 12)
+        .classed("freqCheck", idx => { this.checked[idx] = true; return true })
+        .text("✔")
+        .on('click', idx => {
+          this.checked[idx] = ! this.checked[idx];
+          d3.select(d3.event.target).text(this.checked[idx] ? "✔" : "✘");
+          d3.select(`#level_line_${idx}`).classed("hidden", ! this.checked[idx]);
+        });
 
     this.freq_idx = freq_idxs[0]; // default frequency to show info for is the first one
+    this.showInfo = false;
+    this.infoText = "";
   }
 
   onClick(e) {
@@ -187,6 +209,7 @@ export class LevelComponent {
       // hide info text if it is clicked on
       this.showInfo = false;
       this.infoText = "";
+      delete this.tick;
       return;
     }
     // find SVG co-ordinates of click...
@@ -201,6 +224,7 @@ export class LevelComponent {
       // out of bounds - hide info text
       this.showInfo = false;
       this.infoText = "";
+      delete this.tick;
       return;
     }
     this.tick = this.nearestTick(t, this.data.levels.map(d => +d.fields.timestamp)); // find nearest timestamp in the levels array
