@@ -11,17 +11,10 @@ export class DataService {
 
   constructor(private http: Http, private errorService: ErrorService) { }
 
-  getModels(): Observable<any> {
+  getCaps(): Observable<any> {
     return this.http.get(this.baseUrl + 'caps')
-                    .map(res => res.json().models)
+                    .map(res => res.json())
                     .catch(this.errorHandler("get rig models"));
-  }
-
-  //FIXME combine with getModels() by moving getModels() call into app component
-  getModes(): Observable<any> {
-    return this.http.get(this.baseUrl + 'caps')
-                    .map(res => res.json().modes)
-                    .catch(this.errorHandler("get available modes"));
   }
 
   getRig(): Observable<any> {

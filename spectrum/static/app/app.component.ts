@@ -19,6 +19,14 @@ import { HTTP_PROVIDERS } from '@angular/http';
 // Add the RxJS Observable operators we need in this app
 import './rxjs-operators';
 
+let modelSort = function (a, b) {
+  if (a.manufacturer == b.manufacturer) {
+    return a.name < b.name ? -1 : 1;
+  } else {
+    return a.manufacturer < b.manufacturer ? -1 : 1;
+  }
+};
+
 @Component({
   selector: 'psm-app',
   templateUrl: 'templates/app.html',
@@ -27,6 +35,7 @@ import './rxjs-operators';
 })
 export class AppComponent {
   user: User = new User();
+  models: any[] = [ ];
   modes: any[] = [ ];
 
   // config set and config currently selected in sweep table
@@ -39,8 +48,11 @@ export class AppComponent {
   ngOnInit() {
     this.dataService.getCurrentUser()
                     .subscribe(user => { this.user = user; this.checkSuperior() });
-    this.dataService.getModes()
-                    .subscribe(modes => this.modes = modes);
+    this.dataService.getCaps()
+                    .subscribe(data => {
+                      this.models = data.models;
+                      this.modes = data.modes;
+                    });
     setInterval(this.monitor.bind(this), TICK_INTERVAL);
   }
 
