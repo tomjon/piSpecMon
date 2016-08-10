@@ -21,15 +21,20 @@ import { _d3 as d3, dt_format, insertLineBreaks } from './d3_import';
                    </select>
                  </div>
                </form>
-               <svg #chart
+               <svg #chart (click)="onClick($event)"
                  viewBox="0 0 ${LEVEL_CHART_OPTIONS.width} ${LEVEL_CHART_OPTIONS.height}"
                  preserveAspectRatio="xMidYMid meet">
+                 <svg:line class="horizontal" *ngIf="showInfo" [attr.x1]="margin.left" [attr.x2]="width + margin.left" [attr.y1]="showY" [attr.y2]="showY" />
+                 <svg:line class="vertical" *ngIf="showInfo" [attr.x1]="showX" [attr.x2]="showX" [attr.y1]="height + margin.top" [attr.y2]="showY" />
+                 <svg:rect class="info" *ngIf="showInfo" [attr.x]="showX + 10 + adjustX" [attr.y]="showY - 30" [attr.width]="textWidth + 20" height=21 rx=5 ry=5 />
+                 <svg:text #text class="info" [attr.x]="showX + 20 + adjustX" [attr.y]="showY - 15">{{infoText}}</svg:text>
                </svg>
              </psm-widget>`
 })
 export class LevelComponent {
   top: string = 'avg';
   N: number = 1;
+  freq_idx: number;
 
   svg: any;
   colour: any;
@@ -39,19 +44,29 @@ export class LevelComponent {
   yAxis: any;
   height: number;
   width: number;
+  margin: any;
+
+  showInfo: boolean = false;
+  showX: number;
+  showY: number;
+  infoText: string = "";
+  textWidth: number = 0;
+  adjustX: number = 0;
+  tick: any;
 
   @Input() freqs: any;
   @Input() data: any;
 
   @ViewChild('chart') chart;
+  @ViewChild('text') text;
   @ViewChild('selectN') selectN;
 
   constructor() { }
 
   ngOnInit() {
-    let margin = LEVEL_CHART_OPTIONS.margin;
-    this.width = LEVEL_CHART_OPTIONS.width - margin.left - margin.right,
-    this.height = LEVEL_CHART_OPTIONS.height - margin.top - margin.bottom;
+    this.margin = LEVEL_CHART_OPTIONS.margin;
+    this.width = LEVEL_CHART_OPTIONS.width - this.margin.left - this.margin.right,
+    this.height = LEVEL_CHART_OPTIONS.height - this.margin.top - this.margin.bottom;
 
     this.x = d3.time.scale().range([0, this.width]);
     this.y = d3.scale.linear().range([this.height, 0]);
@@ -63,7 +78,7 @@ export class LevelComponent {
 
     this.svg = d3.select(this.chart.nativeElement)
                  .append("g")
-                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                 .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
 
     d3.select(this.selectN.nativeElement)
       .selectAll("option")
@@ -79,7 +94,7 @@ export class LevelComponent {
   ngOnChanges() {
     if (! this.svg) return; // ngOnChanges() happens before ngOnInit()!
 
-    this.svg.selectAll("*").remove();
+    this.svg.selectAll("g").remove();
 
     if (this.isHidden()) return;
 
@@ -154,11 +169,67 @@ export class LevelComponent {
       return +f.toFixed(3) + ' ' + HZ_LABELS[this.freqs.exp];
     };
 
+    // plot label for top frequency list
     freq.append("text")
         .attr("x", this.width + 10)
         .attr("y", (idx, i) => 16 * i)
         .attr("dy", 12)
         .text(this.freqs.freqs ? discreteFn : rangeFn)
-        .style("stroke", idx => this.colour(idx));
+        .style("stroke", idx => this.colour(idx))
+        .classed("freqLabel", true)
+        .on('click', idx => { this.freq_idx = idx; this.showText(); d3.event.stopPropagation() });
+
+    this.freq_idx = freq_idxs[0]; // default frequency to show info for is the first one
+  }
+
+  onClick(e) {
+    if (e.target.tagName == "text" || e.target.tagName == "rect") {
+      // hide info text if it is clicked on
+      this.showInfo = false;
+      this.infoText = "";
+      return;
+    }
+    // find SVG co-ordinates of click...
+    let p = this.chart.nativeElement.createSVGPoint();
+    p.x = e.clientX;
+    p.y = e.clientY;
+    let z = p.matrixTransform(this.chart.nativeElement.getScreenCTM().inverse());
+
+    // find timestamp of click...
+    let t = this.x.invert(z.x - this.margin.left);
+    if (t < this.x.domain()[0] || t > this.x.domain()[1]) {
+      // out of bounds - hide info text
+      this.showInfo = false;
+      this.infoText = "";
+      return;
+    }
+    this.tick = this.nearestTick(t, this.data.levels.map(d => +d.fields.timestamp)); // find nearest timestamp in the levels array
+    this.showText();
+  }
+
+  private showText() {
+    if (! this.tick) return;
+    // decide where to show the info text and lines
+    this.showX = this.x(this.tick.value) + this.margin.left;
+    this.adjustX = this.showX > this.width / 2 ? -300 : 0;
+    let f = +this.freqs.range[0] + this.freq_idx * this.freqs.range[2];
+    let v = this.data.levels[this.tick.index].fields.level[this.freq_idx];
+    this.showY = this.y(v) + this.margin.top;
+    this.infoText = `${v}dB at ${f}${HZ_LABELS[this.freqs.exp]} at ${dt_format(new Date(this.tick.value))}`;
+    setTimeout(() => this.textWidth = this.text.nativeElement.getComputedTextLength());
+    this.showInfo = true;
+  }
+
+  // return the value in the (monotonic increasing) ticks array closest to the given value, v
+  private nearestTick(value: number, ticks: number[]): any {
+    let t0: any = { };
+    for (let idx in ticks) {
+      let t = { value: ticks[idx], index: idx };
+      if (t.value > value) {
+        return t0 != undefined && (value - t0.value <= t.value - value) ? t0 : t;
+      }
+      t0 = t;
+    }
+    return t0;
   }
 }

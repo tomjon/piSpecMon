@@ -36,6 +36,9 @@ rect.info {
 text.info {
   cursor: default;
 }
+.freqLabel {
+  cursor: pointer;
+}
 
 /* widget containers */
 .container {

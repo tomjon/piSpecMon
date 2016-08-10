@@ -160,5 +160,4 @@ export class FrequencyComponent {
     setTimeout(() => this.textWidth = this.text.nativeElement.getComputedTextLength());
     this.showInfo = true;
   }
-
 }
