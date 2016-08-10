@@ -14,7 +14,7 @@
       <psm-error></psm-error>
       <psm-details [user]="user"></psm-details>
       <psm-stats *ngIf="user.roleIn(['admin'])"></psm-stats>
-      <psm-rig *ngIf="user.roleIn(['admin'])" [models]="models"></psm-rig>
+      <psm-rig *ngIf="user.roleIn(['admin'])" [models]="models" [rates]="rates" [parities]="parities"></psm-rig>
       <psm-scan *ngIf="user.roleIn(['admin', 'freq'])" [modes]="modes" [config]="fields" [status]="status"></psm-scan>
     </div>
   </div>

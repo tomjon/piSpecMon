@@ -37,6 +37,8 @@ export class AppComponent {
   user: User = new User();
   models: any[] = [ ];
   modes: any[] = [ ];
+  rates: any[] = [ ];
+  parities: any[] = [ ];
 
   // config set and config currently selected in sweep table
   config: Config;
@@ -52,6 +54,8 @@ export class AppComponent {
                     .subscribe(data => {
                       this.models = data.models;
                       this.modes = data.modes;
+                      this.rates = data.rates;
+                      this.parities = data.parities;
                     });
     setInterval(this.monitor.bind(this), TICK_INTERVAL);
   }

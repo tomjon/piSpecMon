@@ -27,7 +27,7 @@ def probe_rig_model(pathname, data_bits, stop_bits, rate):
 
 
 def get_capabilities():
-  caps = { 'models': [], 'modes': [] }
+  caps = { 'models': [], 'modes': [], 'rates': [], 'parities': [] }
 
   is_int = lambda n: isinstance(n, int)
   for model in [ n for x, n in inspect.getmembers(Hamlib, is_int) if x.startswith('RIG_MODEL_') ]:
@@ -47,6 +47,18 @@ def get_capabilities():
   for n in xrange(int(math.log(Hamlib.RIG_MODE_TESTS_MAX - 1, 2))):
     mode = 2 ** n
     caps['modes'].append({ 'mode': mode, 'name': Hamlib.rig_strrmode(mode) })
+
+  caps['rates'] = [ { 'rate': 2400, 'label': '2400' },
+                    { 'rate': 4800, 'label': '4800' },
+                    { 'rate': 9600, 'label': '9600' },
+                    { 'rate': 14400, 'label': '14.4k' },
+                    { 'rate': 19200, 'label': '19.2k' },
+                    { 'rate': 28800, 'label': '28.8k' } ]
+
+  for x, n in inspect.getmembers(Hamlib, is_int):
+    if not x.startswith('RIG_PARITY_'):
+      continue
+    caps['parities'].append({ 'label': x[11:].capitalize(), 'value': n })
 
   return caps
 
