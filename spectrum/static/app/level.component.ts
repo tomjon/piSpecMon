@@ -74,6 +74,8 @@ export class LevelComponent {
 
     this.xAxis = d3.svg.axis().scale(this.x).orient("bottom").tickFormat(dt_format);
     this.yAxis = d3.svg.axis().scale(this.y).orient("left");
+//    if (LEVEL_CHART_OPTIONS.x_ticks) this.xAxis().ticks(LEVEL_CHART_OPTIONS.x_ticks);
+//    if (LEVEL_CHART_OPTIONS.y_ticks) this.yAxis().ticks(LEVEL_CHART_OPTIONS.y_ticks);
 
     this.colour = d3.scale.category10();
 

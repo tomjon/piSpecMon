@@ -69,6 +69,8 @@ export class FrequencyComponent {
 
     this.xAxis = d3.svg.axis().scale(this.x).orient("bottom");
     this.yAxis = d3.svg.axis().scale(this.y).orient("left");
+//    if (FREQUENCY_CHART_OPTIONS.x_ticks) this.xAxis().ticks(FREQUENCY_CHART_OPTIONS.x_ticks);
+//    if (FREQUENCY_CHART_OPTIONS.y_ticks) this.yAxis().ticks(FREQUENCY_CHART_OPTIONS.y_ticks);
 
     this.line = d3.svg.line()
                   .y(d => this.y(d.v))

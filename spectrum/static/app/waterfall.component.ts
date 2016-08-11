@@ -56,6 +56,8 @@ export class WaterfallComponent {
 
     this.xAxis = d3.svg.axis().scale(this.x).orient("bottom");
     this.yAxis = d3.svg.axis().scale(this.y).orient("left").tickFormat(dt_format);
+//    if (WATERFALL_CHART_OPTIONS.x_ticks) this.xAxis().ticks(WATERFALL_CHART_OPTIONS.x_ticks);
+//    if (WATERFALL_CHART_OPTIONS.y_ticks) this.yAxis().ticks(WATERFALL_CHART_OPTIONS.y_ticks);
 
     this.heat = d3.scale.linear().domain(WATERFALL_CHART_OPTIONS.heat).range(["blue", "yellow", "red"]).clamp(true);
 
