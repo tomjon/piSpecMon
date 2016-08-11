@@ -95,6 +95,9 @@ tbody tr {
 }
 
 /* specials for range display */
+.range-slider {
+  height: 50px;
+}
 .range-controls * {
   margin: -2px 0px 5px 10px;
 	display: inline-block;
