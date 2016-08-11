@@ -158,7 +158,7 @@ export class DataService {
   }
 
   getData(config_id, range): Observable<any> {
-    return this.http.get(`${this.baseUrl}data/${config_id}?start=${range[0]}&end=${range[1] + 5}`)
+    return this.http.get(`${this.baseUrl}data/${config_id}?start=${Math.round(range[0])}&end=${Math.round(range[1]) + 5}`)
                     .map(res => res.json().data)
                     .catch(this.errorHandler("get spectrum data"));
   }

@@ -81,12 +81,14 @@ class TimeoutError (RigError):
 
 class Monitor:
 
-  def __init__(self, model=1, data_bits=None, stop_bits=None, write_delay=None, pathname=None, set_check=0, retries=0, interval=0):
+  def __init__(self, model=1, data_bits=None, stop_bits=None, rate=None, parity=None, write_delay=None, pathname=None, set_check=0, retries=0, interval=0):
     """ Arguments:
     
         model - hamlib model number, defaults to dummy implementation
         data_bits - if not None, set data bits on the rig port
         stop_bits - if not None, set stop bits on the rig port
+        rate - if not None, set rate on the rig port
+        parity - if not None, set parity on the rig port
         write_delay - if not None, set write delay on the rig port (ms)
         pathname - is not None, set path name on the rig port
         set_check - 0 = set frequency and hope, N = set/check N times before failing
@@ -100,6 +102,10 @@ class Monitor:
       self.rig.state.rigport.parm.serial.data_bits = data_bits
     if stop_bits is not None:
       self.rig.state.rigport.parm.serial.stop_bits = stop_bits
+    if rate is not None:
+      self.rig.state.rigport.parm.serial.rate = rate
+    if parity is not None:
+      self.rig.state.rigport.parm.serial.parit = parity
     if write_delay is not None:
       self.rig.state.rigport.write_delay = write_delay
     if pathname is not None:
