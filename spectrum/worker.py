@@ -130,7 +130,6 @@ class Worker:
 
     rig = config['rig']
     period = config['monitor'].get('period', 0)
-    radio_on = config['monitor'].get('radio_on', 0)
     scan = config['scan']
     for x in config['freqs']:
       # x is either 'range' or 'freqs'
@@ -145,9 +144,10 @@ class Worker:
     else:
       raise ValueError("No frequencies in config")
 
-    return rig, period, radio_on, scan
+    return rig, period, scan
 
   def _scan(self, config_id, rig, period, scan):
+    del rig['radio_on']
     with Monitor(**rig) as monitor:
       self._timeout_count = 0
       n = 0
@@ -190,7 +190,7 @@ class Worker:
       return
 
     try:
-      rig, period, radio_on, scan = self._read_config(config)
+      rig, period, scan = self._read_config(config)
 
       while not self._stop:
         try:
@@ -200,7 +200,7 @@ class Worker:
           finally:
             log.info('Scanning stopped')
         except TimeoutError as e:
-          if self._timeout_count < radio_on:
+          if self._timeout_count < rig['radio_on']:
             self._timeout_count += 1
             log.error(e)
             log.info("Attempting to power on")

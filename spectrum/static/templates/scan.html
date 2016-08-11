@@ -6,25 +6,27 @@
         <option *ngFor="let mode of modes" value="{{mode.mode}}">{{mode.name}}</option>
       </select>
     </div>
-    <div class="form-group psm-horizontal-form-group">
+    <div class="form-group">
       <label for="start">Frequency range</label>
-      <div class="psm-input-group">
-        <input [disabled]="loading || standby || status.config_id" type="text" required class="form-control" [(ngModel)]="config.freqs.range[0]" name="start" #start="ngModel">
-        <div class="help">start</div>
-      </div>
-      <div class="psm-input-group">
-        <input [disabled]="loading || standby || status.config_id" type="text" required class="form-control" [(ngModel)]="config.freqs.range[1]" name="end" #end="ngModel">
-        <div class="help">end</div>
-      </div>
-      <div class="psm-input-group">
-        <input [disabled]="loading || standby || status.config_id" type="text" required class="form-control" [(ngModel)]="config.freqs.range[2]" name="step" #step="ngModel">
-        <div class="help">step</div>
-      </div>
-      <div class="psm-input-group">
-        <select class="form-control" [disabled]="loading || standby || status.config_id" [(ngModel)]="config.freqs.exp" name="units">
-          <option *ngFor="let u of units" value="{{u.value}}">{{u.label}}</option>
-        </select>
-        <div class="help">units</div>
+      <div>
+        <div class="psm-input-group col-lg-3">
+          <input [disabled]="loading || standby || status.config_id" type="text" required class="form-control" [(ngModel)]="config.freqs.range[0]" name="start" #start="ngModel">
+          <div class="help">start</div>
+        </div>
+        <div class="psm-input-group col-lg-3">
+          <input [disabled]="loading || standby || status.config_id" type="text" required class="form-control" [(ngModel)]="config.freqs.range[1]" name="end" #end="ngModel">
+          <div class="help">end</div>
+        </div>
+        <div class="psm-input-group col-lg-3">
+          <input [disabled]="loading || standby || status.config_id" type="text" required class="form-control" [(ngModel)]="config.freqs.range[2]" name="step" #step="ngModel">
+          <div class="help">step</div>
+        </div>
+        <div class="psm-input-group col-lg-3">
+          <select class="form-control" [disabled]="loading || standby || status.config_id" [(ngModel)]="config.freqs.exp" name="units">
+            <option *ngFor="let u of units" value="{{u.value}}">{{u.label}}</option>
+          </select>
+          <div class="help">units</div>
+        </div>
       </div>
       <div [hidden]="validNumber(start) && validNumber(end) && validNumber(step)" class="alert alert-danger">
         Frequency range is a required parameter, and must consist of numbers

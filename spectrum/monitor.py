@@ -12,20 +12,6 @@ def frange(min, max, step):
     yield round(min + n * step, digits)
 
 
-def probe_rig_model(pathname, data_bits, stop_bits, rate):
-  port = Hamlib.hamlib_port_t()
-  port.type.rig = Hamlib.RIG_PORT_SERIAL
-  port.parm.serial.rate = rate
-  port.parm.serial.data_bits = data_bits
-  port.parm.serial.stop_bits = stop_bits
-  port.parm.serial.parity = Hamlib.RIG_PARITY_NONE
-  port.parm.serial.handshake = Hamlib.RIG_HANDSHAKE_NONE
-  port.pathname = pathname
-
-  Hamlib.rig_load_all_backends()
-  return Hamlib.rig_probe(port)
-
-
 def get_capabilities():
   caps = { 'models': [], 'modes': [], 'rates': [], 'parities': [] }
 
@@ -81,7 +67,9 @@ class TimeoutError (RigError):
 
 class Monitor:
 
-  def __init__(self, model=1, data_bits=None, stop_bits=None, rate=None, parity=None, write_delay=None, pathname=None, set_check=0, retries=0, interval=0):
+  def __init__(self, model=1, data_bits=None, stop_bits=None, rate=None, parity=None,
+                     write_delay=None, pathname=None, set_check=0, retries=0, interval=0,
+                     attenuation=None):
     """ Arguments:
     
         model - hamlib model number, defaults to dummy implementation
@@ -94,6 +82,7 @@ class Monitor:
         set_check - 0 = set frequency and hope, N = set/check N times before failing
         retries - retry after error or timeout this many times
         interval - if > 0, pause this many ms before retrying (doubles each retry)
+        attenuation - if not None, set attentuation level on the rig
     """
     self.rig = Hamlib.Rig(model)
     if self.rig.this is None:
@@ -110,12 +99,15 @@ class Monitor:
       self.rig.state.rigport.write_delay = write_delay
     if pathname is not None:
       self.rig.state.rigport.pathname = str(pathname)
+    self.attenuation = attenuation
     self.set_check = set_check
     self.retries = retries
     self.interval = interval
 
   def __enter__(self):
     self._check(self.rig.open)
+    if self.attenuation is not None:
+      self._check(self.rig.set_level, Hamlib.RIG_VFO_CURR, Hamlib.RIG_LEVEL_ATT, self.attentuation)
     return self
 
   def __exit__(self, *args):
@@ -148,6 +140,7 @@ class Monitor:
     return self._check(self.rig.get_strength, Hamlib.RIG_VFO_CURR)
 
   def scan(self, freqs=[], range=None, mode=None):
+    #FIXME mode should probably just be set once at rig.open, and not be an argument to scan() but to __init__()
     if mode is not None and mode != Hamlib.RIG_MODE_NONE:
       width = self._check(self.rig.passband_normal, mode)
       self._check(self.rig.set_mode, mode, width, Hamlib.RIG_VFO_CURR)

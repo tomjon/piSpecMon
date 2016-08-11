@@ -120,21 +120,9 @@ psm-login span {
 .ng-invalid {
   border-left: 5px solid #a94442; /* red */
 }
-.psm-horizontal-form-group {
-  text-align: justify;
-}
-.psm-horizontal-form-group * {
-  text-align: initial;
-}
-.psm-horizontal-form-group label {
-  width: 100%;
-}
 .psm-input-group {
-  display: inline-block;
-  width: 23%;
+	padding: 0px 5px 15px 0px;
 }
-.psm-horizontal-form-group:after {
-  display: inline-block;
-  width: 100%;
-  content: '';
+.psm-input-group:last-child {
+	padding-right: 0;
 }
