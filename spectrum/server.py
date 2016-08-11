@@ -140,7 +140,7 @@ def settings():
 #      PUT /monitor - start process with supplied config as request body
 #      DELETE /monitor - stop process
 @application.route('/monitor', methods=['HEAD', 'GET', 'PUT', 'DELETE'])
-@role_required(['admin', 'freq'])
+@role_required(['admin', 'freq', 'data'])
 def monitor():
   if request.method == 'PUT':
     if 'config_id' in application.worker.status():
