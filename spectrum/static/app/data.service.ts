@@ -32,6 +32,21 @@ export class DataService {
                     .catch(this.errorHandler("set rig configuration"));
   }
 
+  getAudio(): Observable<any> {
+    return this.http.get(this.baseUrl + 'audio')
+                    .map(res => res.json())
+                    .catch(this.errorHandler("get audio configuration"));
+  }
+
+  setAudio(audio: any): Observable<void> {
+    let body = JSON.stringify(audio);
+    let headers = new Headers({ 'Content-Type': 'application/json' });
+    let options = new RequestOptions({ headers: headers });
+    return this.http.put(this.baseUrl + 'audio', body, options)
+                    .map(res => res.json())
+                    .catch(this.errorHandler("set audio configuration"));
+  }
+
   getStats(): Observable<any> {
     return this.http.get(this.baseUrl + 'stats')
                     .map(res => res.json())
@@ -157,10 +172,16 @@ export class DataService {
                     .catch(this.errorHandler("get sweep range"));
   }
 
-  getData(config_id, range): Observable<any> {
+  getSpectrumData(config_id, range): Observable<any> {
     return this.http.get(`${this.baseUrl}data/${config_id}?start=${Math.round(range[0])}&end=${Math.round(range[1]) + 5}`)
                     .map(res => res.json().data)
                     .catch(this.errorHandler("get spectrum data"));
+  }
+
+  getAudioData(config_id, range): Observable<any> {
+    return this.http.get(`${this.baseUrl}audio/${config_id}?start=${Math.round(range[0])}&end=${Math.round(range[1]) + 5}`)
+                    .map(res => res.json().data)
+                    .catch(this.errorHandler("get audio data"));
   }
 
   private errorHandler(source: any) {

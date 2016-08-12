@@ -125,10 +125,12 @@ class Worker:
 
   def _read_config(self, config):
     convert(config['rig'])
+    convert(config['audio'])
     convert(config['monitor'])
     convert(config['scan'])
 
     rig = config['rig']
+    audio = config['audio']
     period = config['monitor'].get('period', 0)
     scan = config['scan']
     for x in config['freqs']:
@@ -144,10 +146,13 @@ class Worker:
     else:
       raise ValueError("No frequencies in config")
 
-    return rig, period, scan
+    return rig, audio, period, scan
 
-  def _scan(self, config_id, rig, period, scan):
+  def _scan(self, config_id, rig, audio, period, scan):
     del rig['radio_on']
+    audio_t = 0 if scan['audio'] else None
+    del scan['audio']
+
     with Monitor(**rig) as monitor:
       self._timeout_count = 0
       n = 0
@@ -170,10 +175,19 @@ class Worker:
             log.error("Could not post to Elasticsearch ({0})".format(r.status_code))
             return
 
+          if now() - audio_t > audio['period']:
+            audio_t = now()
+            self._record(audio, sweep)
+
           sleep(max(period - sweep['totaltime'], 0) / 1000.0)
       if self._power_off:
         monitor.power_off()
         self._stop = False
+
+  def _record(audio, sweep):
+    for idx in xrange(len(sweep.level)):
+      if sweep.level[idx] >= audio['threshold']:
+        pass # change rig to this frequency and save a recording to /wav/<new id>; save record to ES
 
   def run(self):
     """ Uses files .config and .monitor to communicate state. (The .pid file is managed elsewhere.)
@@ -190,13 +204,13 @@ class Worker:
       return
 
     try:
-      rig, period, scan = self._read_config(config)
+      rig, audio, period, scan = self._read_config(config)
 
       while not self._stop:
         try:
           try:
             log.info('Scanning started')
-            self._scan(config_id, rig, period, scan)
+            self._scan(config_id, rig, audio, period, scan)
           finally:
             log.info('Scanning stopped')
         except TimeoutError as e:

@@ -3,6 +3,8 @@ import { LoginComponent } from './login.component';
 import { DetailsComponent } from './details.component';
 import { StatsComponent } from './stats.component';
 import { RigComponent } from './rig.component';
+import { AudioComponent } from './audio.component';
+import { AudioChartComponent } from './audiochart.component';
 import { SweepComponent } from './sweep.component';
 import { ScanComponent } from './scan.component';
 import { ErrorComponent } from './error.component';
@@ -30,7 +32,7 @@ let modelSort = function (a, b) {
 @Component({
   selector: 'psm-app',
   templateUrl: 'templates/app.html',
-  directives: [ LoginComponent, ErrorComponent, DetailsComponent, StatsComponent, RigComponent, TableComponent, SweepComponent, ScanComponent, ChartsComponent ],
+  directives: [ LoginComponent, ErrorComponent, DetailsComponent, StatsComponent, RigComponent, AudioComponent, AudioChartComponent, TableComponent, SweepComponent, ScanComponent, ChartsComponent ],
   providers: [ DataService, ErrorService, MessageService, HTTP_PROVIDERS ]
 })
 export class AppComponent {
