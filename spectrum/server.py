@@ -39,11 +39,26 @@ def role_required(roles):
   def role_decorator(func):
     @wraps(func)
     def decorated_view(*args, **kwargs):
+      if hasattr(current_user, 'name'):
+        application.request_times[current_user.name] = time()
       if hasattr(current_user, 'data') and current_user.data['role'] in roles:
         return login_required(func)(*args, **kwargs)
       return application.login_manager.unauthorized()
     return decorated_view
   return role_decorator
+
+def check_user_timeout():
+  # check for user timeouts
+  for name in application.logged_in_users:
+    if time() > application.request_times[name] + USER_TIMEOUT_SECS:
+      application.logged_in_users.remove(name)
+  # check whether current user has been logged out?
+  if not hasattr(current_user, 'name'):
+    return None
+  if current_user.name not in application.logged_in_users:
+    logout_user()
+    return "User session timed out", 403
+  return None
 
 
 def set_settings(id, value):
@@ -76,6 +91,8 @@ wait_for_elasticsearch()
 application = SecuredStaticFlask(__name__)
 application.login_manager = LoginManager()
 application.logged_in_users = []
+application.request_times = {}
+application.before_request(check_user_timeout)
 application.caps = get_capabilities()
 application.rig = get_settings('rig', { 'model': 1 }) #FIXME is this a Hamlib constant? (dummy rig)
 application.worker = WorkerClient(WorkerInit())
@@ -140,7 +157,7 @@ def settings():
 #      PUT /monitor - start process with supplied config as request body
 #      DELETE /monitor - stop process
 @application.route('/monitor', methods=['HEAD', 'GET', 'PUT', 'DELETE'])
-@role_required(['admin', 'freq'])
+@role_required(['admin', 'freq', 'data'])
 def monitor():
   if request.method == 'PUT':
     if 'config_id' in application.worker.status():
@@ -224,6 +241,8 @@ def user_list():
     data['name'] = name
     if name in application.logged_in_users:
       data['logged_in'] = True
+    if name in application.request_times:
+      data['last_request'] = application.request_times[name]
     return data
   users = [_namise_data(name, data) for name, data in iter_users()]
   return json.dumps({ 'data': users })
@@ -318,6 +337,7 @@ def login():
   try:
     user = load_user(username, password)
     login_user(user)
+    application.request_times[user.name] = time()
     application.logged_in_users.append(user.name)
   except IncorrectPasswordError:
     pass

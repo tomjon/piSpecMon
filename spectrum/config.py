@@ -19,3 +19,6 @@ WORKER_MONITOR = '.monitor'
 # GPIO radio 'on' script settings
 RADIO_ON_SWITCH = 21 # BCM numbering
 RADIO_ON_SLEEP_SECS = 1.0
+
+# user session inactivity timeout
+USER_TIMEOUT_SECS = 60
