@@ -82,7 +82,7 @@ class Monitor:
         set_check - 0 = set frequency and hope, N = set/check N times before failing
         retries - retry after error or timeout this many times
         interval - if > 0, pause this many ms before retrying (doubles each retry)
-        attenuation - if not None, set attentuation level on the rig
+        attenuation - if not None, set attenuation level on the rig
     """
     self.rig = Hamlib.Rig(model)
     if self.rig.this is None:
@@ -107,7 +107,7 @@ class Monitor:
   def __enter__(self):
     self._check(self.rig.open)
     if self.attenuation is not None:
-      self._check(self.rig.set_level, Hamlib.RIG_VFO_CURR, Hamlib.RIG_LEVEL_ATT, self.attentuation)
+      self._check(self.rig.set_level, Hamlib.RIG_LEVEL_ATT, self.attenuation, Hamlib.RIG_VFO_CURR)
     return self
 
   def __exit__(self, *args):
