@@ -1,0 +1,41 @@
+<psm-widget title="Audio">
+  <form role="form" (ngSubmit)="onSubmit()" #form="ngForm">
+    <div class="form-group">
+      <div class="psm-input-group col-lg-6">
+        <label for="rate">Rate (samples /s)</label>
+        <select class="form-control" [disabled]="loading" [(ngModel)]="audio.rate" name="rate">
+          <option value="8000">8000</option>
+          <option value="11025">11025</option>
+          <option value="22050">22050</option>
+          <option value="44100">44100</option>
+          <option value="96000">96000</option>
+        </select>
+      </div>
+      <div class="psm-input-group col-lg-6">
+        <label for="time">Sample time (s)</label>
+        <input [disabled]="loading" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="audio.time" name="time" #time="ngModel">
+      </div>
+      <div [hidden]="time.valid || time.pristine" class="alert alert-danger">
+        Sample time is a required integer parameter
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="psm-input-group col-lg-6">
+        <label for="threshold">Level threshold (dB)</label>
+        <input [disabled]="loading" type="number" pattern="-?[0-9]+" required class="form-control" [(ngModel)]="audio.threshold" name="threshold" #threshold="ngModel">
+      </div>
+      <div class="psm-input-group col-lg-6">
+        <label for="period">Sample period (s)</label>
+        <input [disabled]="loading" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="audio.period" name="period" #period="ngModel">
+      </div>
+      <div [hidden]="threshold.valid || threshold.pristine" class="alert alert-danger">
+        Level threshold is a required integer parameter
+      </div>
+      <div [hidden]="period.valid || period.pristine" class="alert alert-danger">
+        Sample period is a required integer parameter
+      </div>
+    </div>
+    <button (click)="onReset()" class="btn btn-default" [disabled]="loading || form.form.pristine">Reset</button>
+    <button type="submit" class="btn btn-default" [disabled]="loading || ! form.form.valid || form.form.pristine">Submit</button>
+  </form>
+</psm-widget>

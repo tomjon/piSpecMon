@@ -16,6 +16,7 @@ import { MAX_N, CHART_HEIGHT } from './constants';
 export class ChartsComponent {
   data: any = { }; //FIXME replace with a SpectrumData object? (new class)
   avg_time: number;
+  audio: any = { };
 
   config: Config;
 
@@ -31,9 +32,12 @@ export class ChartsComponent {
   show(range: number[]) {
     if (! range) {
       this.data = { };
+      this.audio = { };
     } else {
-      this.dataService.getData(this.config.config_id, range)
+      this.dataService.getSpectrumData(this.config.config_id, range)
                       .subscribe(data => this.update(data));
+      this.dataService.getAudioData(this.config.config_id, range)
+                      .subscribe(audio => this.update(audio));
     }
   }
 

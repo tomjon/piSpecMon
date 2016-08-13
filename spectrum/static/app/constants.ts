@@ -11,7 +11,8 @@ export var WATERFALL_CHART_OPTIONS: any = { heat: [-70, 0, 70], margin: { top: 2
 export var DEFAULTS = {
                         freqs: { range: [87.5, 108, 0.1], exp: 6 },
                         monitor: { period: 0, radio_on: 1 },
-                        scan: { mode: 64 }
+                        scan: { mode: 64 },
+                        audio: false
                       };
 
 export var CHANGE_TIMEOUT = 5000;

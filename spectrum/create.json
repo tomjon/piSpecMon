@@ -35,6 +35,17 @@
         "totaltime": { "type": "long", "store": true, "index": "no" }
       }
     },
+    "audio": {
+      "_all": { "enabled": false },
+      "_source": { "enabled": false },
+      "_timestamp": { "enabled": false },
+      "properties": {
+        "config_id": { "type": "string", "store": true, "index": "not_analyzed" },
+        "timestamp": { "type": "long", "store": true },
+        "freq_n": { "type": "integer", "store": true, "index": "no" },
+        "audio_id": { "type": "string", "store": true, "index": "not_analyzed" }
+      }
+    },
     "error": {
       "_all": { "enabled": false },
       "_source": { "enabled": false },

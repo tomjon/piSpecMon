@@ -95,6 +95,7 @@ application.request_times = {}
 application.before_request(check_user_timeout)
 application.caps = get_capabilities()
 application.rig = get_settings('rig', { 'model': 1 }) #FIXME is this a Hamlib constant? (dummy rig)
+application.audio = get_settings('audio', { 'rate': 44100, 'period': 600, 'time': 10, 'threshold': -20 })
 application.worker = WorkerClient(WorkerInit())
 
 # set up secret key for sessions
@@ -142,6 +143,7 @@ def caps():
 # settings API
 @application.route('/defaults', methods=['GET', 'PUT'])
 @application.route('/rig', methods=['GET', 'PUT'])
+@application.route('/audio', methods=['GET', 'PUT'])
 @role_required(['admin'])
 def settings():
   rule = request.url_rule.rule[1:]
@@ -164,6 +166,7 @@ def monitor():
       return "Worker already running", 400
     config = json.loads(request.get_data())
     config['rig'] = application.rig
+    config['audio'] = application.audio
     application.worker.start(json.dumps(config))
     return json.dumps({ 'status': 'OK' })
   if request.method == 'DELETE':
@@ -223,16 +226,44 @@ def range(config_id):
     ret['range'] = int(r.json()['hits']['hits'][0]['fields']['timestamp'][0])
   return json.dumps(ret)
 
-@application.route('/data/<config_id>')
-@role_required(['admin', 'freq', 'data'])
-def data(config_id):
-  q ='config_id:' + config_id
+def _range_search(config_id):
+  q = 'config_id:' + config_id
   if 'start' in request.args and 'end' in request.args:
     q += '+AND+timestamp:[' + request.args['start'] + '+TO+' + request.args['end'] + ']'
-  r = requests.get(ELASTICSEARCH + 'spectrum/sweep/_search', params='size=1000000&q=' + q + '&fields=*&sort=timestamp')
+  return 'size=1000000&q=' + q + '&fields=*&sort=timestamp'
+
+@application.route('/data/<config_id>')
+@role_required(['admin', 'freq', 'data'])
+def audio(config_id):
+  q = _range_q(config_id)
+  r = requests.get(ELASTICSEARCH + 'spectrum/sweep/_search', params=_range_search(config_id))
   if r.status_code != 200:
-    return "Elasticsearch error getting sweep data", r.status_code
+    return "Elasticsearch error getting spectrum data", r.status_code
   return json.dumps({ 'data': r.json()['hits']['hits'] })
+
+@application.route('/audio/<config_id>')
+@role_required(['admin', 'freq', 'data'])
+def data(config_id):
+  r = requests.get(ELASTICSEARCH + 'spectrum/audio/_search', params=_range_search(config_id))
+  if r.status_code != 200:
+    return "Elasticsearch error getting audio data", r.status_code
+  return json.dumps({ 'data': r.json()['hits']['hits'] })
+
+@application.route('/wav/<audio_id>')
+@role_required(['admin', 'freq', 'data'])
+def wav():
+  path = "wav/" + audio_id
+  def generate():
+    with open(path, "rb") as f:
+      while True:
+        data = f.read(1024)
+        if data is None:
+          break
+        yield data
+  if not os.path.exists(path):
+    return "No wav with specified id", 404
+  return Response(generate(), mimetype="audio/x-wav")
+
 
 @application.route('/users')
 @role_required([ 'admin' ])
