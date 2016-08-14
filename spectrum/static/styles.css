@@ -30,8 +30,8 @@ psm-frequency span {
   margin-right: 15px;
 }
 rect.info {
-	fill: black;
-	fill-opacity: 0.2;
+  fill: black;
+  fill-opacity: 0.2;
 }
 text.info {
   cursor: default;
@@ -46,17 +46,17 @@ text.info {
 /* widget containers */
 .container {
   width: auto;
-	background: lightgoldenrodyellow;
+  background: lightgoldenrodyellow;
   margin: 5px;
 }
 .container h1 {
-	font-size: 20px;
-	margin-top: 10;
+  font-size: 20px;
+  margin-top: 10;
   cursor: pointer;
 }
 .container .toggle {
   float: left;
-	margin-right: 4px;
+  margin-right: 4px;
 }
 .container .busy {
   float: right;
@@ -100,7 +100,7 @@ tbody tr {
 }
 .range-controls * {
   margin: -2px 0px 5px 10px;
-	display: inline-block;
+  display: inline-block;
 }
 
 /* specials for the login component */
@@ -121,8 +121,14 @@ psm-login span {
   border-left: 5px solid #a94442; /* red */
 }
 .psm-input-group {
-	padding: 0px 5px 15px 0px;
+  padding: 0px 5px 0px 0px;
 }
 .psm-input-group:last-child {
-	padding-right: 0;
+  padding-right: 0;
 }
+.form-group:after {
+  display: inline-block;
+  width: 100%;
+  content: ''
+}
+
