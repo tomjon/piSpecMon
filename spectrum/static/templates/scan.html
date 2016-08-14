@@ -28,20 +28,17 @@
           <div class="help">units</div>
         </div>
       </div>
-      <div [hidden]="validNumber(start) && validNumber(end) && validNumber(step)" class="alert alert-danger">
-        Frequency range is a required parameter, and must consist of numbers
-      </div>
-      <div [hidden]="! validNumber(start) || ! validNumber(end) || ! validNumber(step) || validRange()" class="alert alert-danger">
-        Invalid range: end frequency must be greater than start frequency
-      </div>
+    </div>
+    <div [hidden]="validNumber(start) && validNumber(end) && validNumber(step)" class="alert alert-danger">
+      Frequency range is a required parameter, and must consist of numbers
+    </div>
+    <div [hidden]="! validNumber(start) || ! validNumber(end) || ! validNumber(step) || validRange()" class="alert alert-danger">
+      Invalid range: end frequency must be greater than start frequency
     </div>
     <div class="form-group">
       <div class="psm-input-group col-lg-6">
         <label for="attempts">Period (ms)</label>
         <input [disabled]="loading || standby || status.config_id" type="number" min="0" step="100" required class="form-control" [(ngModel)]="config.monitor.period" name="period" #period="ngModel">
-        <div [hidden]="period.valid || period.pristine" class="alert alert-danger">
-          Period is a required parameter, and must be a number
-        </div>
       </div>
       <div class="psm-input-group col-lg-6">
         <label for="audio">Audio collection</label>
@@ -50,6 +47,9 @@
           <option value="true">On</option>
         </select>
       </div>
+    </div>
+    <div [hidden]="period.valid || period.pristine" class="alert alert-danger">
+      Period is a required parameter, and must be a number
     </div>
     <div *ngIf="status.config_id" [ngClass]="{ status: true, error: status.error }">
       <span>Last sweep at {{lastSweepTime}}</span>

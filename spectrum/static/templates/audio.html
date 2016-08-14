@@ -3,9 +3,9 @@
     <div class="form-group">
       <label for="path">Audio device path</label>
       <input [disabled]="loading" type="text" required class="form-control" [(ngModel)]="audio.path" name="path" #path="ngModel">
-      <div [hidden]="path.valid || path.pristine" class="alert alert-danger">
-        Audio device path is a required parameter
-      </div>
+    </div>
+    <div [hidden]="path.valid || path.pristine" class="alert alert-danger">
+      Audio device path is a required parameter
     </div>
     <div class="form-group">
       <div class="psm-input-group col-lg-6">
@@ -22,9 +22,9 @@
         <label for="duration">Sample duration (s)</label>
         <input [disabled]="loading" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="audio.duration" name="duration" #duration="ngModel">
       </div>
-      <div [hidden]="duration.valid || duration.pristine" class="alert alert-danger">
-        Sample duration is a required integer parameter
-      </div>
+    </div>
+    <div [hidden]="duration.valid || duration.pristine" class="alert alert-danger">
+      Sample duration is a required integer parameter
     </div>
     <div class="form-group">
       <div class="psm-input-group col-lg-6">
@@ -35,12 +35,12 @@
         <label for="period">Sample period (s)</label>
         <input [disabled]="loading" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="audio.period" name="period" #period="ngModel">
       </div>
-      <div [hidden]="threshold.valid || threshold.pristine" class="alert alert-danger">
-        Level threshold is a required integer parameter
-      </div>
-      <div [hidden]="period.valid || period.pristine" class="alert alert-danger">
-        Sample period is a required integer parameter
-      </div>
+    </div>
+    <div [hidden]="threshold.valid || threshold.pristine" class="alert alert-danger">
+      Level threshold is a required integer parameter
+    </div>
+    <div [hidden]="period.valid || period.pristine" class="alert alert-danger">
+      Sample period is a required integer parameter
     </div>
     <button (click)="onReset()" class="btn btn-default" [disabled]="loading || form.form.pristine">Reset</button>
     <button type="submit" class="btn btn-default" [disabled]="loading || ! form.form.valid || form.form.pristine">Submit</button>
