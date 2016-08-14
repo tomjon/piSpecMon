@@ -160,13 +160,16 @@ class Worker:
         log.debug("Scan: {0}".format(scan))
         t0 = now()
         sweep = { 'config_id': config_id, 'n': n, 'timestamp': t0, 'level': [] }
+        highs = [ ]
         n += 1
 
         os.utime(self.init.monitor_file, None)
-        for x in monitor.scan(**scan):
+        for freq, level, idx in monitor.scan(**scan):
           if self._stop:
             break
-          sweep['level'].append(x[1] if x[1] is not None else -128)
+          sweep['level'].append(level if level is not None else -128)
+          if level >= audio['threshold']:
+            highs.append((idx, freq))
         else:
           sweep['totaltime'] = now() - t0
 
@@ -175,19 +178,28 @@ class Worker:
             log.error("Could not post to Elasticsearch ({0})".format(r.status_code))
             return
 
-          if now() - audio_t > audio['period']:
+          if audio_t is not None and now() - audio_t > audio['period'] * 1000:
             audio_t = now()
-            self._record(audio, sweep)
+            self._record(config_id, n, monitor, scan, audio, highs)
 
           sleep(max(period - sweep['totaltime'], 0) / 1000.0)
       if self._power_off:
         monitor.power_off()
         self._stop = False
 
-  def _record(audio, sweep):
-    for idx in xrange(len(sweep.level)):
-      if sweep.level[idx] >= audio['threshold']:
-        pass # change rig to this frequency and save a recording to /wav/<new id>; save record to ES
+  def _record(self, config_id, sweep_n, monitor, scan, audio, freqs):
+    log.debug("Recording audio from {0} frequencies".format(len(freqs)))
+    for idx, freq in freqs:
+      t0 = now()
+      path = '/'.join(['wav', str(config_id), str(sweep_n), str(idx)]) + '.wav'
+      if not os.path.exists(os.path.dirname(path)):
+        os.makedirs(os.path.dirname(path))
+      monitor.record(freq, scan['mode'], audio['rate'], audio['duration'], path, audio['path'])
+      data = { 'config_id': config_id, 'timestamp': t0, 'sweep_n': sweep_n, 'freq_n': idx }
+      r = requests.post(self.init.elasticsearch + '/spectrum/audio/', params={ 'refresh': 'true' }, data=json.dumps(data))
+      if r.status_code != 201:
+        log.error("Could not post to Elasticsearch ({0})".format(r.status_code))
+        return
 
   def run(self):
     """ Uses files .config and .monitor to communicate state. (The .pid file is managed elsewhere.)
@@ -224,6 +236,7 @@ class Worker:
             raise e
     except Exception as e:
       log.error(e)
+      traceback.print_exc()
       data = { 'timestamp': now(), 'config_id': config_id, 'json': json.dumps(str(e)) }
       params = { 'refresh': 'true' }
       requests.post(self.init.elasticsearch + 'spectrum/error/', params=params, data=json.dumps(data))

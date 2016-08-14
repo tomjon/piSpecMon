@@ -2,6 +2,15 @@ import Hamlib
 import math
 import inspect
 import time
+import wave
+try:
+  import ossaudiodev
+except ImportError:
+  import fake_ossaudiodev as ossaudiodev
+
+CHANNELS = 1
+FORMAT = ossaudiodev.AFMT_S16_LE
+SAMPLE_WIDTH = 2
 
 Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_NONE)
 
@@ -82,7 +91,7 @@ class Monitor:
         set_check - 0 = set frequency and hope, N = set/check N times before failing
         retries - retry after error or timeout this many times
         interval - if > 0, pause this many ms before retrying (doubles each retry)
-        attenuation - if not None, set attentuation level on the rig
+        attenuation - if not None, set attenuation level on the rig
     """
     self.rig = Hamlib.Rig(model)
     if self.rig.this is None:
@@ -107,7 +116,7 @@ class Monitor:
   def __enter__(self):
     self._check(self.rig.open)
     if self.attenuation is not None:
-      self._check(self.rig.set_level, Hamlib.RIG_VFO_CURR, Hamlib.RIG_LEVEL_ATT, self.attentuation)
+      self._check(self.rig.set_level, Hamlib.RIG_LEVEL_ATT, self.attenuation, Hamlib.RIG_VFO_CURR)
     return self
 
   def __exit__(self, *args):
@@ -139,16 +148,41 @@ class Monitor:
         return None
     return self._check(self.rig.get_strength, Hamlib.RIG_VFO_CURR)
 
-  def scan(self, freqs=[], range=None, mode=None):
-    #FIXME mode should probably just be set once at rig.open, and not be an argument to scan() but to __init__()
+  def _set_mode(self, mode):
     if mode is not None and mode != Hamlib.RIG_MODE_NONE:
       width = self._check(self.rig.passband_normal, mode)
       self._check(self.rig.set_mode, mode, width, Hamlib.RIG_VFO_CURR)
+
+  def scan(self, freqs=[], range=None, mode=None):
+    #FIXME mode should probably just be set once at rig.open, and not be an argument to scan() but to __init__()
+    self._set_mode(mode)
+    idx = 0
     for freq in freqs:
-      yield freq, self._get_strength(freq)
+      yield freq, self._get_strength(freq), idx
+      idx += 1
     if range is not None:
       for freq in frange(*range):
-        yield freq, self._get_strength(freq)
+        yield freq, self._get_strength(freq), idx
+        idx += 1
+
+  def record(self, freq, mode, rate, duration, path, device):
+    self._set_mode(mode)
+    strength = self._get_strength(freq)
+    if strength is None:
+      return None
+    with ossaudiodev.open(device, 'r') as audio:
+      audio.channels(CHANNELS)
+      audio.setfmt(FORMAT)
+      audio.speed(rate)
+      wav = wave.open(path, 'w')
+      wav.setnchannels(CHANNELS)
+      wav.setsampwidth(SAMPLE_WIDTH)
+      wav.setframerate(rate)
+      for _ in xrange(duration):
+        data = audio.read(rate * CHANNELS * SAMPLE_WIDTH)
+        wav.writeframes(data)
+      wav.close()
+    return strength
 
   def power_off(self):
     self.rig.set_powerstat(Hamlib.RIG_POWER_OFF)

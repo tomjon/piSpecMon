@@ -4,6 +4,7 @@ import { RangeComponent } from './range.component';
 import { FrequencyComponent } from './frequency.component';
 import { LevelComponent } from './level.component';
 import { WaterfallComponent } from './waterfall.component';
+import { AudioChartComponent } from './audiochart.component';
 import { DataService } from './data.service';
 import { Config } from './config';
 import { MAX_N, CHART_HEIGHT } from './constants';
@@ -11,7 +12,7 @@ import { MAX_N, CHART_HEIGHT } from './constants';
 @Component({
   selector: 'psm-charts',
   templateUrl: 'templates/charts.html',
-  directives: [ RangeComponent, FrequencyComponent, LevelComponent, WaterfallComponent ]
+  directives: [ RangeComponent, FrequencyComponent, LevelComponent, WaterfallComponent, AudioChartComponent ]
 })
 export class ChartsComponent {
   data: any = { }; //FIXME replace with a SpectrumData object? (new class)
@@ -37,7 +38,7 @@ export class ChartsComponent {
       this.dataService.getSpectrumData(this.config.config_id, range)
                       .subscribe(data => this.update(data));
       this.dataService.getAudioData(this.config.config_id, range)
-                      .subscribe(audio => this.update(audio));
+                      .subscribe(audio => this.audio = audio);
     }
   }
 

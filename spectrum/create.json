@@ -43,7 +43,7 @@
         "config_id": { "type": "string", "store": true, "index": "not_analyzed" },
         "timestamp": { "type": "long", "store": true },
         "freq_n": { "type": "integer", "store": true, "index": "no" },
-        "audio_id": { "type": "string", "store": true, "index": "not_analyzed" }
+        "sweep_n": { "type": "integer", "store": true, "index": "no" }
       }
     },
     "error": {

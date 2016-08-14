@@ -1,6 +1,13 @@
 <psm-widget title="Audio">
   <form role="form" (ngSubmit)="onSubmit()" #form="ngForm">
     <div class="form-group">
+      <label for="path">Audio device path</label>
+      <input [disabled]="loading" type="text" required class="form-control" [(ngModel)]="audio.path" name="path" #path="ngModel">
+      <div [hidden]="path.valid || path.pristine" class="alert alert-danger">
+        Audio device path is a required parameter
+      </div>
+    </div>
+    <div class="form-group">
       <div class="psm-input-group col-lg-6">
         <label for="rate">Rate (samples /s)</label>
         <select class="form-control" [disabled]="loading" [(ngModel)]="audio.rate" name="rate">
@@ -12,11 +19,11 @@
         </select>
       </div>
       <div class="psm-input-group col-lg-6">
-        <label for="time">Sample time (s)</label>
-        <input [disabled]="loading" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="audio.time" name="time" #time="ngModel">
+        <label for="duration">Sample duration (s)</label>
+        <input [disabled]="loading" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="audio.duration" name="duration" #duration="ngModel">
       </div>
-      <div [hidden]="time.valid || time.pristine" class="alert alert-danger">
-        Sample time is a required integer parameter
+      <div [hidden]="duration.valid || duration.pristine" class="alert alert-danger">
+        Sample duration is a required integer parameter
       </div>
     </div>
     <div class="form-group">

@@ -95,7 +95,7 @@ application.request_times = {}
 application.before_request(check_user_timeout)
 application.caps = get_capabilities()
 application.rig = get_settings('rig', { 'model': 1 }) #FIXME is this a Hamlib constant? (dummy rig)
-application.audio = get_settings('audio', { 'rate': 44100, 'period': 600, 'time': 10, 'threshold': -20 })
+application.audio = get_settings('audio', { 'path': '/dev/dsp1', 'rate': 44100, 'period': 600, 'duration': 10, 'threshold': -20 })
 application.worker = WorkerClient(WorkerInit())
 
 # set up secret key for sessions
@@ -235,7 +235,6 @@ def _range_search(config_id):
 @application.route('/data/<config_id>')
 @role_required(['admin', 'freq', 'data'])
 def audio(config_id):
-  q = _range_q(config_id)
   r = requests.get(ELASTICSEARCH + 'spectrum/sweep/_search', params=_range_search(config_id))
   if r.status_code != 200:
     return "Elasticsearch error getting spectrum data", r.status_code
@@ -249,10 +248,10 @@ def data(config_id):
     return "Elasticsearch error getting audio data", r.status_code
   return json.dumps({ 'data': r.json()['hits']['hits'] })
 
-@application.route('/wav/<audio_id>')
+@application.route('/wav/<config_id>/<sweep_n>/<freq_n>')
 @role_required(['admin', 'freq', 'data'])
-def wav():
-  path = "wav/" + audio_id
+def wav(config_id, sweep_n, freq_n):
+  path = '/'.join(['wav', config_id, sweep_n, freq_n]) + '.wav'
   def generate():
     with open(path, "rb") as f:
       while True:
@@ -361,17 +360,18 @@ def user_details():
     return json.dumps({ 'status': 'OK' }), 200
 
 
-@application.route('/login', methods=['POST'])
+@application.route('/login', methods=['GET', 'POST'])
 def login():
-  username = request.form['username']
-  password = request.form['password']
-  try:
-    user = load_user(username, password)
-    login_user(user)
-    application.request_times[user.name] = time()
-    application.logged_in_users.append(user.name)
-  except IncorrectPasswordError:
-    pass
+  if request.method == 'POST':
+    username = request.form['username']
+    password = request.form['password']
+    try:
+      user = load_user(username, password)
+      login_user(user)
+      application.request_times[user.name] = time()
+      application.logged_in_users.append(user.name)
+    except IncorrectPasswordError:
+      pass
   return redirect('/')
 
 @application.route('/logout')
