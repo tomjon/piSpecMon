@@ -78,7 +78,7 @@ class Monitor:
 
   def __init__(self, model=1, data_bits=None, stop_bits=None, rate=None, parity=None,
                      write_delay=None, pathname=None, set_check=0, retries=0, interval=0,
-                     attenuation=None):
+                     attenuation=None, **ignore):
     """ Arguments:
     
         model - hamlib model number, defaults to dummy implementation
@@ -153,7 +153,7 @@ class Monitor:
       width = self._check(self.rig.passband_normal, mode)
       self._check(self.rig.set_mode, mode, width, Hamlib.RIG_VFO_CURR)
 
-  def scan(self, freqs=[], range=None, mode=None):
+  def scan(self, freqs=[], range=None, mode=None, **ignore):
     #FIXME mode should probably just be set once at rig.open, and not be an argument to scan() but to __init__()
     self._set_mode(mode)
     idx = 0

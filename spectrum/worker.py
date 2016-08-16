@@ -149,9 +149,7 @@ class Worker:
     return rig, audio, period, scan
 
   def _scan(self, config_id, rig, audio, period, scan):
-    del rig['radio_on']
     audio_t = 0 if scan['audio'] else None
-    del scan['audio']
 
     with Monitor(**rig) as monitor:
       self._timeout_count = 0
