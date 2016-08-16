@@ -17,7 +17,7 @@ import { MAX_N, CHART_HEIGHT } from './constants';
 export class ChartsComponent {
   data: any = { }; //FIXME replace with a SpectrumData object? (new class)
   avg_time: number;
-  audio: any = { };
+  audio: any = [ ];
 
   config: Config;
 

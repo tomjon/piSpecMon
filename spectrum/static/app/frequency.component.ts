@@ -152,6 +152,7 @@ export class FrequencyComponent {
       return;
     }
     f = +this.freqs.range[0] + i * this.freqs.range[2]; // 'snap' to an actual frequency value
+    f = f.toFixed(-Math.log10(this.freqs.range[2]));
 
     // decide where to show the info text and lines
     this.showX = this.margin.left + this.x(f);

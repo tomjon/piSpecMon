@@ -142,6 +142,7 @@ export class WaterfallComponent {
     let f = this.x.invert(z.x - this.margin.left);
     let i = Math.round((f - this.freqs.range[0]) / this.freqs.range[2]);
     f = +this.freqs.range[0] + i * this.freqs.range[2]; // 'snap' to an actual frequency value
+    f = f.toFixed(-Math.log10(this.freqs.range[2]));
     if (i < 0 || i >= this.data.levels[0].fields.level.length) {
       // out of bounds - hide info text
       this.showInfo = false;

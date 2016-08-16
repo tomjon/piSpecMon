@@ -2,7 +2,7 @@ from config import *
 from common import *
 from users import *
 
-from flask import Flask, redirect, url_for, request, send_from_directory, Response, abort
+from flask import Flask, redirect, url_for, request, send_from_directory, Response, abort, send_file
 from flask_login import LoginManager, login_user, login_required, current_user, logout_user
 from functools import wraps
 import requests
@@ -14,6 +14,8 @@ import math
 from datetime import datetime
 from worker import WorkerInit, WorkerClient
 from monitor import get_capabilities, frange
+import re
+import mimetypes
 
 
 class SecuredStaticFlask (Flask):
@@ -22,6 +24,37 @@ class SecuredStaticFlask (Flask):
       return super(SecuredStaticFlask, self).send_static_file(filename)
     else:
       return redirect('/')
+
+def send_file_partial(path):
+  """ See http://blog.asgaard.co.uk/2012/08/03/http-206-partial-content-for-flask-python
+      
+      We need this for supprting media files with Safari (at least).
+  """
+  range_header = request.headers.get('Range', None)
+  if not range_header: return send_file(path)
+  
+  size = os.path.getsize(path)    
+  byte1, byte2 = 0, None
+  
+  m = re.search('(\d+)-(\d*)', range_header)
+  g = m.groups()
+  
+  if g[0]: byte1 = int(g[0])
+  if g[1]: byte2 = int(g[1])
+
+  length = size - byte1 + 1
+  if byte2 is not None:
+    length = byte2 - byte1 + 1
+  
+  data = None
+  with open(path, 'rb') as f:
+    f.seek(byte1)
+    data = f.read(length)
+
+  rv = Response(data, 206, mimetype=mimetypes.guess_type(path)[0], direct_passthrough=True)
+  rv.headers.add('Content-Range', 'bytes {0}-{1}/{2}'.format(byte1, byte1 + length - 1, size))
+  return rv
+
 
 class User:
   def __init__(self, username, data):
@@ -97,6 +130,11 @@ application.caps = get_capabilities()
 application.rig = get_settings('rig', { 'model': 1 }) #FIXME is this a Hamlib constant? (dummy rig)
 application.audio = get_settings('audio', { 'path': '/dev/dsp1', 'rate': 44100, 'period': 600, 'duration': 10, 'threshold': -20 })
 application.worker = WorkerClient(WorkerInit())
+
+@application.after_request
+def after_request(response):
+  response.headers.add('Accept-Ranges', 'bytes')
+  return response
 
 # set up secret key for sessions
 if not os.path.exists(SECRET_KEY):
@@ -250,19 +288,11 @@ def data(config_id):
 
 @application.route('/wav/<config_id>/<sweep_n>/<freq_n>')
 @role_required(['admin', 'freq', 'data'])
-def wav(config_id, sweep_n, freq_n):
+def wav_stream(config_id, sweep_n, freq_n):
   path = '/'.join(['wav', config_id, sweep_n, freq_n]) + '.wav'
-  def generate():
-    with open(path, "rb") as f:
-      while True:
-        data = f.read(1024)
-        if data is None:
-          break
-        yield data
   if not os.path.exists(path):
     return "No wav with specified id", 404
-  return Response(generate(), mimetype="audio/x-wav")
-
+  return send_file_partial(path)
 
 @application.route('/users')
 @role_required([ 'admin' ])

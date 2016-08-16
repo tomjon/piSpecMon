@@ -7,6 +7,12 @@ import { _d3 as d3, dt_format, insertLineBreaks } from './d3_import';
   selector: 'psm-audiochart',
   directives: [ WidgetComponent ],
   template: `<psm-widget [hidden]="isHidden()" title="Audio Samples" class="chart">
+               <form class="form-inline" role="form">
+                 <span *ngIf="infoText">{{infoText}}</span>
+                 <div class="form-group">
+                  <audio #audio controls preload='none'></audio>
+                 </div>
+               </form>
                <svg #chart
                  viewBox="0 0 ${AUDIO_CHART_OPTIONS.width} ${AUDIO_CHART_OPTIONS.height}"
                  preserveAspectRatio="xMidYMid meet">
@@ -25,11 +31,13 @@ export class AudioChartComponent {
   rh: number;
   rw: number;
   margin: any;
+  infoText: string;
 
   @Input() freqs: any;
   @Input() audio: any;
 
   @ViewChild('chart') chart;
+  @ViewChild('audio') audioControl;
 
   constructor() { }
 
@@ -62,13 +70,11 @@ export class AudioChartComponent {
 
     if (this.isHidden()) return;
 
-    console.log(this.audio);
-
     var f0 = +this.freqs.range[0];
     var f1 = +this.freqs.range[1];
     let df = +this.freqs.range[2];
-    this.x.domain([f0, f1]);
-    this.y.domain(d3.extent(this.audio, d => d.fields.timestamp));
+    this.x.domain([f0 - df/2, f1 + df/2]);
+    this.y.domain(d3.extent(this.audio, d => d.sort[0]));
 
     this.g.append("g")
         .attr("class", "x axis")
@@ -93,26 +99,24 @@ export class AudioChartComponent {
      this.svg.selectAll('g.y.axis g text').each(insertLineBreaks);
 
      let nf = (this.freqs.range[1] - this.freqs.range[0]) / this.freqs.range[2];
-     this.rw = this.width / nf;
-     this.rh = this.height / this.audio.length;
+     this.rw = 20;//this.width / nf;
+     this.rh = 20;//this.height / this.audio.length;
 
      this.g.selectAll('rect')
          .data(this.audio)
          .enter().append('rect')
-         .attr('x', d => this.rw * d.fields.freq_n[0])
-         .attr('y', d => this.rh * d.fields.sweep_n[0])
+         .attr('x', d => this.x(f0 + d.fields.freq_n[0] * df) - this.rw / 2)
+         .attr('y', d => this.y(d.sort[0]) - this.rh / 2)
          .attr('width', this.rw + 1)
          .attr('height', this.rh + 1)
          .attr('style', (d, i) => d != null ? `fill:black` : 'display:none')
          .on('click', d => {
-           var audio = new Audio();
-           audio.src = `http://localhost:8080/wav/${d.fields.config_id}/${d.fields.sweep_n}/${d.fields.freq_n}`;
-           console.log("play", audio.src);
-           audio.load();
-           audio.play();
+           let f = f0 + d.fields.freq_n[0] * df;
+           this.infoText = `${f.toFixed(-Math.log10(df))}${HZ_LABELS[this.freqs.exp]} at ${dt_format(new Date(d.sort[0]))}`;
+           let a = this.audioControl.nativeElement;
+           a.src = `http://localhost:8080/wav/${d.fields.config_id[0]}/${d.fields.sweep_n[0]}/${d.fields.freq_n[0]}`;
+           a.load();
+           a.play();
          });
-  }
-
-  onClick(e) {
   }
 }

@@ -153,7 +153,7 @@ export class LevelComponent {
     freq.append("path")
         .attr("class", "line")
         .attr("d", idx => {
-          let line = d3.svg.line().interpolate("monotone")
+          let line = d3.svg.line()
                        .x(d => this.x(d.fields.timestamp))
                        .y(d => this.y(d.fields.level[idx]))
                        .defined(d => d.fields.level[idx] != null);
