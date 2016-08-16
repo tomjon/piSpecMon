@@ -123,18 +123,20 @@ export class ChartsComponent {
       /* find top N by avg, min and max */
       for (let x in this.data.freq_idxs) {
         // see if it beats any, if so swap and keep looking down the list... drop off end and gets kicked out
-        for (let idx in this.data.agg[x]) {
+        for (let _idx in this.data.agg[x]) {
+          let idx = +_idx;
+
           let v = this.data.agg[x][idx].v;
 
-          if (+idx > 0 && idx + 1 < this.data.agg[x].length) {
-            if (this.data.agg[x][+idx - 1].v >= v || v < this.data.agg[x][idx + 1].v) {
+          if (idx > 0 && idx + 1 < this.data.agg[x].length) {
+            if (this.data.agg[x][idx - 1].v >= v || v < this.data.agg[x][idx + 1].v) {
               continue;
             }
           }
 
-          let i = idx; //FIXME needed??
+          let i: number = idx; //FIXME needed??
           // try slotting in our value
-          for (let n = 0; n < MAX_N; ++n) {
+          for (let n: number = 0; n < MAX_N; ++n) {
             let slot_idx = this.data.freq_idxs[x][n];
             // if we find an empty slot, just use it and quit
             if (slot_idx == null) {
