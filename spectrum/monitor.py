@@ -170,18 +170,19 @@ class Monitor:
     strength = self._get_strength(freq)
     if strength is None:
       return None
-    with ossaudiodev.open(device, 'r') as audio:
-      audio.channels(CHANNELS)
-      audio.setfmt(FORMAT)
-      audio.speed(rate)
-      wav = wave.open(path, 'w')
-      wav.setnchannels(CHANNELS)
-      wav.setsampwidth(SAMPLE_WIDTH)
-      wav.setframerate(rate)
-      for _ in xrange(duration):
-        data = audio.read(rate * CHANNELS * SAMPLE_WIDTH)
-        wav.writeframes(data)
-      wav.close()
+    audio = ossaudiodev.open(device, 'r')
+    audio.channels(CHANNELS)
+    audio.setfmt(FORMAT)
+    audio.speed(rate)
+    wav = wave.open(path, 'w')
+    wav.setnchannels(CHANNELS)
+    wav.setsampwidth(SAMPLE_WIDTH)
+    wav.setframerate(rate)
+    for _ in xrange(duration):
+      data = audio.read(rate * CHANNELS * SAMPLE_WIDTH)
+      wav.writeframes(data)
+    wav.close()
+    audio.close()
     return strength
 
   def power_off(self):
