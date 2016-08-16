@@ -114,7 +114,7 @@ export class AudioChartComponent {
            let f = f0 + d.fields.freq_n[0] * df;
            this.infoText = `${f.toFixed(-Math.log10(df))}${HZ_LABELS[this.freqs.exp]} at ${dt_format(new Date(d.sort[0]))}`;
            let a = this.audioControl.nativeElement;
-           a.src = `http://localhost:8080/wav/${d.fields.config_id[0]}/${d.fields.sweep_n[0]}/${d.fields.freq_n[0]}`;
+           a.src = `/wav/${d.fields.config_id[0]}/${d.fields.sweep_n[0]}/${d.fields.freq_n[0]}`;
            a.load();
            a.play();
          });
