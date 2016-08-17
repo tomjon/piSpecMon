@@ -4,7 +4,6 @@ import { RangeComponent } from './range.component';
 import { FrequencyComponent } from './frequency.component';
 import { LevelComponent } from './level.component';
 import { WaterfallComponent } from './waterfall.component';
-import { AudioChartComponent } from './audiochart.component';
 import { DataService } from './data.service';
 import { Config } from './config';
 import { MAX_N, CHART_HEIGHT } from './constants';
@@ -12,12 +11,12 @@ import { MAX_N, CHART_HEIGHT } from './constants';
 @Component({
   selector: 'psm-charts',
   templateUrl: 'templates/charts.html',
-  directives: [ RangeComponent, FrequencyComponent, LevelComponent, WaterfallComponent, AudioChartComponent ]
+  directives: [ RangeComponent, FrequencyComponent, LevelComponent, WaterfallComponent ]
 })
 export class ChartsComponent {
-  data: any = { }; //FIXME replace with a SpectrumData object? (new class)
+  data: any = { };
   avg_time: number;
-  audio: any = [ ];
+  audio: any = { };
 
   config: Config;
 
@@ -36,9 +35,9 @@ export class ChartsComponent {
       this.audio = { };
     } else {
       this.dataService.getSpectrumData(this.config.config_id, range)
-                      .subscribe(data => this.update(data));
+                      .subscribe(data => this.mapData(data));
       this.dataService.getAudioData(this.config.config_id, range)
-                      .subscribe(audio => this.audio = audio);
+                      .subscribe(audio => this.mapAudio(audio));
     }
   }
 
@@ -51,7 +50,20 @@ export class ChartsComponent {
     return a;
   }
 
-  update(data) {
+  mapAudio(audio: any[]) {
+    // want this.audio to be a lookup like this.audio[{sweep_n}_{freq_n}] = Object
+    this.audio = { length: audio.length };
+    for (let a of audio) {
+      this.audio[`${a.fields.sweep_n[0]}_${a.fields.freq_n[0]}`] = {
+        config_id: a.fields.config_id[0],
+        sweep_n: a.fields.sweep_n[0],
+        freq_n: a.fields.freq_n[0],
+        timestamp: a.fields.timestamp[0]
+      };
+    }
+  }
+
+  mapData(data) {
     var interval = data.length / CHART_HEIGHT;
 
     this.data = {
@@ -72,13 +84,17 @@ export class ChartsComponent {
       }
       let level_idx = 0, count = null;
       for (let sweep_idx in data) {
-        var length = data[sweep_idx].fields.level.length;
+        let length = data[sweep_idx].fields.level.length;
         total_time += data[sweep_idx].fields.totaltime[0];
 
         if (! this.data.levels[level_idx]) {
-          this.data.levels[level_idx] = { fields: { } };
-          this.data.levels[level_idx].fields.level = this.fillArray(0, length);
-          this.data.levels[level_idx].fields.timestamp = data[sweep_idx].fields.timestamp;
+          this.data.levels[level_idx] = {
+            fields: {
+              level: this.fillArray(0, length),
+              timestamp: data[sweep_idx].fields.timestamp[0],
+              sweep_n: data[sweep_idx].fields.n[0]
+            }
+          };
           count = this.fillArray(0, data[sweep_idx].fields.level.length);
         }
 
@@ -123,18 +139,20 @@ export class ChartsComponent {
       /* find top N by avg, min and max */
       for (let x in this.data.freq_idxs) {
         // see if it beats any, if so swap and keep looking down the list... drop off end and gets kicked out
-        for (let idx in this.data.agg[x]) {
+        for (let _idx in this.data.agg[x]) {
+          let idx = +_idx;
+
           let v = this.data.agg[x][idx].v;
 
-          if (+idx > 0 && idx + 1 < this.data.agg[x].length) {
-            if (this.data.agg[x][+idx - 1].v >= v || v < this.data.agg[x][idx + 1].v) {
+          if (idx > 0 && idx + 1 < this.data.agg[x].length) {
+            if (this.data.agg[x][idx - 1].v >= v || v < this.data.agg[x][idx + 1].v) {
               continue;
             }
           }
 
-          let i = idx; //FIXME needed??
+          let i: number = idx; //FIXME needed??
           // try slotting in our value
-          for (let n = 0; n < MAX_N; ++n) {
+          for (let n: number = 0; n < MAX_N; ++n) {
             let slot_idx = this.data.freq_idxs[x][n];
             // if we find an empty slot, just use it and quit
             if (slot_idx == null) {

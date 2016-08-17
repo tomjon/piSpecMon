@@ -158,18 +158,22 @@ class Worker:
         log.debug("Scan: {0}".format(scan))
         t0 = now()
         sweep = { 'config_id': config_id, 'n': n, 'timestamp': t0, 'level': [] }
-        highs = [ ]
-        n += 1
+        peaks = [ ]
 
         os.utime(self.init.monitor_file, None)
+        w = [(None,) * 3] * 3
         for freq, level, idx in monitor.scan(**scan):
           if self._stop:
             break
+          w = [w[1], w[2], (freq, level, idx)]
           sweep['level'].append(level if level is not None else -128)
-          if level >= audio['threshold']:
-            highs.append((idx, freq))
+          if w[0][1] < w[1][1] and w[1][1] >= audio['threshold'] and w[1][1] >= w[2][1]: # ..[1] gets you the level
+            peaks.append((w[1][2], w[1][0]))
         else:
           sweep['totaltime'] = now() - t0
+
+          if w[1][1] < w[2][1] and w[2][1] >= audio['threshold']:
+            peaks.append((w[2][2], w[2][0]))
 
           r = requests.post(self.init.elasticsearch + '/spectrum/sweep/', params={ 'refresh': 'true' }, data=json.dumps(sweep))
           if r.status_code != 201:
@@ -178,9 +182,12 @@ class Worker:
 
           if audio_t is not None and now() - audio_t > audio['period'] * 1000:
             audio_t = now()
-            self._record(config_id, n, monitor, scan, audio, highs)
+            self._record(config_id, n, monitor, scan, audio, peaks)
 
           sleep(max(period - sweep['totaltime'], 0) / 1000.0)
+
+        n += 1
+
       if self._power_off:
         monitor.power_off()
         self._stop = False
