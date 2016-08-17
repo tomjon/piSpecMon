@@ -2,7 +2,7 @@ from config import *
 from common import *
 from users import *
 
-from flask import Flask, redirect, url_for, request, send_from_directory, Response, abort, send_file
+from flask import Flask, current_app, redirect, url_for, request, send_from_directory, Response, abort, send_file
 from flask_login import LoginManager, login_user, login_required, current_user, logout_user
 from functools import wraps
 import requests
@@ -32,8 +32,7 @@ def send_file_partial(path):
   """
   range_header = request.headers.get('Range', None)
   if not range_header: return send_file(path)
-  
-  size = os.path.getsize(path)    
+
   byte1, byte2 = 0, None
   
   m = re.search('(\d+)-(\d*)', range_header)
@@ -41,6 +40,11 @@ def send_file_partial(path):
   
   if g[0]: byte1 = int(g[0])
   if g[1]: byte2 = int(g[1])
+
+  if byte2 is None: return send_file(path)
+
+  path = os.path.join(current_app.root_path, path)
+  size = os.path.getsize(path)    
 
   length = size - byte1 + 1
   if byte2 is not None:
@@ -289,10 +293,16 @@ def data(config_id):
 @application.route('/wav/<config_id>/<sweep_n>/<freq_n>')
 @role_required(['admin', 'freq', 'data'])
 def wav_stream(config_id, sweep_n, freq_n):
-  path = '/'.join(['wav', config_id, sweep_n, freq_n]) + '.wav'
-  if not os.path.exists(path):
-    return "No wav with specified id", 404
-  return send_file_partial(path)
+  if '/' in config_id or '\\' in config_id:
+    return 'Bad parameter', 400
+  try:
+    int(sweep_n), int(freq_n)
+    path = '/'.join(['wav', config_id, sweep_n, freq_n]) + '.wav'
+    return send_file_partial(path)
+  except ValueError:
+    return 'Bad parameter', 400
+  except IOError:
+    return 'File not found', 404
 
 @application.route('/users')
 @role_required([ 'admin' ])
