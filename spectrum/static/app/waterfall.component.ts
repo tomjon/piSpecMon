@@ -3,16 +3,26 @@ import { WidgetComponent } from './widget.component';
 import { WATERFALL_CHART_OPTIONS, HZ_LABELS } from './constants';
 import { _d3 as d3, dt_format, insertLineBreaks } from './d3_import';
 
+declare var $;
+
 @Component({
   selector: 'psm-waterfall',
   directives: [ WidgetComponent ],
   template: `<psm-widget [hidden]="isHidden()" title="Waterfall" class="chart">
+               <form class="form-inline controls" role="form">
+                 <div *ngIf="showSamples" class="form-group">
+                   <audio #audio controls preload='none'></audio>
+                 </div>
+               </form>
+               <form class="form-inline" role="form">
+                 <span class="infoText">{{infoText}}</span>
+                 <label for="samples">Overlay audio samples</label>
+                 <input type="checkbox" name="samples" [disabled]="audio.length == 0" [(ngModel)]="showSamples">
+               </form>
                <svg #chart (click)="onClick($event)"
                  viewBox="0 0 ${WATERFALL_CHART_OPTIONS.width} ${WATERFALL_CHART_OPTIONS.height}"
                  preserveAspectRatio="xMidYMid meet">
                  <svg:g #group />
-                 <svg:rect id="infoText" class="info" *ngIf="showInfo" [attr.x]="showX + 10" [attr.y]="showY - 30" [attr.width]="textWidth + 20" height=21 rx=5 ry=5 />
-                 <svg:text #text class="info" [attr.x]="showX + 20" [attr.y]="showY - 15">{{infoText}}</svg:text>
                </svg>
              </psm-widget>`
 })
@@ -30,19 +40,17 @@ export class WaterfallComponent {
   rw: number;
   margin: any;
 
-  //FIXME these attributes are copied from frequency chart... abstract?
-  showInfo: boolean;
-  showX: number;
-  showY: number;
   infoText: string = "";
-  textWidth: number = 0;
+  _showSamples: boolean = false;
 
   @Input() freqs: any;
   @Input() data: any;
+  @Input() audio: any;
 
   @ViewChild('chart') chart;
   @ViewChild('text') text;
   @ViewChild('group') group;
+  @ViewChild('audio') audioControl;
 
   constructor() { }
 
@@ -82,7 +90,7 @@ export class WaterfallComponent {
     var f0 = +this.freqs.range[0];
     var f1 = +this.freqs.range[1];
     let df = +this.freqs.range[2];
-    this.x.domain([f0, f1]);
+    this.x.domain([f0 - df/2, f1 + df/2]);
     this.y.domain(d3.extent(data, d => d.fields.timestamp));
 
     this.g.append("g")
@@ -116,22 +124,26 @@ export class WaterfallComponent {
                  .attr('transform', (d, i) => `translate(1, ${this.rh * i - 1})`);
 
      g.selectAll('rect')
-      .data(d => d.fields.level)
+      .data(d => d.fields.level.map(v => [v, d.fields.sweep_n]))
       .enter().append('rect')
       .attr('x', (d, i) => this.rw * i)
       .attr('width', this.rw + 1)
       .attr('height', this.rh + 1)
-      .attr('style', (d, i) => d != null ? `fill:${this.heat(d)}` : 'display:none');
+      .classed('sample', (d, i) => this.audio[`${d[1]}_${i}`] != undefined)
+      .attr('fill', (d, i) => this.heat(d[0]))
+      .on('click', (d, i) => {
+        if (! this.showSamples) return;
+        let audio = this.audio[`${d[1]}_${i}`];
+        if (audio == undefined) return;
+        let control = this.audioControl.nativeElement;
+        control.src = `/wav/${audio.config_id}/${audio.sweep_n}/${audio.freq_n}`;
+        control.load();
+        control.play();
+      });
   }
 
   //FIXME much copied from frequency chart, abstract?
   onClick(e) {
-    if (e.target.tagName == "text" || (e.target.tagName == "rect" && e.target.id == "infoText")) {
-      // hide info text if it is clicked on
-      this.showInfo = false;
-      this.infoText = "";
-      return;
-    }
     // find SVG co-ordinates of click...
     let p = this.chart.nativeElement.createSVGPoint();
     p.x = e.clientX;
@@ -145,7 +157,6 @@ export class WaterfallComponent {
     f = f.toFixed(-Math.log10(this.freqs.range[2]));
     if (i < 0 || i >= this.data.levels[0].fields.level.length) {
       // out of bounds - hide info text
-      this.showInfo = false;
       this.infoText = "";
       return;
     }
@@ -154,21 +165,26 @@ export class WaterfallComponent {
     let j = Math.round(z.y / this.rh) - 1;
     if (j < 0 || j >= this.data.levels.length) {
       // out of bounds - hide info text
-      this.showInfo = false;
       this.infoText = "";
       return;
     }
     let t = this.data.levels[j].fields.timestamp;
 
-    // decide where to show the info text and lines
-    this.showX = this.margin.left + this.x(f);
-    if (z.x > this.width / 2) {
-      this.showX -= 300;
-    }
-    this.showY = (j + 1) * this.rh + this.margin.top;
+    // formulate info text
     let v = this.data.levels[j].fields.level[i];
     this.infoText = `${v}dB at ${f}${HZ_LABELS[this.freqs.exp]} at ${dt_format(new Date(+t))}`;
-    setTimeout(() => this.textWidth = this.text.nativeElement.getComputedTextLength());
-    this.showInfo = true;
+  }
+
+  set showSamples(value: boolean) {
+    this._showSamples = value;
+    if (value) {
+      $(".sample").attr("class", 'sample audio');
+    } else {
+      $(".sample").attr("class", 'sample');
+    }
+  }
+
+  get showSamples() {
+    return this._showSamples;
   }
 }

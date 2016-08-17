@@ -91,7 +91,7 @@ export class FrequencyComponent {
 
     if (this.isHidden()) return;
 
-    this.timestamp = dt_format(new Date(this.data.levels[this.data.levels.length - 1].fields.timestamp[0]));
+    this.timestamp = dt_format(new Date(this.data.levels[this.data.levels.length - 1].fields.timestamp));
     let agg = this.data.agg[this.sweep];
 
     this.x.domain([this.freqs.range[0], this.freqs.range[1]]);

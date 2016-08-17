@@ -159,7 +159,6 @@ class Worker:
         t0 = now()
         sweep = { 'config_id': config_id, 'n': n, 'timestamp': t0, 'level': [] }
         peaks = [ ]
-        n += 1
 
         os.utime(self.init.monitor_file, None)
         w = [(None,) * 3] * 3
@@ -186,6 +185,9 @@ class Worker:
             self._record(config_id, n, monitor, scan, audio, peaks)
 
           sleep(max(period - sweep['totaltime'], 0) / 1000.0)
+
+        n += 1
+
       if self._power_off:
         monitor.power_off()
         self._stop = False

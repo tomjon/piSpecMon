@@ -42,6 +42,18 @@ text.info {
 .hidden {
   opacity: 0;
 }
+form.controls {
+	float: left;
+	margin-left: 100px;
+	margin-top: 8px;
+}
+psm-waterfall .infoText {
+	margin-right: 50px;
+}
+rect.audio {
+  fill: green;
+  cursor: pointer;
+}
 
 /* widget containers */
 .container {
