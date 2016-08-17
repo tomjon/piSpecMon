@@ -90,7 +90,7 @@ export class WaterfallComponent {
     var f0 = +this.freqs.range[0];
     var f1 = +this.freqs.range[1];
     let df = +this.freqs.range[2];
-    this.x.domain([f0, f1]);
+    this.x.domain([f0 - df/2, f1 + df/2]);
     this.y.domain(d3.extent(data, d => d.fields.timestamp));
 
     this.g.append("g")
