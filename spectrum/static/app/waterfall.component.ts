@@ -75,7 +75,7 @@ export class WaterfallComponent {
   }
 
   isHidden() {
-    return this.data.levels == undefined || this.freqs.freqs || this.data.levels.length < 2;
+    return this.data.levels == undefined || this.freqs.freqs || this.data.levels.length < 1;
   }
 
   ngOnChanges() {

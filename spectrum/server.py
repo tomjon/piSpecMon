@@ -8,6 +8,7 @@ from functools import wraps
 import requests
 import json
 import os, os.path
+import shutil
 from time import sleep, time, strftime, localtime
 import Hamlib
 import math
@@ -249,7 +250,7 @@ def sweepSets():
 @role_required(['admin'])
 def deleteConfig(config_id):
   # delete audio samples...
-  shutil.rmtree(os.path.join(SAMPLES_DIRECTORY, config_id))
+  shutil.rmtree(os.path.join(current_app.root_path, SAMPLES_DIRECTORY, config_id))
   # delete spectrum data
   r = requests.delete(ELASTICSEARCH + 'spectrum/_query', params='refresh=true&q=config_id:' + config_id)
   if r.status_code != 200:
