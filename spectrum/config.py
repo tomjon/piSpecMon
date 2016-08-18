@@ -22,3 +22,6 @@ RADIO_ON_SLEEP_SECS = 1.0
 
 # user session inactivity timeout
 USER_TIMEOUT_SECS = 60
+
+# how often (in s) the wav2mp3 converter should run
+CONVERT_PERIOD = 300

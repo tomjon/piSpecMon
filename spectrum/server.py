@@ -290,19 +290,21 @@ def data(config_id):
     return "Elasticsearch error getting audio data", r.status_code
   return json.dumps({ 'data': r.json()['hits']['hits'] })
 
-@application.route('/wav/<config_id>/<sweep_n>/<freq_n>')
+@application.route('/audio/<config_id>/<sweep_n>/<freq_n>')
 @role_required(['admin', 'freq', 'data'])
 def wav_stream(config_id, sweep_n, freq_n):
   if '/' in config_id or '\\' in config_id:
     return 'Bad parameter', 400
   try:
     int(sweep_n), int(freq_n)
-    path = '/'.join(['wav', config_id, sweep_n, freq_n]) + '.wav'
-    return send_file_partial(path)
+    base = '/'.join(['wav', config_id, sweep_n, freq_n])
+    for ext in ['mp3', 'ogg', 'wav']:
+      path = '{0}.{1}'.format(base, ext)
+      if os.path.exists(path):
+        return send_file_partial(path)
+    return 'File not found', 404
   except ValueError:
     return 'Bad parameter', 400
-  except IOError:
-    return 'File not found', 404
 
 @application.route('/users')
 @role_required([ 'admin' ])
