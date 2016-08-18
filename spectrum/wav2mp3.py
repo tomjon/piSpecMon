@@ -25,6 +25,6 @@ if __name__ == "__main__":
   import time
 
   while True:
-    walk_convert('wav')
+    walk_convert(SAMPLES_DIRECTORY)
     log.debug("Sleeping for {0}s".format(CONVERT_PERIOD))
     time.sleep(CONVERT_PERIOD)

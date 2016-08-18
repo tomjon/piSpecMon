@@ -244,17 +244,20 @@ def sweepSets():
   hits = r.json()['hits']['hits'] if 'hits' in r.json()['hits'] else [ ]
   return json.dumps({ 'data': [{ 'id': hit['_id'], 'config': json.loads(hit['fields']['json'][0]), 'timestamp': int(hit['fields']['timestamp'][0]) } for hit in hits] })
 
-# FIXME noone should be able to delete a running sweep
+# FIXME noone should be able to delete the running sweep
 @application.route('/config/<config_id>', methods=['DELETE'])
 @role_required(['admin'])
 def deleteConfig(config_id):
+  # delete audio samples...
+  shutil.rmtree(os.path.join(SAMPLES_DIRECTORY, config_id))
+  # delete spectrum data
   r = requests.delete(ELASTICSEARCH + 'spectrum/_query', params='refresh=true&q=config_id:' + config_id)
   if r.status_code != 200:
     return "Elasticsearch error deleting sweep data", r.status_code
+  # delete config
   r = requests.delete(ELASTICSEARCH + 'spectrum/config/' + config_id, params='refresh=true')
   if r.status_code != 200:
     return "Elasticsearch error deleting config set", r.status_code
-  #FIXME also delete all scan data with this config_id
   return json.dumps({ 'status': 'OK' })
 
 @application.route('/range/<config_id>')
@@ -297,14 +300,16 @@ def wav_stream(config_id, sweep_n, freq_n):
     return 'Bad parameter', 400
   try:
     int(sweep_n), int(freq_n)
-    base = '/'.join(['wav', config_id, sweep_n, freq_n])
-    for ext in ['mp3', 'ogg', 'wav']:
-      path = '{0}.{1}'.format(base, ext)
-      if os.path.exists(path):
-        return send_file_partial(path)
-    return 'File not found', 404
   except ValueError:
     return 'Bad parameter', 400
+  base = '/'.join([SAMPLES_DIRECTORY, config_id, sweep_n, freq_n])
+  for ext in ['mp3', 'ogg', 'wav']:
+    path = '{0}.{1}'.format(base, ext)
+    try:
+      return send_file_partial(path)
+    except OSError:
+      pass
+  return 'File not found', 404
 
 @application.route('/users')
 @role_required([ 'admin' ])

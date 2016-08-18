@@ -196,7 +196,7 @@ class Worker:
     log.debug("Recording audio from {0} frequencies".format(len(freqs)))
     for idx, freq in freqs:
       t0 = now()
-      path = '/'.join(['wav', str(config_id), str(sweep_n), str(idx)]) + '.wav'
+      path = '/'.join([SAMPLES_DIRECTORY, str(config_id), str(sweep_n), str(idx)]) + '.wav'
       if not os.path.exists(os.path.dirname(path)):
         os.makedirs(os.path.dirname(path))
       monitor.record(freq, scan['mode'], audio['rate'], audio['duration'], path, audio['path'])
