@@ -3,7 +3,7 @@ example_queries/
 *.pyc
 .*
 logs/
-wav/
+samples/
 users.passwords
 static/app/*.js
 static/app/*.map
