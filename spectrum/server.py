@@ -201,7 +201,7 @@ def settings():
 #      HEAD /monitor - minimal process status
 #      PUT /monitor - start process with supplied config as request body
 #      DELETE /monitor - stop process
-@application.route('/monitor', methods=['HEAD', 'GET', 'PUT', 'DELETE'])
+@application.route('/monitor', methods=['GET', 'PUT', 'DELETE'])
 @role_required(['admin', 'freq', 'data'])
 def monitor():
   if request.method == 'PUT':
@@ -220,21 +220,7 @@ def monitor():
     return json.dumps({ 'status': 'OK' })
   if request.method == 'GET':
     # monitor status
-    status = application.worker.status()
-    if 'config_id' in status:
-      r = requests.get(''.join([ELASTICSEARCH + 'spectrum/', 'config/', status['config_id']]), params='fields=timestamp,json')
-      if r.status_code != 200:
-        return "Elasticsearch error finding config", r.status_code
-      fields = r.json()['fields']
-      status['timestamp'] = fields['timestamp'][0]
-      status['config'] = json.loads(fields['json'][0])
-      del status['config']['rig']
-
-      r = requests.get(ELASTICSEARCH + 'spectrum/sweep/_search?size=0&q=config_id:' + status['config_id'])
-      if r.status_code != 200:
-        return "Elasticsearch error finding sweep count", r.status_code
-      status['count'] = r.json()['hits']['total']
-    return json.dumps(status)
+    return json.dumps(application.worker.status())
 
 @application.route('/config')
 @role_required(['admin', 'freq', 'data'])

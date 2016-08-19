@@ -66,13 +66,13 @@ export class ScanComponent {
   onStart() {
     this.standby = true;
     this.widgetComponent.busy(this.dataService.startMonitor(this.config))
-                        .subscribe(() => { });
+                        .subscribe();
   }
 
   onStop() {
     this.standby = true;
     this.widgetComponent.busy(this.dataService.stopMonitor())
-                        .subscribe(() => { });
+                        .subscribe();
   }
 
   get loading() {

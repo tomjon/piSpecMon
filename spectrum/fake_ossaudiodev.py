@@ -5,11 +5,10 @@ _open = open
 
 class FakeAudio:
 
-  def __enter__(self):
+  def __init__(self):
     self._f = _open('/dev/random')
-    return self
 
-  def __exit__(self, *args):
+  def close(self):
     self._f.close()
 
   def channels(self, channels):
@@ -26,7 +25,7 @@ class FakeAudio:
     s = self._f.read(size)
     time.sleep(size / float(self.speed * self.channels) - time.time() + t0)
     return s
-    
+
 
 def open(*args):
   return FakeAudio()

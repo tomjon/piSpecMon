@@ -36,10 +36,12 @@ export class RangeComponent {
   }
 
   @Input('status') set _status(status: any) {
-    if (status && status.config_id == this.config.config_id && status.count > this.count) {
-      this.count = status.count;
+    if (this.value && status && status.config_id == this.config.config_id && status.sweep) {
+      let count = status.sweep.sweep_n + 1;
+      if (count <= this.count) return;
+      this.count = count;
       let atEnd = this.value[1] == this.range[1];
-      this.range[1] = status.last_sweep * 1000;
+      this.range[1] = status.sweep.timestamp;
       if (atEnd) {
         this.value[1] = this.range[1];
         if (this.showing) this.onShow();

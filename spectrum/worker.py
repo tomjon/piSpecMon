@@ -93,6 +93,7 @@ class Worker:
     self._timeout_count = 0
     self.set_signal('SIGUSR1')
     self.set_signal('SIGUSR2', power_off=True)
+    self.progress = Progress(init.monitor_file)
 
   def set_signal(self, signame, exit=False, tidy=True, power_off=False):
     """ Define signal handler for given signal in order to exit cleanly.
@@ -100,30 +101,27 @@ class Worker:
     signal.signal(getattr(signal, signame), lambda *_: self.stop(signame, exit, tidy, power_off))
 
   def _init_config(self):
-    if os.path.isfile(self.init.monitor_file):
-      with open(self.init.monitor_file) as f:
-        config_id = f.read()
-      config = common.get_config(config_id)
-    else:
+    config_id, config = self.progress.get_config()
+    if config_id is None:
+      # no monitor progress - check for config file
       if not os.path.isfile(self.init.config_file):
         return None, None
+
       with open(self.init.config_file) as f:
         config = json.loads(f.read())
-
-      data = { 'timestamp': now(), 'json': json.dumps(config) }
-      r = requests.post(self.init.elasticsearch + 'spectrum/config/', params={ 'refresh': 'true' }, data=json.dumps(data))
-      if r.status_code != 201:
-        log.error("Can not post config: {0} {1}".format(r.status_code, config))
-        return
-      config_id = r.json()['_id']
       os.remove(self.init.config_file)
 
-      with open(self.init.monitor_file, 'w') as f:
-        f.write(config_id)
+    # post config to data store
+    data = { 'timestamp': now(), 'json': json.dumps(config) }
+    r = requests.post(self.init.elasticsearch + 'spectrum/config/', params={ 'refresh': 'true' }, data=json.dumps(data))
+    if r.status_code != 201:
+      log.error("Can not post config: {0} {1}".format(r.status_code, config))
+      return
+    config_id = r.json()['_id']
 
     return config_id, config
 
-  def _read_config(self, config):
+  def _parse_config(self, config):
     convert(config['rig'])
     convert(config['audio'])
     convert(config['monitor'])
@@ -158,22 +156,26 @@ class Worker:
         log.debug("Scan: {0}".format(scan))
         t0 = now()
         sweep = { 'config_id': config_id, 'n': n, 'timestamp': t0, 'level': [] }
-        peaks = [ ]
+        self.progress.sweep_start(n, t0)
 
-        os.utime(self.init.monitor_file, None)
+        peaks = [ ]
         w = [(None,) * 3] * 3
         for freq, level, idx in monitor.scan(**scan):
           if self._stop:
             break
+          self.progress.get_strength(freq, level)
           w = [w[1], w[2], (freq, level, idx)]
           sweep['level'].append(level if level is not None else -128)
           if w[0][1] < w[1][1] and w[1][1] >= audio['threshold'] and w[1][1] >= w[2][1]: # ..[1] gets you the level
             peaks.append((w[1][2], w[1][0]))
+            self.progress.peak(w[1][0], w[1][1])
         else:
           sweep['totaltime'] = now() - t0
 
           if w[1][1] < w[2][1] and w[2][1] >= audio['threshold']:
             peaks.append((w[2][2], w[2][0]))
+
+          self.progress.sweep_stop()
 
           r = requests.post(self.init.elasticsearch + '/spectrum/sweep/', params={ 'refresh': 'true' }, data=json.dumps(sweep))
           if r.status_code != 201:
@@ -199,6 +201,7 @@ class Worker:
       path = '/'.join([SAMPLES_DIRECTORY, str(config_id), str(sweep_n), str(idx)]) + '.wav'
       if not os.path.exists(os.path.dirname(path)):
         os.makedirs(os.path.dirname(path))
+      self.progress.record(freq)
       monitor.record(freq, scan['mode'], audio['rate'], audio['duration'], path, audio['path'])
       data = { 'config_id': config_id, 'timestamp': t0, 'sweep_n': sweep_n, 'freq_n': idx }
       r = requests.post(self.init.elasticsearch + '/spectrum/audio/', params={ 'refresh': 'true' }, data=json.dumps(data))
@@ -221,7 +224,8 @@ class Worker:
       return
 
     try:
-      rig, audio, period, scan = self._read_config(config)
+      rig, audio, period, scan = self._parse_config(config)
+      self.progress.start(config_id, config)
 
       while not self._stop:
         try:
@@ -245,6 +249,8 @@ class Worker:
       data = { 'timestamp': now(), 'config_id': config_id, 'json': json.dumps(str(e)) }
       params = { 'refresh': 'true' }
       requests.post(self.init.elasticsearch + 'spectrum/error/', params=params, data=json.dumps(data))
+    finally:
+      self.progress.stop()
 
   def stop(self, signame, exit, tidy, power_off):
     self._stop = True
@@ -281,14 +287,11 @@ class WorkerClient:
     return self.worker_pid
 
   def status(self):
-    result = { }
     self.read_pid()
+
+    result = Progress.read(self.init.monitor_file)
     if self.error is not None:
       result['error'] = self.error
-    if os.path.isfile(self.init.monitor_file):
-      stat = os.stat(self.init.monitor_file)
-      with open(self.init.monitor_file) as f:
-        result.update({ 'config_id': f.read(), 'last_sweep': stat.st_mtime })
     return result
 
   def start(self, config):
@@ -300,6 +303,59 @@ class WorkerClient:
   def stop(self):
     if self.read_pid() is not None:
       os.kill(self.worker_pid, signal.SIGUSR1)
+
+
+class Progress:
+
+  def __init__(self, monitor_file):
+    self.monitor_file = monitor_file
+
+  @staticmethod
+  def read(monitor_file):
+    if not os.path.isfile(monitor_file):
+      return { }
+    stat = os.stat(monitor_file)
+    with open(monitor_file, 'r') as f:
+      progress = json.loads(f.read())
+      progress['timestamp'] = stat.st_mtime
+      return progress
+
+  def get_config(self):
+    if not os.path.isfile(self.monitor_file):
+      return None, None
+    with open(self.monitor_file, 'r') as f:
+      progress = json.loads(f.read())
+      return progress['config_id'], progress['config']
+
+  def start(self, config_id, config):
+    self.progress = { 'config_id': config_id, 'config': config }
+    self._write()
+
+  def sweep_start(self, sweep_n, t0):
+    self.progress['sweep'] = { 'sweep_n': sweep_n, 'timestamp': t0, 'peaks': [] }
+    self._write()
+
+  def sweep_stop(self):
+    del self.progress['sweep']['current']
+    self._write()
+
+  def get_strength(self, freq, level):
+    self.progress['sweep']['current'] = { 'freq': freq, 'strength': level }
+    self._write()
+
+  def peak(self, freq, level):
+    self.progress['sweep']['peaks'].append({ 'freq': freq, 'strength': level })
+    self._write()
+
+  def record(self, freq):
+    self.progress['sweep']['record'] = { 'freq': freq }
+
+  def stop(self):
+    os.remove(self.monitor_file)
+
+  def _write(self):
+    with open(self.monitor_file, 'w') as f:
+      f.write(json.dumps(self.progress))
 
 
 class ProcessError:
