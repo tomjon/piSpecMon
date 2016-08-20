@@ -87,7 +87,15 @@ export class ScanComponent {
     return +(this.config.freqs.range[0]) + +(this.config.freqs.range[2]) <= +(this.config.freqs.range[1]);
   }
 
-  get lastSweepTime(): string {
-    return dt_format(new Date(this.status.last_sweep * 1000));
+  //FIXME a common function?
+  time(t: number): string {
+    if (! t) return undefined;
+    return dt_format(new Date(t));
+  }
+
+  //FIXME this is quite a common function...
+  freq(freq_n: number): string {
+    let f = +this.config.freqs.range[0] + this.config.freqs.range[2] * freq_n;
+    return `${f.toFixed(-Math.log10(this.config.freqs.range[2]))}${HZ_LABELS[this.config.freqs.exp]}`;
   }
 }

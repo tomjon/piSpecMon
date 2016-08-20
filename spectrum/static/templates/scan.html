@@ -51,8 +51,15 @@
     <div [hidden]="period.valid || period.pristine" class="alert alert-danger">
       Period is a required parameter, and must be a number
     </div>
-    <div *ngIf="status.config_id" [ngClass]="{ status: true, error: status.error }">
-      <span>Last sweep at {{lastSweepTime}}</span>
+    <div *ngIf="status.config_id || status.error" [ngClass]="{ status: true, error: status.error != undefined }">
+      <h2 *ngIf="status.timestamp">Status at {{time(status.timestamp * 1000)}}</h2>
+      <div *ngIf="status.sweep">
+        <span>Sweep started {{time(status.sweep.timestamp)}}</span>
+        <span *ngFor="let peak of status.sweep.peaks">Peak {{peak.strength}}dB at {{freq(peak.freq_n)}}</span>
+        <span *ngIf="status.sweep.previous">{{status.sweep.previous.strength}}dB at {{freq(status.sweep.previous.freq_n)}}</span>
+        <span *ngIf="status.sweep.current">Reading strength at {{freq(status.sweep.current.freq_n)}}...</span>
+        <span *ngIf="status.sweep.record">Recording audio sample at {{freq(status.sweep.record.freq_n)}}...</span>
+      </div>
       <span *ngIf="status.error">{{status.error}}</span>
     </div>
     <button (click)="onReset()" class="btn btn-default" [disabled]="loading || standby || form.form.pristine || status.config_id">Reset</button>

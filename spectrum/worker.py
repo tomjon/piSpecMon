@@ -28,22 +28,31 @@ import traceback
 """
 
 def convert(d):
-  """ Auto-convert empty strings into None, and number strings into numbers.
+  """ Auto-convert empty strings into None, number strings into numbers, and boolean strings into booleans.
   """
   for k, v in d.iteritems():
     if not isinstance(v, basestring):
       continue
-    if v.strip() == '':
+    v = v.strip()
+    if v == '':
       d[k] = None
+      continue
+    if v.lower() == 'true':
+      d[k] = True
+      continue
+    if v.lower() == 'false':
+      d[k] = False
       continue
     try:
       d[k] = int(v)
+      continue
     except:
-      try:
-        d[k] = float(v)
-      except:
-        pass
-
+      pass
+    try:
+      d[k] = float(v)
+      continue
+    except:
+      pass
 
 def now():
   """ Return time in milliseconds since the epoch.
@@ -160,15 +169,18 @@ class Worker:
 
         peaks = [ ]
         w = [(None,) * 3] * 3
-        for freq, level, idx in monitor.scan(**scan):
+        for idx, freq in monitor.scan(**scan):
           if self._stop:
             break
-          self.progress.get_strength(freq, level)
+          self.progress.strength_start(idx)
+          level = monitor.get_strength(freq)
+          sleep(0.2) # FIXME DEBUG REMOVE
+          self.progress.strength_stop(level)
           w = [w[1], w[2], (freq, level, idx)]
           sweep['level'].append(level if level is not None else -128)
           if w[0][1] < w[1][1] and w[1][1] >= audio['threshold'] and w[1][1] >= w[2][1]: # ..[1] gets you the level
             peaks.append((w[1][2], w[1][0]))
-            self.progress.peak(w[1][0], w[1][1])
+            self.progress.peak(w[1][2], w[1][1])
         else:
           sweep['totaltime'] = now() - t0
 
@@ -197,11 +209,13 @@ class Worker:
   def _record(self, config_id, sweep_n, monitor, scan, audio, freqs):
     log.debug("Recording audio from {0} frequencies".format(len(freqs)))
     for idx, freq in freqs:
+      if self._stop:
+        return #FIXME how/whether to interrupt audio recording?
       t0 = now()
       path = '/'.join([SAMPLES_DIRECTORY, str(config_id), str(sweep_n), str(idx)]) + '.wav'
       if not os.path.exists(os.path.dirname(path)):
         os.makedirs(os.path.dirname(path))
-      self.progress.record(freq)
+      self.progress.record(idx)
       monitor.record(freq, scan['mode'], audio['rate'], audio['duration'], path, audio['path'])
       data = { 'config_id': config_id, 'timestamp': t0, 'sweep_n': sweep_n, 'freq_n': idx }
       r = requests.post(self.init.elasticsearch + '/spectrum/audio/', params={ 'refresh': 'true' }, data=json.dumps(data))
@@ -336,26 +350,40 @@ class Progress:
     self._write()
 
   def sweep_stop(self):
-    del self.progress['sweep']['current']
+    if 'previous' in self.progress['sweep']:
+      del self.progress['sweep']['previous']
+    if 'current' in self.progress['sweep']:
+      del self.progress['sweep']['current']
+    if 'record' in self.progress['sweep']:
+      del self.progress['sweep']['record']
     self._write()
 
-  def get_strength(self, freq, level):
-    self.progress['sweep']['current'] = { 'freq': freq, 'strength': level }
+  def strength_start(self, idx):
+    if 'current' in self.progress['sweep']:
+      self.progress['sweep']['previous'] = self.progress['sweep']['current']
+    self.progress['sweep']['current'] = { 'freq_n': idx }
     self._write()
 
-  def peak(self, freq, level):
-    self.progress['sweep']['peaks'].append({ 'freq': freq, 'strength': level })
+  def strength_stop(self, level):
+    self.progress['sweep']['current']['strength'] = level
     self._write()
 
-  def record(self, freq):
-    self.progress['sweep']['record'] = { 'freq': freq }
+  def peak(self, idx, level):
+    self.progress['sweep']['peaks'].append({ 'freq_n': idx, 'strength': level })
+    self._write()
+
+  def record(self, idx):
+    self.progress['sweep']['record'] = { 'freq_n': idx }
+    self._write()
 
   def stop(self):
     os.remove(self.monitor_file)
 
   def _write(self):
-    with open(self.monitor_file, 'w') as f:
+    tmp = self.monitor_file + '_tmp'
+    with open(tmp, 'w') as f:
       f.write(json.dumps(self.progress))
+    os.rename(tmp, self.monitor_file)
 
 
 class ProcessError:

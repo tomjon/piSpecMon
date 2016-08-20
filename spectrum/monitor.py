@@ -1,5 +1,6 @@
 import Hamlib
 import math
+import itertools
 import inspect
 import time
 import wave
@@ -136,7 +137,7 @@ class Monitor:
     raise RigError(self.rig, fn.__name__, tries)
 
   # return strength, or None if the freq can't be set
-  def _get_strength(self, freq):
+  def get_strength(self, freq):
     if self.set_check == 0:
       self._check(self.rig.set_freq, Hamlib.RIG_VFO_CURR, freq)
     else:
@@ -157,17 +158,13 @@ class Monitor:
     #FIXME mode should probably just be set once at rig.open, and not be an argument to scan() but to __init__()
     self._set_mode(mode)
     idx = 0
-    for freq in freqs:
-      yield freq, self._get_strength(freq), idx
+    for freq in itertools.chain(freqs, frange(*range) if range is not None else []):
+      yield idx, freq
       idx += 1
-    if range is not None:
-      for freq in frange(*range):
-        yield freq, self._get_strength(freq), idx
-        idx += 1
 
   def record(self, freq, mode, rate, duration, path, device):
-    self._set_mode(mode)
-    strength = self._get_strength(freq)
+    self._set_mode(mode) #FIXME again, probably just fix this at rig.open
+    strength = self.get_strength(freq) #FIXME is this a bit odd? or do we want the strength data at start/end?
     if strength is None:
       return None
     audio = ossaudiodev.open(device, 'r')
@@ -200,5 +197,5 @@ if __name__ == "__main__":
 
   model = int(sys.argv[1])
   with Monitor(model=model, pathname="/dev/ttyUSB0", stop_bits=1, write_delay=5) as monitor:
-    for x in monitor.scan(range=(88E6, 108E6, 0.1E6), mode=Hamlib.RIG_MODE_WFM):
-      print x
+    for idx, freq in monitor.scan(range=(88E6, 108E6, 0.1E6), mode=Hamlib.RIG_MODE_WFM):
+      print idx, freq, monitor.get_strength(freq)

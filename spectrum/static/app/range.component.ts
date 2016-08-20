@@ -37,7 +37,7 @@ export class RangeComponent {
 
   @Input('status') set _status(status: any) {
     if (this.value && status && status.config_id == this.config.config_id && status.sweep) {
-      let count = status.sweep.sweep_n + 1;
+      let count = status.sweep.sweep_n; // only count complete sweeps
       if (count <= this.count) return;
       this.count = count;
       let atEnd = this.value[1] == this.range[1];
