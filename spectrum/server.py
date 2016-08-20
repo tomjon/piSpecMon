@@ -198,7 +198,6 @@ def settings():
 
 
 # API: GET /monitor - return process status
-#      HEAD /monitor - minimal process status
 #      PUT /monitor - start process with supplied config as request body
 #      DELETE /monitor - stop process
 @application.route('/monitor', methods=['GET', 'PUT', 'DELETE'])
@@ -236,7 +235,9 @@ def sweepSets():
 @role_required(['admin'])
 def deleteConfig(config_id):
   # delete audio samples...
-  shutil.rmtree(os.path.join(current_app.root_path, SAMPLES_DIRECTORY, config_id))
+  samples_path = os.path.join(current_app.root_path, SAMPLES_DIRECTORY, config_id)
+  if os.path.isdir(samples_path):
+    shutil.rmtree(samples_path)
   # delete spectrum data
   r = requests.delete(ELASTICSEARCH + 'spectrum/_query', params='refresh=true&q=config_id:' + config_id)
   if r.status_code != 200:
