@@ -174,7 +174,6 @@ class Worker:
             break
           self.progress.strength_start(idx)
           level = monitor.get_strength(freq)
-          sleep(0.2) # FIXME DEBUG REMOVE
           self.progress.strength_stop(level)
           w = [w[1], w[2], (freq, level, idx)]
           sweep['level'].append(level if level is not None else -128)

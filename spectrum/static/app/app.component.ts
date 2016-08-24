@@ -53,7 +53,7 @@ export class AppComponent {
                     .subscribe(user => { this.user = user; this.checkSuperior() });
     this.dataService.getCaps()
                     .subscribe(data => {
-                      this.models = data.models;
+                      this.models = data.models.sort(modelSort);
                       this.modes = data.modes;
                       this.rates = data.rates;
                       this.parities = data.parities;
