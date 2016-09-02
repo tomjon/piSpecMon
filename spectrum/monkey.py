@@ -29,7 +29,7 @@ def iterator(config):
       for idx, freq in scan(**config['rds']):
         yield progress('frequency', freq)
         api.set_frequency(freq)
-        strength = poll(api.get_strength, lambda s: s >= threshold, config['rds']['strength_timeout'])
+        strength = poll(api.get_strength, lambda s: s >= config['rds']['strength_threshold'], config['rds']['strength_timeout'])
         if strength is None:
           continue
         yield progress('strength', strength)
