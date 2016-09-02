@@ -5,7 +5,9 @@
 SECRET_KEY = 'secret.key'
 
 # path to the file worker.py writes its PID to
-PID_FILE = ".pid"
+PID_FILE = '.worker_pid'
+WORKER_CONFIG = '.worker_config'
+WORKER_MONITOR = '.worker_progress'
 
 ELASTICSEARCH = 'http://localhost:9200/'
 EXPORT_DIRECTORY = '/tmp'
@@ -13,8 +15,11 @@ EXPORT_DIRECTORY = '/tmp'
 USERS_FILE = 'users.passwords'
 ROUNDS = 10 ** 5
 
-WORKER_CONFIG = '.config'
-WORKER_MONITOR = '.monitor'
+# Monkey config (RDS decoder)
+MONKEY_PID = '.monkey_pid'
+MONKEY_CONFIG = '.monkey_config'
+MONKEY_STATUS = '.monkey_status'
+MONKEY_POLL = 1.0
 
 # GPIO radio 'on' script settings
 RADIO_ON_SWITCH = 21 # BCM numbering

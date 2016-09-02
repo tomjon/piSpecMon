@@ -4,6 +4,7 @@ import itertools
 import inspect
 import time
 import wave
+from common import frange
 try:
   import ossaudiodev
 except ImportError:
@@ -14,12 +15,6 @@ FORMAT = ossaudiodev.AFMT_S16_LE
 SAMPLE_WIDTH = 2
 
 Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_NONE)
-
-def frange(min, max, step):
-  digits = -int(round(math.log10(step)))
-  N = round((max - min) / float(step))
-  for n in xrange(int(N) + 1):
-    yield round(min + n * step, digits)
 
 
 def get_capabilities():

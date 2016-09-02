@@ -14,15 +14,15 @@ import traceback
 
 """ The worker process can be signalled to start and stop operation.
 
-    When signalled to start, it checks for a .monitor file; if there is one, it contains the ElasticSearch config_id
-    which is used to look up the config.
-    
+    When signalled to start, it checks for a .monitor file; if there is one, it contains the last written
+    progress of the worker (which itself contains the config_id and config).
+
     Otherwise, it checks for a .config file, and if there is one, config JSON is read from it, and uploaded
-    to ES and a config_id obtained, which is written to the .monitor file. The .config file is removed.
+    to ES and a config_id obtained. The .config file is removed.
     
-    Thus, .monitor file is used in preference to .config - if both exist, .config is ignored and not consumed.
+    Note, .monitor file is used in preference to .config - if both exist, .config is ignored and not consumed.
     
-    The .monitor file is touched at the start of each sweep.
+    The .monitor file is kept up-to-date with current progress.
     
     The worker runs until stopped by another signal, and the .monitor file is removed.
 """

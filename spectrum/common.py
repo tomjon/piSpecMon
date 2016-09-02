@@ -43,11 +43,23 @@ log.addHandler(ch)
 def get_config(config_id):
   r = requests.get('%s/spectrum/config/_search?fields=*&q=_id:%s' % (ELASTICSEARCH, config_id))
   if r.status_code != 200:
-    return r.text, r.status_code
+    return None #FIXME need to throw or return an error somehow
   hits = r.json()['hits']['hits']
-  if len(hits) == 0:
-    return 'No such config id', 404
-  return json.loads(hits[0]['fields']['json'][0])
+  return json.loads(hits[0]['fields']['json'][0]) if len(hits) > 0 else None
+
+
+def scan(freqs=[], range=None, **ignore):
+  idx = 0
+  for freq in itertools.chain(freqs, frange(*range) if range is not None else []):
+    yield idx, freq
+    idx += 1
+
+#FIXME this could be 'private' if no-one else is using it outside the module (currently at least monitor.py is)
+def frange(min, max, step):
+  digits = -int(round(math.log10(step)))
+  N = round((max - min) / float(step))
+  for n in xrange(int(N) + 1):
+    yield round(min + n * step, digits)
 
 
 def wait_for_elasticsearch():
