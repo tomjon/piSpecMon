@@ -23,6 +23,7 @@ class RdsApi:
     value = self.dll.OpenRadioPort(c_char_p(self.device), self.use_hard_mute)
     if value != 1:
       raise Exception("Error opening monkey board: {0}".format(value))
+    return self
 
   def __exit__(self, *args):
     value = self.dll.CloseRadioPort()
@@ -30,7 +31,7 @@ class RdsApi:
       raise Exception("Error closing monkey board: {0}".format(value))
 
   def set_frequency(self, freq):
-    value = self.dll.PlayStream(c_char_p(MODE_FM), c_long(freq / 1000))
+    value = self.dll.PlayStream(c_char_p(MODE_FM), c_long(int(freq / 1000)))
     if value != 1:
       raise Exception("Error setting frequencya: {0}".format(value))
 

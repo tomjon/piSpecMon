@@ -23,10 +23,10 @@ def poll(fn, condition, timeout):
 
 
 def iterator(config):
-  with RdsApi() as api:
+  with RdsApi(config['rds']['device']) as api:
     progress = UpdatableDict()
     while True:
-      for idx, freq in scan(**config['rds']):
+      for idx, freq in scan(**config['scan']):
         yield progress('frequency', freq)
         api.set_frequency(freq)
         strength = poll(api.get_strength, lambda s: s >= config['rds']['strength_threshold'], config['rds']['strength_timeout'])
@@ -46,7 +46,7 @@ def iterator(config):
 
 
 if __name__ == "__main__":
-  monkey = Process(callable, MONKEY_PID, MONKEY_CONFIG, MONKEY_STATUS, ELASTICSEARCH)
+  monkey = Process(MONKEY_PID, MONKEY_CONFIG, MONKEY_STATUS, ELASTICSEARCH)
   monkey.init()
   wait_for_elasticsearch()
   monkey.start(iterator)

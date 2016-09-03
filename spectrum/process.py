@@ -18,13 +18,13 @@ import sys
 """
 
 #FIXME shared between worker.py - move to common
-def convert(d):
+def _convert(d):
   """ Auto-convert empty strings into None, number strings into numbers, and boolean strings into booleans.
       Recurse into dictionaries.
   """
   for k, v in d.iteritems():
     if isinstance(v, dict):
-      convert(v)
+      _convert(v)
     if not isinstance(v, basestring):
       continue
     v = v.strip()
@@ -47,7 +47,24 @@ def convert(d):
       continue
     except:
       pass
+  return d
 
+def convert(config):
+  config['scan'] = { }
+  scan = config['scan']
+  for x in config['freqs']:
+    # x is either 'range' or 'freqs'
+    if x == 'range':
+      exp = int(config['freqs']['exp'])
+      scan[x] = [ 10 ** exp * float(f) for f in config['freqs'][x] ]
+    elif x == 'freqs':
+      scan[x] = [ 10 ** int(f['exp']) * float(f['f']) for f in config['freqs'][x] ]
+    else:
+      raise ValueError("Bad key in config.freqs")
+    break
+  else:
+    raise ValueError("No frequencies in config")
+  return _convert(config)
 
 class Process:
 
@@ -88,6 +105,7 @@ class Process:
       return status
 
   def write_status(self, status):
+    log.debug("Writing status {0}".format(json.dumps(status)))
     tmp = self.status_file + '_tmp'
     with open(tmp, 'w') as f:
       f.write(json.dumps(status))
@@ -106,7 +124,7 @@ class Process:
     if not os.path.isfile(self.config_file):
       return None
     with open(self.config_file) as f:
-      return f.read()
+      return f.read().strip()
 
   def start(self, iterator):
     log.info("STARTING")
@@ -114,6 +132,7 @@ class Process:
       while True:
         self.config_id = self._read_config()
         if self.config_id is not None:
+          log.debug("Read config id {0}".format(self.config_id))
           config = convert(get_config(self.config_id))
           self._stop = False
           for status in iterator(config):
@@ -130,12 +149,12 @@ class Process:
         signal.pause()
     finally:
       log.info("STOPPING")
-      os.remove(init.pid_file)
+      os.remove(self.pid_file)
 
   def stop(self):
     self._stop = True
 
-  def init():
+  def init(self):
     try:
       pid = self.read_pid()
       if pid is not None:

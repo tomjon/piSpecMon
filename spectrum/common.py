@@ -4,6 +4,7 @@ import json
 import logging, logging.handlers
 import sys
 import os, os.path
+import itertools
 from time import sleep
 
 """ Initialise logging and define shared functions.
