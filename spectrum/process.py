@@ -135,7 +135,7 @@ class Process:
           log.debug("Read config id {0}".format(self.config_id))
           config = convert(get_config(self.config_id))
           self._stop = False
-          for status in iterator(config):
+          for status in iterator(self.config_id, config):
             self.write_status(status)
             if self._stop:
               break

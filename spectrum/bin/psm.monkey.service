@@ -1,0 +1,18 @@
+[Unit]
+Description=Pi Spectrum Monitor Monkey Service
+After=multi-user.target
+Wants=network-online.target psm.elasticsearch.service
+After=network-online.target psm.elasticsearch.service
+
+[Service]
+Type=idle
+ExecStart=/usr/bin/python -u /home/ses/spectrum/piSpecMon/spectrum/monkey.py
+Restart=always
+RestartSec=1
+WorkingDirectory=/home/ses/spectrum/piSpecMon/spectrum
+
+User=ses
+Group=pi
+
+[Install]
+WantedBy=multi-user.target

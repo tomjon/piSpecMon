@@ -5,7 +5,7 @@ import logging, logging.handlers
 import sys
 import os, os.path
 import itertools
-from time import sleep
+from time import time, sleep
 
 """ Initialise logging and define shared functions.
 """
@@ -39,6 +39,12 @@ ch.setFormatter(formatter)
 # add the handlers to the logger
 log.addHandler(rfh)
 log.addHandler(ch)
+
+
+def now():
+  """ Return time in milliseconds since the epoch.
+  """
+  return int(time() * 1000)
 
 
 def get_config(config_id):

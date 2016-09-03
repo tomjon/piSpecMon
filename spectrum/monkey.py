@@ -3,6 +3,7 @@ from common import *
 from process import Process
 from rds import RdsApi
 from time import sleep, time
+import requests
 
 
 class UpdatableDict (dict):
@@ -22,11 +23,11 @@ def poll(fn, condition, timeout):
     sleep(MONKEY_POLL)
 
 
-def iterator(config):
+def iterator(config_id, config):
   with RdsApi(config['rds']['device']) as api:
-    progress = UpdatableDict()
     while True:
       for idx, freq in scan(**config['scan']):
+        progress = UpdatableDict()
         yield progress('frequency', freq)
         api.set_frequency(freq)
         strength = poll(api.get_strength, lambda s: s >= config['rds']['strength_threshold'], config['rds']['strength_timeout'])
@@ -38,11 +39,24 @@ def iterator(config):
         if name is None:
           continue
         yield progress('name', name)
+
+        data = { 'config_id': config_id, 'idx': idx, 'timestamp': now(), 'name': name }
+        r = requests.post(self.init.elasticsearch + '/spectrum/name/', params={ 'refresh': 'true' }, data=json.dumps(data))
+        if r.status_code != 201:
+          log.error("Could not post to Elasticsearch ({0})".format(r.status_code))
+          return
+
         text0 = None
         while time() < t0 + config['rds']['rds_timeout']:
           text = api.get_text()
           if text is not None and text != text0:
             yield progress('text', text)
+
+            data = { 'config_id': config_id, 'idx': idx, 'timestamp': now(), 'text': text }
+            r = requests.post(self.init.elasticsearch + '/spectrum/name/', params={ 'refresh': 'true' }, data=json.dumps(data))
+            if r.status_code != 201:
+              log.error("Could not post to Elasticsearch ({0})".format(r.status_code))
+              return
 
 
 if __name__ == "__main__":

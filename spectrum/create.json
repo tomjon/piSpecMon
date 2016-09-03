@@ -35,6 +35,28 @@
         "totaltime": { "type": "long", "store": true, "index": "no" }
       }
     },
+    "name": {
+      "_all": { "enabled": false },
+      "_source": { "enabled": false },
+      "_timestamp": { "enabled": false },
+      "properties": {
+        "config_id": { "type": "string", "store": true, "index": "not_analyzed" },
+        "idx": { "type": "integer", "store": true, "index": "no" },
+        "timestamp": { "type": "long", "store": true },
+        "name": { "type": "string", "store": true, "index": "not_analyzed" }
+      }
+    },
+    "text": {
+      "_all": { "enabled": false },
+      "_source": { "enabled": false },
+      "_timestamp": { "enabled": false },
+      "properties": {
+        "config_id": { "type": "string", "store": true, "index": "not_analyzed" },
+        "idx": { "type": "integer", "store": true, "index": "no" },
+        "timestamp": { "type": "long", "store": true },
+        "text": { "type": "string", "store": true, "index": "not_analyzed" }
+      }
+    },
     "audio": {
       "_all": { "enabled": false },
       "_source": { "enabled": false },

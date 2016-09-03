@@ -44,8 +44,8 @@ class RdsApi:
 
   def get_name(self):
     value = self.dll.GetProgramName(c_char_p(MODE_FM), c_long(0), c_char_p(1), _buffer)
-    return _buffer.value if value > 0 else None
+    return _buffer.value.strip() if value > 0 else None
 
   def get_text(self):
     value = self.dll.GetProgramText(_buffer)
-    return _buffer.value if value == 0 else None
+    return _buffer.value.strip() if value == 0 else None
