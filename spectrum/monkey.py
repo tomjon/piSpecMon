@@ -40,8 +40,9 @@ def iterator(config_id, config):
           continue
         yield progress('name', name)
 
+        #FIXME need to pass back to Process to do this - or be given an API object?
         data = { 'config_id': config_id, 'idx': idx, 'timestamp': now(), 'name': name }
-        r = requests.post(self.init.elasticsearch + '/spectrum/name/', params={ 'refresh': 'true' }, data=json.dumps(data))
+        r = requests.post(ELASTICSEARCH + '/spectrum/name/', params={ 'refresh': 'true' }, data=json.dumps(data))
         if r.status_code != 201:
           log.error("Could not post to Elasticsearch ({0})".format(r.status_code))
           return
@@ -53,7 +54,7 @@ def iterator(config_id, config):
             yield progress('text', text)
 
             data = { 'config_id': config_id, 'idx': idx, 'timestamp': now(), 'text': text }
-            r = requests.post(self.init.elasticsearch + '/spectrum/name/', params={ 'refresh': 'true' }, data=json.dumps(data))
+            r = requests.post(ELASTICSEARCH + '/spectrum/text/', params={ 'refresh': 'true' }, data=json.dumps(data))
             if r.status_code != 201:
               log.error("Could not post to Elasticsearch ({0})".format(r.status_code))
               return

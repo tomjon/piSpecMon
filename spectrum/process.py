@@ -139,17 +139,18 @@ class Process:
             self.write_status(status)
             if self._stop:
               break
-        if self._tidy:
           if os.path.isfile(self.status_file):
             os.remove(self.status_file)
-          if os.path.isfile(self.config_file):
-            os.remove(self.config_file)
+        if self._tidy and os.path.isfile(self.config_file):
+          os.remove(self.config_file)
         if self._exit:
           break
         signal.pause()
     finally:
       log.info("STOPPING")
       os.remove(self.pid_file)
+      if os.path.isfile(self.status_file):
+        os.remove(self.status_file)
 
   def stop(self):
     self._stop = True

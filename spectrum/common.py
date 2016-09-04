@@ -5,6 +5,7 @@ import logging, logging.handlers
 import sys
 import os, os.path
 import itertools
+import math
 from time import time, sleep
 
 """ Initialise logging and define shared functions.
