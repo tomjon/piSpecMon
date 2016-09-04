@@ -3,8 +3,6 @@ from common import *
 
 import requests
 import json
-from monitor import Monitor, TimeoutError, get_capabilities, frange
-from power import power_on
 from time import sleep, time
 import os, os.path
 import signal
@@ -56,9 +54,10 @@ def convert(config):
     # x is either 'range' or 'freqs'
     if x == 'range':
       exp = int(config['freqs']['exp'])
-      scan[x] = [ 10 ** exp * float(f) for f in config['freqs'][x] ]
+      scan[x] = [ int(10 ** exp * float(f)) for f in config['freqs'][x] ]
+      scan[x][1] += scan[x][2] / 2 # ensure to include the end of the range
     elif x == 'freqs':
-      scan[x] = [ 10 ** int(f['exp']) * float(f['f']) for f in config['freqs'][x] ]
+      scan[x] = [ int(10 ** int(f['exp']) * float(f['f'])) for f in config['freqs'][x] ]
     else:
       raise ValueError("Bad key in config.freqs")
     break

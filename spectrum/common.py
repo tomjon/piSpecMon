@@ -58,16 +58,9 @@ def get_config(config_id):
 
 def scan(freqs=[], range=None, **ignore):
   idx = 0
-  for freq in itertools.chain(freqs, frange(*range) if range is not None else []):
+  for freq in itertools.chain(freqs, xrange(*range) if range is not None else []):
     yield idx, freq
     idx += 1
-
-#FIXME this could be 'private' if no-one else is using it outside the module (currently at least monitor.py is)
-def frange(min, max, step):
-  digits = -int(round(math.log10(step)))
-  N = round((max - min) / float(step))
-  for n in xrange(int(N) + 1):
-    yield round(min + n * step, digits)
 
 
 def wait_for_elasticsearch():
