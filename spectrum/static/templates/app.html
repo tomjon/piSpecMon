@@ -16,6 +16,7 @@
       <psm-stats *ngIf="user.roleIn(['admin'])"></psm-stats>
       <psm-rig *ngIf="user.roleIn(['admin'])" [models]="models" [rates]="rates" [parities]="parities"></psm-rig>
       <psm-audio *ngIf="user.roleIn(['admin', 'freq'])"></psm-audio>
+      <psm-rds *ngIf="user.roleIn(['admin', 'freq'])"></psm-rds>
       <psm-scan *ngIf="user.roleIn(['admin', 'freq'])" [modes]="modes" [config]="fields" [status]="status"></psm-scan>
     </div>
   </div>

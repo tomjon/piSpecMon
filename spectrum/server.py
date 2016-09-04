@@ -134,6 +134,7 @@ application.before_request(check_user_timeout)
 application.caps = get_capabilities()
 application.rig = get_settings('rig', { 'model': 1 }) #FIXME is this a Hamlib constant? (dummy rig)
 application.audio = get_settings('audio', { 'path': '/dev/dsp1', 'rate': 44100, 'period': 600, 'duration': 10, 'threshold': -20 })
+application.rds = get_settings('rds', { 'device': '/dev/ttyACM0', 'strength_threshold': 40, 'strength_timeout': 20, 'rds_timeout': 300 })
 application.worker = WorkerClient(WorkerInit())
 
 @application.after_request
@@ -187,6 +188,7 @@ def caps():
 @application.route('/defaults', methods=['GET', 'PUT'])
 @application.route('/rig', methods=['GET', 'PUT'])
 @application.route('/audio', methods=['GET', 'PUT'])
+@application.route('/rds', methods=['GET', 'PUT'])
 @role_required(['admin'])
 def settings():
   rule = request.url_rule.rule[1:]
@@ -209,6 +211,7 @@ def monitor():
     config = json.loads(request.get_data())
     config['rig'] = application.rig
     config['audio'] = application.audio
+    config['rds'] = application.rds
     application.worker.start(json.dumps(config))
     return json.dumps({ 'status': 'OK' })
   if request.method == 'DELETE':

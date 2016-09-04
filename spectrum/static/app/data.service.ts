@@ -47,6 +47,21 @@ export class DataService {
                     .catch(this.errorHandler("set audio configuration"));
   }
 
+  getRds(): Observable<any> {
+    return this.http.get(this.baseUrl + 'rds')
+                    .map(res => res.json())
+                    .catch(this.errorHandler("get RDS configuration"));
+  }
+
+  setRds(audio: any): Observable<void> {
+    let body = JSON.stringify(audio);
+    let headers = new Headers({ 'Content-Type': 'application/json' });
+    let options = new RequestOptions({ headers: headers });
+    return this.http.put(this.baseUrl + 'rds', body, options)
+                    .map(res => res.json())
+                    .catch(this.errorHandler("set RDS configuration"));
+  }
+
   getStats(): Observable<any> {
     return this.http.get(this.baseUrl + 'stats')
                     .map(res => res.json())
