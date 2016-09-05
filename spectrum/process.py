@@ -194,10 +194,16 @@ class Client:
   def status(self):
     self.read_pid()
 
-    result = status.read(self.process.status_file)
+    if not os.path.isfile(self.process.status_file):
+      return { }
+    stat = os.stat(self.process.status_file)
+    with open(self.process.status_file, 'r') as f:
+      status = json.loads(f.read())
+      status['timestamp'] = stat.st_mtime
+
     if self.error is not None:
-      result['error'] = self.error
-    return result
+      status['error'] = self.error
+    return status
 
   def start(self, config_id):
     if self.read_pid() is not None:

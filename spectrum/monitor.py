@@ -2,8 +2,8 @@ import Hamlib
 import math
 import itertools
 import inspect
-import time
 import wave
+from time import sleep
 from common import *
 try:
   import ossaudiodev
@@ -125,7 +125,7 @@ class Monitor:
       v = fn(*args)
       if self.rig.error_status == Hamlib.RIG_OK:
         return v
-      time.sleep(self.interval * 2 ** tries / 1000.0)
+      sleep(self.interval * 2 ** tries / 1000.0)
       tries += 1
     if -self.rig.error_status == Hamlib.RIG_ETIMEOUT:
       raise TimeoutError(self.rig, fn.__name__, tries)
@@ -153,7 +153,8 @@ class Monitor:
     #FIXME mode should probably just be set once at rig.open, and not be an argument to scan() but to __init__()
     self._set_mode(mode)
     idx = 0
-    for freq in itertools.chain(freqs, xrange(*[int(x) for x in range]) if range is not None else []):
+    xr = xrange(int(range[0]), int(range[1] + range[2]/2), int(range[2])) if range is not None else []
+    for freq in itertools.chain(freqs, xr):
       yield idx, freq
       idx += 1
 
