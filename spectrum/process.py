@@ -65,7 +65,7 @@ def convert(config):
     raise ValueError("No frequencies in config")
   return _convert(config)
 
-class Process:
+class Process (object):
 
   def __init__(self, pid_file, config_file, status_file, data_source):
     self.pid_file = local_path(pid_file)

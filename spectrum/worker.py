@@ -3,7 +3,7 @@ from common import *
 
 import requests
 import json
-from monitor import Monitor, TimeoutError, get_capabilities, frange
+from monitor import Monitor, TimeoutError, get_capabilities
 from power import power_on
 from time import sleep, time
 import os, os.path

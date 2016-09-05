@@ -14,7 +14,8 @@ import Hamlib
 import math
 from datetime import datetime
 from worker import WorkerInit, WorkerClient
-from monitor import get_capabilities, frange
+from monkey import Monkey
+from monitor import get_capabilities
 import re
 import mimetypes
 
@@ -299,7 +300,7 @@ def data(config_id):
 
 @application.route('/rds/name/<config_id>')
 @role_required(['admin', 'freq', 'data'])
-def data(config_id):
+def rsd_name(config_id):
   r = requests.get(ELASTICSEARCH + 'spectrum/name/_search', params=_range_search(config_id))
   if r.status_code != 200:
     return "Elasticsearch error getting RSD name data", r.status_code
@@ -307,7 +308,7 @@ def data(config_id):
 
 @application.route('/rds/text/<config_id>')
 @role_required(['admin', 'freq', 'data'])
-def data(config_id):
+def rds_text(config_id):
   r = requests.get(ELASTICSEARCH + 'spectrum/text/_search', params=_range_search(config_id))
   if r.status_code != 200:
     return "Elasticsearch error getting RDS text data", r.status_code
@@ -457,7 +458,7 @@ def _iter_export(config, hits):
     yield ','.join(freq['f'] * 10 ** int(freq['exp']) for freq in config['freqs']['freqs'])
   else:
     e = 10 ** int(config['freqs']['exp'])
-    yield ','.join(str(f * e) for f in frange(*[float(x) for x in config['freqs']['range']]))
+    yield ','.join(str(f) for f in xrange(*[int(x * e) for x in config['freqs']['range']]))
   yield '\n'
   for hit in hits:
     dt = datetime.fromtimestamp(hit['fields']['timestamp'][0] / 1000.0)
