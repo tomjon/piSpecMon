@@ -28,7 +28,7 @@ def iterator(config_id, config):
     while True:
       for idx, freq in scan(**config['scan']):
         progress = UpdatableDict()
-        yield progress('frequency', freq)
+        yield progress('freq_n', idx)
         api.set_frequency(freq)
         strength = poll(api.get_strength, lambda s: s >= config['rds']['strength_threshold'], config['rds']['strength_timeout'])
         if strength is None:

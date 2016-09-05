@@ -110,17 +110,31 @@ class Worker:
     signal.signal(getattr(signal, signame), lambda *_: self.stop(signame, exit, tidy, power_off))
 
   def _init_config(self):
+    log.debug('try progress file')
     config_id = self.progress.get_config()
-    if config_id is not None:
-      config = get_config(config_id)
-    else:
+    if config_id is None:
+      log.debug('no config_id in progress file - try config file')
+
       # no monitor progress - check for config file
       if not os.path.isfile(self.init.config_file):
+        log.debug('no config file')
         return None, None
 
       with open(self.init.config_file) as f:
-        config = json.loads(f.read())
-      os.remove(self.init.config_file)
+        config_id = f.read()
+      #os.remove(self.init.config_file)
+
+    log.debug('read config_id ' + config_id)
+
+    config = get_config(config_id)
+    if config is None:
+      log.debug('no config found for config_id')
+
+      #if os.path.exists(self.init.config_file):
+      #  os.remove(self.init.config_file)
+      return None, None
+
+    log.debug('success - got config for config_id')
 
     return config_id, config
 
@@ -301,10 +315,10 @@ class WorkerClient:
       result['error'] = self.error
     return result
 
-  def start(self, config):
+  def start(self, config_id):
     if self.read_pid() is not None:
       with open(self.init.config_file, 'w') as f:
-        f.write(config)
+        f.write(config_id)
       os.kill(self.worker_pid, signal.SIGUSR1)
 
   def stop(self):
@@ -329,7 +343,7 @@ class Progress:
 
   def get_config(self):
     if not os.path.isfile(self.monitor_file):
-      return None, None
+      return None
     with open(self.monitor_file, 'r') as f:
       progress = json.loads(f.read())
       return progress['config_id']
