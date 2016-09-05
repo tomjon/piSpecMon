@@ -19,7 +19,8 @@ export class ScanComponent {
 
   units: any[] = [ ];
   config: any;
-  status: any = { };
+  worker: any = { };
+  monkey: any = { };
 
   // true when waiting for (real) status after startup or start/stop buttons pressed
   standby: boolean = true;
@@ -32,15 +33,16 @@ export class ScanComponent {
   @Input('status') set _status(status: any) {
     if (status == undefined) return;
     this.standby = false;
-    this.status = status;
-    if (status.config_id) {
+    this.worker = status.worker;
+    this.monkey = status.monkey;
+    if (this.worker.config_id) {
       // monitor is running
-      this.config = status.config;
+      this.config = this.worker.config;
     }
   }
 
   @Input('config') set _config(config: Config) {
-    if (this.status.config_id) return;
+    if (this.worker.config_id) return;
     this.input = config;
     if (this.input == undefined) {
       this.widgetComponent.pristine(this.form, false);

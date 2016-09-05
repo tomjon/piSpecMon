@@ -2,7 +2,7 @@
   <form role="form" (ngSubmit)="onStart()" #form="ngForm">
     <div class="form-group">
       <label for="model">Mode</label>
-      <select class="form-control" [disabled]="loading || status.config_id" [(ngModel)]="config.scan.mode" name="model">
+      <select class="form-control" [disabled]="loading || worker.config_id" [(ngModel)]="config.scan.mode" name="model">
         <option *ngFor="let mode of modes" value="{{mode.mode}}">{{mode.name}}</option>
       </select>
     </div>
@@ -10,19 +10,19 @@
       <label for="start">Frequency range</label>
       <div>
         <div class="psm-input-group col-lg-3">
-          <input [disabled]="loading || standby || status.config_id" type="text" required class="form-control" [(ngModel)]="config.freqs.range[0]" name="start" #start="ngModel">
+          <input [disabled]="loading || standby || worker.config_id" type="text" required class="form-control" [(ngModel)]="config.freqs.range[0]" name="start" #start="ngModel">
           <div class="help">start</div>
         </div>
         <div class="psm-input-group col-lg-3">
-          <input [disabled]="loading || standby || status.config_id" type="text" required class="form-control" [(ngModel)]="config.freqs.range[1]" name="end" #end="ngModel">
+          <input [disabled]="loading || standby || worker.config_id" type="text" required class="form-control" [(ngModel)]="config.freqs.range[1]" name="end" #end="ngModel">
           <div class="help">end</div>
         </div>
         <div class="psm-input-group col-lg-3">
-          <input [disabled]="loading || standby || status.config_id" type="text" required class="form-control" [(ngModel)]="config.freqs.range[2]" name="step" #step="ngModel">
+          <input [disabled]="loading || standby || worker.config_id" type="text" required class="form-control" [(ngModel)]="config.freqs.range[2]" name="step" #step="ngModel">
           <div class="help">step</div>
         </div>
         <div class="psm-input-group col-lg-3">
-          <select class="form-control" [disabled]="loading || standby || status.config_id" [(ngModel)]="config.freqs.exp" name="units">
+          <select class="form-control" [disabled]="loading || standby || worker.config_id" [(ngModel)]="config.freqs.exp" name="units">
             <option *ngFor="let u of units" value="{{u.value}}">{{u.label}}</option>
           </select>
           <div class="help">units</div>
@@ -38,11 +38,11 @@
     <div class="form-group">
       <div class="psm-input-group col-lg-6">
         <label for="attempts">Period (ms)</label>
-        <input [disabled]="loading || standby || status.config_id" type="number" min="0" step="100" required class="form-control" [(ngModel)]="config.monitor.period" name="period" #period="ngModel">
+        <input [disabled]="loading || standby || worker.config_id" type="number" min="0" step="100" required class="form-control" [(ngModel)]="config.monitor.period" name="period" #period="ngModel">
       </div>
       <div class="psm-input-group col-lg-6">
         <label for="audio">Audio collection</label>
-        <select [disabled]="loading || standby || status.config_id" class="form-control" [(ngModel)]="config.scan.audio" name="audio">
+        <select [disabled]="loading || standby || worker.config_id" class="form-control" [(ngModel)]="config.scan.audio" name="audio">
           <option value="false">Off</option>
           <option value="true">On</option>
         </select>
@@ -51,19 +51,27 @@
     <div [hidden]="period.valid || period.pristine" class="alert alert-danger">
       Period is a required parameter, and must be a number
     </div>
-    <div *ngIf="status.config_id || status.error" [ngClass]="{ status: true, error: status.error != undefined }">
-      <h2 *ngIf="status.timestamp">Status at {{time(status.timestamp * 1000)}}</h2>
-      <div *ngIf="status.sweep">
-        <span>Sweep started {{time(status.sweep.timestamp)}}</span>
-        <span *ngFor="let peak of status.sweep.peaks">Peak {{peak.strength}}dB at {{freq(peak.freq_n)}}</span>
-        <span *ngIf="status.sweep.previous">{{status.sweep.previous.strength}}dB at {{freq(status.sweep.previous.freq_n)}}</span>
-        <span *ngIf="status.sweep.current">Reading strength at {{freq(status.sweep.current.freq_n)}}...</span>
-        <span *ngIf="status.sweep.record">Recording audio sample at {{freq(status.sweep.record.freq_n)}}...</span>
+    <div *ngIf="worker.config_id || worker.error" [ngClass]="{ status: true, error: worker.error != undefined }">
+      <h2 *ngIf="worker.timestamp">Scan status at {{time(worker.timestamp * 1000)}}</h2>
+      <div *ngIf="worker.sweep">
+        <span>Sweep started {{time(worker.sweep.timestamp)}}</span>
+        <span *ngFor="let peak of worker.sweep.peaks">Peak {{peak.strength}}dB at {{freq(peak.freq_n)}}</span>
+        <span *ngIf="worker.sweep.previous">{{worker.sweep.previous.strength}}dB at {{freq(worker.sweep.previous.freq_n)}}</span>
+        <span *ngIf="worker.sweep.current">Reading strength at {{freq(worker.sweep.current.freq_n)}}...</span>
+        <span *ngIf="worker.sweep.record">Recording audio sample at {{freq(worker.sweep.record.freq_n)}}...</span>
       </div>
-      <span *ngIf="status.error">{{status.error}}</span>
+      <span *ngIf="worker.error">{{worker.error}}</span>
     </div>
-    <button (click)="onReset()" class="btn btn-default" [disabled]="loading || standby || form.form.pristine || status.config_id">Reset</button>
-    <button type="submit" class="btn btn-default" [disabled]="loading || standby || ! form.form.valid || ! validRange() || status.config_id">Start</button>
-    <button (click)="onStop()" class="btn btn-default" [disabled]="loading || standby || ! status.config_id">Stop</button>
+    <div *ngIf="monkey.timestamp || monkey.error" [ngClass]="{ status: true, error: monkey.error != undefined }">
+      <h2 *ngIf="monkey.timestamp">RDS status at {{time(monkey.timestamp * 1000)}}</h2>
+      <span *ngIf="monkey.freq_n && ! monkey.strength">Receiving on {{freq(monkey.freq_n)}}</span>
+      <span *ngIf="monkey.strength">Decoding on {{freq(monkey.freq_n)}}, strength {{monkey.strength}}</span>
+      <span *ngIf="monkey.name">Station name: {{monkey.name}}</span>
+      <span *ngIf="monkey.text"><i>{{monkey.text}}</i></span>
+      <span *ngIf="monkey.error">{{monkey.error}}</span>
+    </div>
+    <button (click)="onReset()" class="btn btn-default" [disabled]="loading || standby || form.form.pristine || worker.config_id">Reset</button>
+    <button type="submit" class="btn btn-default" [disabled]="loading || standby || ! form.form.valid || ! validRange() || worker.config_id">Start</button>
+    <button (click)="onStop()" class="btn btn-default" [disabled]="loading || standby || ! worker.config_id">Stop</button>
   </form>
 </psm-widget>

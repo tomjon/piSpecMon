@@ -42,10 +42,9 @@ export class AppComponent {
   rates: any[] = [ ];
   parities: any[] = [ ];
 
-  // config set and config currently selected in sweep table
   config: Config;
   fields: any;
-  status: any;
+  status: any = { worker: { }, monkey: { } };
 
   constructor(private dataService: DataService, private messageService: MessageService) { }
 

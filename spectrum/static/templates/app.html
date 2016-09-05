@@ -7,8 +7,8 @@
   </div>
   <div class="row">
     <div class="col-lg-9">
-      <psm-table [modes]="modes" (select)="setConfig($event)" [user]="user" [status]="status"></psm-table>
-      <psm-charts *ngIf="config" [config]="config" [status]="status"></psm-charts>
+      <psm-table [modes]="modes" (select)="setConfig($event)" [user]="user" [status]="status.worker"></psm-table>
+      <psm-charts *ngIf="config" [config]="config" [status]="status.worker"></psm-charts>
     </div>
     <div class="col-lg-3">
       <psm-error></psm-error>

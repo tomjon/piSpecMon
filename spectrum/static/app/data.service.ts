@@ -7,7 +7,7 @@ import { ErrorService } from './error.service';
 
 @Injectable()
 export class DataService {
-  private baseUrl = '/';
+  private baseUrl = 'http://tjwinch.hopto.org/';
 
   constructor(private http: Http, private errorService: ErrorService) { }
 
