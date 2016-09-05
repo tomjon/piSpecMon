@@ -57,6 +57,7 @@ export class LevelComponent {
 
   @Input() freqs: any;
   @Input() data: any;
+  @Input('names') rdsNames: any;
 
   @ViewChild('chart') chart;
   @ViewChild('text') text;
@@ -164,13 +165,17 @@ export class LevelComponent {
 
     let discreteFn = idx => {
       let freq = this.freqs.freqs[idx];
-      return (+freq.f).toFixed(3) + ' ' + HZ_LABELS[freq.exp];
+      let s = (+freq.f).toFixed(3) + ' ' + HZ_LABELS[freq.exp];
+      if (this.rdsNames[idx]) s += ` (${this.rdsNames[idx]})`;
+      return s;
     };
 
     let rangeFn = idx => {
       var range = this.freqs.range;
       var f = +range[0] + idx * +range[2];
-      return +f.toFixed(3) + ' ' + HZ_LABELS[this.freqs.exp];
+      let s = +f.toFixed(3) + ' ' + HZ_LABELS[this.freqs.exp];
+      if (this.rdsNames[idx]) s += ` (${this.rdsNames[idx]})`;
+      return s;
     };
 
     // plot label for top frequency list
@@ -241,7 +246,9 @@ export class LevelComponent {
     let f = +this.freqs.range[0] + this.freq_idx * this.freqs.range[2];
     let v = this.data.levels[this.tick.index].fields.level[this.freq_idx];
     this.showY = this.y(v) + this.margin.top;
-    this.infoText = `${v}dB at ${f}${HZ_LABELS[this.freqs.exp]} at ${dt_format(new Date(this.tick.value))}`;
+    this.infoText = `${v}dB at ${f}${HZ_LABELS[this.freqs.exp]}`;
+    if (this.rdsNames[this.freq_idx]) this.infoText += ` (${this.rdsNames[this.freq_idx]})`;
+    this.infoText += ` at ${dt_format(new Date(this.tick.value))}`;
     setTimeout(() => this.textWidth = this.text.nativeElement.getComputedTextLength());
     this.showInfo = true;
   }

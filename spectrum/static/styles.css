@@ -132,6 +132,16 @@ psm-login span {
   margin-right: 10px;
 }
 
+/* specials for RDS text display */
+psm-rds-table table, psm-rds-table div {
+  clear: both;
+  margin-bottom: 10px;
+}
+
+psm-rds-table th, psm-rds-table td {
+  padding: 5px
+}
+
 /* forms */
 .ng-valid[required] {
   border-left: 5px solid #42A948; /* green */

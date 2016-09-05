@@ -46,6 +46,7 @@ export class WaterfallComponent {
   @Input() freqs: any;
   @Input() data: any;
   @Input() audio: any;
+  @Input('names') rdsNames: any;
 
   @ViewChild('chart') chart;
   @ViewChild('text') text;
@@ -172,7 +173,9 @@ export class WaterfallComponent {
 
     // formulate info text
     let v = this.data.levels[j].fields.level[i];
-    this.infoText = `${v}dB at ${f}${HZ_LABELS[this.freqs.exp]} at ${dt_format(new Date(+t))}`;
+    this.infoText = `${v}dB at ${f}${HZ_LABELS[this.freqs.exp]}`;
+    if (this.rdsNames[i]) this.infoText += ` (${this.rdsNames[i]})`;
+    this.infoText += ` at ${dt_format(new Date(+t))}`;
   }
 
   set showSamples(value: boolean) {

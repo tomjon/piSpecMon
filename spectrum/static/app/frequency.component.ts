@@ -53,6 +53,7 @@ export class FrequencyComponent {
 
   @Input() freqs: any;
   @Input() data: any;
+  @Input('names') rdsNames: any;
 
   @ViewChild('chart') chart;
   @ViewChild('text') text;
@@ -160,6 +161,7 @@ export class FrequencyComponent {
     let v = this.data.agg[this.sweep][i] ? this.data.agg[this.sweep][i].v : 0;
     this.showY = this.y(v) + this.margin.top;
     this.infoText = `${v}dB at ${f}${HZ_LABELS[this.freqs.exp]}`;
+    if (this.rdsNames[i]) this.infoText += ` (${this.rdsNames[i]})`;
     setTimeout(() => this.textWidth = this.text.nativeElement.getComputedTextLength());
     this.showInfo = true;
   }

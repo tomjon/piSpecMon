@@ -41,7 +41,7 @@ export class RangeComponent {
       if (count <= this.count) return;
       this.count = count;
       let atEnd = this.value[1] == this.range[1];
-      this.range[1] = status.sweep.timestamp * 1000;
+      this.range[1] = +status.sweep.timestamp;
       if (atEnd) {
         this.value[1] = this.range[1];
         if (this.showing) this.onShow();

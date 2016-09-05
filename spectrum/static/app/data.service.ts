@@ -199,6 +199,18 @@ export class DataService {
                     .catch(this.errorHandler("get audio data"));
   }
 
+  getRdsNameData(config_id, range): Observable<any> {
+    return this.http.get(`${this.baseUrl}rds/name/${config_id}?start=${Math.round(range[0])}&end=${Math.round(range[1]) + 300000}`)
+                    .map(res => res.json().data)
+                    .catch(this.errorHandler("get RDS name data"));
+  }
+
+  getRdsTextData(config_id, range): Observable<any> {
+    return this.http.get(`${this.baseUrl}rds/text/${config_id}?start=${Math.round(range[0])}&end=${Math.round(range[1]) + 300000}`)
+                    .map(res => res.json().data)
+                    .catch(this.errorHandler("get RDS text data"));
+  }
+
   private errorHandler(source: any) {
     let errors = this.errorService;
     return function (error: any, caught: Observable<any>): Observable<any> {

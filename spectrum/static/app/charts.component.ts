@@ -4,6 +4,7 @@ import { RangeComponent } from './range.component';
 import { FrequencyComponent } from './frequency.component';
 import { LevelComponent } from './level.component';
 import { WaterfallComponent } from './waterfall.component';
+import { RdsTableComponent } from './rds-table.component';
 import { DataService } from './data.service';
 import { Config } from './config';
 import { MAX_N, CHART_HEIGHT } from './constants';
@@ -11,12 +12,14 @@ import { MAX_N, CHART_HEIGHT } from './constants';
 @Component({
   selector: 'psm-charts',
   templateUrl: 'templates/charts.html',
-  directives: [ RangeComponent, FrequencyComponent, LevelComponent, WaterfallComponent ]
+  directives: [ RangeComponent, FrequencyComponent, LevelComponent, WaterfallComponent, RdsTableComponent ]
 })
 export class ChartsComponent {
   data: any = { };
   avg_time: number;
   audio: any = { };
+  rdsNames: any = { };
+  rdsText: any = { };
 
   config: Config;
 
@@ -25,6 +28,8 @@ export class ChartsComponent {
   @Input('config') set _config(config: Config) {
     this.config = config;
     this.data = { };
+    this.rdsNames = { };
+    this.rdsText = { };
   }
 
   constructor(private dataService: DataService) { }
@@ -38,6 +43,10 @@ export class ChartsComponent {
                       .subscribe(data => this.mapData(data));
       this.dataService.getAudioData(this.config.config_id, range)
                       .subscribe(audio => this.mapAudio(audio));
+      this.dataService.getRdsNameData(this.config.config_id, range)
+                      .subscribe(data => this.mapRdsNames(data));
+      this.dataService.getRdsTextData(this.config.config_id, range)
+                      .subscribe(data => this.mapRdsText(data));
     }
   }
 
@@ -60,6 +69,22 @@ export class ChartsComponent {
         freq_n: a.fields.freq_n[0],
         timestamp: a.fields.timestamp[0]
       };
+    }
+  }
+
+  mapRdsNames(docs: any[]) {
+    this.rdsNames = { };
+    for (let doc of docs) {
+      this.rdsNames[doc.fields.idx] = doc.fields.name;
+    }
+  }
+
+  mapRdsText(docs: any[]) {
+    this.rdsText = { };
+    for (let doc of docs) {
+      let idx = doc.fields.idx;
+      if (this.rdsText[idx] == undefined) this.rdsText[idx] = [];
+      this.rdsText[idx].push({ 'timestamp': +doc.fields.timestamp, 'text': doc.fields.text });
     }
   }
 
