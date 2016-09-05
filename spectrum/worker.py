@@ -110,8 +110,10 @@ class Worker:
     signal.signal(getattr(signal, signame), lambda *_: self.stop(signame, exit, tidy, power_off))
 
   def _init_config(self):
-    config_id, config = self.progress.get_config()
-    if config_id is None:
+    config_id = self.progress.get_config()
+    if config_id is not None:
+      config = get_config(config_id)
+    else:
       # no monitor progress - check for config file
       if not os.path.isfile(self.init.config_file):
         return None, None
@@ -119,14 +121,6 @@ class Worker:
       with open(self.init.config_file) as f:
         config = json.loads(f.read())
       os.remove(self.init.config_file)
-
-    # post config to data store
-    data = { 'timestamp': now(), 'json': json.dumps(config) }
-    r = requests.post(self.init.elasticsearch + 'spectrum/config/', params={ 'refresh': 'true' }, data=json.dumps(data))
-    if r.status_code != 201:
-      log.error("Can not post config: {0} {1}".format(r.status_code, config))
-      return
-    config_id = r.json()['_id']
 
     return config_id, config
 
@@ -338,7 +332,7 @@ class Progress:
       return None, None
     with open(self.monitor_file, 'r') as f:
       progress = json.loads(f.read())
-      return progress['config_id'], progress['config']
+      return progress['config_id']
 
   def start(self, config_id, config):
     self.progress = { 'config_id': config_id, 'config': config }

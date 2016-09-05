@@ -136,6 +136,7 @@ application.rig = get_settings('rig', { 'model': 1 }) #FIXME is this a Hamlib co
 application.audio = get_settings('audio', { 'path': '/dev/dsp1', 'rate': 44100, 'period': 600, 'duration': 10, 'threshold': -20 })
 application.rds = get_settings('rds', { 'device': '/dev/ttyACM0', 'strength_threshold': 40, 'strength_timeout': 20, 'rds_timeout': 300 })
 application.worker = WorkerClient(WorkerInit())
+application.monkey = Monkey().client()
 
 @application.after_request
 def after_request(response):
@@ -212,17 +213,29 @@ def monitor():
     config['rig'] = application.rig
     config['audio'] = application.audio
     config['rds'] = application.rds
-    application.worker.start(json.dumps(config))
+
+    # post config to data store
+    data = { 'timestamp': now(), 'json': json.dumps(config) }
+    r = requests.post(ELASTICSEARCH + 'spectrum/config/', params={ 'refresh': 'true' }, data=json.dumps(data))
+    if r.status_code != 201:
+      log.error("Can not post config: {0} {1}".format(r.status_code, config))
+      return "Can not post config", 500
+    config_id = r.json()['_id']
+
+    application.worker.start(config_id)
+    application.monkey.start(config_id)
+
     return json.dumps({ 'status': 'OK' })
   if request.method == 'DELETE':
     # stop process
     if 'config_id' not in application.worker.status():
       return "Worker not running", 400
     application.worker.stop()
+    application.monkey.stop()
     return json.dumps({ 'status': 'OK' })
   if request.method == 'GET':
     # monitor status
-    return json.dumps(application.worker.status())
+    return json.dumps({ 'worker': application.worker.status(), 'monkey': application.monkey.status() })
 
 @application.route('/config')
 @role_required(['admin', 'freq', 'data'])
@@ -241,10 +254,10 @@ def deleteConfig(config_id):
   samples_path = os.path.join(current_app.root_path, SAMPLES_DIRECTORY, config_id)
   if os.path.isdir(samples_path):
     shutil.rmtree(samples_path)
-  # delete spectrum data
+  # delete spectrum and RDS data
   r = requests.delete(ELASTICSEARCH + 'spectrum/_query', params='refresh=true&q=config_id:' + config_id)
   if r.status_code != 200:
-    return "Elasticsearch error deleting sweep data", r.status_code
+    return "Elasticsearch error deleting spectrum and RDS data", r.status_code
   # delete config
   r = requests.delete(ELASTICSEARCH + 'spectrum/config/' + config_id, params='refresh=true')
   if r.status_code != 200:
@@ -282,6 +295,22 @@ def data(config_id):
   r = requests.get(ELASTICSEARCH + 'spectrum/audio/_search', params=_range_search(config_id))
   if r.status_code != 200:
     return "Elasticsearch error getting audio data", r.status_code
+  return json.dumps({ 'data': r.json()['hits']['hits'] })
+
+@application.route('/rds/name/<config_id>')
+@role_required(['admin', 'freq', 'data'])
+def data(config_id):
+  r = requests.get(ELASTICSEARCH + 'spectrum/name/_search', params=_range_search(config_id))
+  if r.status_code != 200:
+    return "Elasticsearch error getting RSD name data", r.status_code
+  return json.dumps({ 'data': r.json()['hits']['hits'] })
+
+@application.route('/rds/text/<config_id>')
+@role_required(['admin', 'freq', 'data'])
+def data(config_id):
+  r = requests.get(ELASTICSEARCH + 'spectrum/text/_search', params=_range_search(config_id))
+  if r.status_code != 200:
+    return "Elasticsearch error getting RDS text data", r.status_code
   return json.dumps({ 'data': r.json()['hits']['hits'] })
 
 @application.route('/audio/<config_id>/<sweep_n>/<freq_n>')

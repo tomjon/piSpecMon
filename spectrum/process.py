@@ -170,6 +170,9 @@ class Process:
     self._set_signal('SIGHUP', exit=True)
     self._set_signal('SIGUSR1')
 
+  def client(self):
+    return Client(self)
+
 
 class Client:
 

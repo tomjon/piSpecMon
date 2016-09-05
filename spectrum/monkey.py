@@ -60,8 +60,14 @@ def iterator(config_id, config):
               return
 
 
+class Monkey (Process):
+
+  def __init__(self):
+    super(Monkey, self).__init__(MONKEY_PID, MONKEY_CONFIG, MONKEY_STATUS, ELASTICSEARCH)
+
+
 if __name__ == "__main__":
-  monkey = Process(MONKEY_PID, MONKEY_CONFIG, MONKEY_STATUS, ELASTICSEARCH)
+  monkey = Monkey()
   monkey.init()
   wait_for_elasticsearch()
   monkey.start(iterator)

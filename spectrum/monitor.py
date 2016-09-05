@@ -4,7 +4,7 @@ import itertools
 import inspect
 import time
 import wave
-from common import frange
+from common import *
 try:
   import ossaudiodev
 except ImportError:
@@ -153,7 +153,7 @@ class Monitor:
     #FIXME mode should probably just be set once at rig.open, and not be an argument to scan() but to __init__()
     self._set_mode(mode)
     idx = 0
-    for freq in itertools.chain(freqs, frange(*range) if range is not None else []):
+    for freq in itertools.chain(freqs, xrange(*[int(x) for x in range]) if range is not None else []):
       yield idx, freq
       idx += 1
 
