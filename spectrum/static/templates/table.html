@@ -5,7 +5,8 @@
         <th>Timestamp</th>
         <th>Mode</th>
         <th colspan="4">Frequency range</th>
-        <th>Interval</th>
+        <th class="feature">RDS</th>
+        <th class="feature">Audio</th>
         <th *ngIf="user.roleIn(['admin'])">&nbsp;</th>
       </tr>
       <tr>
@@ -15,7 +16,8 @@
         <td>end</td>
         <td>step</td>
         <td>units</td>
-        <td>ms</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
         <td *ngIf="user.roleIn(['admin'])">&nbsp;</td>
       </tr>
     </thead>
@@ -27,7 +29,8 @@
         <td>{{set.config.freqs.range[1]}}</td>
         <td>{{set.config.freqs.range[2]}}</td>
         <td>{{units(set.config.freqs.exp)}}</td>
-        <td>{{set.config.monitor.period}}</td>
+        <td class="feature">{{set.config.scan.rds == 'true' ? '✔' : '✘' }}</td>
+        <td class="feature">{{set.config.scan.audio == 'true' ? '✔' : '✘'}}</td>
         <td *ngIf="user.roleIn(['admin'])">
           <input *ngIf="set.config_id != config_id" type="checkbox" [disabled]="standby" [(ngModel)]="checked[set.config_id]">
           <span *ngIf="set.config_id == config_id" class="running">&#x25FC;</span>

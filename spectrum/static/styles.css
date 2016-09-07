@@ -112,6 +112,9 @@ tbody tr {
 .running {
   color: green;
 }
+.feature {
+  text-align: center;
+}
 
 /* specials for range display */
 .range-slider {
@@ -137,7 +140,6 @@ psm-rds-table table, psm-rds-table div {
   clear: both;
   margin-bottom: 10px;
 }
-
 psm-rds-table th, psm-rds-table td {
   padding: 5px
 }
