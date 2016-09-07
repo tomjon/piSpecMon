@@ -18,7 +18,7 @@ def poll(fn, condition, timeout):
 
 
 def iterator(config_id, config):
-  scan_config = _parse_config(config)
+  scan_config = parse_config(config)
 
   with RdsApi(config['rds']['device']) as api:
     while True:
