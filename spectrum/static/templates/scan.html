@@ -37,19 +37,19 @@
     </div>
     <div class="form-group">
       <div class="psm-input-group col-lg-6">
-        <label for="attempts">Period (ms)</label>
-        <input [disabled]="loading || standby || worker.config_id" type="number" min="0" step="100" required class="form-control" [(ngModel)]="config.monitor.period" name="period" #period="ngModel">
-      </div>
-      <div class="psm-input-group col-lg-6">
-        <label for="audio">Audio collection</label>
-        <select [disabled]="loading || standby || worker.config_id" class="form-control" [(ngModel)]="config.scan.audio" name="audio">
-          <option value="false">Off</option>
-          <option value="true">On</option>
+        <label for="rds">Decode RDS</label>
+        <select [disabled]="loading || standby || worker.config_id" class="form-control" [(ngModel)]="config.scan.rds" name="rds">
+          <option value="true">Yes</option>
+          <option value="false">No</option>
         </select>
       </div>
-    </div>
-    <div [hidden]="period.valid || period.pristine" class="alert alert-danger">
-      Period is a required parameter, and must be a number
+      <div class="psm-input-group col-lg-6">
+        <label for="audio">Collect audio</label>
+        <select [disabled]="loading || standby || worker.config_id" class="form-control" [(ngModel)]="config.scan.audio" name="audio">
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
+      </div>
     </div>
     <div *ngIf="worker.config_id || worker.error" [ngClass]="{ status: true, error: worker.error != undefined }">
       <h2 *ngIf="worker.timestamp">Scan status at {{time(worker.timestamp * 1000)}}</h2>

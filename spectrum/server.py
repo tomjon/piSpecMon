@@ -13,7 +13,7 @@ from time import sleep, time, strftime, localtime
 import Hamlib
 import math
 from datetime import datetime
-from worker import WorkerInit, WorkerClient
+from worker import Worker
 from monkey import Monkey
 from monitor import get_capabilities
 import re
@@ -136,7 +136,7 @@ application.caps = get_capabilities()
 application.rig = get_settings('rig', { 'model': 1 }) #FIXME is this a Hamlib constant? (dummy rig)
 application.audio = get_settings('audio', { 'path': '/dev/dsp1', 'rate': 44100, 'period': 600, 'duration': 10, 'threshold': -20 })
 application.rds = get_settings('rds', { 'device': '/dev/ttyACM0', 'strength_threshold': 40, 'strength_timeout': 20, 'rds_timeout': 300 })
-application.worker = WorkerClient(WorkerInit())
+application.worker = Worker().client()
 application.monkey = Monkey().client()
 
 @application.after_request
@@ -224,7 +224,8 @@ def monitor():
     config_id = r.json()['_id']
 
     application.worker.start(config_id)
-    application.monkey.start(config_id)
+    if config['scan']['rds']:
+      application.monkey.start(config_id)
 
     return json.dumps({ 'status': 'OK' })
   if request.method == 'DELETE':
@@ -248,22 +249,29 @@ def sweepSets():
   return json.dumps({ 'data': [{ 'id': hit['_id'], 'config': json.loads(hit['fields']['json'][0]), 'timestamp': int(hit['fields']['timestamp'][0]) } for hit in hits] })
 
 # FIXME noone should be able to delete the running sweep
-@application.route('/config/<config_id>', methods=['DELETE'])
+@application.route('/config/<config_id>', methods=['GET', 'DELETE'])
 @role_required(['admin'])
 def deleteConfig(config_id):
-  # delete audio samples...
-  samples_path = os.path.join(current_app.root_path, SAMPLES_DIRECTORY, config_id)
-  if os.path.isdir(samples_path):
-    shutil.rmtree(samples_path)
-  # delete spectrum and RDS data
-  r = requests.delete(ELASTICSEARCH + 'spectrum/_query', params='refresh=true&q=config_id:' + config_id)
-  if r.status_code != 200:
-    return "Elasticsearch error deleting spectrum and RDS data", r.status_code
-  # delete config
-  r = requests.delete(ELASTICSEARCH + 'spectrum/config/' + config_id, params='refresh=true')
-  if r.status_code != 200:
-    return "Elasticsearch error deleting config set", r.status_code
-  return json.dumps({ 'status': 'OK' })
+  if request.method == 'GET':
+    r = requests.get(ELASTICSEARCH + 'spectrum/config/' + config_id, params='fields=timestamp,json')
+    if r.status_code != 200:
+      return "Elasticsearch error finding config sets", r.status_code
+    fields = r.json()['fields']
+    return json.dumps({ 'config': json.loads(fields['json'][0]), 'timestamp': int(fields['timestamp'][0]) })
+  else:
+    # delete audio samples...
+    samples_path = os.path.join(current_app.root_path, SAMPLES_DIRECTORY, config_id)
+    if os.path.isdir(samples_path):
+      shutil.rmtree(samples_path)
+    # delete spectrum and RDS data
+    r = requests.delete(ELASTICSEARCH + 'spectrum/_query', params='refresh=true&q=config_id:' + config_id)
+    if r.status_code != 200:
+      return "Elasticsearch error deleting spectrum and RDS data", r.status_code
+    # delete config
+    r = requests.delete(ELASTICSEARCH + 'spectrum/config/' + config_id, params='refresh=true')
+    if r.status_code != 200:
+      return "Elasticsearch error deleting config set", r.status_code
+    return json.dumps({ 'status': 'OK' })
 
 @application.route('/range/<config_id>')
 @role_required(['admin', 'freq', 'data'])

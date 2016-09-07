@@ -1,15 +1,9 @@
 from config import *
 from common import *
-from process import Process
+from process import Process, UpdatableDict
 from rds import RdsApi
 from time import sleep, time
 import requests
-
-
-class UpdatableDict (dict):
-  def __call__(self, key, value):
-    self[key] = value
-    return self
 
 
 def poll(fn, condition, timeout):
@@ -24,9 +18,11 @@ def poll(fn, condition, timeout):
 
 
 def iterator(config_id, config):
+  scan_config = _parse_config(config)
+
   with RdsApi(config['rds']['device']) as api:
     while True:
-      for idx, freq in scan(**config['scan']):
+      for idx, freq in scan(**scan_config):
         progress = UpdatableDict()
         yield progress('freq_n', idx)
         api.set_frequency(freq)
@@ -40,7 +36,6 @@ def iterator(config_id, config):
           continue
         yield progress('name', name)
 
-        #FIXME need to pass back to Process to do this - or be given an API object?
         data = { 'config_id': config_id, 'idx': idx, 'timestamp': now(), 'name': name }
         r = requests.post(ELASTICSEARCH + '/spectrum/name/', params={ 'refresh': 'true' }, data=json.dumps(data))
         if r.status_code != 201:
@@ -61,9 +56,8 @@ def iterator(config_id, config):
 
 
 class Monkey (Process):
-
   def __init__(self):
-    super(Monkey, self).__init__(MONKEY_PID, MONKEY_CONFIG, MONKEY_STATUS, ELASTICSEARCH)
+    super(Monkey, self).__init__(MONKEY_PID, MONKEY_CONFIG, MONKEY_STATUS)
 
 
 if __name__ == "__main__":

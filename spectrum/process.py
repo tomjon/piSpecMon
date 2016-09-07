@@ -15,63 +15,18 @@ import sys
     and writes status using the file system, and writes data to the provided data source.
 """
 
-#FIXME shared between worker.py - move to common
-def _convert(d):
-  """ Auto-convert empty strings into None, number strings into numbers, and boolean strings into booleans.
-      Recurse into dictionaries.
-  """
-  for k, v in d.iteritems():
-    if isinstance(v, dict):
-      _convert(v)
-    if not isinstance(v, basestring):
-      continue
-    v = v.strip()
-    if v == '':
-      d[k] = None
-      continue
-    if v.lower() == 'true':
-      d[k] = True
-      continue
-    if v.lower() == 'false':
-      d[k] = False
-      continue
-    try:
-      d[k] = int(v)
-      continue
-    except:
-      pass
-    try:
-      d[k] = float(v)
-      continue
-    except:
-      pass
-  return d
+class UpdatableDict (dict):
+  def __call__(self, key, value):
+    self[key] = value
+    return self
 
-def convert(config):
-  config['scan'] = { }
-  scan = config['scan']
-  for x in config['freqs']:
-    # x is either 'range' or 'freqs'
-    if x == 'range':
-      exp = int(config['freqs']['exp'])
-      scan[x] = [ int(10 ** exp * float(f)) for f in config['freqs'][x] ]
-      scan[x][1] += scan[x][2] / 2 # ensure to include the end of the range
-    elif x == 'freqs':
-      scan[x] = [ int(10 ** int(f['exp']) * float(f['f'])) for f in config['freqs'][x] ]
-    else:
-      raise ValueError("Bad key in config.freqs")
-    break
-  else:
-    raise ValueError("No frequencies in config")
-  return _convert(config)
 
 class Process (object):
 
-  def __init__(self, pid_file, config_file, status_file, data_source):
+  def __init__(self, pid_file, config_file, status_file):
     self.pid_file = local_path(pid_file)
     self.config_file = local_path(config_file)
     self.status_file = local_path(status_file)
-    self.data_source = data_source #FIXME currently only valid is an Elasticsearch URL!
     self._exit = False
     self._stop = False
     self._tidy = True
@@ -132,7 +87,7 @@ class Process (object):
         self.config_id = self._read_config()
         if self.config_id is not None:
           log.debug("Read config id {0}".format(self.config_id))
-          config = convert(get_config(self.config_id))
+          config = get_config(self.config_id)
           self._stop = False
           for status in iterator(self.config_id, config):
             self.write_status(status)

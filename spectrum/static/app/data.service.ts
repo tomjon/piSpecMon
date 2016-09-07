@@ -133,14 +133,14 @@ export class DataService {
                     .catch(this.errorHandler("log out"));
   }
 
-  fgetConfig(config_id: string): Observable<Config> {
+  getConfig(config_id: string): Observable<Config> {
     let url = this.baseUrl + 'config/' + config_id;
     return this.http.get(url)
                     .map(res => {
                       let data = res.json();
                       return new Config(config_id, +data.timestamp, data.config);
                     })
-                    .catch(this.errorHandler("get scan configuration"));
+                    .catch(this.errorHandler("get config set"));
   }
 
   getSweepSets(): Observable<Config[]> {

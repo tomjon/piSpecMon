@@ -63,6 +63,55 @@ def scan(freqs=[], range=None, **ignore):
     idx += 1
 
 
+def _convert(d):
+  """ Auto-convert empty strings into None, number strings into numbers, and boolean strings into booleans.
+      Recurse into dictionaries.
+  """
+  for k, v in d.iteritems():
+    if isinstance(v, dict):
+      _convert(v)
+    if not isinstance(v, basestring):
+      continue
+    v = v.strip()
+    if v == '':
+      d[k] = None
+      continue
+    if v.lower() == 'true':
+      d[k] = True
+      continue
+    if v.lower() == 'false':
+      d[k] = False
+      continue
+    try:
+      d[k] = int(v)
+      continue
+    except:
+      pass
+    try:
+      d[k] = float(v)
+      continue
+    except:
+      pass
+
+def parse_config(config):
+  _convert(config)
+  scan = { }
+  for x in config['freqs']:
+    # x is either 'range' or 'freqs'
+    if x == 'range':
+      exp = int(config['freqs']['exp'])
+      scan[x] = [ int(10 ** exp * float(f)) for f in config['freqs'][x] ]
+      scan[x][1] += scan[x][2] / 2 # ensure to include the end of the range
+    elif x == 'freqs':
+      scan[x] = [ int(10 ** int(f['exp']) * float(f['f'])) for f in config['freqs'][x] ]
+    else:
+      raise ValueError("Bad key in config.freqs")
+    break
+  else:
+    raise ValueError("No frequencies in config")
+  return scan
+
+
 def wait_for_elasticsearch():
   while True:
     try:

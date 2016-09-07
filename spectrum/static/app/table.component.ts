@@ -35,7 +35,8 @@ export class TableComponent {
     this.standby = false;
     this.config_id = status.config_id;
     if (status.config_id && ! this.sets.find(set => set.config_id == status.config_id)) {
-      this.sets.push(new Config(status.config_id, status.timestamp, status.config));
+      this.widgetComponent.busy(this.dataService.getConfig(status.config_id))
+                          .subscribe(config => this.sets.push(config));
     }
   }
 
@@ -47,14 +48,17 @@ export class TableComponent {
   onSelect(config_id, e) {
     if (e.target.tagName != 'INPUT') {
       this.selected = this.selected == config_id ? undefined : config_id;
-      for (let set of this.sets) {
-        if (set.config_id == this.selected) {
-          this.select.emit(set);
-          return;
-        }
-      }
-      this.select.emit(null);
+      this.select.emit(this.getConfig(this.selected));
     }
+  }
+
+  private getConfig(config_id: string): Config {
+    for (let set of this.sets) {
+      if (set.config_id == config_id) {
+        return set;
+      }
+    }
+    return null;
   }
 
   checkedIds(): string[] {

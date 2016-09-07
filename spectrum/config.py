@@ -4,10 +4,10 @@
 # path where Flask's secret key is stored
 SECRET_KEY = 'secret.key'
 
-# path to the file worker.py writes its PID to
-PID_FILE = '.worker_pid'
+# worker configuration
+WORKER_PID = '.worker_pid'
 WORKER_CONFIG = '.worker_config'
-WORKER_MONITOR = '.worker_progress'
+WORKER_STATUS = '.worker_status'
 
 ELASTICSEARCH = 'http://localhost:9200/'
 EXPORT_DIRECTORY = '/tmp'

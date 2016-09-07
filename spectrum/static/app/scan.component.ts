@@ -37,7 +37,6 @@ export class ScanComponent {
     this.monkey = status.monkey;
     if (this.worker.config_id) {
       // monitor is running
-      this.config = this.worker.config;
     }
   }
 

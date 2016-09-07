@@ -11,8 +11,8 @@ export var AUDIO_CHART_OPTIONS: any = { margin: { top: 20, left: 80, right: 80, 
 
 export var DEFAULTS = {
                         freqs: { range: [87.5, 108, 0.1], exp: 6 },
-                        monitor: { period: 0, radio_on: 1 },
-                        scan: { mode: 64, audio: false }
+                        monitor: { radio_on: 1 },
+                        scan: { mode: 64, rds: true, audio: false }
                       };
 
 export var CHANGE_TIMEOUT = 5000;

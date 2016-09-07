@@ -144,19 +144,10 @@ class Monitor:
         return None
     return self._check(self.rig.get_strength, Hamlib.RIG_VFO_CURR)
 
-  def _set_mode(self, mode):
+  def set_mode(self, mode):
     if mode is not None and mode != Hamlib.RIG_MODE_NONE:
       width = self._check(self.rig.passband_normal, mode)
       self._check(self.rig.set_mode, mode, width, Hamlib.RIG_VFO_CURR)
-
-  def scan(self, freqs=[], range=None, mode=None, **ignore):
-    #FIXME mode should probably just be set once at rig.open, and not be an argument to scan() but to __init__()
-    self._set_mode(mode)
-    idx = 0
-    xr = xrange(int(range[0]), int(range[1] + range[2]/2), int(range[2])) if range is not None else []
-    for freq in itertools.chain(freqs, xr):
-      yield idx, freq
-      idx += 1
 
   def record(self, freq, mode, rate, duration, path, device):
     self._set_mode(mode) #FIXME again, probably just fix this at rig.open
