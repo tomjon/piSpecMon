@@ -87,7 +87,7 @@ def iterator(config_id, config):
 
           if audio_t is not None and now() - audio_t > config['audio']['period'] * 1000:
             audio_t = now()
-            for st in record(status, config_id, n, monitor, config['scan'], config['audio'], peaks):
+            for st in record(status, config_id, sweep_n, monitor, config['scan'], config['audio'], peaks):
               yield st
 
         sweep_n += 1

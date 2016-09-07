@@ -224,7 +224,7 @@ def monitor():
     config_id = r.json()['_id']
 
     application.worker.start(config_id)
-    if config['scan']['rds']:
+    if config['scan']['rds'] == 'true':
       application.monkey.start(config_id)
 
     return json.dumps({ 'status': 'OK' })
