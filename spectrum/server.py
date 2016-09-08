@@ -292,7 +292,7 @@ def _range_search(config_id):
 
 @application.route('/data/<config_id>')
 @role_required(['admin', 'freq', 'data'])
-def audio(config_id):
+def data(config_id):
   r = requests.get(ELASTICSEARCH + 'spectrum/sweep/_search', params=_range_search(config_id))
   if r.status_code != 200:
     return "Elasticsearch error getting spectrum data", r.status_code
@@ -300,7 +300,7 @@ def audio(config_id):
 
 @application.route('/audio/<config_id>')
 @role_required(['admin', 'freq', 'data'])
-def data(config_id):
+def audio(config_id):
   r = requests.get(ELASTICSEARCH + 'spectrum/audio/_search', params=_range_search(config_id))
   if r.status_code != 200:
     return "Elasticsearch error getting audio data", r.status_code
