@@ -150,7 +150,7 @@ class Monitor:
       self._check(self.rig.set_mode, mode, width, Hamlib.RIG_VFO_CURR)
 
   def record(self, freq, mode, rate, duration, path, device):
-    self._set_mode(mode) #FIXME again, probably just fix this at rig.open
+    self.set_mode(mode) #FIXME again, probably just fix this at rig.open
     strength = self.get_strength(freq) #FIXME is this a bit odd? or do we want the strength data at start/end?
     if strength is None:
       return None
