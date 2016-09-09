@@ -4,7 +4,9 @@ import json
 import logging, logging.handlers
 import sys
 import os, os.path
-from time import sleep
+import itertools
+import math
+from time import time, sleep
 
 """ Initialise logging and define shared functions.
 """
@@ -28,7 +30,7 @@ rfh.setLevel(logging.DEBUG)
 
 # create console handler with a higher log level (these end up in system journal)
 ch = logging.StreamHandler()
-ch.setLevel(logging.ERROR)
+ch.setLevel(logging.DEBUG if 'debug' in sys.argv else logging.ERROR)
 
 # create formatter and add it to the handlers
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -40,26 +42,86 @@ log.addHandler(rfh)
 log.addHandler(ch)
 
 
+def now():
+  """ Return time in milliseconds since the epoch.
+  """
+  return int(time() * 1000)
+
+
 def get_config(config_id):
   r = requests.get('%s/spectrum/config/_search?fields=*&q=_id:%s' % (ELASTICSEARCH, config_id))
   if r.status_code != 200:
-    return r.text, r.status_code
+    return None #FIXME need to throw or return an error somehow
   hits = r.json()['hits']['hits']
-  if len(hits) == 0:
-    return 'No such config id', 404
-  return json.loads(hits[0]['fields']['json'][0])
+  return json.loads(hits[0]['fields']['json'][0]) if len(hits) > 0 else None
+
+
+def scan(freqs=[], range=None, **ignore):
+  idx = 0
+  for freq in itertools.chain(freqs, xrange(*range) if range is not None else []):
+    yield idx, freq
+    idx += 1
+
+
+def _convert(d):
+  """ Auto-convert empty strings into None, number strings into numbers, and boolean strings into booleans.
+      Recurse into dictionaries.
+  """
+  for k, v in d.iteritems():
+    if isinstance(v, dict):
+      _convert(v)
+    if not isinstance(v, basestring):
+      continue
+    v = v.strip()
+    if v == '':
+      d[k] = None
+      continue
+    if v.lower() == 'true':
+      d[k] = True
+      continue
+    if v.lower() == 'false':
+      d[k] = False
+      continue
+    try:
+      d[k] = int(v)
+      continue
+    except:
+      pass
+    try:
+      d[k] = float(v)
+      continue
+    except:
+      pass
+
+def parse_config(config):
+  _convert(config)
+  scan = { }
+  for x in config['freqs']:
+    # x is either 'range' or 'freqs'
+    if x == 'range':
+      exp = int(config['freqs']['exp'])
+      scan[x] = [ int(10 ** exp * float(f)) for f in config['freqs'][x] ]
+      scan[x][1] += scan[x][2] / 2 # ensure to include the end of the range
+    elif x == 'freqs':
+      scan[x] = [ int(10 ** int(f['exp']) * float(f['f'])) for f in config['freqs'][x] ]
+    else:
+      raise ValueError("Bad key in config.freqs")
+    break
+  else:
+    raise ValueError("No frequencies in config")
+  return scan
 
 
 def wait_for_elasticsearch():
   while True:
     try:
-      r = requests.get('%s/_cluster/health/spectrum' % ELASTICSEARCH)
+      r = requests.get('%s/_cluster/health' % ELASTICSEARCH)
       if r.status_code != 200:
         log.warn("Elasticsearch status %s" % r.status_code)
       else:
         status = r.json()['status']
-        if status == 'green':
-          log.info("Elasticsearch up and running")
+        if status != 'red':
+          log.info("Elasticsearch up and running ({0})".format(status))
           return
         log.warn("Elasticsearch cluster health status: %s" % status)
     except requests.exceptions.ConnectionError:

@@ -1,0 +1,5 @@
+<psm-range [config]="config" [status]="status" (onRange)="show($event)"></psm-range>
+<psm-frequency [data]="data" [freqs]="config.config.freqs" [names]="rdsNames"></psm-frequency>
+<psm-level [data]="data" [freqs]="config.config.freqs" [names]="rdsNames"></psm-level>
+<psm-waterfall [data]="data" [audio]="audio" [freqs]="config.config.freqs" [names]="rdsNames"></psm-waterfall>
+<psm-rds-table [names]="rdsNames" [text]="rdsText"></psm-rds-table>

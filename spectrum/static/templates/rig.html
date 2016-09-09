@@ -1,0 +1,101 @@
+<psm-widget title="Rig">
+  <form role="form" (ngSubmit)="onSubmit()" #rigForm="ngForm">
+    <div class="form-group">
+      <label for="model">Model</label>
+      <select class="form-control" [disabled]="loading" [(ngModel)]="rig.model" name="model">
+        <option *ngFor="let model of models" value="{{model.model}}">{{model.manufacturer}} {{model.name}} v{{model.version}} ({{model.status}})</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="path">Serial port path</label>
+      <input [disabled]="loading" type="text" required class="form-control" required [(ngModel)]="rig.pathname" name="path" #path="ngModel">
+    </div>
+    <div [hidden]="path.valid || path.pristine" class="alert alert-danger">
+      Serial port path is a required parameter
+    </div>
+    <div class="form-group">
+      <div class="psm-input-group col-lg-6">
+        <label for="data">Data bits</label>
+        <input [disabled]="loading" type="number" pattern="[0-9]+" min="1" max="8" step="1" class="form-control" required [(ngModel)]="rig.data_bits" name="data" #data="ngModel">
+      </div>
+      <div class="psm-input-group col-lg-6">
+        <label for="rate">Rate</label>
+        <select class="form-control" [disabled]="loading" [(ngModel)]="rig.rate" name="rate">
+          <option *ngFor="let rate of rates" value="{{rate.rate}}">{{rate.label}}</option>
+        </select>
+      </div>
+    </div>
+    <div [hidden]="data.valid || data.pristine" class="alert alert-danger">
+      Data bits is a required parameter, and must be an integer
+    </div>
+    <div class="form-group">
+      <div class="psm-input-group col-lg-6">
+        <label for="stop">Stop bits</label>
+        <input [disabled]="loading" type="number" min="1" max="2" step="0.5" class="form-control" required [(ngModel)]="rig.stop_bits" name="stop" #stop="ngModel">
+      </div>
+      <div class="psm-input-group col-lg-6">
+        <label for="parity">Parity</label>
+        <select class="form-control" [disabled]="loading" [(ngModel)]="rig.parity" name="parity">
+          <option *ngFor="let parity of parities" value="{{parity.value}}">{{parity.label}}</option>
+        </select>
+      </div>
+    </div>
+    <div [hidden]="stop.valid || stop.pristine" class="alert alert-danger">
+      Stop bits is a required parameter
+    </div>
+    <div class="form-group">
+      <div class="psm-input-group col-lg-6">
+        <label for="delay">Write delay (ms)</label>
+        <input [disabled]="loading" type="number" min="0" pattern="[0-9]+" required class="form-control" [(ngModel)]="rig.write_delay" name="delay" #delay="ngModel">
+      </div>
+      <div class="psm-input-group col-lg-6">
+        <label for="interval">Retry interval (ms)</label>
+        <input [disabled]="loading" type="number" min="0" pattern="[0-9]+" required class="form-control" [(ngModel)]="rig.interval" name="interval" #interval="ngModel">
+      </div>
+    </div>
+    <div [hidden]="delay.valid || delay.pristine" class="alert alert-danger">
+      Write delay is a required parameter, and must be an integer
+    </div>
+    <div [hidden]="interval.valid || interval.pristine" class="alert alert-danger">
+      Retry interval is a required parameter, and must be an integer
+    </div>
+    <div class="form-group">
+      <label for="attempts">Set frequency attempts</label>
+      <select [disabled]="loading" class="form-control" [(ngModel)]="rig.set_check" name="attempts">
+        <option value="0">Set once only</option>
+        <option value="1">Set once and check</option>
+        <option value="2">Set and check up to twice</option>
+        <option value="3">Set and check up to three times</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="retries">Error handling</label>
+      <select [disabled]="loading" class="form-control" [(ngModel)]="rig.retries" name="retries">
+        <option value="0">Fail on error</option>
+        <option value="1">Wait and retry once</option>
+        <option value="2">Wait and retry twice</option>
+        <option value="3">Wait and retry three times</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <div class="psm-input-group col-lg-6">
+        <label for="radio_on">Radio on attempts</label>
+        <select [disabled]="loading" class="form-control" [(ngModel)]="rig.radio_on" name="radio_on">
+          <option value="0">Never</option>
+          <option value="1">Try once</option>
+          <option value="2">Try twice</option>
+          <option value="3">Try three times</option>
+        </select>
+      </div>
+      <div class="psm-input-group col-lg-6">
+        <label for="attenuation">Attenuation level (dB)</label>
+        <input [disabled]="loading" type="number" min="0" pattern="[0-9]+" required class="form-control" [(ngModel)]="rig.attenuation" name="attenuation" #attenuation="ngModel">
+      </div>
+    </div>
+    <div [hidden]="attenuation.valid || attenuation.pristine" class="alert alert-danger">
+      Attenuation level is a required parameter, and must be an integer
+    </div>
+    <button (click)="onReset()" class="btn btn-default" [disabled]="loading || rigForm.form.pristine">Reset</button>
+    <button type="submit" class="btn btn-default" [disabled]="loading || ! rigForm.form.valid || rigForm.form.pristine">Submit</button>
+  </form>
+</psm-widget>

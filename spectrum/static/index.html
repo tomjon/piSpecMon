@@ -1,145 +1,33 @@
-<!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8" />
-    <title>Ofcom - Spectrum Monitor</title>
-    <script src="lib/require.js"></script>
+    <title>Ofcom piSpecMon</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css" />
+    <!--link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"-->
+    <link rel="stylesheet" type="text/css" href="d3/slider/d3.slider.css" />
+    <link rel="stylesheet" href="styles.css" />
+    <script type="text/javascript" src="d3/d3.v3.min.js"></script>
+    <script type="text/javascript" src="d3/slider/d3.slider.js"></script>
+    <!-- 1. Load libraries -->
+    <!--script src="http://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script-->
+    <script src="jquery.min.js"></script>
+    <!--script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script-->
+    <script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <!-- Polyfill(s) for older browsers -->
+    <script src="node_modules/core-js/client/shim.min.js"></script>
+    <script src="node_modules/zone.js/dist/zone.js"></script>
+    <script src="node_modules/reflect-metadata/Reflect.js"></script>
+    <script src="node_modules/systemjs/dist/system.src.js"></script>
+    <script src="http://cdn.polyfill.io/v2/polyfill.min.js?features=Intl.~locale.en"></script>
+    <!-- 2. Configure SystemJS -->
+    <script src="systemjs.config.js"></script>
     <script>
-      require.config({
-        waitSeconds: 0
-      });
-      require(["main"], function (main) {
-        main();
-      });
+      System.import('app').catch(function(err){ console.error(err); });
     </script>
-    <link rel="stylesheet" type="text/css" href="style.css" />
-    <link rel="stylesheet" type="text/css" href="lib/d3/slider/d3.slider.css" />
   </head>
-  <body style="display: none">
-    <h1>Spectrum Monitor</h1>
-    <div id="tabs"><span id="data">Data</span><span id="freqs">Frequencies</span><span id="admin">Admin</span></div>
-    <div id="rig" class="content admin">
-      <h2>Rig Configuration</h2>
-      <table>
-        <tr><td>Model</td><td><select id="model"></select></td></tr>
-        <tr><td>Serial port path</td><td><input id="pathname" /></td></tr>
-        <tr><td>Stop bits</td><td><input id="stop_bits" /></td></tr>
-        <tr><td>Write delay (ms)</td><td><input id="write_delay" /></td></tr>
-        <tr><td>Set frequency attempts</td><td><select id="set_check">
-          <option value="0">Set once only</option>
-          <option value="1">Set once and check</option>
-          <option value="2">Set and check up to twice</option>
-          <option value="3">Set and check up to three times</option>
-        </select></td></tr>
-        <tr><td>Error handling</td><td><select id="retries">
-          <option value="0">Fail on error</option>
-          <option value="1">Wait and retry once</option>
-          <option value="2">Wait and retry twice</option>
-          <option value="3">Wait and retry three times</option>
-        </select></td></tr>
-        <tr><td>Retry interval (ms)</td><td><input id="interval" /></td></tr>
-      </table>
-    </div>
-    <div id="choice" class="content freqs">
-      <h2>Sweep sets</h2>
-      <select id="freqs_set">
-        <option value="">New</option>
-      </select>
-      <button id="delete" disabled="true">Delete</button>
-    </div>
-    <div id="process" class="content freqs">
-      <h2>Monitor</h2>
-      <table id="monitor">
-        <tr><td>Minimum interval (ms)</td><td><input id="period" /></td></tr>
-        <tr><td>Radio-on attempts</td><td><select id="radio_on">
-          <option value="0">Don&apos;t try</option>
-          <option value="1">Try once only</option>
-          <option value="2">Try up to twice</option>
-          <option value="3">Try up to three times</option>
-        </select></td></tr>
-      </table>
-      <p/>
-      <button id="start">Start</button>
-      <button id="stop">Stop</button>
-      <p/>
-      <div id="worker_error"></div>
-      <div id="current"><span></span> sweeps in total</div>
-    </div>
-    <div id="config" class="content freqs">
-      <h2>Scan Configuration</h2>
-      <table id="scan">
-        <tr><td>Mode</td><td><select id="mode"></select></td></tr>
-      </table>
-      <label for="discrete">Discrete</label><input type="radio" name="type" id="discrete" checked />
-      <label for="range">Range</label><input type="radio" name="type" id="range" />
-      <div id="discreteSet">
-        <table>
-        </table>
-        <button id="add">Add</button>
-      </div>
-      <div id="rangeSet">
-        <table>
-          <tr id="f0"><td>Start</td><td><input /></td></tr>
-          <tr id="f1"><td>End</td><td><input /></td></tr>
-          <tr id="df"><td>Step</td><td><input /></td></tr>
-          <tr><td>Units</td><td><select class="hz" /></td></tr>
-        </table>
-      </div>
-    </div>
-    <div id="stats" class="content admin">
-      <h2>Elasticsearch Index</h2>
-      <table>
-        <tr><td>Total index size</td><td id="totalSize"><td></td></tr>
-        <tr><td>Number of records</td><td id="records"><td></td></tr>
-      </table>
-    </div>
-    <div id="sweep_set" class="content data">
-      <h2>Sweep sets</h2>
-      <select id="data_set">
-        <option value="">None</option>
-      </select>
-      <p/>
-      <div id="controls">
-        <div id="count"><span></span> sweeps in total <button id="update">Update</button></div>
-        <p/>
-        <button id="export">Export</button>
-        <button id="download">Download</button>
-        <p/>
-        <div id="slider"></div>
-        <button id="go">Fetch Data</button>
-        <div id="progress"><span id="n"><span></span> of </span><span id="total"></span></div>
-      </div>
-      <p/>
-      <div id="error"></div>
-    </div>
-    <div id="charts" class="content data">
-      <p id="avg">Average time per sweep <span></span></p>
-      <div id="frequency-chart">
-        <h2>Level / frequency</h2>
-        <select id="sweep" class="option">
-          <option value="latest">Latest sweep</option>
-          <option value="avg">Average</option>
-          <option value="max">Maximum</option>
-          <option value="min">Minimum</option>
-        </select>
-      </div>
-      <div id="level-chart">
-        <h2>Level / time</h2>
-        <span>
-          <label>Top</label><select id="N" class="option"></select><label>by</label>
-          <select id="top" class="option">
-            <option value="avg">Average</option>
-            <option value="max">Maximum</option>
-            <option value="min">Minimum</option>
-          </select>
-        </span>
-      </div>
-      <div id="waterfall-chart">
-        <h2>Waterfall</h2>
-      </div>
-    </div>
-    <div id="debugSwitch">
-      <label for="debug">Debug</label><input id="debug" type="checkbox" />
-    </div>
+  <!-- 3. Display the application -->
+  <body>
+    <psm-app>Loading...</psm-app>
   </body>
 </html>

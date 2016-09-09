@@ -1,4 +1,11 @@
+secret.key
+example_queries/
 *.pyc
 .*
 logs/
+samples/
 users.passwords
+static/app/*.js
+static/app/*.map
+static/node_modules
+static/typings

@@ -1,0 +1,10 @@
+<div class="container" [ngClass]="{ 'container-notitle': title == undefined }">
+  <h1 *ngIf="title" (click)="toggle()">
+    {{title}}
+    <span *ngIf="show" class="toggle glyphicon glyphicon-collapse-down"></span>
+    <span *ngIf="! show" class="toggle glyphicon glyphicon-collapse-up"></span>
+    <span *ngIf="loading" class="busy glyphicon glyphicon-transfer"></span>
+  </h1>
+  <span *ngIf="! title && loading" class="busy glyphicon glyphicon-transfer"></span>
+  <ng-content *ngIf="show"></ng-content>
+</div>

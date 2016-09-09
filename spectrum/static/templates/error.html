@@ -1,0 +1,5 @@
+<div *ngIf="errors.length > 0">
+  <ul>
+    <li *ngFor="let error of errors; let i = index">{{error.source}}: {{error.message}}<button (click)="onClear(i)">x</button></li>
+  </ul>
+</div>

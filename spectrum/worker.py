@@ -3,311 +3,133 @@ from common import *
 
 import requests
 import json
-from monitor import Monitor, TimeoutError, get_capabilities, frange
+from monitor import Monitor, TimeoutError, get_capabilities
 from power import power_on
-from time import sleep, time
+from time import sleep
 import os, os.path
-import signal
-import common
-import errno
 import traceback
-
-""" The worker process can be signalled to start and stop operation.
-
-    When signalled to start, it checks for a .monitor file; if there is one, it contains the ElasticSearch config_id
-    which is used to look up the config.
-    
-    Otherwise, it checks for a .config file, and if there is one, config JSON is read from it, and uploaded
-    to ES and a config_id obtained, which is written to the .monitor file. The .config file is removed.
-    
-    Thus, .monitor file is used in preference to .config - if both exist, .config is ignored and not consumed.
-    
-    The .monitor file is touched at the start of each sweep.
-    
-    The worker runs until stopped by another signal, and the .monitor file is removed.
-"""
-
-def convert(d):
-  """ Auto-convert empty strings into None, and number strings into numbers.
-  """
-  for k, v in d.iteritems():
-    if not isinstance(v, basestring):
-      continue
-    if v.strip() == '':
-      d[k] = None
-      continue
-    try:
-      d[k] = int(v)
-    except:
-      try:
-        d[k] = float(v)
-      except:
-        pass
+from process import Process, UpdatableDict
 
 
-def now():
-  """ Return time in milliseconds since the epoch.
-  """
-  return int(time() * 1000)
+def iterator(config_id, config):
+  scan_config = parse_config(config)
+  audio_t = 0 if config['scan']['audio'] else None
 
+  status = UpdatableDict()
+  yield status('config_id', config_id)
 
-class WorkerInit:
+  try:
+    with Monitor(**config['rig']) as monitor:
+      timeout_count = 0
+      sweep_n = 0
+      while True:
+        log.debug("Scan: {0}".format(config['scan']))
+        yield status
 
-  # the _file parameters here would be prefices if more than one worker needs to run concurrently
-  def __init__(self, elasticsearch=ELASTICSEARCH, pid_file=PID_FILE, config_file=WORKER_CONFIG, monitor_file=WORKER_MONITOR):
-    self.elasticsearch = elasticsearch
-    self.pid_file = local_path(pid_file)
-    self.config_file = local_path(config_file)
-    self.monitor_file = local_path(monitor_file)
-
-  def worker(self):
-    return Worker(self)
-
-  def client(self):
-    return Client(self)
-
-  def read_pid_file(self):
-    if not os.path.isfile(self.pid_file):
-      return None
-    try:
-      with open(self.pid_file) as f:
-        worker_pid = f.read().strip()
-      worker_pid = int(worker_pid)
-      os.kill(worker_pid, 0)
-      return worker_pid
-    except IOError:
-      raise ProcessError("Can not open PID file: {0}".format(self.pid_file))
-    except ValueError:
-      raise ProcessError("Bad worker PID: {0}".format(worker_pid))
-    except OSError as e:
-      raise ProcessError("Bad worker PID ({0}): {1}".format(errno.errorcode[e.errno], worker_pid))
-
-
-class Worker:
-
-  def __init__(self, init):
-    self.init = init
-    self._exit = False
-    self._tidy = True
-    self._power_off = False
-    self._timeout_count = 0
-    self.set_signal('SIGUSR1')
-    self.set_signal('SIGUSR2', power_off=True)
-
-  def set_signal(self, signame, exit=False, tidy=True, power_off=False):
-    """ Define signal handler for given signal in order to exit cleanly.
-    """
-    signal.signal(getattr(signal, signame), lambda *_: self.stop(signame, exit, tidy, power_off))
-
-  def _init_config(self):
-    if os.path.isfile(self.init.monitor_file):
-      with open(self.init.monitor_file) as f:
-        config_id = f.read()
-      config = common.get_config(config_id)
-    else:
-      if not os.path.isfile(self.init.config_file):
-        return None, None
-      with open(self.init.config_file) as f:
-        config = json.loads(f.read())
-
-      data = { 'timestamp': now(), 'json': json.dumps(config) }
-      r = requests.post(self.init.elasticsearch + 'spectrum/config/', params={ 'refresh': 'true' }, data=json.dumps(data))
-      if r.status_code != 201:
-        log.error("Can not post config: {0} {1}".format(r.status_code, config))
-        return
-      config_id = r.json()['_id']
-      os.remove(self.init.config_file)
-
-      with open(self.init.monitor_file, 'w') as f:
-        f.write(config_id)
-
-    return config_id, config
-
-  def _read_config(self, config):
-    convert(config['rig'])
-    convert(config['monitor'])
-    convert(config['scan'])
-
-    rig = config['rig']
-    period = config['monitor'].get('period', 0)
-    radio_on = config['monitor'].get('radio_on', 0)
-    scan = config['scan']
-    for x in config['freqs']:
-      # x is either 'range' or 'freqs'
-      if x == 'range':
-        exp = int(config['freqs']['exp'])
-        scan[x] = [ 10 ** exp * float(f) for f in config['freqs'][x] ]
-      elif x == 'freqs':
-        scan[x] = [ 10 ** int(f['exp']) * float(f['f']) for f in config['freqs'][x] ]
-      else:
-        raise ValueError("Bad key in config.freqs")
-      break
-    else:
-      raise ValueError("No frequencies in config")
-
-    return rig, period, radio_on, scan
-
-  def _scan(self, config_id, rig, period, scan):
-    with Monitor(**rig) as monitor:
-      self._timeout_count = 0
-      n = 0
-      while not self._stop:
-        log.debug("Scan: {0}".format(scan))
         t0 = now()
-        sweep = { 'config_id': config_id, 'n': n, 'timestamp': t0, 'level': [] }
-        n += 1
+        sweep = { 'config_id': config_id, 'n': sweep_n, 'timestamp': t0, 'level': [] }
+        yield status('sweep', { 'sweep_n': sweep_n, 'timestamp': t0, 'peaks': [] })
 
-        os.utime(self.init.monitor_file, None)
-        for x in monitor.scan(**scan):
-          if self._stop:
-            break
-          sweep['level'].append(x[1] if x[1] is not None else -128)
+        peaks = [ ]
+        w = [(None,) * 3] * 3
+
+        #FIXME mode should probably just be set once at rig.open, and should be an argument to Monitor.__init__()
+        monitor.set_mode(config['scan']['mode'])
+
+        for idx, freq in scan(**scan_config):
+          if 'current' in status['sweep']:
+            status['sweep']['previous'] = status['sweep']['current']
+          status['sweep']['current'] = { 'freq_n': idx }
+          yield status
+
+          while True:
+            try:
+              level = monitor.get_strength(freq)
+              break
+            except TimeoutError as e:
+              if timeout_count < rig['radio_on']:
+                timeout_count += 1
+                log.error(e)
+                log.info("Attempting to power on")
+                power_on()
+                sleep(RADIO_ON_SLEEP_SECS) # give the rig chance to power up
+              else:
+                raise e
+
+          status['sweep']['current']['strength'] = level
+          yield status
+
+          w = [w[1], w[2], (freq, level, idx)]
+          sweep['level'].append(level if level is not None else -128)
+          if w[0][1] < w[1][1] and w[1][1] >= config['audio']['threshold'] and w[1][1] >= w[2][1]: # ..[1] gets you the level
+            peaks.append((w[1][2], w[1][0]))
+
+            status['sweep']['peaks'].append({ 'freq_n': w[1][2], 'strength': w[1][1] })
+            yield status
         else:
           sweep['totaltime'] = now() - t0
 
-          r = requests.post(self.init.elasticsearch + '/spectrum/sweep/', params={ 'refresh': 'true' }, data=json.dumps(sweep))
+          if w[1][1] < w[2][1] and w[2][1] >= config['audio']['threshold']:
+            peaks.append((w[2][2], w[2][1]))
+
+          if 'previous' in status['sweep']:
+            del status['sweep']['previous']
+          if 'current' in status['sweep']:
+            del status['sweep']['current']
+          if 'record' in status['sweep']:
+            del status['sweep']['record']
+          yield status
+
+          r = requests.post(ELASTICSEARCH + '/spectrum/sweep/', params={ 'refresh': 'true' }, data=json.dumps(sweep))
           if r.status_code != 201:
             log.error("Could not post to Elasticsearch ({0})".format(r.status_code))
             return
 
-          sleep(max(period - sweep['totaltime'], 0) / 1000.0)
-      if self._power_off:
-        monitor.power_off()
-        self._stop = False
+          if audio_t is not None and now() - audio_t > config['audio']['period'] * 1000:
+            audio_t = now()
+            for st in record(status, config_id, sweep_n, monitor, config['scan'], config['audio'], peaks):
+              yield st
 
-  def run(self):
-    """ Uses files .config and .monitor to communicate state. (The .pid file is managed elsewhere.)
-        
-        If .monitor exists, it contains the ElasticSearch config_id, look up config in ES
-        If not, read config JSON from .config and insert into ES - remove .config and create .monitor
-        
-        Whilst running, the .monitor file is touched to indicate the last sweep time
+        sweep_n += 1
+  except Exception as e:
+    log.error(e)
+    traceback.print_exc()
+    data = { 'timestamp': now(), 'config_id': config_id, 'json': json.dumps(str(e)) }
+    params = { 'refresh': 'true' }
+    requests.post(ELASTICSEARCH + 'spectrum/error/', params=params, data=json.dumps(data))
 
-        If stopped normally, removes .monitor (otherwise .monitor remains)
-    """
-    config_id, config = self._init_config()
-    if config_id is None:
+#FIXME how/whether to interrupt audio recording?
+def record(status, config_id, sweep_n, monitor, scan, audio, freqs):
+  log.debug("Recording audio from {0} frequencies".format(len(freqs)))
+  for idx, freq in freqs:
+    t0 = now()
+    path = '/'.join([SAMPLES_DIRECTORY, str(config_id), str(sweep_n), str(idx)]) + '.wav'
+    if not os.path.exists(os.path.dirname(path)):
+      os.makedirs(os.path.dirname(path))
+
+    status['sweep']['record'] = { 'freq_n': idx }
+    yield status
+
+    monitor.record(freq, scan['mode'], audio['rate'], audio['duration'], path, audio['path'])
+    data = { 'config_id': config_id, 'timestamp': t0, 'sweep_n': sweep_n, 'freq_n': idx }
+    r = requests.post(ELASTICSEARCH + '/spectrum/audio/', params={ 'refresh': 'true' }, data=json.dumps(data))
+    if r.status_code != 201:
+      log.error("Could not post to Elasticsearch ({0})".format(r.status_code))
       return
 
-    try:
-      rig, period, radio_on, scan = self._read_config(config)
 
-      while not self._stop:
-        try:
-          try:
-            log.info('Scanning started')
-            self._scan(config_id, rig, period, scan)
-          finally:
-            log.info('Scanning stopped')
-        except TimeoutError as e:
-          if self._timeout_count < radio_on:
-            self._timeout_count += 1
-            log.error(e)
-            log.info("Attempting to power on")
-            power_on()
-            sleep(RADIO_ON_SLEEP_SECS) # give the rig chance to power up
-          else:
-            raise e
-    except Exception as e:
-      log.error(e)
-      data = { 'timestamp': now(), 'config_id': config_id, 'json': json.dumps(str(e)) }
-      params = { 'refresh': 'true' }
-      requests.post(self.init.elasticsearch + 'spectrum/error/', params=params, data=json.dumps(data))
-
-  def stop(self, signame, exit, tidy, power_off):
-    self._stop = True
-    self._exit = exit
-    self._tidy = tidy
-    self._power_off = power_off
-
-  def start(self):
-    while True:
-      self._stop = False
-      self.run()
-      if self._tidy and os.path.isfile(self.init.monitor_file):
-        os.remove(self.init.monitor_file)
-      if self._exit:
-        break
-      signal.pause()
-
-
-class WorkerClient:
-
-  def __init__(self, init):
-    self.init = init
-    self.worker_pid = None
-    self.error = None
-
-  def read_pid(self):
-    try:
-      self.worker_pid = self.init.read_pid_file()
-      self.error = None
-    except ProcessError as e:
-      self.error = e.message
-    if self.worker_pid is None and self.error is None:
-      self.error = "No worker process"
-    return self.worker_pid
-
-  def status(self):
-    result = { }
-    self.read_pid()
-    if self.error is not None:
-      result['error'] = self.error
-    if os.path.isfile(self.init.monitor_file):
-      stat = os.stat(self.init.monitor_file)
-      with open(self.init.monitor_file) as f:
-        result.update({ 'config_id': f.read(), 'last_sweep': stat.st_mtime })
-    return result
-
-  def start(self, config):
-    if self.read_pid() is not None:
-      with open(self.init.config_file, 'w') as f:
-        f.write(config)
-      os.kill(self.worker_pid, signal.SIGUSR1)
-
-  def stop(self):
-    if self.read_pid() is not None:
-      os.kill(self.worker_pid, signal.SIGUSR1)
-
-
-class ProcessError:
-
-  def __init__(self, message):
-    self.message = message
+class Worker (Process):
+  def __init__(self):
+    super(Worker, self).__init__(WORKER_PID, WORKER_CONFIG, WORKER_STATUS)
 
 
 if __name__ == "__main__":
-  """ PID file is a hint and not definitive of whether we will start a new process. We only abort
-      if there is a .pid file and the indicated process exists (and we have permission to signal it).
-  """
-  import Hamlib, sys
+  import Hamlib
 
-  init = WorkerInit()
-  try:
-    pid = init.read_pid_file()
-    if pid is not None:
-      log.error("Worker process already exists: {0}".format(pid))
-      sys.exit(1)
-  except ProcessError:
-    pass
-
-  with open(init.pid_file, 'w') as f:
-    f.write(str(os.getpid()))
-
+  worker = Worker()
+  worker.init()
   wait_for_elasticsearch()
-
-  worker = init.worker()
-  worker.set_signal('SIGTERM', exit=True, tidy=False)
-  worker.set_signal('SIGINT', exit=True)
-  worker.set_signal('SIGHUP', exit=True)
-
-  try:
-    with open(common.log_filename, 'a') as f:
-      Hamlib.rig_set_debug_file(f)
-      Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
-
-      log.info("Starting worker process")
-      worker.start()
-  finally:
-    log.info("Stopping worker process")
-    os.remove(init.pid_file)
+  with open(log_filename, 'a') as f:
+    Hamlib.rig_set_debug_file(f)
+    Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
+    worker.start(iterator)
