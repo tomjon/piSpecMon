@@ -16,6 +16,7 @@ from datetime import datetime
 from worker import Worker
 from monkey import Monkey
 from monitor import get_capabilities
+from elasticsearch import *
 import re
 import mimetypes
 
@@ -99,33 +100,6 @@ def check_user_timeout():
     return "User session timed out", 403
   return None
 
-
-def set_settings(id, value):
-  data = { 'timestamp': int(time()), 'json': json.dumps(value) }
-  r = requests.put(ELASTICSEARCH + 'spectrum/settings/' + id, params={ 'refresh': 'true' }, data=json.dumps(data))
-  if r.status_code != 200 and r.status_code != 201:
-    raise Exception("Can not apply settings: %s (%d)" % (id, r.status_code))
-  return value
-
-def get_settings(id, new={}):
-  """ Get the settings by id from Elasticsearch.
-  """
-  params = { 'fields': 'json' }
-  r = requests.get(ELASTICSEARCH + 'spectrum/settings/' + id, params=params)
-  log.debug("get_settings status code {0}: {1}".format(r.status_code, r.json()))
-  if r.status_code == 404:
-    log.info("Initialising settings: {0}".format(id))
-    set_settings(id, new)
-    return new
-  fields = r.json()['fields']
-  return json.loads(fields['json'][0])
-
-# create index (harmless if it already exists)
-wait_for_elasticsearch()
-with open(local_path('create.json')) as f:
-  r = requests.put('{0}spectrum'.format(ELASTICSEARCH), data=f.read())
-  log.debug("Code {0} creating index".format(r.status_code))
-wait_for_elasticsearch()
 
 application = SecuredStaticFlask(__name__)
 application.login_manager = LoginManager()
@@ -215,13 +189,10 @@ def monitor():
     config['audio'] = application.audio
     config['rds'] = application.rds
 
-    # post config to data store
-    data = { 'timestamp': now(), 'json': json.dumps(config) }
-    r = requests.post(ELASTICSEARCH + 'spectrum/config/', params={ 'refresh': 'true' }, data=json.dumps(data))
-    if r.status_code != 201:
-      log.error("Can not post config: {0} {1}".format(r.status_code, config))
-      return "Can not post config", 500
-    config_id = r.json()['_id']
+    try:
+        config_id = write_config(config)
+    except StoreError as e:
+        return e.message, 500
 
     application.worker.start(config_id)
     if config['scan']['rds'] == 'true':
@@ -242,85 +213,71 @@ def monitor():
 @application.route('/config')
 @role_required(['admin', 'freq', 'data'])
 def sweepSets():
-  r = requests.get(ELASTICSEARCH + 'spectrum/config/_search', params='size=10000&fields=*&sort=timestamp')
-  if r.status_code != 200:
-    return "Elasticsearch error finding config sets", r.status_code
-  hits = r.json()['hits']['hits'] if 'hits' in r.json()['hits'] else [ ]
-  return json.dumps({ 'data': [{ 'id': hit['_id'], 'config': json.loads(hit['fields']['json'][0]), 'timestamp': int(hit['fields']['timestamp'][0]) } for hit in hits] })
+  try:
+    return json.dumps({ 'data': read_configs() })
+  except StoreError as e:
+    return e.message, 500
 
 # FIXME noone should be able to delete the running sweep
 @application.route('/config/<config_id>', methods=['GET', 'DELETE'])
 @role_required(['admin'])
 def deleteConfig(config_id):
   if request.method == 'GET':
-    r = requests.get(ELASTICSEARCH + 'spectrum/config/' + config_id, params='fields=timestamp,json')
-    if r.status_code != 200:
-      return "Elasticsearch error finding config sets", r.status_code
-    fields = r.json()['fields']
-    return json.dumps({ 'config': json.loads(fields['json'][0]), 'timestamp': int(fields['timestamp'][0]) })
+    try:
+      return json.dumps(read_config(config_id))
+    except StoreError as e:
+      return e.message, 500
   else:
     # delete audio samples...
     samples_path = os.path.join(current_app.root_path, SAMPLES_DIRECTORY, config_id)
     if os.path.isdir(samples_path):
       shutil.rmtree(samples_path)
     # delete spectrum and RDS data
-    r = requests.delete(ELASTICSEARCH + 'spectrum/_query', params='refresh=true&q=config_id:' + config_id)
-    if r.status_code != 200:
-      return "Elasticsearch error deleting spectrum and RDS data", r.status_code
-    # delete config
-    r = requests.delete(ELASTICSEARCH + 'spectrum/config/' + config_id, params='refresh=true')
-    if r.status_code != 200:
-      return "Elasticsearch error deleting config set", r.status_code
+    try:
+      delete_config(config_id)
+    except StoreError as e:
+      return e.message, 500
     return json.dumps({ 'status': 'OK' })
 
 @application.route('/range/<config_id>')
 @role_required(['admin', 'freq', 'data'])
 def range(config_id):
-  r = requests.get(ELASTICSEARCH + 'spectrum/sweep/_search', params='size=1&q=config_id:' + config_id + '&fields=timestamp&sort=timestamp:desc')
-  if r.status_code != 200:
-    return "Elasticsearch error getting range", r.status_code
-  ret = { 'count': r.json()['hits']['total'] }
-  if ret['count'] > 0:
-    ret['range'] = int(r.json()['hits']['hits'][0]['fields']['timestamp'][0])
-  return json.dumps(ret)
-
-def _range_search(config_id):
-  q = 'config_id:' + config_id
-  if 'start' in request.args and 'end' in request.args:
-    q += '+AND+timestamp:[' + request.args['start'] + '+TO+' + request.args['end'] + ']'
-  return 'size=1000000&q=' + q + '&fields=*&sort=timestamp'
+  try:
+    return json.dumps(sweep_info(config_id))
+  except StoreError as e:
+    return e.message, 500
 
 @application.route('/data/<config_id>')
 @role_required(['admin', 'freq', 'data'])
 def data(config_id):
-  r = requests.get(ELASTICSEARCH + 'spectrum/sweep/_search', params=_range_search(config_id))
-  if r.status_code != 200:
-    return "Elasticsearch error getting spectrum data", r.status_code
-  return json.dumps({ 'data': r.json()['hits']['hits'] })
+  try:
+    return json.dumps({ 'data': read_data(config_id, request.args.get('start'), request.args.get('end')) })
+  except StoreError as e:
+    return e.message, 500
 
 @application.route('/audio/<config_id>')
 @role_required(['admin', 'freq', 'data'])
 def audio(config_id):
-  r = requests.get(ELASTICSEARCH + 'spectrum/audio/_search', params=_range_search(config_id))
-  if r.status_code != 200:
-    return "Elasticsearch error getting audio data", r.status_code
-  return json.dumps({ 'data': r.json()['hits']['hits'] })
+  try:
+    return json.dumps({ 'data': read_audio(config_id, request.args.get('start'), request.args.get('end')) })
+  except StoreError as e:
+    return e.message, 500
 
 @application.route('/rds/name/<config_id>')
 @role_required(['admin', 'freq', 'data'])
-def rsd_name(config_id):
-  r = requests.get(ELASTICSEARCH + 'spectrum/name/_search', params=_range_search(config_id))
-  if r.status_code != 200:
-    return "Elasticsearch error getting RSD name data", r.status_code
-  return json.dumps({ 'data': r.json()['hits']['hits'] })
+def rsd_names(config_id):
+  try:
+    return json.dumps({ 'data': read_rds_names(config_id, request.args.get('start'), request.args.get('end')) })
+  except StoreError as e:
+    return e.message, 500
 
 @application.route('/rds/text/<config_id>')
 @role_required(['admin', 'freq', 'data'])
 def rds_text(config_id):
-  r = requests.get(ELASTICSEARCH + 'spectrum/text/_search', params=_range_search(config_id))
-  if r.status_code != 200:
-    return "Elasticsearch error getting RDS text data", r.status_code
-  return json.dumps({ 'data': r.json()['hits']['hits'] })
+  try:
+    return json.dumps({ 'data': read_rds_text(config_id, request.args.get('start'), request.args.get('end')) })
+  except StoreError as e:
+    return e.message, 500
 
 @application.route('/audio/<config_id>/<sweep_n>/<freq_n>')
 @role_required(['admin', 'freq', 'data'])
@@ -480,10 +437,10 @@ def _iter_export(config, hits):
 @role_required(['admin', 'freq', 'data'])
 def export(config_id):
   config = get_config(config_id)
-  r = requests.get('%s/spectrum/sweep/_search?size=1000000&sort=timestamp&fields=*&q=config_id:%s' % (ELASTICSEARCH, config_id))
-  if r.status_code != 200:
-    return r.text, r.status_code
-  export = _iter_export(config, r.json()['hits']['hits'])
+  try:
+    export = _iter_export(config, read_data(config_id))
+  except StoreError as e:
+    return e.message, 500
   if request.method == 'GET':
     return Response(export, mimetype='text/csv')
   else:
@@ -494,15 +451,10 @@ def export(config_id):
     return json.dumps({ 'path': path })
 
 
-#FIXME should return labels and values, not just values - might use various back ends
 @application.route('/stats')
 @role_required(['admin'])
 def get_stats():
-  r = requests.get(ELASTICSEARCH + 'spectrum/_stats/docs,store')
-  if r.status_code != 200:
-    return None
-  stats = r.json()['indices']['spectrum']['primaries']
-  return json.dumps({ 'doc_count': stats['docs']['count'], 'size_in_bytes': stats['store']['size_in_bytes'] })
+  return json.dumps(stats())
 
 
 if __name__ == "__main__":

@@ -48,14 +48,6 @@ def now():
   return int(time() * 1000)
 
 
-def get_config(config_id):
-  r = requests.get('%s/spectrum/config/_search?fields=*&q=_id:%s' % (ELASTICSEARCH, config_id))
-  if r.status_code != 200:
-    return None #FIXME need to throw or return an error somehow
-  hits = r.json()['hits']['hits']
-  return json.loads(hits[0]['fields']['json'][0]) if len(hits) > 0 else None
-
-
 def scan(freqs=[], range=None, **ignore):
   idx = 0
   for freq in itertools.chain(freqs, xrange(*range) if range is not None else []):
@@ -112,18 +104,7 @@ def parse_config(config):
   return scan
 
 
-def wait_for_elasticsearch():
-  while True:
-    try:
-      r = requests.get('%s/_cluster/health' % ELASTICSEARCH)
-      if r.status_code != 200:
-        log.warn("Elasticsearch status %s" % r.status_code)
-      else:
-        status = r.json()['status']
-        if status != 'red':
-          log.info("Elasticsearch up and running ({0})".format(status))
-          return
-        log.warn("Elasticsearch cluster health status: %s" % status)
-    except requests.exceptions.ConnectionError:
-      log.warn("No elasticsearch... waiting")
-    sleep(2)
+class StoreError:
+    def __init__(self, message):
+        log.error(msg)
+        self.message = message

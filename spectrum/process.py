@@ -11,6 +11,8 @@ import errno
 import traceback
 import sys
 
+from elasticsearch import *
+
 """ Process management module. Use this to provide a process which responds to signals and reads config
     and writes status using the file system, and writes data to the provided data source.
 """
@@ -87,14 +89,19 @@ class Process (object):
         self.config_id = self._read_config()
         if self.config_id is not None:
           log.debug("Read config id {0}".format(self.config_id))
-          config = get_config(self.config_id)
-          self._stop = False
-          for status in iterator(self.config_id, config):
-            self.write_status(status)
-            if self._stop:
-              break
-          if os.path.isfile(self.status_file):
-            os.remove(self.status_file)
+          config = read_config(self.config_id)
+          if config is not None:
+            config = config['config'] #FIXME yuck
+            log.debug("Running with config: {0}".format(json.dumps(config)))
+            self._stop = False
+            for status in iterator(self.config_id, config):
+              self.write_status(status)
+              if self._stop:
+                break
+            if os.path.isfile(self.status_file):
+              os.remove(self.status_file)
+          else:
+            log.warn("Config not found for id {0}".format(self.config_id))
         if self._tidy and os.path.isfile(self.config_file):
           os.remove(self.config_file)
         if self._exit:

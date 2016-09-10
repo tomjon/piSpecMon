@@ -4,6 +4,7 @@ from process import Process, UpdatableDict
 from rds import RdsApi
 from time import sleep, time
 import requests
+from elasticsearch import *
 
 
 def poll(fn, condition, timeout):
@@ -36,10 +37,9 @@ def iterator(config_id, config):
           continue
         yield progress('name', name)
 
-        data = { 'config_id': config_id, 'idx': idx, 'timestamp': now(), 'name': name }
-        r = requests.post(ELASTICSEARCH + '/spectrum/name/', params={ 'refresh': 'true' }, data=json.dumps(data))
-        if r.status_code != 201:
-          log.error("Could not post to Elasticsearch ({0})".format(r.status_code))
+        try:
+          write_rds_name(config_id, idx, name)
+        except StoreError:
           return
 
         text0 = None
@@ -48,10 +48,9 @@ def iterator(config_id, config):
           if text is not None and text != text0:
             yield progress('text', text)
 
-            data = { 'config_id': config_id, 'idx': idx, 'timestamp': now(), 'text': text }
-            r = requests.post(ELASTICSEARCH + '/spectrum/text/', params={ 'refresh': 'true' }, data=json.dumps(data))
-            if r.status_code != 201:
-              log.error("Could not post to Elasticsearch ({0})".format(r.status_code))
+            try:
+              write_rds_text(config_id, idx, text)
+            except StoreError:
               return
 
 
@@ -63,5 +62,4 @@ class Monkey (Process):
 if __name__ == "__main__":
   monkey = Monkey()
   monkey.init()
-  wait_for_elasticsearch()
   monkey.start(iterator)

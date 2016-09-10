@@ -9,6 +9,7 @@ from time import sleep
 import os, os.path
 import traceback
 from process import Process, UpdatableDict
+from elasticsearch import *
 
 
 def iterator(config_id, config):
@@ -80,10 +81,8 @@ def iterator(config_id, config):
             del status['sweep']['record']
           yield status
 
-          r = requests.post(ELASTICSEARCH + '/spectrum/sweep/', params={ 'refresh': 'true' }, data=json.dumps(sweep))
-          if r.status_code != 201:
-            log.error("Could not post to Elasticsearch ({0})".format(r.status_code))
-            return
+          #FIXME now, tidy up by removing sweep list entirely?
+          write_data(sweep['config_id'], sweep['n'], sweep['timestamp'], sweep['level'], sweep['totaltime'])
 
           if audio_t is not None and now() - audio_t > config['audio']['period'] * 1000:
             audio_t = now()
@@ -94,9 +93,7 @@ def iterator(config_id, config):
   except Exception as e:
     log.error(e)
     traceback.print_exc()
-    data = { 'timestamp': now(), 'config_id': config_id, 'json': json.dumps(str(e)) }
-    params = { 'refresh': 'true' }
-    requests.post(ELASTICSEARCH + 'spectrum/error/', params=params, data=json.dumps(data))
+    write_error(config_id, e)
 
 #FIXME how/whether to interrupt audio recording?
 def record(status, config_id, sweep_n, monitor, scan, audio, freqs):
@@ -111,10 +108,10 @@ def record(status, config_id, sweep_n, monitor, scan, audio, freqs):
     yield status
 
     monitor.record(freq, scan['mode'], audio['rate'], audio['duration'], path, audio['path'])
-    data = { 'config_id': config_id, 'timestamp': t0, 'sweep_n': sweep_n, 'freq_n': idx }
-    r = requests.post(ELASTICSEARCH + '/spectrum/audio/', params={ 'refresh': 'true' }, data=json.dumps(data))
-    if r.status_code != 201:
-      log.error("Could not post to Elasticsearch ({0})".format(r.status_code))
+
+    try:
+      write_audio(config_id, t0, sweep_n, idx)
+    except StoreError:
       return
 
 
@@ -128,7 +125,6 @@ if __name__ == "__main__":
 
   worker = Worker()
   worker.init()
-  wait_for_elasticsearch()
   with open(log_filename, 'a') as f:
     Hamlib.rig_set_debug_file(f)
     Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
