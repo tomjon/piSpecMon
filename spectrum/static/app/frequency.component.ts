@@ -91,7 +91,7 @@ export class FrequencyComponent {
     this.svg.selectAll("g, path").remove();
 
     if (this.isHidden()) return;
-
+    
     this.timestamp = dt_format(new Date(this.data.levels[this.data.levels.length - 1].fields.timestamp));
     let agg = this.data.agg[this.sweep];
 

@@ -1,4 +1,5 @@
 import { Component, Input, ViewChild } from '@angular/core';
+import { Observable } from 'rxjs/Observable';
 import { SweepComponent } from './sweep.component';
 import { RangeComponent } from './range.component';
 import { FrequencyComponent } from './frequency.component';
@@ -16,12 +17,13 @@ import { MAX_N, CHART_HEIGHT } from './constants';
 })
 export class ChartsComponent {
   data: any = { };
-  avg_time: number;
   audio: any = { };
   rdsNames: any = { };
   rdsText: any = { };
 
   config: Config;
+
+  times: any[] = [ ];
 
   @Input() status: any;
 
@@ -34,19 +36,31 @@ export class ChartsComponent {
 
   constructor(private dataService: DataService) { }
 
+  progress(key: string, obs: Observable<any>): Observable<any> {
+    let t = { key: key, start: new Date(), end: null, time: null };
+    this.times.push(t);
+    return Observable.create(observer => {
+      obs.subscribe(observer);
+      return () => {
+        t.end = new Date();
+        t.time = t.end.getTime() - t.start.getTime();
+      };
+    });
+  }
+
   show(range: number[]) {
     if (! range) {
       this.data = { };
       this.audio = { };
     } else {
-      this.dataService.getSpectrumData(this.config.config_id, range)
-                      .subscribe(data => this.mapData(data));
-      this.dataService.getAudioData(this.config.config_id, range)
-                      .subscribe(audio => this.mapAudio(audio));
-      this.dataService.getRdsNameData(this.config.config_id, range)
-                      .subscribe(data => this.mapRdsNames(data));
-      this.dataService.getRdsTextData(this.config.config_id, range)
-                      .subscribe(data => this.mapRdsText(data));
+      this.progress('spectrum', this.dataService.getSpectrumData(this.config.config_id, range))
+                                                .subscribe(data => this.mapData(data));
+      this.progress('audio', this.dataService.getAudioData(this.config.config_id, range))
+                                             .subscribe(audio => this.mapAudio(audio));
+      this.progress('names', this.dataService.getRdsNameData(this.config.config_id, range))
+                                             .subscribe(data => this.mapRdsNames(data));
+      this.progress('text', this.dataService.getRdsTextData(this.config.config_id, range))
+                                            .subscribe(data => this.mapRdsText(data));
     }
   }
 
@@ -89,6 +103,9 @@ export class ChartsComponent {
   }
 
   mapData(data) {
+    let timer = { key: 'processing', start: new Date(), end: null, time: null };
+    this.times.push(timer);
+
     var interval = data.length / CHART_HEIGHT;
 
     this.data = {
@@ -96,10 +113,6 @@ export class ChartsComponent {
                   agg: { latest: [], min: [], max: [], avg: [] },
                   freq_idxs: { 'min': this.fillArray(), 'max': this.fillArray(), 'avg': this.fillArray() }
                 };
-    delete this.avg_time;
-
-    /* also compute sweep time */
-    let total_time = 0.0; //FIXME can this move inside the next scope?
 
     if (data.length > 0) {
       for (let freq_idx in data[data.length - 1].fields.level) {
@@ -108,16 +121,16 @@ export class ChartsComponent {
         this.data.agg['latest'][freq_idx] = { idx: freq_idx, v: level != -128 ? level : null };
       }
       let level_idx = 0, count = null;
+
       for (let sweep_idx in data) {
         let length = data[sweep_idx].fields.level.length;
-        total_time += data[sweep_idx].fields.totaltime[0];
 
         if (! this.data.levels[level_idx]) {
           this.data.levels[level_idx] = {
             fields: {
               level: this.fillArray(0, length),
               timestamp: data[sweep_idx].fields.timestamp[0],
-              sweep_n: data[sweep_idx].fields.n[0]
+              sweep_n: +sweep_idx
             }
           };
           count = this.fillArray(0, data[sweep_idx].fields.level.length);
@@ -159,8 +172,6 @@ export class ChartsComponent {
         }
       }
 
-      this.avg_time = total_time / (1000 * data.length);
-
       /* find top N by avg, min and max */
       for (let x in this.data.freq_idxs) {
         // see if it beats any, if so swap and keep looking down the list... drop off end and gets kicked out
@@ -196,5 +207,8 @@ export class ChartsComponent {
         }
       }
     }
+
+    timer.end = new Date();
+    timer.time = timer.end.getTime() - timer.start.getTime();
   }
 }

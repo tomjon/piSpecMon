@@ -91,7 +91,7 @@ def write_config(config):
 
 
 def read_configs():
-    r = requests.get(ELASTICSEARCH + 'spectrum/config/_search', params='size=10000&fields=*&sort=timestamp')
+    r = requests.get(ELASTICSEARCH + 'spectrum/config/_search', params='size=10000&fields=json,timestamp&sort=timestamp')
     if r.status_code != 200:
         raise StoreError("Elasticsearch error finding config sets: %s (%d)" % r.status_code)
     hits = r.json()['hits']['hits'] if 'hits' in r.json()['hits'] else [ ]
@@ -129,20 +129,19 @@ def sweep_info(config_id):
     return ret
 
 
-def _range_search(config_id, start, end):
-    q = 'config_id:' + config_id
-    if start is not None and end is not None:
-        q += '+AND+timestamp:[' + start + '+TO+' + end + ']'
-    return 'size=1000000&q=' + q + '&fields=*&sort=timestamp'
-
-
-#FIXME surely we don't need sweep_n (n)? Is it ever even used?
-def write_data(config_id, sweep_n, timestamp, strengths, totaltime):
-    sweep = { 'config_id': config_id, 'n': sweep_n, 'timestamp': timestamp, 'level': strengths, 'totaltime': totaltime }
+def write_data(config_id, timestamp, strengths):
+    sweep = { 'config_id': config_id, 'timestamp': timestamp, 'level': strengths }
     r = requests.post(ELASTICSEARCH + '/spectrum/sweep/', params={ 'refresh': 'true' }, data=json.dumps(sweep))
     if r.status_code != 201:
         log.error("Could not post to Elasticsearch ({0})".format(r.status_code))
         return
+
+
+def _range_search(config_id, start, end):
+    q = 'config_id:' + config_id
+    if start is not None and end is not None:
+        q += '+AND+timestamp:[' + start + '+TO+' + end + ']'
+    return 'size=10000&q=' + q + '&fields=config_id,timestamp,level,idx,name,text,freq_n,sweep_n&sort=timestamp'
 
 
 def read_data(config_id, start=None, end=None):

@@ -106,5 +106,5 @@ def parse_config(config):
 
 class StoreError:
     def __init__(self, message):
-        log.error(msg)
+        log.error(message)
         self.message = message

@@ -10,6 +10,7 @@ declare var $;
   directives: [ WidgetComponent ],
   template: `<psm-widget [hidden]="isHidden()" title="Waterfall" class="chart">
                <form class="form-inline controls" role="form">
+                 {{time}}
                  <div *ngIf="showSamples" class="form-group">
                    <audio #audio controls preload='none'></audio>
                  </div>
@@ -42,6 +43,8 @@ export class WaterfallComponent {
 
   infoText: string = "";
   _showSamples: boolean = false;
+
+  time: number;
 
   @Input() freqs: any;
   @Input() data: any;
@@ -81,6 +84,8 @@ export class WaterfallComponent {
 
   ngOnChanges() {
     if (! this.svg) return; // ngOnChanges() happens before ngOnInit()!
+
+    let t0 = new Date();
 
     this.g.selectAll("g *").remove();
 
@@ -141,6 +146,8 @@ export class WaterfallComponent {
         control.load();
         control.play();
       });
+
+    this.time = (new Date()).getTime() - t0.getTime();
   }
 
   //FIXME much copied from frequency chart, abstract?

@@ -28,7 +28,7 @@ def iterator(config_id, config):
         yield status
 
         t0 = now()
-        sweep = { 'config_id': config_id, 'n': sweep_n, 'timestamp': t0, 'level': [] }
+        sweep = { 'config_id': config_id, 'timestamp': t0, 'level': [] }
         yield status('sweep', { 'sweep_n': sweep_n, 'timestamp': t0, 'peaks': [] })
 
         peaks = [ ]
@@ -68,8 +68,6 @@ def iterator(config_id, config):
             status['sweep']['peaks'].append({ 'freq_n': w[1][2], 'strength': w[1][1] })
             yield status
         else:
-          sweep['totaltime'] = now() - t0
-
           if w[1][1] < w[2][1] and w[2][1] >= config['audio']['threshold']:
             peaks.append((w[2][2], w[2][1]))
 
@@ -82,7 +80,7 @@ def iterator(config_id, config):
           yield status
 
           #FIXME now, tidy up by removing sweep list entirely?
-          write_data(sweep['config_id'], sweep['n'], sweep['timestamp'], sweep['level'], sweep['totaltime'])
+          write_data(sweep['config_id'], sweep['timestamp'], sweep['level'])
 
           if audio_t is not None and now() - audio_t > config['audio']['period'] * 1000:
             audio_t = now()

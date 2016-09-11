@@ -1,3 +1,8 @@
+<div>
+  <ul>
+    <li *ngFor="let t of times"><b>{{t.key}}</b> {{t.time}}ms</li>
+  </ul>
+</div>
 <psm-range [config]="config" [status]="status" (onRange)="show($event)"></psm-range>
 <psm-frequency [data]="data" [freqs]="config.config.freqs" [names]="rdsNames"></psm-frequency>
 <psm-level [data]="data" [freqs]="config.config.freqs" [names]="rdsNames"></psm-level>
