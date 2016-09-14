@@ -138,20 +138,20 @@ export class DataService {
     return this.http.get(url)
                     .map(res => {
                       let data = res.json();
-                      return new Config(config_id, +data.timestamp, data.config);
+                      return new Config(data.id, data.values, +data.timestamp, +data.latest, +data.count);
                     })
                     .catch(this.errorHandler("get config set"));
   }
 
-  getSweepSets(): Observable<Config[]> {
+  getConfigs(): Observable<Config[]> {
     return this.http.get(this.baseUrl + 'config')
-                    .map(res => res.json().data.map(c => new Config(c.id, c.timestamp, c.config)))
-                    .catch(this.errorHandler("get scan config sets"));
+                    .map(res => res.json().data.map(c => new Config(c.id, c.values, c.timestamp, c.latest, c.count)))
+                    .catch(this.errorHandler("get scan configs"));
   }
 
-  deleteSweepSet(config_id): Observable<void> {
+  deleteConfig(config_id): Observable<void> {
     return this.http.delete(this.baseUrl + 'config/' + config_id)
-                    .catch(this.errorHandler("delete scan"));
+                    .catch(this.errorHandler("delete config"));
   }
 
   getMonitor(): Observable<any> {
@@ -181,34 +181,10 @@ export class DataService {
                     .catch(this.errorHandler("export spectrum data"));
   }
 
-  getRange(config_id): Observable<any> {
-    return this.http.get(this.baseUrl + 'range/' + config_id)
-                    .map(res => res.json())
-                    .catch(this.errorHandler("get sweep range"));
-  }
-
-  getSpectrumData(config_id, range): Observable<any> {
+  getData(config_id, range): Observable<any> {
     return this.http.get(`${this.baseUrl}data/${config_id}?start=${Math.round(range[0])}&end=${Math.round(range[1]) + 5}`)
-                    .map(res => res.json().data)
-                    .catch(this.errorHandler("get spectrum data"));
-  }
-
-  getAudioData(config_id, range): Observable<any> {
-    return this.http.get(`${this.baseUrl}audio/${config_id}?start=${Math.round(range[0])}&end=${Math.round(range[1]) + 5}`)
-                    .map(res => res.json().data)
-                    .catch(this.errorHandler("get audio data"));
-  }
-
-  getRdsNameData(config_id, range): Observable<any> {
-    return this.http.get(`${this.baseUrl}rds/name/${config_id}?start=${Math.round(range[0])}&end=${Math.round(range[1]) + 300000}`)
-                    .map(res => res.json().data)
-                    .catch(this.errorHandler("get RDS name data"));
-  }
-
-  getRdsTextData(config_id, range): Observable<any> {
-    return this.http.get(`${this.baseUrl}rds/text/${config_id}?start=${Math.round(range[0])}&end=${Math.round(range[1]) + 300000}`)
-                    .map(res => res.json().data)
-                    .catch(this.errorHandler("get RDS text data"));
+                    .map(res => res.json())
+                    .catch(this.errorHandler("get data"));
   }
 
   private errorHandler(source: any) {

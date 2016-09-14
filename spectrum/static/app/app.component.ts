@@ -5,7 +5,6 @@ import { StatsComponent } from './stats.component';
 import { RigComponent } from './rig.component';
 import { AudioComponent } from './audio.component';
 import { RdsComponent } from './rds.component';
-import { SweepComponent } from './sweep.component';
 import { ScanComponent } from './scan.component';
 import { ErrorComponent } from './error.component';
 import { TableComponent } from './table.component';
@@ -32,7 +31,7 @@ let modelSort = function (a, b) {
 @Component({
   selector: 'psm-app',
   templateUrl: 'templates/app.html',
-  directives: [ LoginComponent, ErrorComponent, DetailsComponent, StatsComponent, RigComponent, AudioComponent, RdsComponent, TableComponent, SweepComponent, ScanComponent, ChartsComponent ],
+  directives: [ LoginComponent, ErrorComponent, DetailsComponent, StatsComponent, RigComponent, AudioComponent, RdsComponent, TableComponent, ScanComponent, ChartsComponent ],
   providers: [ DataService, ErrorService, MessageService, HTTP_PROVIDERS ]
 })
 export class AppComponent {
@@ -43,7 +42,7 @@ export class AppComponent {
   parities: any[] = [ ];
 
   config: Config;
-  fields: any;
+  values: any;
   status: any = { worker: { }, monkey: { } };
 
   constructor(private dataService: DataService, private messageService: MessageService) { }
@@ -71,7 +70,7 @@ export class AppComponent {
 
   setConfig(config: Config) {
     this.config = config;
-    this.fields = config ? config.config : undefined;
+    this.values = config ? config.values : undefined;
   }
 
   private checkSuperior() {

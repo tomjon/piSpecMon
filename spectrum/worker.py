@@ -9,33 +9,33 @@ from time import sleep
 import os, os.path
 import traceback
 from process import Process, UpdatableDict
-from elasticsearch import *
+import elasticsearch as data_store
 
 
-def iterator(config_id, config):
-  scan_config = parse_config(config)
-  audio_t = 0 if config['scan']['audio'] else None
+def iterator(config):
+  scan_config = parse_config(config.values)
+  audio_t = 0 if config.values['scan']['audio'] else None
 
   status = UpdatableDict()
-  yield status('config_id', config_id)
+  yield status('config_id', config.id)
 
   try:
-    with Monitor(**config['rig']) as monitor:
+    with Monitor(**config.values['rig']) as monitor:
       timeout_count = 0
       sweep_n = 0
       while True:
-        log.debug("Scan: {0}".format(config['scan']))
+        log.debug("Scan: {0}".format(config.values['scan']))
         yield status
 
         t0 = now()
-        sweep = { 'config_id': config_id, 'timestamp': t0, 'level': [] }
+        strengths = []
         yield status('sweep', { 'sweep_n': sweep_n, 'timestamp': t0, 'peaks': [] })
 
-        peaks = [ ]
+        peaks = []
         w = [(None,) * 3] * 3
 
         #FIXME mode should probably just be set once at rig.open, and should be an argument to Monitor.__init__()
-        monitor.set_mode(config['scan']['mode'])
+        monitor.set_mode(config.values['scan']['mode'])
 
         for idx, freq in scan(**scan_config):
           if 'current' in status['sweep']:
@@ -45,7 +45,7 @@ def iterator(config_id, config):
 
           while True:
             try:
-              level = monitor.get_strength(freq)
+              strength = monitor.get_strength(freq)
               break
             except TimeoutError as e:
               if timeout_count < rig['radio_on']:
@@ -57,18 +57,18 @@ def iterator(config_id, config):
               else:
                 raise e
 
-          status['sweep']['current']['strength'] = level
+          status['sweep']['current']['strength'] = strength
           yield status
 
-          w = [w[1], w[2], (freq, level, idx)]
-          sweep['level'].append(level if level is not None else -128)
-          if w[0][1] < w[1][1] and w[1][1] >= config['audio']['threshold'] and w[1][1] >= w[2][1]: # ..[1] gets you the level
+          w = [w[1], w[2], (freq, strength, idx)]
+          strengths.append(strength if strength is not None else -128)
+          if w[0][1] < w[1][1] and w[1][1] >= config.values['audio']['threshold'] and w[1][1] >= w[2][1]: # ..[1] gets you the strength
             peaks.append((w[1][2], w[1][0]))
 
             status['sweep']['peaks'].append({ 'freq_n': w[1][2], 'strength': w[1][1] })
             yield status
         else:
-          if w[1][1] < w[2][1] and w[2][1] >= config['audio']['threshold']:
+          if w[1][1] < w[2][1] and w[2][1] >= config.values['audio']['threshold']:
             peaks.append((w[2][2], w[2][1]))
 
           if 'previous' in status['sweep']:
@@ -79,38 +79,37 @@ def iterator(config_id, config):
             del status['sweep']['record']
           yield status
 
-          #FIXME now, tidy up by removing sweep list entirely?
-          write_data(sweep['config_id'], sweep['timestamp'], sweep['level'])
+          config.write_spectrum(t0, strengths)
 
-          if audio_t is not None and now() - audio_t > config['audio']['period'] * 1000:
+          if audio_t is not None and now() - audio_t > config.values['audio']['period'] * 1000:
             audio_t = now()
-            for st in record(status, config_id, sweep_n, monitor, config['scan'], config['audio'], peaks):
+            for st in record(status, config, monitor, peaks):
               yield st
 
         sweep_n += 1
   except Exception as e:
     log.error(e)
     traceback.print_exc()
-    write_error(config_id, e)
+    config.write_error(now(), e)
 
 #FIXME how/whether to interrupt audio recording?
-def record(status, config_id, sweep_n, monitor, scan, audio, freqs):
+def record(status, config, monitor, freqs):
   log.debug("Recording audio from {0} frequencies".format(len(freqs)))
   for idx, freq in freqs:
     t0 = now()
-    path = '/'.join([SAMPLES_DIRECTORY, str(config_id), str(sweep_n), str(idx)]) + '.wav'
-    if not os.path.exists(os.path.dirname(path)):
-      os.makedirs(os.path.dirname(path))
 
-    status['sweep']['record'] = { 'freq_n': idx }
+    status['sweep']['record'] = {'freq_n': idx}
     yield status
 
-    monitor.record(freq, scan['mode'], audio['rate'], audio['duration'], path, audio['path'])
-
     try:
-      write_audio(config_id, t0, sweep_n, idx)
+      path = config.write_audio(config_id, t0, idx)
+      if not os.path.exists(os.path.dirname(path)):
+        os.makedirs(os.path.dirname(path))
     except StoreError:
       return
+
+    audio = config.values['audio']
+    monitor.record(freq, config.values['scan']['mode'], audio['rate'], audio['duration'], path, audio['path'])
 
 
 class Worker (Process):

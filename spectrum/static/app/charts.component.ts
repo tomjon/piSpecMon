@@ -1,6 +1,5 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
-import { SweepComponent } from './sweep.component';
 import { RangeComponent } from './range.component';
 import { FrequencyComponent } from './frequency.component';
 import { LevelComponent } from './level.component';
@@ -16,7 +15,7 @@ import { MAX_N, CHART_HEIGHT } from './constants';
   directives: [ RangeComponent, FrequencyComponent, LevelComponent, WaterfallComponent, RdsTableComponent ]
 })
 export class ChartsComponent {
-  data: any = { };
+  spectrum: any = { };
   audio: any = { };
   rdsNames: any = { };
   rdsText: any = { };
@@ -29,7 +28,7 @@ export class ChartsComponent {
 
   @Input('config') set _config(config: Config) {
     this.config = config;
-    this.data = { };
+    this.spectrum = { };
     this.rdsNames = { };
     this.rdsText = { };
   }
@@ -50,17 +49,16 @@ export class ChartsComponent {
 
   show(range: number[]) {
     if (! range) {
-      this.data = { };
+      this.spectrum = { };
       this.audio = { };
     } else {
-      this.progress('spectrum', this.dataService.getSpectrumData(this.config.config_id, range))
-                                                .subscribe(data => this.mapData(data));
-      this.progress('audio', this.dataService.getAudioData(this.config.config_id, range))
-                                             .subscribe(audio => this.mapAudio(audio));
-      this.progress('names', this.dataService.getRdsNameData(this.config.config_id, range))
-                                             .subscribe(data => this.mapRdsNames(data));
-      this.progress('text', this.dataService.getRdsTextData(this.config.config_id, range))
-                                            .subscribe(data => this.mapRdsText(data));
+      this.progress('spectrum', this.dataService.getData(this.config.id, range))
+                                                .subscribe(data => {
+                                                  this.mapSpectrum(data.spectrum);
+                                                  this.mapAudio(data.audio);
+                                                  this.mapRdsNames(data.rds.name);
+                                                  this.mapRdsText(data.rds.text);
+                                                });
     }
   }
 
@@ -102,68 +100,69 @@ export class ChartsComponent {
     }
   }
 
-  mapData(data) {
+  mapSpectrum(data) {
     let timer = { key: 'processing', start: new Date(), end: null, time: null };
     this.times.push(timer);
 
     var interval = data.length / CHART_HEIGHT;
 
-    this.data = {
-                  levels: [],
-                  agg: { latest: [], min: [], max: [], avg: [] },
-                  freq_idxs: { 'min': this.fillArray(), 'max': this.fillArray(), 'avg': this.fillArray() }
-                };
+    this.spectrum = {
+      levels: [],
+      agg: { latest: [], min: [], max: [], avg: [] },
+      freq_idxs: { 'min': this.fillArray(), 'max': this.fillArray(), 'avg': this.fillArray() }
+    };
 
     if (data.length > 0) {
-      for (let freq_idx in data[data.length - 1].fields.level) {
+      // data[sweep_n] = [timestamp, [strength_0, strength_1, strength_2, .., strength_N]]
+      for (let freq_idx in data[data.length - 1][1]) {
         // take into account failed readings (level -128)
-        let level = data[data.length - 1].fields.level[freq_idx];
-        this.data.agg['latest'][freq_idx] = { idx: freq_idx, v: level != -128 ? level : null };
+        let strength = data[data.length - 1][1][freq_idx];
+        this.spectrum.agg['latest'][freq_idx] = { idx: freq_idx, v: strength != -128 ? strength : null };
       }
-      let level_idx = 0, count = null;
+      let level_idx = 0, count = null;//FIXME I think level_idx is/should be freq_n?? or is it sweep_n??
 
       for (let sweep_idx in data) {
-        let length = data[sweep_idx].fields.level.length;
+        let length = data[sweep_idx][1].length;
 
-        if (! this.data.levels[level_idx]) {
-          this.data.levels[level_idx] = {
+        if (! this.spectrum.levels[level_idx]) {
+          this.spectrum.levels[level_idx] = {
             fields: {
               level: this.fillArray(0, length),
-              timestamp: data[sweep_idx].fields.timestamp[0],
+              timestamp: data[sweep_idx][0],
               sweep_n: +sweep_idx
             }
           };
-          count = this.fillArray(0, data[sweep_idx].fields.level.length);
+          count = this.fillArray(0, data[sweep_idx][1].length);
         }
 
-        for (let freq_idx in data[sweep_idx].fields.level) {
-          let level = data[sweep_idx].fields.level[freq_idx];
-          if (level == -128) {
+        for (let freq_idx in data[sweep_idx][1]) {
+          let strength = data[sweep_idx][1][freq_idx];
+          if (strength == -128) {
             // failed reading, remove from data
-            data[sweep_idx].fields.level[freq_idx] = null;
+            data[sweep_idx][1][freq_idx] = null;
             continue;
           }
-          if (this.data.agg['min'][freq_idx] == null || level < this.data.agg['min'][freq_idx].v) {
-            this.data.agg['min'][freq_idx] = { idx: freq_idx, v: level };
+          if (this.spectrum.agg['min'][freq_idx] == null || strength < this.spectrum.agg['min'][freq_idx].v) {
+            this.spectrum.agg['min'][freq_idx] = { idx: freq_idx, v: strength };
           }
-          if (this.data.agg['max'][freq_idx] == null || level > this.data.agg['max'][freq_idx].v) {
-            this.data.agg['max'][freq_idx] = { idx: freq_idx, v: level };
+          if (this.spectrum.agg['max'][freq_idx] == null || strength > this.spectrum.agg['max'][freq_idx].v) {
+            this.spectrum.agg['max'][freq_idx] = { idx: freq_idx, v: strength };
           }
-          if (this.data.agg['avg'][freq_idx] == null) {
-            this.data.agg['avg'][freq_idx] = { idx: freq_idx, v: 0 };
+          if (this.spectrum.agg['avg'][freq_idx] == null) {
+            this.spectrum.agg['avg'][freq_idx] = { idx: freq_idx, v: 0 };
           }
-          this.data.agg['avg'][freq_idx].v += level / data.length;
+          this.spectrum.agg['avg'][freq_idx].v += strength / data.length;
 
-          this.data.levels[level_idx].fields.level[freq_idx] += level;
+          this.spectrum.levels[level_idx].fields.level[freq_idx] += strength;
           ++count[freq_idx];
         }
 
         if (+sweep_idx >= (level_idx + 1) * interval - 1 || +sweep_idx == length - 1) {
-          for (let freq_idx in data[sweep_idx].fields.level) {
+          for (let freq_idx in data[sweep_idx][1]) {
             if (count[freq_idx] > 0) {
-              this.data.levels[level_idx].fields.level[freq_idx] /= count[freq_idx];
+              this.spectrum.levels[level_idx].fields.level[freq_idx] /= count[freq_idx];
             } else {
-              this.data.levels[level_idx].fields.level[freq_idx] = -128; // no reading
+              this.spectrum.levels[level_idx].fields.level[freq_idx] = -128; // no reading
             }
           }
 
@@ -173,15 +172,15 @@ export class ChartsComponent {
       }
 
       /* find top N by avg, min and max */
-      for (let x in this.data.freq_idxs) {
+      for (let x in this.spectrum.freq_idxs) {
         // see if it beats any, if so swap and keep looking down the list... drop off end and gets kicked out
-        for (let _idx in this.data.agg[x]) {
+        for (let _idx in this.spectrum.agg[x]) {
           let idx = +_idx;
 
-          let v = this.data.agg[x][idx].v;
+          let v = this.spectrum.agg[x][idx].v;
 
-          if (idx > 0 && idx + 1 < this.data.agg[x].length) {
-            if (this.data.agg[x][idx - 1].v >= v || v < this.data.agg[x][idx + 1].v) {
+          if (idx > 0 && idx + 1 < this.spectrum.agg[x].length) {
+            if (this.spectrum.agg[x][idx - 1].v >= v || v < this.spectrum.agg[x][idx + 1].v) {
               continue;
             }
           }
@@ -189,18 +188,18 @@ export class ChartsComponent {
           let i: number = idx; //FIXME needed??
           // try slotting in our value
           for (let n: number = 0; n < MAX_N; ++n) {
-            let slot_idx = this.data.freq_idxs[x][n];
+            let slot_idx = this.spectrum.freq_idxs[x][n];
             // if we find an empty slot, just use it and quit
             if (slot_idx == null) {
-              this.data.freq_idxs[x][n] = i;
+              this.spectrum.freq_idxs[x][n] = i;
               break;
             }
-            let slot_v = this.data.agg[x][slot_idx].v;
+            let slot_v = this.spectrum.agg[x][slot_idx].v;
             // otherwise, compare with each slot, swapping if we beat it
             if ((x == 'min' && v < slot_v) || (x != 'min' && v > slot_v)) {
               let tmp = i;
               i = slot_idx;
-              this.data.freq_idxs[x][n] = tmp;
+              this.spectrum.freq_idxs[x][n] = tmp;
               v = slot_v;
             }
           }

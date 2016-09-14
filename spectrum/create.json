@@ -10,7 +10,6 @@
       "_source": { "enabled": false },
       "_timestamp": { "enabled": false },
       "properties": {
-        "timestamp": { "type": "long", "store": true },
         "json": { "type": "string", "store": true, "index": "no" }
       }
     },
@@ -62,8 +61,7 @@
       "properties": {
         "config_id": { "type": "string", "store": true, "index": "not_analyzed" },
         "timestamp": { "type": "long", "store": true },
-        "freq_n": { "type": "integer", "store": true, "index": "no" },
-        "sweep_n": { "type": "integer", "store": true, "index": "no" }
+        "freq_n": { "type": "integer", "store": true, "index": "no" }
       }
     },
     "error": {

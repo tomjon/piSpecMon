@@ -1,12 +1,9 @@
 import { Component, Input, Output, EventEmitter, ViewChild } from '@angular/core';
-import { WidgetComponent } from './widget.component';
-import { DataService } from './data.service';
 import { Config } from './config';
 import { _d3 as d3, dt_format, insertLineBreaks } from './d3_import';
 
 @Component({
   selector: 'psm-range',
-  directives: [ WidgetComponent ],
   templateUrl: 'templates/range.html'
 })
 export class RangeComponent {
@@ -20,23 +17,23 @@ export class RangeComponent {
 
   @ViewChild('slider') slider;
 
-  constructor(private dataService: DataService) { }
+  constructor() { }
 
   @Input('config') set _config(config: Config) {
     this.config = config;
-    if (this.config.config_id == '') return;
-    this.dataService.getRange(this.config.config_id)
-                    .subscribe(data => {
-                      this.showing = false;
-                      this.count = data.count;
-                      this.range = [this.config.timestamp, data.range];
-                      this.value = [this.range[0], this.range[1]]; // need a literal copy
-                      if (this.count > 0) this.draw();
-                    });
+    if (this.config.id == '') return;
+    //FIXME I have no idea why this timeout is required
+    setTimeout(() => {
+      this.showing = false;
+      this.count = this.config.count;
+      this.range = [this.config.timestamp, this.config.latest];
+      this.value = [this.range[0], this.range[1]]; // need a literal copy
+      if (this.count > 0) this.draw();
+    });
   }
 
   @Input('status') set _status(status: any) {
-    if (this.value && status && status.config_id == this.config.config_id && status.sweep) {
+    if (this.value && status && status.config_id == this.config.id && status.sweep) {
       let count = status.sweep.sweep_n; // only count complete sweeps
       if (count <= this.count) return;
       this.count = count;

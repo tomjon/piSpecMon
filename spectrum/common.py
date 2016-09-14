@@ -104,7 +104,7 @@ def parse_config(config):
   return scan
 
 
-class StoreError:
+class StoreError (Exception):
     def __init__(self, message):
         log.error(message)
         self.message = message

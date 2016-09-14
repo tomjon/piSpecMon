@@ -16,7 +16,7 @@ from datetime import datetime
 from worker import Worker
 from monkey import Monkey
 from monitor import get_capabilities
-from elasticsearch import *
+import elasticsearch as data_store
 import re
 import mimetypes
 
@@ -90,7 +90,7 @@ def role_required(roles):
 def check_user_timeout():
   # check for user timeouts
   for name in application.logged_in_users:
-    if time() > application.request_times[name] + USER_TIMEOUT_SECS:
+    if not application.debug and time() > application.request_times[name] + USER_TIMEOUT_SECS:
       application.logged_in_users.remove(name)
   # check whether current user has been logged out?
   if not hasattr(current_user, 'name'):
@@ -107,9 +107,10 @@ application.logged_in_users = []
 application.request_times = {}
 application.before_request(check_user_timeout)
 application.caps = get_capabilities()
-application.rig = get_settings('rig', { 'model': 1 }) #FIXME is this a Hamlib constant? (dummy rig)
-application.audio = get_settings('audio', { 'path': '/dev/dsp1', 'rate': 44100, 'period': 600, 'duration': 10, 'threshold': -20 })
-application.rds = get_settings('rds', { 'device': '/dev/ttyACM0', 'strength_threshold': 40, 'strength_timeout': 20, 'rds_timeout': 300 })
+application.rig = data_store.Settings('rig').read({'model': Hamlib.RIG_MODEL_PSMTEST})
+application.audio = data_store.Settings('audio').read({'path': '/dev/dsp1', 'rate': 44100, 'period': 600, 'duration': 10, 'threshold': -20})
+application.rds = data_store.Settings('rds').read({'device': '/dev/ttyACM0', 'strength_threshold': 40, 'strength_timeout': 20, 'rds_timeout': 300})
+application.defaults = data_store.Settings('defaults').read({"freqs": {"range": [87.5, 108.0, 0.1], "exp": 6}, "monitor": {"period": 0, "radio_on": 1}, "scan": {"mode": 64}})
 application.worker = Worker().client()
 application.monkey = Monkey().client()
 
@@ -129,10 +130,6 @@ else:
 
 # initialise login manager
 application.login_manager.init_app(application)
-
-# get default default scan configuration from defaults.json
-with open(local_path('defaults.json')) as f:
-  application.defaults = get_settings('defaults', json.loads(f.read()))
 
 # Also add log handlers to Flask's logger for cases where Werkzeug isn't used as the underlying WSGI server
 application.logger.addHandler(rfh)
@@ -169,9 +166,9 @@ def caps():
 def settings():
   rule = request.url_rule.rule[1:]
   if request.method == 'GET':
-    return json.dumps(getattr(application, rule))
+    return json.dumps(getattr(application, rule).values)
   elif request.method == 'PUT':
-    setattr(application, rule, set_settings(rule, request.get_json()))
+    getattr(application, rule).write(request.get_json())
     return json.dumps({ 'status': 'OK' })
 
 
@@ -184,19 +181,19 @@ def monitor():
   if request.method == 'PUT':
     if 'config_id' in application.worker.status():
       return "Worker already running", 400
-    config = json.loads(request.get_data())
-    config['rig'] = application.rig
-    config['audio'] = application.audio
-    config['rds'] = application.rds
+    values = json.loads(request.get_data())
+    values['rig'] = application.rig.values
+    values['audio'] = application.audio.values
+    values['rds'] = application.rds.values
 
     try:
-        config_id = write_config(config)
+      config = data_store.Config().write(now(), values)
     except StoreError as e:
-        return e.message, 500
+      return e.message, 500
 
-    application.worker.start(config_id)
-    if config['scan']['rds'] == 'true':
-      application.monkey.start(config_id)
+    application.worker.start(config.id)
+    if config.values['scan']['rds'] == 'true':
+      application.monkey.start(config.id)
 
     return json.dumps({ 'status': 'OK' })
   if request.method == 'DELETE':
@@ -212,19 +209,21 @@ def monitor():
 
 @application.route('/config')
 @role_required(['admin', 'freq', 'data'])
-def sweepSets():
+def configs():
+  def _dict(x):
+    return {'id': x.id, 'timestamp': x.timestamp, 'values': x.values, 'latest': x.latest, 'count': x.count}
   try:
-    return json.dumps({ 'data': read_configs() })
+    return json.dumps({ 'data': [_dict(x) for x in data_store.Config.iter()]})
   except StoreError as e:
     return e.message, 500
 
 # FIXME noone should be able to delete the running sweep
 @application.route('/config/<config_id>', methods=['GET', 'DELETE'])
 @role_required(['admin'])
-def deleteConfig(config_id):
+def config(config_id):
   if request.method == 'GET':
     try:
-      return json.dumps(read_config(config_id))
+      return json.dumps(data_store.Config(config_id).read().values)
     except StoreError as e:
       return e.message, 500
   else:
@@ -234,61 +233,38 @@ def deleteConfig(config_id):
       shutil.rmtree(samples_path)
     # delete spectrum and RDS data
     try:
-      delete_config(config_id)
+      data_store.Config(config_id).delete()
     except StoreError as e:
       return e.message, 500
     return json.dumps({ 'status': 'OK' })
 
-@application.route('/range/<config_id>')
-@role_required(['admin', 'freq', 'data'])
-def range(config_id):
-  try:
-    return json.dumps(sweep_info(config_id))
-  except StoreError as e:
-    return e.message, 500
-
 @application.route('/data/<config_id>')
 @role_required(['admin', 'freq', 'data'])
 def data(config_id):
+  range = (request.args.get('start'), request.args.get('end'))
   try:
-    return json.dumps({ 'data': read_data(config_id, request.args.get('start'), request.args.get('end')) })
+    config = data_store.Config(config_id)
+    data = {}
+    data['spectrum'] = list(config.iter_spectrum(*range))
+    data['audio'] = list(config.iter_audio(*range))
+    data['rds'] = {
+      'name': list(config.iter_rds_name(*range)),
+      'text': list(config.iter_rds_text(*range))
+    }
+    return json.dumps(data)
   except StoreError as e:
     return e.message, 500
 
-@application.route('/audio/<config_id>')
+@application.route('/audio/<config_id>/<freq_n>/<timestamp>')
 @role_required(['admin', 'freq', 'data'])
-def audio(config_id):
-  try:
-    return json.dumps({ 'data': read_audio(config_id, request.args.get('start'), request.args.get('end')) })
-  except StoreError as e:
-    return e.message, 500
-
-@application.route('/rds/name/<config_id>')
-@role_required(['admin', 'freq', 'data'])
-def rsd_names(config_id):
-  try:
-    return json.dumps({ 'data': read_rds_names(config_id, request.args.get('start'), request.args.get('end')) })
-  except StoreError as e:
-    return e.message, 500
-
-@application.route('/rds/text/<config_id>')
-@role_required(['admin', 'freq', 'data'])
-def rds_text(config_id):
-  try:
-    return json.dumps({ 'data': read_rds_text(config_id, request.args.get('start'), request.args.get('end')) })
-  except StoreError as e:
-    return e.message, 500
-
-@application.route('/audio/<config_id>/<sweep_n>/<freq_n>')
-@role_required(['admin', 'freq', 'data'])
-def wav_stream(config_id, sweep_n, freq_n):
-  if '/' in config_id or '\\' in config_id:
+def wav_stream(config_id, freq_n, timestamp):
+  if '.' in config_id or '/' in config_id or '\\' in config_id:
     return 'Bad parameter', 400
   try:
-    int(sweep_n), int(freq_n)
+    int(timestamp), int(freq_n)
   except ValueError:
     return 'Bad parameter', 400
-  base = '/'.join([SAMPLES_DIRECTORY, config_id, sweep_n, freq_n])
+  base = data_store.Config(config_id).audio_path(freq_n, timestamp)
   for ext in ['mp3', 'ogg', 'wav']:
     path = '{0}.{1}'.format(base, ext)
     try:
@@ -330,7 +306,7 @@ def user_management(name):
         return "No user data", 400
       if set_user(name, data['user']):
         return json.dumps({ 'status': 'OK' }), 200
-      password = data.get('password')
+      password = data_store.get('password')
       if password is None:
         return "No password parameter", 400
       create_user(name, password, data['user'])
@@ -436,15 +412,15 @@ def _iter_export(config, hits):
 @application.route('/export/<config_id>', methods=['GET', 'POST'])
 @role_required(['admin', 'freq', 'data'])
 def export(config_id):
-  config = get_config(config_id)
+  config = data_store.Config(config_id).read()
   try:
-    export = _iter_export(config, read_data(config_id))
+    export = _iter_export(config.values, list(config.iter_spectrum()))
   except StoreError as e:
     return e.message, 500
   if request.method == 'GET':
     return Response(export, mimetype='text/csv')
   else:
-    path = '/'.join([EXPORT_DIRECTORY, config_id + '.csv'])
+    path = os.path.join(EXPORT_DIRECTORY, config_id + '.csv')
     with open(path, 'w') as f:
       for x in export:
         f.write(x)
@@ -454,7 +430,7 @@ def export(config_id):
 @application.route('/stats')
 @role_required(['admin'])
 def get_stats():
-  return json.dumps(stats())
+  return json.dumps(data_store.stats())
 
 
 if __name__ == "__main__":

@@ -1,11 +1,9 @@
-<psm-widget class="container-fluid">
-  <div class="row">
-    <div class="col-lg-10 range-slider">
-      <div [hidden]="count == 0" #slider></div>
-    </div>
-    <div class="col-lg-2 range-controls">
-      <span>Total {{count}} sweeps</span>
-      <button (click)="onShow()">Show</button>
-    </div>
+<div class="container-fluid row">
+  <div class="col-lg-10 range-slider">
+    <div [hidden]="config.count == 0" #slider></div>
   </div>
-</psm-widget>
+  <div class="col-lg-2 range-controls">
+    <span>{{config.count}} sweeps</span>
+    <button (click)="onShow()">Show</button>
+  </div>
+</div>

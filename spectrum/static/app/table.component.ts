@@ -17,7 +17,7 @@ export class TableComponent {
   @Input() user: User;
   @Output('select') select = new EventEmitter<Config>();
 
-  sets: Config[] = [ ];
+  configs: Config[] = [ ];
   checked: any = { };
   selected: string;
 
@@ -34,15 +34,15 @@ export class TableComponent {
     if (status == undefined) return;
     this.standby = false;
     this.config_id = status.config_id;
-    if (status.config_id && ! this.sets.find(set => set.config_id == status.config_id)) {
+    if (status.config_id && ! this.configs.find(set => set.id == status.config_id)) {
       this.widgetComponent.busy(this.dataService.getConfig(status.config_id))
-                          .subscribe(config => this.sets.push(config));
+                          .subscribe(config => this.configs.push(config));
     }
   }
 
   ngOnInit() {
-    this.widgetComponent.busy(this.dataService.getSweepSets())
-                        .subscribe(sets => this.sets = sets);
+    this.widgetComponent.busy(this.dataService.getConfigs())
+                        .subscribe(configs => this.configs = configs);
   }
 
   onSelect(config_id, e) {
@@ -53,9 +53,9 @@ export class TableComponent {
   }
 
   private getConfig(config_id: string): Config {
-    for (let set of this.sets) {
-      if (set.config_id == config_id) {
-        return set;
+    for (let config of this.configs) {
+      if (config.id == config_id) {
+        return config;
       }
     }
     return null;
@@ -70,8 +70,8 @@ export class TableComponent {
   }
 
   onCheckAll() {
-    for (let s of this.sets) {
-      if (s.config_id != this.config_id) this.checked[s.config_id] = true;
+    for (let config of this.configs) {
+      if (config.id != this.config_id) this.checked[config.id] = true;
     }
   }
 
@@ -80,16 +80,16 @@ export class TableComponent {
   }
 
   get maxChecked(): number {
-    return this.sets.length - (this.config_id ? 1 : 0);
+    return this.configs.length - (this.config_id ? 1 : 0);
   }
 
   onDelete() {
-    //FIXME need to overhaul server API - and provide a way to delete multiple sweep sets in one go
+    //FIXME need to provide a way to delete multiple sweep sets in one go
     for (let id of this.checkedIds()) {
-      this.widgetComponent.busy(this.dataService.deleteSweepSet(id))
+      this.widgetComponent.busy(this.dataService.deleteConfig(id))
                           .subscribe(() => {
                             delete this.checked[id];
-                            this.sets.splice(this.sets.findIndex(s => s.config_id == id), 1);
+                            this.configs.splice(this.configs.findIndex(c => c.id == id), 1);
                           });
     }
   }
