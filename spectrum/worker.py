@@ -9,7 +9,7 @@ from time import sleep
 import os, os.path
 import traceback
 from process import Process, UpdatableDict
-import elasticsearch as data_store
+import fs_datastore as data_store
 
 
 def iterator(config):

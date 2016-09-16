@@ -4,7 +4,7 @@ from process import Process, UpdatableDict
 from rds import RdsApi
 from time import sleep, time
 import requests
-import elasticsearch as data_store
+import fs_datastore as data_store
 
 
 def poll(fn, condition, timeout):

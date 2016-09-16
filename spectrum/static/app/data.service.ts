@@ -138,14 +138,14 @@ export class DataService {
     return this.http.get(url)
                     .map(res => {
                       let data = res.json();
-                      return new Config(data.id, data.values, +data.timestamp, +data.latest, +data.count);
+                      return new Config(data.id, data.values, +data.timestamp, +data.first, +data.latest, +data.count);
                     })
                     .catch(this.errorHandler("get config set"));
   }
 
   getConfigs(): Observable<Config[]> {
     return this.http.get(this.baseUrl + 'config')
-                    .map(res => res.json().data.map(c => new Config(c.id, c.values, c.timestamp, c.latest, c.count)))
+                    .map(res => res.json().data.map(c => new Config(c.id, c.values, c.timestamp, c.first, c.latest, c.count)))
                     .catch(this.errorHandler("get scan configs"));
   }
 

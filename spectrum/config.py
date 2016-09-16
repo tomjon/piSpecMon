@@ -31,3 +31,6 @@ USER_TIMEOUT_SECS = 60
 # audio samples directory, and how often (in s) the wav2mp3 converter should run
 SAMPLES_DIRECTORY = 'samples'
 CONVERT_PERIOD = 300
+
+DATA_DIR = 'data'
+SETTINGS_DIR = 'settings'

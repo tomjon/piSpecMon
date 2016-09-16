@@ -16,7 +16,7 @@ from datetime import datetime
 from worker import Worker
 from monkey import Monkey
 from monitor import get_capabilities
-import elasticsearch as data_store
+import fs_datastore as data_store
 import re
 import mimetypes
 
@@ -211,7 +211,7 @@ def monitor():
 @role_required(['admin', 'freq', 'data'])
 def configs():
   def _dict(x):
-    return {'id': x.id, 'timestamp': x.timestamp, 'values': x.values, 'latest': x.latest, 'count': x.count}
+    return {'id': x.id, 'timestamp': x.timestamp, 'values': x.values, 'first': x.first, 'latest': x.latest, 'count': x.count}
   try:
     return json.dumps({ 'data': [_dict(x) for x in data_store.Config.iter()]})
   except StoreError as e:
@@ -238,12 +238,16 @@ def config(config_id):
       return e.message, 500
     return json.dumps({ 'status': 'OK' })
 
+def _int_arg(name):
+  x = request.args.get(name)
+  return None if x is None else int(x)
+
 @application.route('/data/<config_id>')
 @role_required(['admin', 'freq', 'data'])
 def data(config_id):
-  range = (request.args.get('start'), request.args.get('end'))
+  range = (_int_arg('start'), _int_arg('end'))
   try:
-    config = data_store.Config(config_id)
+    config = data_store.Config(config_id).read()
     data = {}
     data['spectrum'] = list(config.iter_spectrum(*range))
     data['audio'] = list(config.iter_audio(*range))

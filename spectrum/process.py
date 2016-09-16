@@ -11,7 +11,7 @@ import errno
 import traceback
 import sys
 
-import elasticsearch as data_store
+import fs_datastore as data_store
 
 """ Process management module. Use this to provide a process which responds to signals and reads config
     and writes status using the file system, and writes data to the provided data source.

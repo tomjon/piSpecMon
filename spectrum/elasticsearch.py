@@ -58,10 +58,11 @@ class Config(object):
     """ A wrapper for config id, timestamp, and values.
     """
 
-    def __init__(self, _id=None, values=None, timestamp=None, latest=None, count=None):
+    def __init__(self, _id=None, values=None, timestamp=None, first=None, latest=None, count=None):
         self.id = _id
         self.values = values
         self.timestamp = timestamp
+        self.first = first
         self.latest = latest
         self.count = count
 
@@ -137,7 +138,15 @@ class Config(object):
         if self.count > 0:
             self.latest = int(req.json()['hits']['hits'][0]['fields']['timestamp'][0])
         else:
+            self.first = None
             self.latest = None
+            return
+        # and repeat to get timestamp of first sweep
+        params['sort'] = 'timestamp:asc'
+        req = requests.get(_url('sweep/_search'), params=params)
+        if req.status_code != 200:
+            raise ElasticsearchError(req)
+        self.first = int(req.json()['hits']['hits'][0]['fields']['timestamp'][0])
 
     def _range_search(self, start, end):
         # formulate parameters for a range from start to end
@@ -276,7 +285,7 @@ class Settings(object):
             log.info("Initialising settings: %s", self.id)
             self.values = defaults or {}
             self.write()
-            return
+            return self
         elif req.status_code != 200:
             raise ElasticsearchError(req)
         fields = req.json()['fields']
