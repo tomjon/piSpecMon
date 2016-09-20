@@ -101,13 +101,18 @@ def check_user_timeout():
   return None
 
 
+try:
+  DEFAULT_MODEL = Hamlib.RIG_MODEL_PSMTEST 
+except AttributeError:
+  DEFAULT_MODEL = Hamlib.RIG_MODEL_AR8200
+
 application = SecuredStaticFlask(__name__)
 application.login_manager = LoginManager()
 application.logged_in_users = []
 application.request_times = {}
 application.before_request(check_user_timeout)
 application.caps = get_capabilities()
-application.rig = data_store.Settings('rig').read({'model': Hamlib.RIG_MODEL_PSMTEST})
+application.rig = data_store.Settings('rig').read({'model': DEFAULT_MODEL})
 application.audio = data_store.Settings('audio').read({'path': '/dev/dsp1', 'rate': 44100, 'period': 600, 'duration': 10, 'threshold': -20})
 application.rds = data_store.Settings('rds').read({'device': '/dev/ttyACM0', 'strength_threshold': 40, 'strength_timeout': 20, 'rds_timeout': 300})
 application.defaults = data_store.Settings('defaults').read({"freqs": {"range": [87.5, 108.0, 0.1], "exp": 6}, "monitor": {"period": 0, "radio_on": 1}, "scan": {"mode": 64}})
