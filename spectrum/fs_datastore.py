@@ -42,6 +42,7 @@ from config import DATA_DIR, SAMPLES_DIRECTORY, SETTINGS_DIR
 from common import StoreError, local_path
 
 
+INDEX = 'index'
 FORMAT = 'format'
 CONFIG = 'config'
 TIMESTAMPS = 'timestamps'
@@ -97,6 +98,7 @@ class Struct(struct.Struct):
 
 _dir = local_path(DATA_DIR)
 _settings = local_path(SETTINGS_DIR)
+_index = os.path.join(_dir, INDEX)
 _t_struct = Struct('Q')
 _n_struct = Struct('I')
 
@@ -118,12 +120,14 @@ class Config(object):
     def iter():
         """ Yield stored Config objects.
         """
-        for config_id in os.listdir(_dir):
-            if len(config_id) == 0 or config_id[0] == '.':
-                continue
-            config = Config(config_id)
-            config.read()
-            yield config
+        with open(_index) as f:
+            for config_id in f:
+                config_id = config_id.strip()
+                if len(config_id) == 0 or config_id[0] == '.':
+                    continue
+                config = Config(config_id)
+                config.read()
+                yield config
 
     def read(self):
         """ Read config attributes from the data store.
@@ -154,6 +158,9 @@ class Config(object):
         self.id = str(timestamp)
         dir = os.path.join(_dir, self.id)
         os.mkdir(dir)
+        with open(_index, 'a') as f:
+            f.write(self.id)
+            f.write('\n')
         with open(os.path.join(dir, CONFIG), 'w') as f:
             f.write(json.dumps(self.values))
         with open(os.path.join(dir, FORMAT), 'w') as f:
@@ -169,6 +176,15 @@ class Config(object):
     def delete(self):
         """ Delete the config and all associated data from the data store.
         """
+        _tmp = '{0}_tmp'.format(_index)
+        with open(_index) as f_index, open(_tmp, 'w') as f_tmp:
+            for config_id in f_index:
+                config_id = config_id.strip()
+                if config_id == self.id:
+                    continue
+                f_tmp.write(config_id)
+                f_tmp.write('\n')
+        os.rename(_tmp, _index)
         shutil.rmtree(os.path.join(_dir, self.id))
         self.id = None # render config object useless (id no longer valid)
 
@@ -198,10 +214,10 @@ class Config(object):
         with open(os.path.join(dir, data_file), 'a') as f:
             _struct.fwrite(f, data)
 
-    def _iter_freq_data(self, index_file, data_file, start=None, end=None):
+    def _iter_freq_data(self, times_file, data_file, start=None, end=None):
         timestamp0, offset0 = None, None
         dir = os.path.join(_dir, self.id)
-        t_path = os.path.join(dir, index_file)
+        t_path = os.path.join(dir, times_file)
         d_path = os.path.join(dir, data_file)
         if not os.path.exists(t_path) or not os.path.exists(d_path):
             return
@@ -369,6 +385,9 @@ if not os.path.exists(_dir):
     os.mkdir(_dir)
 if not os.path.exists(_settings):
     os.mkdir(_settings)
+if not os.path.exists(_index):
+    with open(_index, 'w'):
+        pass
 
 
 if __name__ == '__main__':
