@@ -142,7 +142,7 @@ export class WaterfallComponent {
         let audio = this.audio[`${d[1]}_${i}`];
         if (audio == undefined) return;
         let control = this.audioControl.nativeElement;
-        control.src = `/audio/${audio.config_id}/${audio.sweep_n}/${audio.freq_n}`;
+        control.src = audio;
         control.load();
         control.play();
       });

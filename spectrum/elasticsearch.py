@@ -194,8 +194,6 @@ class Config(object):
 
     def write_audio(self, timestamp, freq_n):
         """ Write freq_n and timestamp for an audio sample.
-
-            Returns a filename for storing the audio sample.
         """
         data = {'config_id': self.id, 'timestamp': timestamp, 'freq_n': freq_n}
         req = requests.post(_url('audio/'), params=REFRESH, data=json.dumps(data))

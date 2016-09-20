@@ -4,6 +4,8 @@ example_queries/
 .*
 logs/
 samples/
+data/
+settings/
 users.passwords
 static/app/*.js
 static/app/*.map

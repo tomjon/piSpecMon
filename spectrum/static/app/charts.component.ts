@@ -22,6 +22,7 @@ export class ChartsComponent {
 
   config: Config;
 
+  debug: boolean = false;
   times: any[] = [ ];
 
   @Input() status: any;
@@ -72,31 +73,33 @@ export class ChartsComponent {
   }
 
   mapAudio(audio: any[]) {
-    // want this.audio to be a lookup like this.audio[{sweep_n}_{freq_n}] = Object
+    // want this.audio to be a lookup like this.audio[{sweep_n}_{freq_n}] = ..
     this.audio = { length: audio.length };
+    let sweep_n = -1;
+    let sweep_t = null;
     for (let a of audio) {
-      this.audio[`${a.fields.sweep_n[0]}_${a.fields.freq_n[0]}`] = {
-        config_id: a.fields.config_id[0],
-        sweep_n: a.fields.sweep_n[0],
-        freq_n: a.fields.freq_n[0],
-        timestamp: a.fields.timestamp[0]
-      };
+      let audio_t = a[0];
+      let freq_n = a[1];
+      while (sweep_t == null || audio_t > sweep_t) {
+        sweep_t = this.spectrum.levels[++sweep_n].fields.timestamp;
+      }
+      this.audio[`${sweep_n}_${freq_n}`] = `/audio/${this.config.id}/${freq_n}/${audio_t}`;
     }
   }
 
-  mapRdsNames(docs: any[]) {
+  mapRdsNames(data: any[]) {
     this.rdsNames = { };
-    for (let doc of docs) {
-      this.rdsNames[doc.fields.idx] = doc.fields.name;
+    for (let rds of data) {
+      this.rdsNames[rds[1]] = rds[2]; //FIXME ignores timestamp, effectively takes last known RDS name per frequency
     }
   }
 
-  mapRdsText(docs: any[]) {
+  mapRdsText(data: any[]) {
     this.rdsText = { };
-    for (let doc of docs) {
-      let idx = doc.fields.idx;
-      if (this.rdsText[idx] == undefined) this.rdsText[idx] = [];
-      this.rdsText[idx].push({ 'timestamp': +doc.fields.timestamp, 'text': doc.fields.text });
+    for (let rds of data) {
+      let freq_n = rds[1];
+      if (this.rdsText[freq_n] == undefined) this.rdsText[freq_n] = [];
+      this.rdsText[freq_n].push({ 'timestamp': +rds[0], 'text': rds[2] });
     }
   }
 

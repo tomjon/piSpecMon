@@ -102,7 +102,7 @@ def record(status, config, monitor, freqs):
     yield status
 
     try:
-      path = config.write_audio(config_id, t0, idx)
+      path = '{0}.wav'.format(config.write_audio(t0, idx))
       if not os.path.exists(os.path.dirname(path)):
         os.makedirs(os.path.dirname(path))
     except StoreError:

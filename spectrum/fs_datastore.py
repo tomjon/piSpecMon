@@ -264,8 +264,6 @@ class Config(object):
     def audio_path(self, timestamp, freq_n):
         """ Return a (base) path at which an audio sample is stored.
         """
-        if self.values is None:
-            raise StoreError("Uninitialised config (call read or write)")
         return os.path.join(SAMPLES_DIRECTORY, self.id, str(freq_n), str(timestamp))
 
     def iter_audio(self, start=None, end=None):
@@ -278,8 +276,6 @@ class Config(object):
 
     def write_audio(self, timestamp, freq_n):
         """ Write freq_n and timestamp for an audio sample.
-
-            Returns a filename for storing the audio sample.
         """
         if self.values is None:
             raise StoreError("Uninitialised config (call read or write)")

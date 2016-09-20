@@ -1,4 +1,4 @@
-<div>
+<div *ngIf="debug">
   <ul>
     <li *ngFor="let t of times"><b>{{t.key}}</b> {{t.time}}ms</li>
   </ul>

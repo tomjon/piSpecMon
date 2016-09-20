@@ -207,13 +207,14 @@ def monitor():
     # monitor status
     return json.dumps({ 'worker': application.worker.status(), 'monkey': application.monkey.status() })
 
+def _config_dict(x):
+  return {'id': x.id, 'timestamp': x.timestamp, 'values': x.values, 'first': x.first, 'latest': x.latest, 'count': x.count}
+
 @application.route('/config')
 @role_required(['admin', 'freq', 'data'])
 def configs():
-  def _dict(x):
-    return {'id': x.id, 'timestamp': x.timestamp, 'values': x.values, 'first': x.first, 'latest': x.latest, 'count': x.count}
   try:
-    return json.dumps({ 'data': [_dict(x) for x in data_store.Config.iter()]})
+    return json.dumps({ 'data': [_config_dict(x) for x in data_store.Config.iter()]})
   except StoreError as e:
     return e.message, 500
 
@@ -223,7 +224,7 @@ def configs():
 def config(config_id):
   if request.method == 'GET':
     try:
-      return json.dumps(data_store.Config(config_id).read().values)
+      return json.dumps(_config_dict(data_store.Config(config_id).read()))
     except StoreError as e:
       return e.message, 500
   else:
@@ -261,19 +262,19 @@ def data(config_id):
 
 @application.route('/audio/<config_id>/<freq_n>/<timestamp>')
 @role_required(['admin', 'freq', 'data'])
-def wav_stream(config_id, freq_n, timestamp):
+def audio_stream(config_id, freq_n, timestamp):
   if '.' in config_id or '/' in config_id or '\\' in config_id:
     return 'Bad parameter', 400
   try:
     int(timestamp), int(freq_n)
   except ValueError:
     return 'Bad parameter', 400
-  base = data_store.Config(config_id).audio_path(freq_n, timestamp)
+  base = data_store.Config(config_id).audio_path(timestamp, freq_n)
   for ext in ['mp3', 'ogg', 'wav']:
     path = '{0}.{1}'.format(base, ext)
     try:
       return send_file_partial(path)
-    except OSError:
+    except IOError:
       pass
   return 'File not found', 404
 

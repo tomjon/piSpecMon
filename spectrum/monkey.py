@@ -1,10 +1,13 @@
 from config import *
 from common import *
 from process import Process, UpdatableDict
-from rds import RdsApi
 from time import sleep, time
 import requests
 import fs_datastore as data_store
+try:
+  from rds import RdsApi
+except ImportError:
+  from fake_rds import RdsApi
 
 
 def poll(fn, condition, timeout):
@@ -38,7 +41,7 @@ def iterator(config):
         yield progress('name', name)
 
         try:
-          write_rds_name(config.id, idx, name)
+          config.write_rds_name(now(), idx, name)
         except StoreError:
           return
 
@@ -46,10 +49,11 @@ def iterator(config):
         while time() < t0 + config.values['rds']['rds_timeout']:
           text = api.get_text()
           if text is not None and text != text0:
+            text0 = text
             yield progress('text', text)
 
             try:
-              write_rds_text(config.id, idx, text)
+              config.write_rds_text(now(), idx, text)
             except StoreError:
               return
 
