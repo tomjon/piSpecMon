@@ -97,7 +97,7 @@ class Struct(struct.Struct):
 
 _dir = local_path(DATA_DIR)
 _settings = local_path(SETTINGS_DIR)
-_t_struct = Struct('L')
+_t_struct = Struct('Q')
 _n_struct = Struct('I')
 
 
