@@ -112,7 +112,8 @@ class Monitor:
   def __enter__(self):
     self._check(self.rig.open)
     if self.attenuation is not None:
-      self._check(self.rig.set_level, Hamlib.RIG_LEVEL_ATT, self.attenuation, Hamlib.RIG_VFO_CURR)
+      #FIXME can we get the legal attenuation values from Hamlib? There's gran_t but where is that used?
+      self._check(self.rig.set_level, Hamlib.RIG_LEVEL_ATT, 20 if self.attenuation else 0, Hamlib.RIG_VFO_CURR)
     return self
 
   def __exit__(self, *args):
