@@ -2,34 +2,34 @@
   <form role="form" #form="ngForm">
     <div class="form-group">
       <label for="device">RDS device path</label>
-      <input [disabled]="loading" type="text" required class="form-control" [(ngModel)]="rds.device" name="device" #path="ngModel">
+      <input [disabled]="loading" type="text" required class="form-control" [(ngModel)]="rds.device" name="device" #device="ngModel">
     </div>
-    <!--div [hidden]="device.valid || device.pristine" class="alert alert-danger">
+    <div [hidden]="device.valid || device.pristine" class="alert alert-danger">
       RDS device path is a required parameter
-    </div-->
+    </div>
     <div class="form-group">
       <div class="psm-input-group col-lg-6">
         <label for="strength_threshold">Strength threshold</label>
-        <input [disabled]="loading" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="rds.strength_threshold" name="strength_threshold" #duration="ngModel">
+        <input [disabled]="loading" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="rds.strength_threshold" name="strength_threshold" #strength_threshold="ngModel">
       </div>
       <div class="psm-input-group col-lg-6">
         <label for="strength_timeout">Strength timeout (s)</label>
-        <input [disabled]="loading" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="rds.strength_timeout" name="strength_timeout" #duration="ngModel">
+        <input [disabled]="loading" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="rds.strength_timeout" name="strength_timeout" #strength_timeout="ngModel">
       </div>
     </div>
-    <!--div [hidden]="strength_threshold.valid || strength_threshold.pristine" class="alert alert-danger">
+    <div [hidden]="strength_threshold.valid || strength_threshold.pristine" class="alert alert-danger">
       Strength threshold is a required integer parameter
     </div>
     <div [hidden]="strength_timeout.valid || strength_timeout.pristine" class="alert alert-danger">
       Strength timeout is a required integer parameter
-    </div-->
+    </div>
     <div class="form-group">
       <label for="rds_timeout">RDS timeout (s)</label>
-      <input [disabled]="loading" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="rds.rds_timeout" name="rds_timeout" #duration="ngModel">
+      <input [disabled]="loading" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="rds.rds_timeout" name="rds_timeout" #rds_timeout="ngModel">
     </div>
-    <!--div [hidden]="rds_timeout.valid || rds_timeout.pristine" class="alert alert-danger">
+    <div [hidden]="rds_timeout.valid || rds_timeout.pristine" class="alert alert-danger">
       RDS timeout is a required parameter
-    </div-->
+    </div>
     <button (click)="onReset()" class="btn btn-default" [disabled]="loading || form.form.pristine">Reset</button>
     <button (click)="onSubmit()" class="btn btn-default" [disabled]="loading || ! form.form.valid || form.form.pristine">Submit</button>
   </form>
