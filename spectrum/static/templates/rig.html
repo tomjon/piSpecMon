@@ -88,12 +88,12 @@
         </select>
       </div>
       <div class="psm-input-group col-lg-6">
-        <label for="attenuation">Attenuation level (dB)</label>
-        <input [disabled]="loading" type="number" min="0" pattern="[0-9]+" required class="form-control" [(ngModel)]="rig.attenuation" name="attenuation" #attenuation="ngModel">
+        <label for="attenuation">Attenuation</label>
+        <select [disabled]="loading" class="form-control" [(ngModel)]="rig.attenuation" name="attenuation">
+          <option value="true">On</option>
+          <option value="false">Off</option>
+        </select>
       </div>
-    </div>
-    <div [hidden]="attenuation.valid || attenuation.pristine" class="alert alert-danger">
-      Attenuation level is a required parameter, and must be an integer
     </div>
     <button (click)="onReset()" class="btn btn-default" [disabled]="loading || rigForm.form.pristine">Reset</button>
     <button (click)="onSubmit()" class="btn btn-default" [disabled]="loading || ! rigForm.form.valid || rigForm.form.pristine">Submit</button>

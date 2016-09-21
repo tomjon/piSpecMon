@@ -1,11 +1,12 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { DataService } from './data.service';
 import { WidgetComponent } from './widget.component';
+import { BinarySelectComponent } from './binary-select.component';
 
 @Component({
   selector: 'psm-rig',
   templateUrl: 'templates/rig.html',
-  directives: [ WidgetComponent ]
+  directives: [ WidgetComponent, BinarySelectComponent ]
 })
 export class RigComponent {
   @Input() models;

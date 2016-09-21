@@ -39,15 +39,15 @@
       <div class="psm-input-group col-lg-6">
         <label for="rds">Decode RDS</label>
         <select [disabled]="loading || standby || worker.config_id" class="form-control" [(ngModel)]="config.scan.rds" name="rds">
-          <option value="true">Yes</option>
-          <option value="false">No</option>
+          <option value="true">On</option>
+          <option value="false">Off</option>
         </select>
       </div>
       <div class="psm-input-group col-lg-6">
         <label for="audio">Collect audio</label>
         <select [disabled]="loading || standby || worker.config_id" class="form-control" [(ngModel)]="config.scan.audio" name="audio">
-          <option value="true">Yes</option>
-          <option value="false">No</option>
+          <option value="true">On</option>
+          <option value="false">Off</option>
         </select>
       </div>
     </div>

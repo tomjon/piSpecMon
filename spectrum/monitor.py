@@ -87,7 +87,7 @@ class Monitor:
         set_check - 0 = set frequency and hope, N = set/check N times before failing
         retries - retry after error or timeout this many times
         interval - if > 0, pause this many ms before retrying (doubles each retry)
-        attenuation - if not None, set attenuation level on the rig
+        attenuation - if not None, set attenuation for the rig
     """
     self.rig = Hamlib.Rig(model)
     if self.rig.this is None:
@@ -99,7 +99,7 @@ class Monitor:
     if rate is not None:
       self.rig.state.rigport.parm.serial.rate = rate
     if parity is not None:
-      self.rig.state.rigport.parm.serial.parit = parity
+      self.rig.state.rigport.parm.serial.parity = parity
     if write_delay is not None:
       self.rig.state.rigport.write_delay = write_delay
     if pathname is not None:
