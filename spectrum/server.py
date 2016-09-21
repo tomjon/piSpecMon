@@ -157,8 +157,15 @@ def favicon():
                              'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 
+# version string
+@application.route('/version')
+@role_required(['admin', 'freq', 'data'])
+def version():
+  return send_file(VERSION_FILE)
+
 # rig capabilities API
 @application.route('/caps')
+@role_required(['admin', 'freq', 'data'])
 def caps():
   return json.dumps(application.caps)
 

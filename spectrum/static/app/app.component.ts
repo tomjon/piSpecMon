@@ -45,9 +45,13 @@ export class AppComponent {
   values: any;
   status: any = { worker: { }, monkey: { } };
 
+  version: string;
+
   constructor(private dataService: DataService, private messageService: MessageService) { }
 
   ngOnInit() {
+    this.dataService.getVersion()
+                    .subscribe(version => this.version = version);
     this.dataService.getCurrentUser()
                     .subscribe(user => { this.user = user; this.checkSuperior() });
     this.dataService.getCaps()

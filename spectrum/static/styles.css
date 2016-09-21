@@ -1,6 +1,13 @@
 .header {
   float: left;
 }
+.header img {
+  margin-right: 20px;
+}
+.version {
+  font-size: small;
+  margin-left: 20px;
+}
 
 /* charts */
 .axis path, .axis line {

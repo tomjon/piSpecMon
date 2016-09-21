@@ -11,6 +11,12 @@ export class DataService {
 
   constructor(private http: Http, private errorService: ErrorService) { }
 
+  getVersion(): Observable<any> {
+    return this.http.get(this.baseUrl + 'version')
+                    .map(res => res.text())
+                    .catch(this.errorHandler("get version"));
+  }
+
   getCaps(): Observable<any> {
     return this.http.get(this.baseUrl + 'caps')
                     .map(res => res.json())
