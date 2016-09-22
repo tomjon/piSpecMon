@@ -26,7 +26,7 @@ declare var $;
                  <svg:line class="horizontal" *ngIf="showInfo" [attr.x1]="margin.left" [attr.x2]="width + margin.left" [attr.y1]="showY" [attr.y2]="showY" />
                  <svg:line class="vertical" *ngIf="showInfo" [attr.x1]="showX" [attr.x2]="showX" [attr.y1]="height + margin.top" [attr.y2]="showY" />
                  <svg:rect class="info" *ngIf="showInfo" [attr.x]="showX + 10 + adjustX" [attr.y]="showY - 30" [attr.width]="textWidth + 20" height=21 rx=5 ry=5 />
-                 <svg:text #text class="info" [attr.x]="showX + 20 + adjustX" [attr.y]="showY - 15">{{infoText}}</svg:text>
+                 <svg:text #text class="info" *ngIf="showInfo" [attr.x]="showX + 20 + adjustX" [attr.y]="showY - 15">{{infoText}}</svg:text>
                </svg>
              </psm-widget>`
 })
@@ -89,9 +89,10 @@ export class FrequencyComponent {
   ngOnChanges() {
     if (! this.svg) return; // ngOnChanges() happens before ngOnInit()!
     this.svg.selectAll("g, path").remove();
+    this.showInfo = false;
 
     if (this.isHidden()) return;
-    
+
     this.timestamp = dt_format(new Date(this.data.levels[this.data.levels.length - 1].fields.timestamp));
     let agg = this.data.agg[this.sweep];
 

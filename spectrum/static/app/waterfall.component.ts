@@ -10,7 +10,6 @@ declare var $;
   directives: [ WidgetComponent ],
   template: `<psm-widget [hidden]="isHidden()" title="Waterfall" class="chart">
                <form class="form-inline controls" role="form">
-                 {{time}}
                  <div *ngIf="showSamples" class="form-group">
                    <audio #audio controls preload='none'></audio>
                  </div>
@@ -88,6 +87,7 @@ export class WaterfallComponent {
     let t0 = new Date();
 
     this.g.selectAll("g *").remove();
+    this.infoText = "";
 
     if (this.isHidden()) return;
 
