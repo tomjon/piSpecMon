@@ -53,6 +53,9 @@ export class TableComponent {
   }
 
   private getConfig(config_id: string): Config {
+    if (config_id == undefined) {
+      return null;
+    }
     for (let config of this.configs) {
       if (config.id == config_id) {
         return config;
@@ -90,6 +93,10 @@ export class TableComponent {
                           for (let id of ids) {
                             delete this.checked[id];
                             this.configs.splice(this.configs.findIndex(c => c.id == id), 1);
+                            if (this.selected == id) {
+                              this.selected = undefined;
+                              this.select.emit(null);
+                            }
                           }
                         });
   }

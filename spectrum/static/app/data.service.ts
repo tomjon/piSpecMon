@@ -143,7 +143,7 @@ export class DataService {
     let url = this.baseUrl + 'config/' + config_id;
     return this.http.get(url)
                     .map(res => {
-                      let data = res.json().data[0];
+                      let data = res.json();
                       return new Config(data.id, data.values, +data.timestamp, +data.first, +data.latest, +data.count);
                     })
                     .catch(this.errorHandler("get config set"));
