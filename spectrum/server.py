@@ -230,6 +230,14 @@ def configs():
   except StoreError as e:
     return e.message, 500
 
+def _delete(config_id):
+    # delete audio samples...
+    samples_path = os.path.join(current_app.root_path, SAMPLES_DIRECTORY, config_id)
+    if os.path.isdir(samples_path):
+      shutil.rmtree(samples_path)
+    # delete config and associated data
+    data_store.Config(config_id).delete()
+
 # FIXME noone should be able to delete the running sweep
 @application.route('/config/<config_id>', methods=['GET', 'DELETE'])
 @role_required(['admin'])
@@ -240,16 +248,22 @@ def config(config_id):
     except StoreError as e:
       return e.message, 500
   else:
-    # delete audio samples...
-    samples_path = os.path.join(current_app.root_path, SAMPLES_DIRECTORY, config_id)
-    if os.path.isdir(samples_path):
-      shutil.rmtree(samples_path)
-    # delete spectrum and RDS data
     try:
-      data_store.Config(config_id).delete()
+      _delete(config_id)
     except StoreError as e:
       return e.message, 500
     return json.dumps({ 'status': 'OK' })
+
+@application.route('/configs/<config_ids>', methods=['DELETE'])
+@role_required(['admin'])
+def configs_delete(config_ids):
+  try:
+    for config_id in config_ids.split(','):
+      _delete(config_id)
+  except StoreError as e:
+    return e.message, 500
+  return json.dumps({ 'status': 'OK' })
+
 
 def _int_arg(name):
   x = request.args.get(name)
@@ -323,7 +337,7 @@ def user_management(name):
         return "No user data", 400
       if set_user(name, data['user']):
         return json.dumps({ 'status': 'OK' }), 200
-      password = data_store.get('password')
+      password = data.get('password')
       if password is None:
         return "No password parameter", 400
       create_user(name, password, data['user'])

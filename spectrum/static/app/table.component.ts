@@ -84,14 +84,14 @@ export class TableComponent {
   }
 
   onDelete() {
-    //FIXME need to provide a way to delete multiple sweep sets in one go
-    for (let id of this.checkedIds()) {
-      this.widgetComponent.busy(this.dataService.deleteConfig(id))
-                          .subscribe(() => {
+    let ids = this.checkedIds();
+    this.widgetComponent.busy(this.dataService.deleteConfigs(ids))
+                        .subscribe(() => {
+                          for (let id of ids) {
                             delete this.checked[id];
                             this.configs.splice(this.configs.findIndex(c => c.id == id), 1);
-                          });
-    }
+                          }
+                        });
   }
 
   onExport() {

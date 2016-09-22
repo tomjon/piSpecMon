@@ -143,7 +143,7 @@ export class DataService {
     let url = this.baseUrl + 'config/' + config_id;
     return this.http.get(url)
                     .map(res => {
-                      let data = res.json();
+                      let data = res.json().data[0];
                       return new Config(data.id, data.values, +data.timestamp, +data.first, +data.latest, +data.count);
                     })
                     .catch(this.errorHandler("get config set"));
@@ -155,8 +155,8 @@ export class DataService {
                     .catch(this.errorHandler("get scan configs"));
   }
 
-  deleteConfig(config_id): Observable<void> {
-    return this.http.delete(this.baseUrl + 'config/' + config_id)
+  deleteConfigs(config_ids: string[]): Observable<void> {
+    return this.http.delete(this.baseUrl + 'configs/' + config_ids.join(','))
                     .catch(this.errorHandler("delete config"));
   }
 
