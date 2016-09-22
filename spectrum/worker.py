@@ -77,7 +77,7 @@ def iterator(config):
             del status['sweep']['current']
           if 'record' in status['sweep']:
             del status['sweep']['record']
-          yield status
+          yield status('latest', t0)
 
           config.write_spectrum(t0, strengths)
 

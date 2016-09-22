@@ -24,6 +24,7 @@ export class TableComponent {
   // true when waiting for (real) status after startup
   standby: boolean = true;
 
+  // id of the running config set, if any
   config_id: string;
 
   @ViewChild(WidgetComponent) widgetComponent;
@@ -34,9 +35,17 @@ export class TableComponent {
     if (status == undefined) return;
     this.standby = false;
     this.config_id = status.config_id;
-    if (status.config_id && ! this.configs.find(set => set.id == status.config_id)) {
+    if (! this.config_id) return;
+
+    let config: Config = this.configs.find(set => set.id == status.config_id);
+    if (! config) {
+      // if we are seeing a new config, add it to the table
       this.widgetComponent.busy(this.dataService.getConfig(status.config_id))
                           .subscribe(config => this.configs.push(config));
+    } else {
+      // otherwise, update the one we have
+      config.latest = status.latest;
+      config.count = status.sweep ? status.sweep.sweep_n : undefined;
     }
   }
 
@@ -111,6 +120,7 @@ export class TableComponent {
   }
 
   formatTime(timestamp): string {
+    if (! timestamp) return "";
     return dt_format(new Date(timestamp));
   }
 

@@ -50,13 +50,14 @@ class Process (object):
     except OSError as e:
       raise ProcessError("Bad PID ({0}): {1}".format(errno.errorcode[e.errno], pid))
 
+  #FIXME isn't this a duplicate of the Client function?
   def read_status(self):
     if not os.path.isfile(self.status_file):
       return { }
     stat = os.stat(self.status_file)
     with open(status_file, 'r') as f:
       status = json.loads(f.read())
-      status['timestamp'] = stat.st_mtime
+      status['timestamp'] = int(1000 * stat.st_mtime)
       status['config_id'] = self.config_id
       return status
 
@@ -157,7 +158,7 @@ class Client:
     stat = os.stat(self.process.status_file)
     with open(self.process.status_file, 'r') as f:
       status = json.loads(f.read())
-      status['timestamp'] = stat.st_mtime
+      status['timestamp'] = int(1000 * stat.st_mtime)
 
     if self.error is not None:
       status['error'] = self.error
