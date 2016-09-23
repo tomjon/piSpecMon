@@ -62,6 +62,7 @@ class Process (object):
       return status
 
   def write_status(self, status):
+    status['config_id'] = self.config_id
     log.debug("Writing status {0}".format(json.dumps(status)))
     tmp = self.status_file + '_tmp'
     with open(tmp, 'w') as f:

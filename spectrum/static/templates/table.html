@@ -26,8 +26,8 @@
     </thead>
     <tbody>
       <tr *ngFor="let config of configs" (click)="onSelect(config.id, $event)" [ngClass]="{ 'row-selected': selected == config.id }">
-        <td>{{formatTime(config.timestamp)}}</td>
-        <td>{{formatTime(config.latest)}}</td>
+        <td>{{config.timestamp | date}}</td>
+        <td>{{config.latest | date}}</td>
         <td>{{config.count}}</td>
         <td>{{mode(config.values.scan.mode)}}</td>
         <td>{{config.values.freqs.range[0]}}</td>
@@ -37,8 +37,8 @@
         <td class="feature">{{config.values.scan.rds == 'true' ? '✔' : '✘' }}</td>
         <td class="feature">{{config.values.scan.audio == 'true' ? '✔' : '✘'}}</td>
         <td *ngIf="user.roleIn(['admin'])">
-          <input *ngIf="config.id != config_id" type="checkbox" [disabled]="standby" [(ngModel)]="checked[config.id]">
-          <span *ngIf="config.id == config_id" class="running">&#x25FC;</span>
+          <input *ngIf="! running(config)" type="checkbox" [disabled]="standby" [(ngModel)]="checked[config.id]">
+          <span *ngIf="running(config)" class="running">&#x25FC;</span>
         </td>
       </tr>
     </tbody>

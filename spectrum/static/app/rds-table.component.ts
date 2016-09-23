@@ -1,10 +1,11 @@
 import { Component, Input } from '@angular/core';
 import { WidgetComponent } from './widget.component';
-import { dt_format } from './d3_import';
+import { DatePipe } from './date.pipe';
 
 @Component({
   selector: 'psm-rds-table',
   directives: [ WidgetComponent ],
+  pipes: [ DatePipe ],
   template: `<psm-widget [hidden]="isHidden()" title="RDS Text" class="chart">
                <form class="form-inline" role="form">
                  <div class="form-group">
@@ -17,7 +18,7 @@ import { dt_format } from './d3_import';
                <table *ngIf="text[idx]">
                  <tr><th>Timestamp</th><th>Text</th></tr>
                  <tr *ngFor="let entry of text[idx]">
-                   <td>{{time(entry)}}</td><td>{{entry.text}}
+                   <td>{{entry | date}}</td><td>{{entry.text}}
                  </tr>
                </table>
                <div *ngIf="! text[idx]">
@@ -42,9 +43,5 @@ export class RdsTableComponent {
     for (let idx in rdsNames) {
       this.stations.push({ 'idx': idx, 'name': rdsNames[idx] });
     }
-  }
-
-  private time(entry: any) {
-    return dt_format(new Date(entry.timestamp));
   }
 }

@@ -4,12 +4,13 @@ import { MessageService } from './message.service';
 import { DataService } from './data.service';
 import { User } from './user';
 import { Config } from './config';
-import { dt_format } from './d3_import';
+import { DatePipe } from './date.pipe';
 import { HZ_LABELS } from './constants';
 
 @Component({
   selector: 'psm-table',
   directives: [ WidgetComponent ],
+  pipes: [ DatePipe ],
   templateUrl: 'templates/table.html'
 })
 export class TableComponent {
@@ -34,18 +35,18 @@ export class TableComponent {
   @Input('status') set _status(status) {
     if (status == undefined) return;
     this.standby = false;
-    this.config_id = status.config_id;
+    this.config_id = status.worker.config_id || status.monkey.config_id;
     if (! this.config_id) return;
 
-    let config: Config = this.configs.find(set => set.id == status.config_id);
+    let config: Config = this.configs.find(set => set.id == this.config_id);
     if (! config) {
       // if we are seeing a new config, add it to the table
-      this.widgetComponent.busy(this.dataService.getConfig(status.config_id))
+      this.widgetComponent.busy(this.dataService.getConfig(this.config_id))
                           .subscribe(config => this.configs.push(config));
     } else {
       // otherwise, update the one we have
-      config.latest = status.latest;
-      config.count = status.sweep ? status.sweep.sweep_n : undefined;
+      config.latest = status.worker.latest;
+      config.count = status.worker.sweep ? status.worker.sweep.sweep_n : 0;
     }
   }
 
@@ -119,11 +120,6 @@ export class TableComponent {
     window.open('/export/' + this.selected, '_blank');
   }
 
-  formatTime(timestamp): string {
-    if (! timestamp) return "";
-    return dt_format(new Date(timestamp));
-  }
-
   mode(value): string {
     for (let m of this.modes) {
       if (m.mode == value) {
@@ -139,5 +135,9 @@ export class TableComponent {
 
   get loading() {
     return this.widgetComponent.loading;
+  }
+
+  running(config: Config): boolean {
+    return config.id == this.config_id;
   }
 }

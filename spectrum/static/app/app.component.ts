@@ -16,6 +16,7 @@ import { User } from './user';
 import { Config } from './config';
 import { TICK_INTERVAL } from './constants';
 import { HTTP_PROVIDERS } from '@angular/http';
+import { DatePipe } from './date.pipe';
 
 // Add the RxJS Observable operators we need in this app
 import './rxjs-operators';
@@ -32,7 +33,8 @@ let modelSort = function (a, b) {
   selector: 'psm-app',
   templateUrl: 'templates/app.html',
   directives: [ LoginComponent, ErrorComponent, DetailsComponent, StatsComponent, RigComponent, AudioComponent, RdsComponent, TableComponent, ScanComponent, ChartsComponent ],
-  providers: [ DataService, ErrorService, MessageService, HTTP_PROVIDERS ]
+  providers: [ DataService, ErrorService, MessageService, HTTP_PROVIDERS ],
+  pipes: [ DatePipe ]
 })
 export class AppComponent {
   user: User = new User();
@@ -82,5 +84,9 @@ export class AppComponent {
       let s = this.user._superior;
       this.messageService.show(`Downgraded to Data Viewer. ${s.real} is logged in as ${s._roleLabel} - contact them at ${s.email} or on ${s.tel}`);
     }
+  }
+
+  get errors(): any[] {
+    return this.config ? this.config.errors : [];
   }
 }

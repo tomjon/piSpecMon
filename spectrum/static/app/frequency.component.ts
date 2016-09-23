@@ -1,16 +1,18 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { WidgetComponent } from './widget.component';
+import { DatePipe } from './date.pipe';
 import { FREQUENCY_CHART_OPTIONS, HZ_LABELS } from './constants';
-import { _d3 as d3, dt_format } from './d3_import';
+import { _d3 as d3 } from './d3_import';
 
 declare var $;
 
 @Component({
   selector: 'psm-frequency',
   directives: [ WidgetComponent ],
+  pipes: [ DatePipe ],
   template: `<psm-widget [hidden]="isHidden()" title="Level / Frequency" class="chart">
                <form class="form-inline" role="form">
-                 <span *ngIf="sweep == 'latest'">{{timestamp}}</span>
+                 <span *ngIf="sweep == 'latest'">{{timestamp | date}}</span>
                  <div class="form-group">
                    <select class="form-control" [(ngModel)]="sweep" (ngModelChange)="ngOnChanges()" name="sweep">
                      <option default value="latest">Latest sweep</option>
@@ -93,7 +95,7 @@ export class FrequencyComponent {
 
     if (this.isHidden()) return;
 
-    this.timestamp = dt_format(new Date(this.data.levels[this.data.levels.length - 1].fields.timestamp));
+    this.timestamp = this.data.levels[this.data.levels.length - 1].fields.timestamp;
     let agg = this.data.agg[this.sweep];
 
     this.x.domain([this.freqs.range[0], this.freqs.range[1]]);

@@ -182,7 +182,7 @@ export class WaterfallComponent {
     let v = this.data.levels[j].fields.level[i];
     this.infoText = `${v}dB at ${f}${HZ_LABELS[this.freqs.exp]}`;
     if (this.rdsNames[i]) this.infoText += ` (${this.rdsNames[i]})`;
-    this.infoText += ` at ${dt_format(new Date(+t))}`;
+    this.infoText += ` at ${dt_format(new Date(t))}`;
   }
 
   set showSamples(value: boolean) {

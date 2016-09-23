@@ -16,4 +16,4 @@ export var insertLineBreaks = function (d) {
       tspan.attr('x', x).attr('dy', '15');
     }
   }
-}
+};

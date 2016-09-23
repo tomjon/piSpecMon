@@ -17,7 +17,7 @@ def iterator(config):
   audio_t = 0 if config.values['scan']['audio'] else None
 
   status = UpdatableDict()
-  yield status('config_id', config.id)
+  yield status
 
   try:
     with Monitor(**config.values['rig']) as monitor:

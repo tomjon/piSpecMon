@@ -9,6 +9,11 @@
   margin-left: 20px;
 }
 
+.error {
+  color: red;
+  margin-left: 20px;
+}
+
 /* charts */
 .axis path, .axis line {
   fill: none;

@@ -2,7 +2,7 @@ import { Component, Input, ViewChild } from '@angular/core';
 import { DataService } from './data.service';
 import { WidgetComponent } from './widget.component';
 import { Config } from './config';
-import { dt_format } from './d3_import';
+import { DatePipe } from './date.pipe';
 import { DEFAULTS, HZ_LABELS } from './constants';
 
 declare var $;
@@ -10,7 +10,8 @@ declare var $;
 @Component({
   selector: 'psm-scan',
   templateUrl: 'templates/scan.html',
-  directives: [ WidgetComponent ]
+  directives: [ WidgetComponent ],
+  pipes: [ DatePipe ]
 })
 export class ScanComponent {
   @Input() modes: any[] = [ ];
@@ -35,9 +36,6 @@ export class ScanComponent {
     this.standby = false;
     this.worker = status.worker;
     this.monkey = status.monkey;
-    if (this.worker.config_id) {
-      // monitor is running
-    }
   }
 
   @Input('config') set _config(config: Config) {
@@ -88,15 +86,13 @@ export class ScanComponent {
     return +(this.config.freqs.range[0]) + +(this.config.freqs.range[2]) <= +(this.config.freqs.range[1]);
   }
 
-  //FIXME a common function?
-  time(t: number): string {
-    if (! t) return undefined;
-    return dt_format(new Date(t));
-  }
-
   //FIXME this is quite a common function...
   freq(freq_n: number): string {
     let f = +this.config.freqs.range[0] + this.config.freqs.range[2] * freq_n;
     return `${f.toFixed(-Math.log10(this.config.freqs.range[2]))}${HZ_LABELS[this.config.freqs.exp]}`;
+  }
+
+  get running(): boolean {
+    return this.worker.timestamp || this.monkey.timestamp;
   }
 }

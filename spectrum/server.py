@@ -210,8 +210,8 @@ def monitor():
     return json.dumps({ 'status': 'OK' })
   if request.method == 'DELETE':
     # stop process
-    if 'config_id' not in application.worker.status():
-      return "Worker not running", 400
+    if 'timestamp' not in application.worker.status() and 'timestamp' not in application.monkey.status():
+      return "Neither Worker nor Monkey are running", 400
     application.worker.stop()
     application.monkey.stop()
     return json.dumps({ 'status': 'OK' })
@@ -220,7 +220,8 @@ def monitor():
     return json.dumps({ 'worker': application.worker.status(), 'monkey': application.monkey.status() })
 
 def _config_dict(x):
-  return {'id': x.id, 'timestamp': x.timestamp, 'values': x.values, 'first': x.first, 'latest': x.latest, 'count': x.count}
+  errors = list(x.iter_error())
+  return {'id': x.id, 'timestamp': x.timestamp, 'values': x.values, 'first': x.first, 'latest': x.latest, 'count': x.count, 'errors': errors}
 
 @application.route('/config')
 @role_required(['admin', 'freq', 'data'])

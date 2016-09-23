@@ -52,9 +52,9 @@
       </div>
     </div>
     <div *ngIf="worker.config_id || worker.error" [ngClass]="{ status: true, error: worker.error != undefined }">
-      <h2 *ngIf="worker.timestamp">Scan status at {{time(worker.timestamp)}}</h2>
+      <h2 *ngIf="worker.timestamp">Scan status at {{worker.timestamp | date}}</h2>
       <div *ngIf="worker.sweep">
-        <span>Sweep started {{time(worker.sweep.timestamp)}}</span>
+        <span>Sweep started {{worker.sweep.timestamp | date}}</span>
         <span *ngFor="let peak of worker.sweep.peaks">Peak {{peak.strength}}dB at {{freq(peak.freq_n)}}</span>
         <span *ngIf="worker.sweep.previous">{{worker.sweep.previous.strength}}dB at {{freq(worker.sweep.previous.freq_n)}}</span>
         <span *ngIf="worker.sweep.current">Reading strength at {{freq(worker.sweep.current.freq_n)}}...</span>
@@ -63,15 +63,15 @@
       <span *ngIf="worker.error">{{worker.error}}</span>
     </div>
     <div *ngIf="monkey.timestamp || monkey.error" [ngClass]="{ status: true, error: monkey.error != undefined }">
-      <h2 *ngIf="monkey.timestamp">RDS status at {{time(monkey.timestamp)}}</h2>
+      <h2 *ngIf="monkey.timestamp">RDS status at {{monkey.timestamp | date}}</h2>
       <span *ngIf="monkey.freq_n && ! monkey.strength">Receiving on {{freq(monkey.freq_n)}}</span>
       <span *ngIf="monkey.strength">Decoding on {{freq(monkey.freq_n)}}, strength {{monkey.strength}}</span>
       <span *ngIf="monkey.name">Station name: {{monkey.name}}</span>
       <span *ngIf="monkey.text"><i>{{monkey.text}}</i></span>
       <span *ngIf="monkey.error">{{monkey.error}}</span>
     </div>
-    <button (click)="onReset()" class="btn btn-default" [disabled]="loading || standby || form.form.pristine || worker.config_id">Reset</button>
-    <button (click)="onStart()" class="btn btn-default" [disabled]="loading || standby || ! form.form.valid || ! validRange() || worker.config_id">Start</button>
-    <button (click)="onStop()" class="btn btn-default" [disabled]="loading || standby || ! worker.config_id">Stop</button>
+    <button (click)="onReset()" class="btn btn-default" [disabled]="loading || standby || form.form.pristine || running">Reset</button>
+    <button (click)="onStart()" class="btn btn-default" [disabled]="loading || standby || ! form.form.valid || ! validRange() || running">Start</button>
+    <button (click)="onStop()" class="btn btn-default" [disabled]="loading || standby || ! running">Stop</button>
   </form>
 </psm-widget>
