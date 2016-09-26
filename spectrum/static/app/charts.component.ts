@@ -99,7 +99,7 @@ export class ChartsComponent {
     for (let rds of data) {
       let freq_n = rds[1];
       if (this.rdsText[freq_n] == undefined) this.rdsText[freq_n] = [];
-      this.rdsText[freq_n].push({ 'timestamp': +rds[0], 'text': rds[2] });
+      this.rdsText[freq_n].push({ timestamp: +rds[0], text: rds[2] });
     }
   }
 

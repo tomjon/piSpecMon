@@ -16,9 +16,13 @@ import { DatePipe } from './date.pipe';
                  </div>
                </form>
                <table *ngIf="text[idx]">
-                 <tr><th>Timestamp</th><th>Text</th></tr>
+                 <tr>
+                   <th>Timestamp</th>
+                   <th>Text</th>
+                 </tr>
                  <tr *ngFor="let entry of text[idx]">
-                   <td>{{entry | date}}</td><td>{{entry.text}}
+                   <td>{{entry.timestamp | date}}</td>
+                   <td>{{entry.text}}
                  </tr>
                </table>
                <div *ngIf="! text[idx]">
