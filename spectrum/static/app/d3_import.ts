@@ -17,3 +17,21 @@ export var insertLineBreaks = function (d) {
     }
   }
 };
+
+export var timeTicks = function (axis, domain, ticks) {
+  let extent = domain[1] - domain[0];
+  if (extent > 1468800000) {
+    let step = Math.ceil(extent / (604800000 * ticks));
+    axis.ticks(d3.time.mondays, step);
+  } else if (extent > 172800000) {
+    let step = Math.ceil(extent / (86400000 * ticks));
+    axis.ticks(d3.time.days, step);
+  } else if (extent > 3600000) {
+    let step = Math.ceil(extent / (3600000 * ticks));
+    axis.ticks(d3.time.hours, step);
+  } else {
+    let step = Math.ceil(extent / (60000 * ticks));
+    axis.ticks(d3.time.minutes, step);
+  }
+  axis.tickFormat(dt_format);
+}

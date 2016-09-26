@@ -1,7 +1,7 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { WidgetComponent } from './widget.component';
 import { WATERFALL_CHART_OPTIONS, HZ_LABELS } from './constants';
-import { _d3 as d3, dt_format, insertLineBreaks } from './d3_import';
+import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
 
 declare var $;
 
@@ -66,9 +66,7 @@ export class WaterfallComponent {
     this.y = d3.time.scale().range([0, this.height]);
 
     this.xAxis = d3.svg.axis().scale(this.x).orient("bottom");
-    this.yAxis = d3.svg.axis().scale(this.y).orient("left").tickFormat(dt_format);
-//    if (WATERFALL_CHART_OPTIONS.x_ticks) this.xAxis().ticks(WATERFALL_CHART_OPTIONS.x_ticks);
-//    if (WATERFALL_CHART_OPTIONS.y_ticks) this.yAxis().ticks(WATERFALL_CHART_OPTIONS.y_ticks);
+    this.yAxis = d3.svg.axis().scale(this.y).orient("left");
 
     this.heat = d3.scale.linear().domain(WATERFALL_CHART_OPTIONS.heat).range(["blue", "yellow", "red"]).clamp(true);
 
@@ -98,6 +96,7 @@ export class WaterfallComponent {
     let df = +this.freqs.range[2];
     this.x.domain([f0 - df/2, f1 + df/2]);
     this.y.domain(d3.extent(data, d => d.fields.timestamp));
+    timeTicks(this.yAxis, this.y.domain(), WATERFALL_CHART_OPTIONS.y_ticks);
 
     this.g.append("g")
         .attr("class", "x axis")

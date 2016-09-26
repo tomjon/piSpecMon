@@ -1,7 +1,7 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { WidgetComponent } from './widget.component';
 import { LEVEL_CHART_OPTIONS, HZ_LABELS, MAX_N } from './constants';
-import { _d3 as d3, dt_format, insertLineBreaks } from './d3_import';
+import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
 
 @Component({
   selector: 'psm-level',
@@ -73,10 +73,8 @@ export class LevelComponent {
     this.x = d3.time.scale().range([0, this.width]);
     this.y = d3.scale.linear().range([this.height, 0]);
 
-    this.xAxis = d3.svg.axis().scale(this.x).orient("bottom").tickFormat(dt_format);
+    this.xAxis = d3.svg.axis().scale(this.x).orient("bottom");
     this.yAxis = d3.svg.axis().scale(this.y).orient("left");
-//    if (LEVEL_CHART_OPTIONS.x_ticks) this.xAxis().ticks(LEVEL_CHART_OPTIONS.x_ticks);
-//    if (LEVEL_CHART_OPTIONS.y_ticks) this.yAxis().ticks(LEVEL_CHART_OPTIONS.y_ticks);
 
     this.colour = d3.scale.category10();
 
@@ -125,6 +123,7 @@ export class LevelComponent {
         d3.max(data, function (d) { return d3.max(d.timestamp.buckets, function (v) { return v.level.value }) })
       ]);
     }
+    timeTicks(this.xAxis, this.x.domain(), LEVEL_CHART_OPTIONS.x_ticks);
 
     this.svg.append("g")
         .attr("class", "x axis")
