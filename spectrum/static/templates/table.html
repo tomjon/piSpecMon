@@ -2,26 +2,14 @@
   <table class="table table-condensed">
     <thead>
       <tr>
-        <th colspan="2">Timestamps</th>
-        <th>Count</th>
+        <th>First timestamp</th>
+        <th>Last timestamp</th>
+        <th>Sweeps</th>
         <th>Mode</th>
-        <th colspan="4">Frequency range</th>
+        <th>Frequencies</th>
         <th class="feature">RDS</th>
         <th class="feature">Audio</th>
         <th *ngIf="user.roleIn(['admin'])">&nbsp;</th>
-      </tr>
-      <tr>
-        <td>first</td>
-        <td>last</td>
-        <td>&nbsp;</td>
-        <td>&nbsp;</td>
-        <td>start</td>
-        <td>end</td>
-        <td>step</td>
-        <td>units</td>
-        <td>&nbsp;</td>
-        <td>&nbsp;</td>
-        <td *ngIf="user.roleIn(['admin'])">&nbsp;</td>
       </tr>
     </thead>
     <tbody>
@@ -30,10 +18,17 @@
         <td>{{config.latest | date}}</td>
         <td>{{config.count}}</td>
         <td>{{mode(config.values.scan.mode)}}</td>
-        <td>{{config.values.freqs.range[0]}}</td>
-        <td>{{config.values.freqs.range[1]}}</td>
-        <td>{{config.values.freqs.range[2]}}</td>
-        <td>{{units(config.values.freqs.exp)}}</td>
+        <td>
+          <span *ngIf="config.values.freqs.range">
+            {{config.values.freqs.range[0]}} - {{config.values.freqs.range[1]}} (&Delta; {{config.values.freqs.range[2]}}) {{config.values.freqs.exp | units}}
+          </span>
+          <span *ngIf="config.values.freqs.freqs">
+            <span *ngFor="let freq of config.values.freqs.freqs; let n = index">
+              <span *ngIf="n < 2">{{freq.f}}{{freq.exp | units}}&nbsp;</span>
+              <span *ngIf="n == 2">&hellip;</span>
+            </span>
+          </span>
+        </td>
         <td class="feature">{{config.values.scan.rds == 'true' ? '✔' : '✘' }}</td>
         <td class="feature">{{config.values.scan.audio == 'true' ? '✔' : '✘'}}</td>
         <td *ngIf="user.roleIn(['admin'])">

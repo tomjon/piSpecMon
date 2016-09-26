@@ -107,6 +107,9 @@ rect.audio {
 .status.error {
   background: pink;
 }
+.freqlist {
+  margin-bottom: 0;
+}
 
 /* specials for the sweep table component */
 tbody tr {

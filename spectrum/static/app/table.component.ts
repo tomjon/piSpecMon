@@ -5,12 +5,12 @@ import { DataService } from './data.service';
 import { User } from './user';
 import { Config } from './config';
 import { DatePipe } from './date.pipe';
-import { HZ_LABELS } from './constants';
+import { UnitsPipe } from './units.pipe';
 
 @Component({
   selector: 'psm-table',
   directives: [ WidgetComponent ],
-  pipes: [ DatePipe ],
+  pipes: [ DatePipe, UnitsPipe ],
   templateUrl: 'templates/table.html'
 })
 export class TableComponent {
@@ -127,10 +127,6 @@ export class TableComponent {
       }
     }
     return null;
-  }
-
-  units(value): string {
-    return HZ_LABELS[value];
   }
 
   get loading() {

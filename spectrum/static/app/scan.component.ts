@@ -26,6 +26,9 @@ export class ScanComponent {
   // true when waiting for (real) status after startup or start/stop buttons pressed
   standby: boolean = true;
 
+  allowRange: boolean = true;
+  allowFreqs: boolean = false;
+
   @ViewChild(WidgetComponent) widgetComponent;
   @ViewChild('form') form;
 
@@ -45,7 +48,9 @@ export class ScanComponent {
       this.widgetComponent.pristine(this.form, false);
       return;
     }
-    this.config = $.extend(true, { }, this.input);
+    this.config = $.extend(true, {}, DEFAULTS, this.input);
+    this.allowRange = this.input.freqs.range != undefined;
+    this.allowFreqs = this.input.freqs.freqs != undefined;
     this.widgetComponent.pristine(this.form);
   }
 
@@ -64,7 +69,14 @@ export class ScanComponent {
 
   onStart() {
     this.standby = true;
-    this.widgetComponent.busy(this.dataService.startMonitor(this.config))
+    let config = $.extend(true, { }, this.config);
+    if (! this.allowRange) {
+      delete config.freqs.range;
+    }
+    if (! this.allowFreqs) {
+      delete config.freqs.freqs;
+    }
+    this.widgetComponent.busy(this.dataService.startMonitor(config))
                         .subscribe();
   }
 
@@ -78,6 +90,10 @@ export class ScanComponent {
     return this.widgetComponent.loading;
   }
 
+  numeric(v): boolean {
+    return $.isNumeric(v);
+  }
+
   validNumber(input): boolean {
     return (input.valid && $.isNumeric(input.model)) || input.pristine;
   }
@@ -86,13 +102,37 @@ export class ScanComponent {
     return +(this.config.freqs.range[0]) + +(this.config.freqs.range[2]) <= +(this.config.freqs.range[1]);
   }
 
-  //FIXME this is quite a common function...
+  validFreqs(): boolean {
+    for (let freq of this.config.freqs.freqs) {
+      if (! this.numeric(freq.f)) return false;
+    }
+    return true;
+  }
+
+  validScan(): boolean {
+    return this.form.form.valid && ((this.validRange && this.validRange()) || (this.validFreqs && this.validFreqs()));
+  }
+
   freq(freq_n: number): string {
-    let f = +this.config.freqs.range[0] + this.config.freqs.range[2] * freq_n;
-    return `${f.toFixed(-Math.log10(this.config.freqs.range[2]))}${HZ_LABELS[this.config.freqs.exp]}`;
+    if (this.allowRange) {
+      let f = +this.config.freqs.range[0] + this.config.freqs.range[2] * freq_n;
+      return `${f.toFixed(-Math.log10(this.config.freqs.range[2]))}${HZ_LABELS[this.config.freqs.exp]}`;
+    } else {
+      let f = this.config.freqs.freqs[freq_n].f;
+      return `${f}${HZ_LABELS[this.config.freqs.freqs[freq_n].exp]}`;
+    }
   }
 
   get running(): boolean {
     return this.worker.timestamp || this.monkey.timestamp;
+  }
+
+  onInsert(n: number) {
+    let fs = this.config.freqs.freqs;
+    fs.splice(n + 1, 0, { f: "", exp: fs[n].exp });
+  }
+
+  onDelete(n: number) {
+    this.config.freqs.freqs.splice(n, 1);
   }
 }
