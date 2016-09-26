@@ -138,16 +138,24 @@ class Config(object):
         with open(os.path.join(dir, FORMAT)) as f:
             self.timestamp = _t_struct.fread(f)
             self.n_freq = _n_struct.fread(f)
-        with open(os.path.join(dir, SPECTRUM_TIMES)) as f:
-            self.first = _t_struct.fread(f)
-            if f.tell() > 0:
+        firsts = []
+        latests = []
+        counts = {}
+        for name in (SPECTRUM_TIMES, AUDIO_TIMES, RDS_NAME_TIMES, RDS_TEXT_TIMES):
+            path = os.path.join(dir, name)
+            if not os.path.exists(path):
+                continue
+            with open(path) as f:
+                firsts.append(_t_struct.fread(f))
+                if f.tell() == 0:
+                    continue;
                 f.seek(-_t_struct.size, os.SEEK_END)
-                self.latest = _t_struct.fread(f)
+                latests.append(_t_struct.fread(f))
                 f.seek(0, os.SEEK_END)
-                self.count = f.tell() / _t_struct.size
-            else:
-                self.latest = None
-                self.count = 0
+                counts[name] = f.tell() / _t_struct.size
+        self.first = min(firsts) if len(firsts) > 0 else None
+        self.latest = max(latests) if len(latests) > 0 else None
+        self.count = counts[SPECTRUM_TIMES] if SPECTRUM_TIMES in counts else 0
         return self
 
     def write(self, timestamp=None, values=None):

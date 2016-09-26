@@ -147,6 +147,8 @@ export class WaterfallComponent {
         control.play();
       });
 
+    this.showSamples = this._showSamples; // forces application of sample class
+
     this.time = (new Date()).getTime() - t0.getTime();
   }
 
