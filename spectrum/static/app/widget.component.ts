@@ -1,5 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
+import { UiSettingsService } from './ui-settings.service';
 
 @Component({
   selector: 'psm-widget',
@@ -7,12 +8,30 @@ import { Observable } from 'rxjs/Observable';
 })
 export class WidgetComponent {
   _loading: number = 0;
-  show: boolean = true;
+  show: boolean = false;
 
   @Input() title: string;
+  @Output('show') showEmitter = new EventEmitter<boolean>();
+
+  constructor (private uiSettings: UiSettingsService) {}
+
+  ngOnInit() {
+    if (this.title) {
+      this.uiSettings.get(this.title)
+                     .subscribe(show => {
+                       this.show = show;
+                       this.showEmitter.emit(show);
+                     });
+    } else {
+      this.show = true;
+      this.showEmitter.emit(true);
+    }
+  }
 
   toggle() {
     this.show = ! this.show;
+    this.showEmitter.emit(this.show);
+    this.uiSettings.set(this.title, this.show).subscribe();
   }
 
   get loading(): boolean {

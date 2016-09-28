@@ -193,6 +193,20 @@ export class DataService {
                     .catch(this.errorHandler("get data"));
   }
 
+  setUiSetting(key, value): Observable<void> {
+    let body = JSON.stringify(value);
+    let headers = new Headers({ 'Content-Type': 'application/json' });
+    let options = new RequestOptions({ headers: headers });
+    return this.http.put(`${this.baseUrl}ui/${key}`, body, options)
+                    .catch(this.errorHandler("set UI setting"));
+  }
+
+  getUiSettings(): Observable<any> {
+    return this.http.get(`${this.baseUrl}ui`)
+                    .map(res => res.json())
+                    .catch(this.errorHandler("get UI settings"));
+  }
+
   private errorHandler(source: any) {
     let errors = this.errorService;
     return function (error: any, caught: Observable<any>): Observable<any> {

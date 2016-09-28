@@ -1,5 +1,7 @@
 import { Component, Input, ViewChild } from '@angular/core';
+import { Chart } from './chart';
 import { WidgetComponent } from './widget.component';
+import { Data} from './data';
 import { WATERFALL_CHART_OPTIONS, HZ_LABELS } from './constants';
 import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
 
@@ -8,7 +10,8 @@ declare var $;
 @Component({
   selector: 'psm-waterfall',
   directives: [ WidgetComponent ],
-  template: `<psm-widget [hidden]="isHidden()" title="Waterfall" class="chart">
+  inputs: [ 'data', 'show' ],
+  template: `<psm-widget [hidden]="isHidden()" title="Waterfall" class="chart" (show)="onShow($event)">
                <form class="form-inline controls" role="form">
                  <div *ngIf="showSamples" class="form-group">
                    <audio #audio controls preload='none'></audio>
@@ -17,7 +20,7 @@ declare var $;
                <form class="form-inline" role="form">
                  <span class="infoText">{{infoText}}</span>
                  <label for="samples">Overlay audio samples</label>
-                 <input type="checkbox" name="samples" [disabled]="audio.length == 0" [(ngModel)]="showSamples">
+                 <input type="checkbox" name="samples" [disabled]="data.audio.length == 0" [(ngModel)]="showSamples">
                </form>
                <svg #chart (click)="onClick($event)"
                  viewBox="0 0 ${WATERFALL_CHART_OPTIONS.width} ${WATERFALL_CHART_OPTIONS.height}"
@@ -26,7 +29,7 @@ declare var $;
                </svg>
              </psm-widget>`
 })
-export class WaterfallComponent {
+export class WaterfallComponent extends Chart {
   svg: any;
   g: any;
   heat: any;
@@ -45,17 +48,14 @@ export class WaterfallComponent {
 
   time: number;
 
-  @Input() freqs: any;
-  @Input() data: any;
-  @Input() audio: any;
-  @Input('names') rdsNames: any;
-
   @ViewChild('chart') chart;
   @ViewChild('text') text;
   @ViewChild('group') group;
   @ViewChild('audio') audioControl;
 
-  constructor() { }
+  constructor() {
+    super(1);
+  }
 
   ngOnInit() {
     this.margin = WATERFALL_CHART_OPTIONS.margin;
@@ -76,11 +76,11 @@ export class WaterfallComponent {
   }
 
   isHidden() {
-    return this.data.levels == undefined || this.freqs.freqs || this.data.levels.length < 1;
+    return this.data.spectrum.levels == undefined || this.data.freqs.freqs || this.data.spectrum.levels.length < 1;
   }
 
-  ngOnChanges() {
-    if (! this.svg) return; // ngOnChanges() happens before ngOnInit()!
+  plot() {
+    if (! this.svg) return;
 
     let t0 = new Date();
 
@@ -89,11 +89,11 @@ export class WaterfallComponent {
 
     if (this.isHidden()) return;
 
-    let data = this.data.levels;
+    let data = this.data.spectrum.levels;
 
-    var f0 = +this.freqs.range[0];
-    var f1 = +this.freqs.range[1];
-    let df = +this.freqs.range[2];
+    var f0 = +this.data.freqs.range[0];
+    var f1 = +this.data.freqs.range[1];
+    let df = +this.data.freqs.range[2];
     this.x.domain([f0 - df/2, f1 + df/2]);
     this.y.domain(d3.extent(data, d => d.fields.timestamp));
     timeTicks(this.yAxis, this.y.domain(), WATERFALL_CHART_OPTIONS.y_ticks);
@@ -107,7 +107,7 @@ export class WaterfallComponent {
         .attr("x", 40)
         .attr("y", 6)
         .style("text-anchor", "end")
-        .text(HZ_LABELS[this.freqs.exp]);
+        .text(HZ_LABELS[this.data.freqs.exp]);
 
     this.g.append("g")
         .attr("class", "y axis")
@@ -134,11 +134,11 @@ export class WaterfallComponent {
       .attr('x', (d, i) => this.rw * i)
       .attr('width', this.rw + 1)
       .attr('height', this.rh + 1)
-      .classed('sample', (d, i) => this.audio[`${d[1]}_${i}`] != undefined)
+      .classed('sample', (d, i) => this.data.audio[`${d[1]}_${i}`] != undefined)
       .attr('fill', (d, i) => this.heat(d[0]))
       .on('click', (d, i) => {
         if (! this.showSamples) return;
-        let audio = this.audio[`${d[1]}_${i}`];
+        let audio = this.data.audio[`${d[1]}_${i}`];
         if (audio == undefined) return;
         let control = this.audioControl.nativeElement;
         control.src = audio;
@@ -161,10 +161,10 @@ export class WaterfallComponent {
 
     // find frequency of click...
     let f = this.x.invert(z.x - this.margin.left);
-    let i = Math.round((f - this.freqs.range[0]) / this.freqs.range[2]);
-    f = +this.freqs.range[0] + i * this.freqs.range[2]; // 'snap' to an actual frequency value
-    f = f.toFixed(-Math.log10(this.freqs.range[2]));
-    if (i < 0 || i >= this.data.levels[0].fields.level.length) {
+    let i = Math.round((f - this.data.freqs.range[0]) / this.data.freqs.range[2]);
+    f = +this.data.freqs.range[0] + i * this.data.freqs.range[2]; // 'snap' to an actual frequency value
+    f = f.toFixed(-Math.log10(this.data.freqs.range[2]));
+    if (i < 0 || i >= this.data.spectrum.levels[0].fields.level.length) {
       // out of bounds - hide info text
       this.infoText = "";
       return;
@@ -172,17 +172,17 @@ export class WaterfallComponent {
 
     // find timestamp of click...
     let j = Math.round(z.y / this.rh) - 1;
-    if (j < 0 || j >= this.data.levels.length) {
+    if (j < 0 || j >= this.data.spectrum.levels.length) {
       // out of bounds - hide info text
       this.infoText = "";
       return;
     }
-    let t = this.data.levels[j].fields.timestamp;
+    let t = this.data.spectrum.levels[j].fields.timestamp;
 
     // formulate info text
-    let v = this.data.levels[j].fields.level[i];
-    this.infoText = `${v}dB at ${f}${HZ_LABELS[this.freqs.exp]}`;
-    if (this.rdsNames[i]) this.infoText += ` (${this.rdsNames[i]})`;
+    let v = this.data.spectrum.levels[j].fields.level[i];
+    this.infoText = `${v}dB at ${f}${HZ_LABELS[this.data.freqs.exp]}`;
+    if (this.data.rdsNames[i]) this.infoText += ` (${this.data.rdsNames[i]})`;
     this.infoText += ` at ${dt_format(new Date(t))}`;
   }
 

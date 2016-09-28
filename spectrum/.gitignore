@@ -1,6 +1,7 @@
 secret.key
 example_queries/
 *.pyc
+*.bak
 .*
 logs/
 samples/

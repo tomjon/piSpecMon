@@ -31,7 +31,7 @@ class SecuredStaticFlask (Flask):
 def send_file_partial(path):
   """ See http://blog.asgaard.co.uk/2012/08/03/http-206-partial-content-for-flask-python
       
-      We need this for supprting media files with Safari (at least).
+      We need this for supporting media files with Safari (at least).
   """
   range_header = request.headers.get('Range', None)
   if not range_header: return send_file(path)
@@ -382,7 +382,6 @@ def user_details():
     return json.dumps(data)
   if request.method == 'POST':
     data = request.get_json()
-    print data
     if data is None:
       return "No user data", 400
     if 'oldPassword' in data and 'newPassword' in data:
@@ -463,6 +462,20 @@ def export(config_id):
 @role_required(['admin'])
 def get_stats():
   return json.dumps(data_store.stats())
+
+
+@application.route('/ui')
+@role_required(['admin', 'freq', 'data'])
+def get_ui_settings():
+  return json.dumps(current_user.data.get('ui') or {})
+
+@application.route('/ui/<key>', methods=['PUT'])
+@role_required(['admin', 'freq', 'data'])
+def set_ui_setting(key):
+  value = request.get_json()
+  if not update_user(current_user.name, 'ui', {key: value}):
+    return "Logged in user does not exist", 500
+  return json.dumps({'status': 'OK'})
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { WidgetComponent } from './widget.component';
 import { DatePipe } from './date.pipe';
+import { Data } from './data';
 
 @Component({
   selector: 'psm-rds-table',
@@ -15,37 +16,37 @@ import { DatePipe } from './date.pipe';
                    </select>
                  </div>
                </form>
-               <table *ngIf="text[idx]">
+               <table *ngIf="data.rdsText[idx]">
                  <tr>
                    <th>Timestamp</th>
                    <th>Text</th>
                  </tr>
-                 <tr *ngFor="let entry of text[idx]">
+                 <tr *ngFor="let entry of data.rdsText[idx]">
                    <td>{{entry.timestamp | date}}</td>
                    <td>{{entry.text}}
                  </tr>
                </table>
-               <div *ngIf="! text[idx]">
+               <div *ngIf="! data.rdsText[idx]">
                  No RDS text decoded
                </div>
              </psm-widget>`
 })
 export class RdsTableComponent {
+  data: Data = new Data();
   stations: any;
-  @Input() text: any;
-
   idx: number; // the selected station index
 
-  constructor() { }
+  @Input('data') set _data(data: Data) {
+    this.data = data;
+    this.stations = [];
+    for (let idx in data.rdsNames) {
+      this.stations.push({ 'idx': idx, 'name': data.rdsNames[idx] });
+    }
+  }
+
+  constructor() {}
 
   isHidden() {
     return this.stations == undefined || this.stations.length == 0;
-  }
-
-  @Input('names') set _rdsNames(rdsNames) {
-    this.stations = [];
-    for (let idx in rdsNames) {
-      this.stations.push({ 'idx': idx, 'name': rdsNames[idx] });
-    }
   }
 }

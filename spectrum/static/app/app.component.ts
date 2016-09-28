@@ -12,6 +12,7 @@ import { ChartsComponent } from './charts.component';
 import { DataService } from './data.service';
 import { ErrorService } from './error.service';
 import { MessageService } from './message.service';
+import { UiSettingsService } from './ui-settings.service';
 import { User } from './user';
 import { Config } from './config';
 import { TICK_INTERVAL } from './constants';
@@ -33,7 +34,7 @@ let modelSort = function (a, b) {
   selector: 'psm-app',
   templateUrl: 'templates/app.html',
   directives: [ LoginComponent, ErrorComponent, DetailsComponent, StatsComponent, RigComponent, AudioComponent, RdsComponent, TableComponent, ScanComponent, ChartsComponent ],
-  providers: [ DataService, ErrorService, MessageService, HTTP_PROVIDERS ],
+  providers: [ DataService, ErrorService, MessageService, UiSettingsService, HTTP_PROVIDERS ],
   pipes: [ DatePipe ]
 })
 export class AppComponent {
