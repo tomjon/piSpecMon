@@ -12,11 +12,11 @@ import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
                <form class="form-inline" role="form">
                  <div class="form-group">
                    <label for="top">Top</label>
-                   <select class="form-control" #selectN [(ngModel)]="N" (ngModelChange)="ngOnChanges()" name="top"></select>
+                   <select class="form-control" #selectN [(ngModel)]="N" (ngModelChange)="plot()" name="top"></select>
                  </div>
                  <div class="form-group">
                    <label for="by">by</label>
-                   <select class="form-control" [(ngModel)]="top" (ngModelChange)="ngOnChanges()" name="by">
+                   <select class="form-control" [(ngModel)]="top" (ngModelChange)="plot()" name="by">
                      <option value="avg">Average</option>
                      <option value="max">Maximum</option>
                      <option value="min">Minimum</option>
@@ -90,7 +90,7 @@ export class LevelComponent extends Chart {
   }
 
   plot() {
-    if (! this.svg) return; // ngOnChanges() happens before ngOnInit()!
+    if (! this.svg) return;
 
     this.svg.selectAll("g").remove();
     this.showInfo = false;

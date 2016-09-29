@@ -16,7 +16,7 @@ declare var $;
                <form class="form-inline" role="form">
                  <span *ngIf="sweep == 'latest'">{{timestamp | date}}</span>
                  <div class="form-group">
-                   <select class="form-control" [(ngModel)]="sweep" (ngModelChange)="ngOnChanges()" name="sweep">
+                   <select class="form-control" [(ngModel)]="sweep" (ngModelChange)="plot()" name="sweep">
                      <option default value="latest">Latest sweep</option>
                      <option value="avg">Average</option>
                      <option value="max">Maximum</option>
