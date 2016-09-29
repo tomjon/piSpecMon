@@ -14,6 +14,7 @@
     <div class="col-lg-3">
       <psm-error></psm-error>
       <psm-details [user]="user"></psm-details>
+      <psm-pi *ngIf="user.roleIn(['admin'])"></psm-pi>
       <psm-stats *ngIf="user.roleIn(['admin'])"></psm-stats>
       <psm-rig *ngIf="user.roleIn(['admin'])" [models]="models" [rates]="rates" [parities]="parities"></psm-rig>
       <psm-audio *ngIf="user.roleIn(['admin', 'freq'])"></psm-audio>

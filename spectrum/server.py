@@ -478,6 +478,16 @@ def set_ui_setting(key):
   return json.dumps({'status': 'OK'})
 
 
+@application.route('/pi/<command>')
+@role_required(['admin'])
+def pi_command(command):
+  if command == 'shutdown':
+    return "Not implemented", 500
+  if command == 'reboot':
+    return "Not implemented", 500
+  return "Command not recognized: " + command, 400
+
+
 if __name__ == "__main__":
   import sys
 
