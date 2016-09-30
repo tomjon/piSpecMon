@@ -15,6 +15,9 @@
 }
 
 /* charts */
+.chart svg {
+	width: 100%;
+}
 .axis path, .axis line {
   fill: none;
   stroke: #000;
@@ -58,6 +61,21 @@ form.controls {
 	float: left;
 	margin-left: 100px;
 	margin-top: 8px;
+}
+psm-waterfall .waterfall {
+  position: relative;
+  top: 40px;
+}
+psm-waterfall svg {
+  position: relative;
+  top: -40px;
+  z-index: 1;
+}
+psm-waterfall canvas {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
 }
 psm-waterfall .infoText {
 	margin-right: 50px;
