@@ -18,20 +18,26 @@ export var insertLineBreaks = function (d) {
   }
 };
 
+/* period * step * ticks = extent */
+/* step = extent / (period * ticks) */
 export var timeTicks = function (axis, domain, ticks) {
-  let extent = domain[1] - domain[0];
-  if (extent > 1468800000) {
-    let step = Math.ceil(extent / (604800000 * ticks));
-    axis.ticks(d3.time.mondays, step);
-  } else if (extent > 172800000) {
-    let step = Math.ceil(extent / (86400000 * ticks));
-    axis.ticks(d3.time.days, step);
-  } else if (extent > 3600000) {
-    let step = Math.ceil(extent / (3600000 * ticks));
-    axis.ticks(d3.time.hours, step);
+  let extent = domain[1] - domain[0]; // milliseconds
+  let period, type;
+  if (extent > 5 * 7 * 24 * 60 * 60 * 1000) {
+    period = 7 * 24 * 60 * 60 * 1000;
+    type = d3.time.mondays;
+  } else if (extent > 5 * 24 * 60 * 60 * 1000) {
+    period = 24 * 60 * 60 * 1000;
+    type = d3.time.days;
+  } else if (extent > 5 * 60 * 60 * 1000) {
+    period = 60 * 60 * 1000;
+    type = d3.time.hours;
   } else {
-    let step = Math.ceil(extent / (60000 * ticks));
-    axis.ticks(d3.time.minutes, step);
+    period = 60 * 1000;
+    type = d3.time.minutes;
   }
+  axis.ticks(type, Math.ceil(extent / (period * ticks)));
   axis.tickFormat(dt_format);
+
+
 }
