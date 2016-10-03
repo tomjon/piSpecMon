@@ -26,7 +26,7 @@ log.setLevel(logging.DEBUG)
 # create file handler which logs even debug messages (these end up in log file)
 log_filename = os.path.join(log_dir, '{0}.log'.format(os.path.basename(sys.argv[0]).replace('.py', '')))
 rfh = logging.handlers.RotatingFileHandler(log_filename, maxBytes=1 * 1024 * 1024, backupCount=0)
-rfh.setLevel(logging.DEBUG)
+rfh.setLevel(logging.WARN)
 
 # create console handler with a higher log level (these end up in system journal)
 ch = logging.StreamHandler()
