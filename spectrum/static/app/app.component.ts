@@ -1,6 +1,7 @@
 import { Component, ViewChild } from '@angular/core';
 import { LoginComponent } from './login.component';
 import { DetailsComponent } from './details.component';
+import { LogsComponent } from './logs.component';
 import { StatsComponent } from './stats.component';
 import { RigComponent } from './rig.component';
 import { AudioComponent } from './audio.component';
@@ -33,7 +34,7 @@ let modelSort = function (a, b) {
 @Component({
   selector: 'psm-app',
   templateUrl: 'templates/app.html',
-  directives: [ LoginComponent, ErrorComponent, DetailsComponent, StatsComponent, RigComponent, AudioComponent, RdsComponent, TableComponent, ScanComponent, ChartsComponent ],
+  directives: [ LoginComponent, ErrorComponent, DetailsComponent, LogsComponent, StatsComponent, RigComponent, AudioComponent, RdsComponent, TableComponent, ScanComponent, ChartsComponent ],
   providers: [ DataService, ErrorService, MessageService, UiSettingsService, HTTP_PROVIDERS ],
   pipes: [ DatePipe ]
 })

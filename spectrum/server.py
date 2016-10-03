@@ -19,6 +19,7 @@ from monitor import get_capabilities
 import fs_datastore as data_store
 import re
 import mimetypes
+import tail
 
 
 class SecuredStaticFlask (Flask):
@@ -476,6 +477,23 @@ def set_ui_setting(key):
   if not update_user(current_user.name, 'ui', {key: value}):
     return "Logged in user does not exist", 500
   return json.dumps({'status': 'OK'})
+
+
+@application.route('/log/<log>')
+@role_required(['admin'])
+def get_log(log):
+  path = local_path('logs/{0}.log'.format(log))
+  if not os.path.exists(path):
+    return "No log {0}".format(path), 400
+  try:
+    n = int(request.args.get('n', 10))
+  except ValueError:
+    return "Bad parameter", 400
+  level = request.args.get('level', '\n')
+  if level not in ('\n', 'DEBUG', 'INFO', 'WARN', 'ERROR'):
+    return "Bad parameter", 400
+  with open(path) as f:
+    return Response(list(tail.iter_tail(f, n, level)), mimetype='text/plain')
 
 
 if __name__ == "__main__":
