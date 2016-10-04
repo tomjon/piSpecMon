@@ -27,6 +27,10 @@ def timeout_try(attempts, fn, *args):
       else:
         raise e
 
+def monitor_open(config):
+  monitor = Monitor(**config.values['rig'])
+  monitor.open(config.values['scan']['mode'])
+  return monitor
 
 def iterator(config):
   scan_config = parse_config(config.values)
@@ -38,9 +42,7 @@ def iterator(config):
 
   monitor = None
   try:
-    monitor = Monitor(**config.values['rig'])
-    timeout_try(attempts, monitor.open, config.values['scan']['mode'])
-
+    monitor = timeout_try(attempts, monitor_open, config)
     sweep_n = 0
     while True:
       log.debug("Scan: {0}".format(config.values['scan']))
