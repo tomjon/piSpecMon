@@ -117,7 +117,7 @@ def record(status, config, monitor, freqs):
       return
 
     audio = config.values['audio']
-    monitor.record(freq, config.values['scan']['mode'], audio['rate'], audio['duration'], path, audio['path'])
+    monitor.record(freq, audio['rate'], audio['duration'], path, audio['path'])
 
 
 class Worker (Process):
