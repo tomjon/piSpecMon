@@ -139,6 +139,11 @@ export class DataService {
                     .catch(this.errorHandler("log out"));
   }
 
+  piCommand(command: string): Observable<void> {
+    return this.http.get(`${this.baseUrl}pi/${command}`)
+                    .catch(this.errorHandler(`pi command: ${command}`));
+  }
+
   getConfig(config_id: string): Observable<Config> {
     let url = this.baseUrl + 'config/' + config_id;
     return this.http.get(url)

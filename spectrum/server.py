@@ -496,6 +496,15 @@ def get_log(log):
     return Response(list(tail.iter_tail(f, n, level)), mimetype='text/plain')
 
 
+@application.route('/pi/<command>')
+@role_required(['admin'])
+def pi_command(command):
+  if command in ['shutdown', 'reboot']:
+    os.system("{0} {1}".format(local_path('bin/pi_control'), command))
+    return "OK"
+  return "Command not recognized: " + command, 400
+
+
 if __name__ == "__main__":
   import sys
 
