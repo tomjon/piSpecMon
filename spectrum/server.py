@@ -481,10 +481,9 @@ def set_ui_setting(key):
 @application.route('/pi/<command>')
 @role_required(['admin'])
 def pi_command(command):
-  if command == 'shutdown':
-    return "Not implemented", 500
-  if command == 'reboot':
-    return "Not implemented", 500
+  if command in ['shutdown', 'reboot']:
+    os.system("{0} {1}".format(local_path('bin/pi_control'), command))
+    return "OK"
   return "Command not recognized: " + command, 400
 
 
