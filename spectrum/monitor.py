@@ -109,14 +109,15 @@ class Monitor:
     self.retries = retries
     self.interval = interval
 
-  def __enter__(self):
+  def open(self, mode):
     self._check(self.rig.open)
+    self.set_mode(mode)
     if self.attenuation is not None:
       #FIXME can we get the legal attenuation values from Hamlib? There's gran_t but where is that used?
       self._check(self.rig.set_level, Hamlib.RIG_LEVEL_ATT, 20 if self.attenuation else 0, Hamlib.RIG_VFO_CURR)
     return self
 
-  def __exit__(self, *args):
+  def close(self):
     self.rig.close()
 
   # handle errors and retries for hamlib calls
@@ -150,8 +151,7 @@ class Monitor:
       width = self._check(self.rig.passband_normal, mode)
       self._check(self.rig.set_mode, mode, width, Hamlib.RIG_VFO_CURR)
 
-  def record(self, freq, mode, rate, duration, path, device):
-    self.set_mode(mode) #FIXME again, probably just fix this at rig.open
+  def record(self, freq, rate, duration, path, device):
     strength = self.get_strength(freq) #FIXME is this a bit odd? or do we want the strength data at start/end?
     if strength is None:
       return None

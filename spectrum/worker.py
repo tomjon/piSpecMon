@@ -12,85 +12,91 @@ from process import Process, UpdatableDict
 import fs_datastore as data_store
 
 
+def timeout_try(attempts, fn, *args):
+  timeout_count = 0
+  while True:
+    try:
+      return fn(*args)
+    except TimeoutError as e:
+      if timeout_count < attempts:
+        timeout_count += 1
+        log.error(e)
+        log.info("Attempting to power on")
+        power_on()
+        sleep(RADIO_ON_SLEEP_SECS) # give the rig chance to power up
+      else:
+        raise e
+
+
 def iterator(config):
   scan_config = parse_config(config.values)
   audio_t = 0 if config.values['scan']['audio'] else None
+  attempts = config.values['rig']['radio_on']
 
   status = UpdatableDict()
   yield status
 
+  monitor = None
   try:
-    with Monitor(**config.values['rig']) as monitor:
-      timeout_count = 0
-      sweep_n = 0
-      while True:
-        log.debug("Scan: {0}".format(config.values['scan']))
+    monitor = Monitor(**config.values['rig'])
+    timeout_try(attempts, monitor.open, config.values['scan']['mode'])
+
+    sweep_n = 0
+    while True:
+      log.debug("Scan: {0}".format(config.values['scan']))
+      yield status
+
+      t0 = now()
+      strengths = []
+      yield status('sweep', { 'sweep_n': sweep_n, 'timestamp': t0, 'peaks': [] })
+
+      peaks = []
+      w = [(None,) * 3] * 3
+
+      for idx, freq in scan(**scan_config):
+        if 'current' in status['sweep']:
+          status['sweep']['previous'] = status['sweep']['current']
+        status['sweep']['current'] = { 'freq_n': idx }
         yield status
 
-        t0 = now()
-        strengths = []
-        yield status('sweep', { 'sweep_n': sweep_n, 'timestamp': t0, 'peaks': [] })
+        strength = timeout_try(attempts, monitor.get_strength, freq)
+        status['sweep']['current']['strength'] = strength
+        yield status
 
-        peaks = []
-        w = [(None,) * 3] * 3
+        w = [w[1], w[2], (freq, strength, idx)]
+        strengths.append(strength if strength is not None else -128)
+        if w[0][1] < w[1][1] and w[1][1] >= config.values['audio']['threshold'] and w[1][1] >= w[2][1]: # ..[1] gets you the strength
+          peaks.append((w[1][2], w[1][0]))
 
-        #FIXME mode should probably just be set once at rig.open, and should be an argument to Monitor.__init__()
-        monitor.set_mode(config.values['scan']['mode'])
-
-        for idx, freq in scan(**scan_config):
-          if 'current' in status['sweep']:
-            status['sweep']['previous'] = status['sweep']['current']
-          status['sweep']['current'] = { 'freq_n': idx }
+          status['sweep']['peaks'].append({ 'freq_n': w[1][2], 'strength': w[1][1] })
           yield status
+      else:
+        if w[1][1] < w[2][1] and w[2][1] >= config.values['audio']['threshold']:
+          peaks.append((w[2][2], w[2][1]))
 
-          while True:
-            try:
-              strength = monitor.get_strength(freq)
-              break
-            except TimeoutError as e:
-              if timeout_count < rig['radio_on']:
-                timeout_count += 1
-                log.error(e)
-                log.info("Attempting to power on")
-                power_on()
-                sleep(RADIO_ON_SLEEP_SECS) # give the rig chance to power up
-              else:
-                raise e
+        if 'previous' in status['sweep']:
+          del status['sweep']['previous']
+        if 'current' in status['sweep']:
+          del status['sweep']['current']
+        if 'record' in status['sweep']:
+          del status['sweep']['record']
+        yield status('latest', t0)
 
-          status['sweep']['current']['strength'] = strength
-          yield status
+        config.write_spectrum(t0, strengths)
 
-          w = [w[1], w[2], (freq, strength, idx)]
-          strengths.append(strength if strength is not None else -128)
-          if w[0][1] < w[1][1] and w[1][1] >= config.values['audio']['threshold'] and w[1][1] >= w[2][1]: # ..[1] gets you the strength
-            peaks.append((w[1][2], w[1][0]))
+        if audio_t is not None and now() - audio_t > config.values['audio']['period'] * 1000:
+          audio_t = now()
+          for st in record(status, config, monitor, peaks):
+            yield st
 
-            status['sweep']['peaks'].append({ 'freq_n': w[1][2], 'strength': w[1][1] })
-            yield status
-        else:
-          if w[1][1] < w[2][1] and w[2][1] >= config.values['audio']['threshold']:
-            peaks.append((w[2][2], w[2][1]))
-
-          if 'previous' in status['sweep']:
-            del status['sweep']['previous']
-          if 'current' in status['sweep']:
-            del status['sweep']['current']
-          if 'record' in status['sweep']:
-            del status['sweep']['record']
-          yield status('latest', t0)
-
-          config.write_spectrum(t0, strengths)
-
-          if audio_t is not None and now() - audio_t > config.values['audio']['period'] * 1000:
-            audio_t = now()
-            for st in record(status, config, monitor, peaks):
-              yield st
-
-        sweep_n += 1
+      sweep_n += 1
   except Exception as e:
     log.error(e)
     traceback.print_exc()
     config.write_error(now(), e)
+  finally:
+    if monitor is not None:
+      monitor.close()
 
 #FIXME how/whether to interrupt audio recording?
 def record(status, config, monitor, freqs):
