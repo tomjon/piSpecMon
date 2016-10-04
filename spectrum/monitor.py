@@ -109,9 +109,8 @@ class Monitor:
     self.retries = retries
     self.interval = interval
 
-  def open(self, mode):
+  def open(self):
     self._check(self.rig.open)
-    self.set_mode(mode)
     if self.attenuation is not None:
       #FIXME can we get the legal attenuation values from Hamlib? There's gran_t but where is that used?
       self._check(self.rig.set_level, Hamlib.RIG_LEVEL_ATT, 20 if self.attenuation else 0, Hamlib.RIG_VFO_CURR)

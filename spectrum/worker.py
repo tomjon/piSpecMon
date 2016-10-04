@@ -29,7 +29,7 @@ def timeout_try(attempts, fn, *args):
 
 def monitor_open(config):
   monitor = Monitor(**config.values['rig'])
-  monitor.open(config.values['scan']['mode'])
+  monitor.open()
   return monitor
 
 def iterator(config):
@@ -43,6 +43,7 @@ def iterator(config):
   monitor = None
   try:
     monitor = timeout_try(attempts, monitor_open, config)
+    monitor.set_mode(config.values['scan']['mode'])
     sweep_n = 0
     while True:
       log.debug("Scan: {0}".format(config.values['scan']))
@@ -74,7 +75,7 @@ def iterator(config):
           yield status
       else:
         if w[1][1] < w[2][1] and w[2][1] >= config.values['audio']['threshold']:
-          peaks.append((w[2][2], w[2][1]))
+          peaks.append((w[2][2], w[2][0]))
 
         if 'previous' in status['sweep']:
           del status['sweep']['previous']
@@ -117,6 +118,7 @@ def record(status, config, monitor, freqs):
       return
 
     audio = config.values['audio']
+    log.info("Recording audio at {0}Hz and storing in {1}".format(freq, path))
     monitor.record(freq, audio['rate'], audio['duration'], path, audio['path'])
 
 
