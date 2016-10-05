@@ -142,16 +142,22 @@ export class ChartsComponent {
 
         if (+sweep_idx >= (level_idx + 1) * interval - 1 || +sweep_idx == length - 1) {
           for (let freq_idx in data[sweep_idx][1]) {
+            let level = this.data.spectrum.levels[level_idx].fields.level;
             if (count[freq_idx] > 0) {
-              this.data.spectrum.levels[level_idx].fields.level[freq_idx] /= count[freq_idx];
+              level[freq_idx] = Math.round(level[freq_idx] / count[freq_idx]);
             } else {
-              this.data.spectrum.levels[level_idx].fields.level[freq_idx] = -128; // no reading
+              level[freq_idx] = -128; // no reading
             }
           }
 
           ++level_idx;
           count = null;
         }
+      }
+
+      for (let freq_idx in this.data.spectrum.agg['avg']) {
+        let freq = this.data.spectrum.agg['avg'][freq_idx];
+        freq.v = Math.round(freq.v);
       }
 
       /* find top N by avg, min and max */
