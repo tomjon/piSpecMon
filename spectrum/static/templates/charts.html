@@ -1,8 +1,3 @@
-<div *ngIf="debug">
-  <ul>
-    <li *ngFor="let t of times"><b>{{t.key}}</b> {{t.time}}ms</li>
-  </ul>
-</div>
 <psm-range [config]="config" [status]="status" (onRange)="show($event)"></psm-range>
 <psm-frequency [data]="data"></psm-frequency>
 <psm-level [data]="data"></psm-level>

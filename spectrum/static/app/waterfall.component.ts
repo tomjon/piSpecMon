@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { Chart } from './chart';
 import { WidgetComponent } from './widget.component';
 import { Data} from './data';
@@ -52,8 +52,6 @@ export class WaterfallComponent extends Chart {
   infoText: string = "";
   showSamples: boolean = false;
 
-  time: number;
-
   @ViewChild('chart') chart;
   @ViewChild('text') text;
   @ViewChild('audio') audioControl;
@@ -97,9 +95,8 @@ export class WaterfallComponent extends Chart {
   plot() {
     if (! this.svg) return;
 
-    let t0 = new Date();
-
     this.g.selectAll("g *").remove();
+    this.overctx.clearRect(0, 0, this.overctx.canvas.width, this.overctx.canvas.height);
     this.infoText = "";
 
     if (this.isHidden()) return;
@@ -148,8 +145,6 @@ export class WaterfallComponent extends Chart {
         }
       }
     }
-
-    this.time = (new Date()).getTime() - t0.getTime();
   }
 
   //FIXME much copied from frequency chart, abstract?

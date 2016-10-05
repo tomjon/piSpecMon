@@ -19,10 +19,6 @@ export class ChartsComponent {
   config: Config;
   data: Data;
 
-  // debugging
-  debug: boolean = false;
-  times: any[] = [ ];
-
   @Input() status: any;
 
   @Input('config') set _config(config: Config) {
@@ -32,31 +28,19 @@ export class ChartsComponent {
 
   constructor(private dataService: DataService) { }
 
-  progress(key: string, obs: Observable<any>): Observable<any> {
-    let t = { key: key, start: new Date(), end: null, time: null };
-    this.times.push(t);
-    return Observable.create(observer => {
-      obs.subscribe(observer);
-      return () => {
-        t.end = new Date();
-        t.time = t.end.getTime() - t.start.getTime();
-      };
-    });
-  }
-
   show(range: number[]) {
     if (! range) {
       this.data.spectrum = { };
       this.data.audio = { };
     } else {
-      this.progress('spectrum', this.dataService.getData(this.config.id, range))
-                                                .subscribe(data => {
-                                                  this.data = new Data(this.data.freqs); //FIXME horrible - forces 'change' for data
-                                                  this.mapSpectrum(data.spectrum);
-                                                  this.mapAudio(data.audio);
-                                                  this.mapRdsNames(data.rds.name);
-                                                  this.mapRdsText(data.rds.text);
-                                                });
+      this.dataService.getData(this.config.id, range)
+                      .subscribe(data => {
+                        this.data = new Data(this.data.freqs);
+                        this.mapSpectrum(data.spectrum);
+                        this.mapAudio(data.audio);
+                        this.mapRdsNames(data.rds.name);
+                        this.mapRdsText(data.rds.text);
+                      });
     }
   }
 
@@ -70,7 +54,7 @@ export class ChartsComponent {
   }
 
   mapAudio(audio: any[]) {
-    // want this.audio to be a lookup like this.audio[{sweep_n}_{freq_n}] = ..
+    // want this.data.audio to be a lookup like this.data.audio[{sweep_n}_{freq_n}] = ..
     this.data.audio = { length: audio.length };
     let sweep_n = -1;
     let sweep_t = null;
@@ -78,7 +62,9 @@ export class ChartsComponent {
       let audio_t = a[0];
       let freq_n = a[1];
       while (sweep_t == null || audio_t > sweep_t) {
-        sweep_t = this.data.spectrum.levels[++sweep_n].fields.timestamp;
+        let sweep = this.data.spectrum.levels[++sweep_n];
+        if (! sweep) return;
+        sweep_t = sweep.fields.timestamp;
       }
       this.data.audio[`${sweep_n}_${freq_n}`] = `/audio/${this.config.id}/${freq_n}/${audio_t}`;
     }
@@ -101,9 +87,6 @@ export class ChartsComponent {
   }
 
   mapSpectrum(data) {
-    let timer = { key: 'processing', start: new Date(), end: null, time: null };
-    this.times.push(timer);
-
     var interval = data.length / CHART_HEIGHT;
 
     this.data.spectrum = {
@@ -206,8 +189,5 @@ export class ChartsComponent {
         }
       }
     }
-
-    timer.end = new Date();
-    timer.time = timer.end.getTime() - timer.start.getTime();
   }
 }
