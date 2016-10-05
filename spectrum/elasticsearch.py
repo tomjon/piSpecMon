@@ -6,7 +6,7 @@ import json
 import os.path
 import requests
 from config import ELASTICSEARCH, SAMPLES_DIRECTORY
-from common import log, StoreError, local_path
+from common import log, StoreError, local_path, fs_size
 
 
 REFRESH = {'refresh': 'true'}
@@ -310,8 +310,8 @@ def stats():
         raise ElasticsearchError(req)
     values = req.json()['indices']['spectrum']['primaries']
     return {
-        'doc_count': values['docs']['count'],
-        'size_in_bytes': values['store']['size_in_bytes']
+        'audio': fs_size(SAMPLES_DIRECTORY),
+        'size': values['store']['size_in_bytes']
     }
 
 

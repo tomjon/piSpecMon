@@ -103,6 +103,10 @@ def parse_config(config):
     raise ValueError("No frequencies in config")
   return scan
 
+def fs_size(path):
+  result = os.popen('du -sk {0}'.format(local_path(path))).read()
+  return int(result.split('\t')[0]) * 1024
+
 
 class StoreError (Exception):
     def __init__(self, message):

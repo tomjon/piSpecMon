@@ -39,7 +39,7 @@ import os.path
 import shutil
 import struct
 from config import DATA_DIR, SAMPLES_DIRECTORY, SETTINGS_DIR
-from common import StoreError, local_path
+from common import StoreError, local_path, fs_size
 
 
 INDEX = 'index'
@@ -385,7 +385,7 @@ class Settings(object):
 def stats():
     """ Return a dictionary of statistics name/values.
     """
-    return {}
+    return {'audio': fs_size(SAMPLES_DIRECTORY), 'size': fs_size(DATA_DIR)}
 
 
 # initialise - just create data directory if necessary
