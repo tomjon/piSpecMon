@@ -86,7 +86,7 @@ export class LevelComponent extends Chart {
   }
 
   isHidden() {
-    return this.data.spectrum.levels == undefined || this.data.spectrum.levels.length < 2;
+    return this.data == undefined || this.data.spectrum.levels == undefined || this.data.spectrum.levels.length < 2;
   }
 
   plot() {

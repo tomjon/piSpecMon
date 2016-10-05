@@ -81,7 +81,7 @@ export class FrequencyComponent extends Chart {
   }
 
   isHidden() {
-    return this.data.spectrum.agg == undefined || this.data.freqs.freqs || this.data.spectrum.agg[this.sweep].length == 0;
+    return this.data == undefined || this.data.spectrum.agg == undefined || this.data.freqs.freqs || this.data.spectrum.agg[this.sweep].length == 0;
   }
 
   plot() {

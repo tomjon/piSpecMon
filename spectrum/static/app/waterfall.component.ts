@@ -20,7 +20,7 @@ declare var $;
                <form class="form-inline" role="form">
                  <span class="infoText">{{infoText}}</span>
                  <label for="samples">Overlay audio samples</label>
-                 <input type="checkbox" name="samples" [disabled]="data.audio.length == 0" [(ngModel)]="showSamples">
+                 <input type="checkbox" name="samples" [disabled]="! data || data.audio.length == 0" [(ngModel)]="showSamples">
                </form>
                <div class="waterfall">
                  <svg #chart (click)="onClick($event)"
@@ -84,7 +84,7 @@ export class WaterfallComponent extends Chart {
   }
 
   isHidden() {
-    return this.data.spectrum.levels == undefined || this.data.freqs.freqs || this.data.spectrum.levels.length < 1;
+    return this.data == undefined || this.data.spectrum.levels == undefined || this.data.freqs.freqs || this.data.spectrum.levels.length < 1;
   }
 
   private rect(context: any, i: number, j: number, fill: string) {
