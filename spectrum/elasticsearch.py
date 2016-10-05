@@ -6,7 +6,7 @@ import json
 import os.path
 import requests
 from config import ELASTICSEARCH, SAMPLES_DIRECTORY
-from common import log, StoreError, local_path, fs_size
+from common import log, StoreError, local_path, fs_size, fs_free
 
 
 REFRESH = {'refresh': 'true'}
@@ -311,7 +311,8 @@ def stats():
     values = req.json()['indices']['spectrum']['primaries']
     return {
         'audio': fs_size(SAMPLES_DIRECTORY),
-        'size': values['store']['size_in_bytes']
+        'size': values['store']['size_in_bytes'],
+        'free': fs_free(SAMPLES_DIRECTORY)
     }
 
 

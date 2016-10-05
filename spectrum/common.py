@@ -107,6 +107,10 @@ def fs_size(path):
   result = os.popen('du -sk {0}'.format(local_path(path))).read()
   return int(result.split('\t')[0]) * 1024
 
+def fs_free(path):
+  result = os.popen('df -k {0}'.format(local_path(path))).read()
+  return int(result.split('\n')[1].split()[3]) * 1024
+
 
 class StoreError (Exception):
     def __init__(self, message):
