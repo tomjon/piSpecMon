@@ -175,7 +175,7 @@ def caps():
 @application.route('/rig', methods=['GET', 'PUT'])
 @application.route('/audio', methods=['GET', 'PUT'])
 @application.route('/rds', methods=['GET', 'PUT'])
-@role_required(['admin'])
+@role_required(['admin', 'freq'])
 def settings():
   rule = request.url_rule.rule[1:]
   if request.method == 'GET':
