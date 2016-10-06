@@ -1,3 +1,3 @@
 #!/bin/bash
 
-echo `/sbin/ifconfig` | mail -s `uname -a` remote.systems@ofcom.org.uk
+echo `/sbin/ifconfig` | mutt -s `uname -n` remote.systems@ofcom.org.uk
