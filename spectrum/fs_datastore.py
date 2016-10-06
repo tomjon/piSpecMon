@@ -117,7 +117,7 @@ class Config(object):
         self.n_freq = None
 
     @staticmethod
-    def iter():
+    def iter(debug=False):
         """ Yield stored Config objects.
         """
         with open(_index) as f:
@@ -126,10 +126,10 @@ class Config(object):
                 if len(config_id) == 0 or config_id[0] == '.':
                     continue
                 config = Config(config_id)
-                config.read()
+                config.read(debug)
                 yield config
 
-    def read(self):
+    def read(self, debug=False):
         """ Read config attributes from the data store.
         """
         dir = os.path.join(_dir, self.id)
@@ -141,18 +141,31 @@ class Config(object):
         firsts = []
         latests = []
         counts = {}
-        for name in (SPECTRUM_TIMES, AUDIO_TIMES, RDS_NAME_TIMES, RDS_TEXT_TIMES):
+        for name, offset in (
+          (SPECTRUM_TIMES, _t_struct.size),
+          (AUDIO_TIMES, _t_struct.size),
+          (RDS_NAME_TIMES, _t_struct.size + _n_struct.size),
+          (RDS_TEXT_TIMES, _t_struct.size + _n_struct.size)
+        ):
             path = os.path.join(dir, name)
             if not os.path.exists(path):
                 continue
             with open(path) as f:
+                if debug:
+                    print self.id, name,
                 firsts.append(_t_struct.fread(f))
+                if debug:
+                    print firsts[-1],
                 if f.tell() == 0:
-                    continue;
-                f.seek(-_t_struct.size, os.SEEK_END)
+                    continue
+                f.seek(-offset, os.SEEK_END)
                 latests.append(_t_struct.fread(f))
+                if debug:
+                    print latests[-1],
                 f.seek(0, os.SEEK_END)
                 counts[name] = f.tell() / _t_struct.size
+                if debug:
+                    print
         self.first = min(firsts) if len(firsts) > 0 else None
         self.latest = max(latests) if len(latests) > 0 else None
         self.count = counts[SPECTRUM_TIMES] if SPECTRUM_TIMES in counts else 0
@@ -403,6 +416,12 @@ if not os.path.exists(_index):
 
 
 if __name__ == '__main__':
+    import sys
+
+    if len(sys.argv) > 1:
+        list(Config.iter(True))
+        sys.exit(0)
+
     try:
         assert not os.path.exists('.test')
         _dir = local_path('.test/data')
