@@ -1,0 +1,9 @@
+[Unit]
+Description=Send email to central server
+
+[Service]
+Type=oneshot
+ExecStart=/home/ses/spectrum/piSpecMon/spectrum/bin/mail.sh
+
+[Install]
+WantedBy=multi-user.target
