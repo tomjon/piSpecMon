@@ -25,6 +25,8 @@ import tail
 class SecuredStaticFlask (Flask):
   def send_static_file(self, filename):
     if filename == 'login.html' or (current_user is not None and not current_user.is_anonymous and current_user.is_authenticated):
+      if application.debug and filename == 'index.html':
+        filename = 'index-debug.html'
       return super(SecuredStaticFlask, self).send_static_file(filename)
     else:
       return redirect('/')
