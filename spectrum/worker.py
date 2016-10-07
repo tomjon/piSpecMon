@@ -51,7 +51,7 @@ def iterator(config):
 
       t0 = now()
       strengths = []
-      yield status('sweep', { 'sweep_n': sweep_n, 'timestamp': t0, 'peaks': [] })
+      yield status('sweep', { 'sweep_n': config.count + sweep_n, 'timestamp': t0, 'peaks': [] })
 
       peaks = []
       w = [(None,) * 3] * 3

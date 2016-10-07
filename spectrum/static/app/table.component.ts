@@ -45,8 +45,8 @@ export class TableComponent {
                           .subscribe(config => this.configs.push(config));
     } else {
       // otherwise, update the one we have
-      config.latest = status.worker.latest;
-      config.count = status.worker.sweep ? status.worker.sweep.sweep_n : 0;
+      if (status.worker.latest) config.latest = status.worker.latest;
+      if (status.worker.sweep) config.count = status.worker.sweep.sweep_n;
     }
   }
 
