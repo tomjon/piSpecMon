@@ -134,6 +134,12 @@ export class DataService {
                     .catch(this.errorHandler("set current user details"));
   }
 
+  getLoggedInUsers(): Observable<string[]> {
+    return this.http.get(this.baseUrl + 'current')
+                    .map(res => res.json().data)
+                    .catch(this.errorHandler("set current user details"));
+  }
+
   logout(): Observable<void> {
     return this.http.get(this.baseUrl + 'logout')
                     .catch(this.errorHandler("log out"));

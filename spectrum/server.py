@@ -309,7 +309,7 @@ def audio_stream(config_id, freq_n, timestamp):
   return 'File not found', 404
 
 @application.route('/users')
-@role_required([ 'admin' ])
+@role_required(['admin'])
 def user_list():
   def _namise_data(name, data):
     data['name'] = name
@@ -320,6 +320,11 @@ def user_list():
     return data
   users = [_namise_data(name, data) for name, data in iter_users()]
   return json.dumps({ 'data': users })
+
+@application.route('/current')
+@role_required(['admin', 'freq', 'data'])
+def logged_in_users():
+  return json.dumps({ 'data': application.logged_in_users })
 
 @application.route('/user/<name>', methods=['GET', 'PUT', 'DELETE'])
 @role_required(['admin'])
