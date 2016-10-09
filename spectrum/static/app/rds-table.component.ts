@@ -16,7 +16,7 @@ import { Data } from './data';
                    </select>
                  </div>
                </form>
-               <table *ngIf="data.rdsText[idx]">
+               <table *ngIf="data && data.rdsText[idx]">
                  <tr>
                    <th>Timestamp</th>
                    <th>Text</th>
@@ -26,25 +26,25 @@ import { Data } from './data';
                    <td>{{entry.text}}
                  </tr>
                </table>
-               <div *ngIf="! data.rdsText[idx]">
+               <div *ngIf="data && ! data.rdsText[idx]">
                  No RDS text decoded
                </div>
              </psm-widget>`
 })
 export class RdsTableComponent {
-  data: Data = new Data();
+  data: Data;
   stations: any;
   idx: number; // the selected station index
 
   @Input('data') set _data(data: Data) {
     this.data = data;
     this.stations = [];
-    for (let idx in data.rdsNames) {
-      this.stations.push({ 'idx': idx, 'name': data.rdsNames[idx] });
+    if (data && data.rdsNames) {
+      for (let idx in data.rdsNames) {
+        this.stations.push({ 'idx': idx, 'name': data.rdsNames[idx] });
+      }
     }
   }
-
-  constructor() {}
 
   isHidden() {
     return this.stations == undefined || this.stations.length == 0;

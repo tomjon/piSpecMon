@@ -198,8 +198,8 @@ export class DataService {
                     .catch(this.errorHandler("export spectrum data"));
   }
 
-  getData(config_id, range): Observable<any> {
-    return this.http.get(`${this.baseUrl}data/${config_id}?start=${Math.round(range[0])}&end=${Math.round(range[1]) + 5}`)
+  getData(config_id): Observable<any> {
+    return this.http.get(`${this.baseUrl}data/${config_id}`)
                     .map(res => res.json())
                     .catch(this.errorHandler("get data"));
   }
