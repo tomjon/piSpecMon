@@ -280,7 +280,10 @@ class Config(object):
         if self.n_freq is None:
             dir = os.path.join(_dir, self.id)
             with open(os.path.join(dir, FORMAT), 'r') as f:
+                _t_struct.fread(f)
                 self.n_freq = _n_struct.fread(f)
+            if self.n_freq is None:
+                return
         _struct = Struct('{0}b'.format(self.n_freq), True)
         for _ in self._iter_data(SPECTRUM_TIMES, SPECTRUM_DATA, start, end, _struct):
             yield _
@@ -424,9 +427,9 @@ if __name__ == '__main__':
 
     try:
         assert not os.path.exists('.test')
-        _dir = local_path('.test/data')
+        _dir = local_path('.test')
         _settings = local_path('.test/settings')
-        os.mkdir('.test')
+        _index = local_path('.test/index')
         os.mkdir(_dir)
         os.mkdir(_settings)
 
@@ -490,5 +493,10 @@ if __name__ == '__main__':
                                                      (1080, 4, 'Bilbo')]
         assert list(c.iter_rds_name(1090, 1300)) == [(1090, 1, 'Frodo'),
                                                      (1280, 6, 'Wikipedia')]
+
+        c = Config()
+        c.write(999, {})
+        c.read()
+        list(c.iter_spectrum())
     finally:
         shutil.rmtree('.test')
