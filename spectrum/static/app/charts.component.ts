@@ -16,6 +16,7 @@ import { Data } from './data';
 export class ChartsComponent {
   config: Config;
   data: Data;
+  loading: boolean = false;
 
   @Input() set status(status: any) {
     if (status && this.config && status.config_id == this.config.id && status.sweep && this.data && status.sweep.sweep_n > this.data.count) {
@@ -36,7 +37,11 @@ export class ChartsComponent {
 
   private getData() {
     delete this.data;
+    this.loading = true;
     this.dataService.getData(this.config.id)
-                    .subscribe(data => this.data = new Data(this.config, data));
+                    .subscribe(data => {
+                      this.data = new Data(this.config, data);
+                      this.loading = false;
+                    });
   }
 }
