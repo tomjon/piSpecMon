@@ -35,6 +35,7 @@ export class ChartsComponent {
   constructor(private dataService: DataService) { }
 
   private getData() {
+    delete this.data;
     this.dataService.getData(this.config.id)
                     .subscribe(data => this.data = new Data(this.config, data));
   }
