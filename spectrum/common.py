@@ -26,7 +26,7 @@ log.setLevel(logging.DEBUG)
 # create file handler which logs even debug messages (these end up in log file)
 log_filename = os.path.join(log_dir, '{0}.log'.format(os.path.basename(sys.argv[0]).replace('.py', '')))
 rfh = logging.handlers.RotatingFileHandler(log_filename, maxBytes=1 * 1024 * 1024, backupCount=0)
-rfh.setLevel(logging.DEBUG)
+rfh.setLevel(logging.INFO)
 
 # create console handler with a higher log level (these end up in system journal)
 ch = logging.StreamHandler()
@@ -46,14 +46,6 @@ def now():
   """ Return time in milliseconds since the epoch.
   """
   return int(time() * 1000)
-
-
-def get_config(config_id):
-  r = requests.get('%s/spectrum/config/_search?fields=*&q=_id:%s' % (ELASTICSEARCH, config_id))
-  if r.status_code != 200:
-    return None #FIXME need to throw or return an error somehow
-  hits = r.json()['hits']['hits']
-  return json.loads(hits[0]['fields']['json'][0]) if len(hits) > 0 else None
 
 
 def scan(freqs=[], range=None, **ignore):
@@ -111,19 +103,16 @@ def parse_config(config):
     raise ValueError("No frequencies in config")
   return scan
 
+def fs_size(path):
+  result = os.popen('du -sk {0}'.format(local_path(path))).read()
+  return int(result.split('\t')[0]) * 1024
 
-def wait_for_elasticsearch():
-  while True:
-    try:
-      r = requests.get('%s/_cluster/health' % ELASTICSEARCH)
-      if r.status_code != 200:
-        log.warn("Elasticsearch status %s" % r.status_code)
-      else:
-        status = r.json()['status']
-        if status != 'red':
-          log.info("Elasticsearch up and running ({0})".format(status))
-          return
-        log.warn("Elasticsearch cluster health status: %s" % status)
-    except requests.exceptions.ConnectionError:
-      log.warn("No elasticsearch... waiting")
-    sleep(2)
+def fs_free(path):
+  result = os.popen('df -k {0}'.format(local_path(path))).read()
+  return int(result.split('\n')[1].split()[3]) * 1024
+
+
+class StoreError (Exception):
+    def __init__(self, message):
+        log.error(message)
+        self.message = message

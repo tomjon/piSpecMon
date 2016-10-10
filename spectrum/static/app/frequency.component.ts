@@ -1,18 +1,22 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { WidgetComponent } from './widget.component';
+import { DatePipe } from './date.pipe';
+import { Chart } from './chart';
 import { FREQUENCY_CHART_OPTIONS, HZ_LABELS } from './constants';
-import { _d3 as d3, dt_format } from './d3_import';
+import { _d3 as d3 } from './d3_import';
 
 declare var $;
 
 @Component({
   selector: 'psm-frequency',
   directives: [ WidgetComponent ],
-  template: `<psm-widget [hidden]="isHidden()" title="Level / Frequency" class="chart">
+  inputs: [ 'data', 'show' ],
+  pipes: [ DatePipe ],
+  template: `<psm-widget [hidden]="isHidden()" title="Level / Frequency" class="chart" (show)="onShow($event)">
                <form class="form-inline" role="form">
-                 <span *ngIf="sweep == 'latest'">{{timestamp}}</span>
+                 <span *ngIf="sweep == 'latest'">{{timestamp | date}}</span>
                  <div class="form-group">
-                   <select class="form-control" [(ngModel)]="sweep" (ngModelChange)="ngOnChanges()" name="sweep">
+                   <select class="form-control" [(ngModel)]="sweep" (ngModelChange)="plot()" name="sweep">
                      <option default value="latest">Latest sweep</option>
                      <option value="avg">Average</option>
                      <option value="max">Maximum</option>
@@ -26,11 +30,11 @@ declare var $;
                  <svg:line class="horizontal" *ngIf="showInfo" [attr.x1]="margin.left" [attr.x2]="width + margin.left" [attr.y1]="showY" [attr.y2]="showY" />
                  <svg:line class="vertical" *ngIf="showInfo" [attr.x1]="showX" [attr.x2]="showX" [attr.y1]="height + margin.top" [attr.y2]="showY" />
                  <svg:rect class="info" *ngIf="showInfo" [attr.x]="showX + 10 + adjustX" [attr.y]="showY - 30" [attr.width]="textWidth + 20" height=21 rx=5 ry=5 />
-                 <svg:text #text class="info" [attr.x]="showX + 20 + adjustX" [attr.y]="showY - 15">{{infoText}}</svg:text>
+                 <svg:text #text class="info" *ngIf="showInfo" [attr.x]="showX + 20 + adjustX" [attr.y]="showY - 15">{{infoText}}</svg:text>
                </svg>
              </psm-widget>`
 })
-export class FrequencyComponent {
+export class FrequencyComponent extends Chart {
   sweep: string = 'latest';
   timestamp: number;
 
@@ -51,14 +55,8 @@ export class FrequencyComponent {
   textWidth: number = 0;
   adjustX: number = 0;
 
-  @Input() freqs: any;
-  @Input() data: any;
-  @Input('names') rdsNames: any;
-
   @ViewChild('chart') chart;
   @ViewChild('text') text;
-
-  constructor() { }
 
   ngOnInit() {
     this.margin = FREQUENCY_CHART_OPTIONS.margin;
@@ -83,19 +81,21 @@ export class FrequencyComponent {
   }
 
   isHidden() {
-    return this.data.agg == undefined || this.freqs.freqs || this.data.agg[this.sweep].length == 0;
+    return this.data == undefined || this.data.spectrum.agg == undefined || this.data.freqs.freqs || this.data.spectrum.agg[this.sweep].length == 0;
   }
 
-  ngOnChanges() {
-    if (! this.svg) return; // ngOnChanges() happens before ngOnInit()!
+  plot() {
+    if (! this.svg) return;
+
     this.svg.selectAll("g, path").remove();
+    this.showInfo = false;
 
     if (this.isHidden()) return;
 
-    this.timestamp = dt_format(new Date(this.data.levels[this.data.levels.length - 1].fields.timestamp));
-    let agg = this.data.agg[this.sweep];
+    this.timestamp = this.data.spectrum.levels[this.data.spectrum.levels.length - 1].fields.timestamp;
+    let agg = this.data.spectrum.agg[this.sweep];
 
-    this.x.domain([this.freqs.range[0], this.freqs.range[1]]);
+    this.x.domain([this.data.freqs.range[0], this.data.freqs.range[1]]);
     if (FREQUENCY_CHART_OPTIONS.y_axis) {
       this.y.domain([FREQUENCY_CHART_OPTIONS.y_axis[0], FREQUENCY_CHART_OPTIONS.y_axis[1]]);
       this.yAxis.tickValues(d3.range(FREQUENCY_CHART_OPTIONS.y_axis[0], FREQUENCY_CHART_OPTIONS.y_axis[1] + FREQUENCY_CHART_OPTIONS.y_axis[2], FREQUENCY_CHART_OPTIONS.y_axis[2]));
@@ -103,7 +103,7 @@ export class FrequencyComponent {
       this.y.domain(d3.extent(agg, d => d.v));
     }
 
-    this.line.x((d, i) => this.x(+this.freqs.range[0] + i * this.freqs.range[2]));
+    this.line.x((d, i) => this.x(+this.data.freqs.range[0] + i * this.data.freqs.range[2]));
 
     this.svg.append("g")
         .attr("class", "x axis")
@@ -114,7 +114,7 @@ export class FrequencyComponent {
         .attr("x", 40)
         .attr("y", 6)
         .style("text-anchor", "end")
-        .text(HZ_LABELS[this.freqs.exp]);
+        .text(HZ_LABELS[this.data.freqs.exp]);
 
     this.svg.append("g")
         .attr("class", "y axis")
@@ -145,23 +145,23 @@ export class FrequencyComponent {
 
     // find frequency of click...
     let f = this.x.invert(z.x - this.margin.left);
-    let i = Math.round((f - this.freqs.range[0]) / this.freqs.range[2]);
-    if (i < 0 || i >= this.data.agg[this.sweep].length) {
+    let i = Math.round((f - this.data.freqs.range[0]) / this.data.freqs.range[2]);
+    if (i < 0 || i >= this.data.spectrum.agg[this.sweep].length) {
       // out of bounds - hide info text
       this.showInfo = false;
       this.infoText = "";
       return;
     }
-    f = +this.freqs.range[0] + i * this.freqs.range[2]; // 'snap' to an actual frequency value
-    f = f.toFixed(-Math.log10(this.freqs.range[2]));
+    f = +this.data.freqs.range[0] + i * this.data.freqs.range[2]; // 'snap' to an actual frequency value
+    f = f.toFixed(-Math.log10(this.data.freqs.range[2]));
 
     // decide where to show the info text and lines
     this.showX = this.margin.left + this.x(f);
     this.adjustX = z.x > this.width / 2 ? -150 : 0;
-    let v = this.data.agg[this.sweep][i] ? this.data.agg[this.sweep][i].v : 0;
+    let v = this.data.spectrum.agg[this.sweep][i] ? this.data.spectrum.agg[this.sweep][i].v : 0;
     this.showY = this.y(v) + this.margin.top;
-    this.infoText = `${v}dB at ${f}${HZ_LABELS[this.freqs.exp]}`;
-    if (this.rdsNames[i]) this.infoText += ` (${this.rdsNames[i]})`;
+    this.infoText = `${v}dB at ${f}${HZ_LABELS[this.data.freqs.exp]}`;
+    if (this.data.rdsNames[i]) this.infoText += ` (${this.data.rdsNames[i]})`;
     setTimeout(() => this.textWidth = this.text.nativeElement.getComputedTextLength());
     this.showInfo = true;
   }

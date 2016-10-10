@@ -1,8 +1,23 @@
 .header {
   float: left;
 }
+.header img {
+  margin-right: 20px;
+}
+.version {
+  font-size: small;
+  margin-left: 20px;
+}
+
+.error {
+  color: red;
+  margin-left: 20px;
+}
 
 /* charts */
+.chart svg {
+	width: 100%;
+}
 .axis path, .axis line {
   fill: none;
   stroke: #000;
@@ -22,9 +37,9 @@ line.vertical, line.horizontal {
   float: left;
 }
 .chart form {
-  float: right;
+  position: absolute;
+  right: 30px;
   margin-top: 10px;
-	margin-bottom: 0px;
 }
 psm-frequency span {
   margin-right: 15px;
@@ -43,12 +58,26 @@ text.info {
   opacity: 0;
 }
 form.controls {
-	float: left;
-	margin-left: 100px;
-	margin-top: 8px;
+  position: absolute;
+  left: 160px;
+  margin-top: 6px;
+}
+psm-waterfall .waterfall {
+  position: relative;
+  margin-top: 40px;
+}
+psm-waterfall svg {
+  position: relative;
+  z-index: 1;
+}
+psm-waterfall canvas {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
 }
 psm-waterfall .infoText {
-	margin-right: 50px;
+  margin-right: 50px;
 }
 rect.audio {
   fill: green;
@@ -94,6 +123,9 @@ rect.audio {
 }
 .status.error {
   background: pink;
+}
+.freqlist {
+  margin-bottom: 0;
 }
 
 /* specials for the sweep table component */

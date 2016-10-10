@@ -16,4 +16,28 @@ export var insertLineBreaks = function (d) {
       tspan.attr('x', x).attr('dy', '15');
     }
   }
+};
+
+/* period * step * ticks = extent */
+/* step = extent / (period * ticks) */
+export var timeTicks = function (axis, domain, ticks) {
+  let extent = domain[1] - domain[0]; // milliseconds
+  let period, type;
+  if (extent > 5 * 7 * 24 * 60 * 60 * 1000) {
+    period = 7 * 24 * 60 * 60 * 1000;
+    type = d3.time.mondays;
+  } else if (extent > 5 * 24 * 60 * 60 * 1000) {
+    period = 24 * 60 * 60 * 1000;
+    type = d3.time.days;
+  } else if (extent > 5 * 60 * 60 * 1000) {
+    period = 60 * 60 * 1000;
+    type = d3.time.hours;
+  } else {
+    period = 60 * 1000;
+    type = d3.time.minutes;
+  }
+  axis.ticks(type, Math.ceil(extent / (period * ticks)));
+  axis.tickFormat(dt_format);
+
+
 }

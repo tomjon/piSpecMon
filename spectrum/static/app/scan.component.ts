@@ -2,7 +2,7 @@ import { Component, Input, ViewChild } from '@angular/core';
 import { DataService } from './data.service';
 import { WidgetComponent } from './widget.component';
 import { Config } from './config';
-import { dt_format } from './d3_import';
+import { DatePipe } from './date.pipe';
 import { DEFAULTS, HZ_LABELS } from './constants';
 
 declare var $;
@@ -10,7 +10,8 @@ declare var $;
 @Component({
   selector: 'psm-scan',
   templateUrl: 'templates/scan.html',
-  directives: [ WidgetComponent ]
+  directives: [ WidgetComponent ],
+  pipes: [ DatePipe ]
 })
 export class ScanComponent {
   @Input() modes: any[] = [ ];
@@ -25,6 +26,9 @@ export class ScanComponent {
   // true when waiting for (real) status after startup or start/stop buttons pressed
   standby: boolean = true;
 
+  allowRange: boolean = true;
+  allowFreqs: boolean = false;
+
   @ViewChild(WidgetComponent) widgetComponent;
   @ViewChild('form') form;
 
@@ -35,9 +39,6 @@ export class ScanComponent {
     this.standby = false;
     this.worker = status.worker;
     this.monkey = status.monkey;
-    if (this.worker.config_id) {
-      // monitor is running
-    }
   }
 
   @Input('config') set _config(config: Config) {
@@ -47,7 +48,9 @@ export class ScanComponent {
       this.widgetComponent.pristine(this.form, false);
       return;
     }
-    this.config = $.extend(true, { }, this.input);
+    this.config = $.extend(true, {}, DEFAULTS, this.input);
+    this.allowRange = this.input.freqs.range != undefined;
+    this.allowFreqs = this.input.freqs.freqs != undefined;
     this.widgetComponent.pristine(this.form);
   }
 
@@ -66,7 +69,14 @@ export class ScanComponent {
 
   onStart() {
     this.standby = true;
-    this.widgetComponent.busy(this.dataService.startMonitor(this.config))
+    let config = $.extend(true, { }, this.config);
+    if (! this.allowRange) {
+      delete config.freqs.range;
+    }
+    if (! this.allowFreqs) {
+      delete config.freqs.freqs;
+    }
+    this.widgetComponent.busy(this.dataService.startMonitor(config))
                         .subscribe();
   }
 
@@ -80,6 +90,10 @@ export class ScanComponent {
     return this.widgetComponent.loading;
   }
 
+  numeric(v): boolean {
+    return $.isNumeric(v);
+  }
+
   validNumber(input): boolean {
     return (input.valid && $.isNumeric(input.model)) || input.pristine;
   }
@@ -88,15 +102,37 @@ export class ScanComponent {
     return +(this.config.freqs.range[0]) + +(this.config.freqs.range[2]) <= +(this.config.freqs.range[1]);
   }
 
-  //FIXME a common function?
-  time(t: number): string {
-    if (! t) return undefined;
-    return dt_format(new Date(t));
+  validFreqs(): boolean {
+    for (let freq of this.config.freqs.freqs) {
+      if (! this.numeric(freq.f)) return false;
+    }
+    return true;
   }
 
-  //FIXME this is quite a common function...
+  validScan(): boolean {
+    return this.form.form.valid && ((this.validRange && this.validRange()) || (this.validFreqs && this.validFreqs()));
+  }
+
   freq(freq_n: number): string {
-    let f = +this.config.freqs.range[0] + this.config.freqs.range[2] * freq_n;
-    return `${f.toFixed(-Math.log10(this.config.freqs.range[2]))}${HZ_LABELS[this.config.freqs.exp]}`;
+    if (this.allowRange) {
+      let f = +this.config.freqs.range[0] + this.config.freqs.range[2] * freq_n;
+      return `${f.toFixed(-Math.log10(this.config.freqs.range[2]))}${HZ_LABELS[this.config.freqs.exp]}`;
+    } else {
+      let f = this.config.freqs.freqs[freq_n].f;
+      return `${f}${HZ_LABELS[this.config.freqs.freqs[freq_n].exp]}`;
+    }
+  }
+
+  get running(): boolean {
+    return this.worker.timestamp || this.monkey.timestamp;
+  }
+
+  onInsert(n: number) {
+    let fs = this.config.freqs.freqs;
+    fs.splice(n + 1, 0, { f: "", exp: fs[n].exp });
+  }
+
+  onDelete(n: number) {
+    this.config.freqs.freqs.splice(n, 1);
   }
 }

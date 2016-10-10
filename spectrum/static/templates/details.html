@@ -18,7 +18,7 @@
       </optgroup>
     </select>
   </div>
-  <form role="form" (ngSubmit)="onSubmit()" #form="ngForm">
+  <form role="form" #form="ngForm">
     <div class="form-group">
       <label for="role">Role</label>
       <input *ngIf="user == logged_in" [disabled]="loading" type="text" readonly class="form-control" [(ngModel)]="user._roleLabel" name="role">
@@ -47,10 +47,10 @@
         Telephone number is a required parameter
       </div>
     </div>
-    <button type="button" (click)="onReset()" class="btn btn-default" [disabled]="loading || form.form.pristine">Reset</button>
-    <button type="submit" class="btn btn-default" [disabled]="loading || ! form.form.valid || form.form.pristine">Submit</button>
-    <button *ngIf="users" type="button" (click)="onDeleteUser()" class="btn btn-default" [disabled]="loading || user == logged_in">Delete</button>
-    <button *ngIf="users" type="button" (click)="resetAddUserForm()" class="btn btn-link" [disabled]="loading" data-toggle="modal" data-target="#newUserModal">New</button>
+    <button (click)="onReset()" class="btn btn-default" [disabled]="loading || form.form.pristine">Reset</button>
+    <button (click)="onSubmit()" class="btn btn-default" [disabled]="loading || ! form.form.valid || form.form.pristine">Submit</button>
+    <button *ngIf="users" (click)="onDeleteUser()" class="btn btn-default" [disabled]="loading || user == logged_in">Delete</button>
+    <button *ngIf="users" (click)="resetAddUserForm()" class="btn btn-link" [disabled]="loading" data-toggle="modal" data-target="#newUserModal">New</button>
   </form>
   <div id="newUserModal" class="modal fade" role="dialog">
     <form role="form" #newForm="ngForm">

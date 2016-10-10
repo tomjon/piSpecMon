@@ -16,13 +16,17 @@ from datetime import datetime
 from worker import Worker
 from monkey import Monkey
 from monitor import get_capabilities
+import fs_datastore as data_store
 import re
 import mimetypes
+import tail
 
 
 class SecuredStaticFlask (Flask):
   def send_static_file(self, filename):
     if filename == 'login.html' or (current_user is not None and not current_user.is_anonymous and current_user.is_authenticated):
+      if application.debug and filename == 'index.html':
+        filename = 'index-debug.html'
       return super(SecuredStaticFlask, self).send_static_file(filename)
     else:
       return redirect('/')
@@ -30,7 +34,7 @@ class SecuredStaticFlask (Flask):
 def send_file_partial(path):
   """ See http://blog.asgaard.co.uk/2012/08/03/http-206-partial-content-for-flask-python
       
-      We need this for supprting media files with Safari (at least).
+      We need this for supporting media files with Safari (at least).
   """
   range_header = request.headers.get('Range', None)
   if not range_header: return send_file(path)
@@ -89,7 +93,7 @@ def role_required(roles):
 def check_user_timeout():
   # check for user timeouts
   for name in application.logged_in_users:
-    if time() > application.request_times[name] + USER_TIMEOUT_SECS:
+    if not application.debug and time() > application.request_times[name] + USER_TIMEOUT_SECS:
       application.logged_in_users.remove(name)
   # check whether current user has been logged out?
   if not hasattr(current_user, 'name'):
@@ -100,32 +104,10 @@ def check_user_timeout():
   return None
 
 
-def set_settings(id, value):
-  data = { 'timestamp': int(time()), 'json': json.dumps(value) }
-  r = requests.put(ELASTICSEARCH + 'spectrum/settings/' + id, params={ 'refresh': 'true' }, data=json.dumps(data))
-  if r.status_code != 200 and r.status_code != 201:
-    raise Exception("Can not apply settings: %s (%d)" % (id, r.status_code))
-  return value
-
-def get_settings(id, new={}):
-  """ Get the settings by id from Elasticsearch.
-  """
-  params = { 'fields': 'json' }
-  r = requests.get(ELASTICSEARCH + 'spectrum/settings/' + id, params=params)
-  log.debug("get_settings status code {0}: {1}".format(r.status_code, r.json()))
-  if r.status_code == 404:
-    log.info("Initialising settings: {0}".format(id))
-    set_settings(id, new)
-    return new
-  fields = r.json()['fields']
-  return json.loads(fields['json'][0])
-
-# create index (harmless if it already exists)
-wait_for_elasticsearch()
-with open(local_path('create.json')) as f:
-  r = requests.put('{0}spectrum'.format(ELASTICSEARCH), data=f.read())
-  log.debug("Code {0} creating index".format(r.status_code))
-wait_for_elasticsearch()
+try:
+  DEFAULT_MODEL = Hamlib.RIG_MODEL_PSMTEST 
+except AttributeError:
+  DEFAULT_MODEL = Hamlib.RIG_MODEL_AR8200
 
 application = SecuredStaticFlask(__name__)
 application.login_manager = LoginManager()
@@ -133,9 +115,10 @@ application.logged_in_users = []
 application.request_times = {}
 application.before_request(check_user_timeout)
 application.caps = get_capabilities()
-application.rig = get_settings('rig', { 'model': 1 }) #FIXME is this a Hamlib constant? (dummy rig)
-application.audio = get_settings('audio', { 'path': '/dev/dsp1', 'rate': 44100, 'period': 600, 'duration': 10, 'threshold': -20 })
-application.rds = get_settings('rds', { 'device': '/dev/ttyACM0', 'strength_threshold': 40, 'strength_timeout': 20, 'rds_timeout': 300 })
+application.rig = data_store.Settings('rig').read({'model': DEFAULT_MODEL})
+application.audio = data_store.Settings('audio').read({'path': '/dev/dsp1', 'rate': 44100, 'period': 600, 'duration': 10, 'threshold': -20})
+application.rds = data_store.Settings('rds').read({'device': '/dev/ttyACM0', 'strength_threshold': 40, 'strength_timeout': 20, 'rds_timeout': 300})
+application.defaults = data_store.Settings('defaults').read({"freqs": {"range": [87.5, 108.0, 0.1], "exp": 6}, "monitor": {"period": 0, "radio_on": 1}, "scan": {"mode": 64}})
 application.worker = Worker().client()
 application.monkey = Monkey().client()
 
@@ -155,10 +138,6 @@ else:
 
 # initialise login manager
 application.login_manager.init_app(application)
-
-# get default default scan configuration from defaults.json
-with open(local_path('defaults.json')) as f:
-  application.defaults = get_settings('defaults', json.loads(f.read()))
 
 # Also add log handlers to Flask's logger for cases where Werkzeug isn't used as the underlying WSGI server
 application.logger.addHandler(rfh)
@@ -181,8 +160,15 @@ def favicon():
                              'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 
+# version string
+@application.route('/version')
+@role_required(['admin', 'freq', 'data'])
+def version():
+  return send_file(VERSION_FILE)
+
 # rig capabilities API
 @application.route('/caps')
+@role_required(['admin', 'freq', 'data'])
 def caps():
   return json.dumps(application.caps)
 
@@ -191,13 +177,13 @@ def caps():
 @application.route('/rig', methods=['GET', 'PUT'])
 @application.route('/audio', methods=['GET', 'PUT'])
 @application.route('/rds', methods=['GET', 'PUT'])
-@role_required(['admin'])
+@role_required(['admin', 'freq'])
 def settings():
   rule = request.url_rule.rule[1:]
   if request.method == 'GET':
-    return json.dumps(getattr(application, rule))
+    return json.dumps(getattr(application, rule).values)
   elif request.method == 'PUT':
-    setattr(application, rule, set_settings(rule, request.get_json()))
+    getattr(application, rule).write(request.get_json())
     return json.dumps({ 'status': 'OK' })
 
 
@@ -210,28 +196,25 @@ def monitor():
   if request.method == 'PUT':
     if 'config_id' in application.worker.status():
       return "Worker already running", 400
-    config = json.loads(request.get_data())
-    config['rig'] = application.rig
-    config['audio'] = application.audio
-    config['rds'] = application.rds
+    values = json.loads(request.get_data())
+    values['rig'] = application.rig.values
+    values['audio'] = application.audio.values
+    values['rds'] = application.rds.values
 
-    # post config to data store
-    data = { 'timestamp': now(), 'json': json.dumps(config) }
-    r = requests.post(ELASTICSEARCH + 'spectrum/config/', params={ 'refresh': 'true' }, data=json.dumps(data))
-    if r.status_code != 201:
-      log.error("Can not post config: {0} {1}".format(r.status_code, config))
-      return "Can not post config", 500
-    config_id = r.json()['_id']
+    try:
+      config = data_store.Config().write(now(), values)
+    except StoreError as e:
+      return e.message, 500
 
-    application.worker.start(config_id)
-    if config['scan']['rds'] == 'true':
-      application.monkey.start(config_id)
+    application.worker.start(config.id)
+    if config.values['scan']['rds'] == 'true':
+      application.monkey.start(config.id)
 
     return json.dumps({ 'status': 'OK' })
   if request.method == 'DELETE':
     # stop process
-    if 'config_id' not in application.worker.status():
-      return "Worker not running", 400
+    if 'timestamp' not in application.worker.status() and 'timestamp' not in application.monkey.status():
+      return "Neither Worker nor Monkey are running", 400
     application.worker.stop()
     application.monkey.stop()
     return json.dumps({ 'status': 'OK' })
@@ -239,109 +222,94 @@ def monitor():
     # monitor status
     return json.dumps({ 'worker': application.worker.status(), 'monkey': application.monkey.status() })
 
+def _config_dict(x):
+  errors = list(x.iter_error())
+  return {'id': x.id, 'timestamp': x.timestamp, 'values': x.values, 'first': x.first, 'latest': x.latest, 'count': x.count, 'errors': errors}
+
 @application.route('/config')
 @role_required(['admin', 'freq', 'data'])
-def sweepSets():
-  r = requests.get(ELASTICSEARCH + 'spectrum/config/_search', params='size=10000&fields=*&sort=timestamp')
-  if r.status_code != 200:
-    return "Elasticsearch error finding config sets", r.status_code
-  hits = r.json()['hits']['hits'] if 'hits' in r.json()['hits'] else [ ]
-  return json.dumps({ 'data': [{ 'id': hit['_id'], 'config': json.loads(hit['fields']['json'][0]), 'timestamp': int(hit['fields']['timestamp'][0]) } for hit in hits] })
+def configs():
+  try:
+    return json.dumps({ 'data': [_config_dict(x) for x in data_store.Config.iter()]})
+  except StoreError as e:
+    return e.message, 500
 
-# FIXME noone should be able to delete the running sweep
-@application.route('/config/<config_id>', methods=['GET', 'DELETE'])
-@role_required(['admin'])
-def deleteConfig(config_id):
-  if request.method == 'GET':
-    r = requests.get(ELASTICSEARCH + 'spectrum/config/' + config_id, params='fields=timestamp,json')
-    if r.status_code != 200:
-      return "Elasticsearch error finding config sets", r.status_code
-    fields = r.json()['fields']
-    return json.dumps({ 'config': json.loads(fields['json'][0]), 'timestamp': int(fields['timestamp'][0]) })
-  else:
+def _delete(config_id):
     # delete audio samples...
     samples_path = os.path.join(current_app.root_path, SAMPLES_DIRECTORY, config_id)
     if os.path.isdir(samples_path):
       shutil.rmtree(samples_path)
-    # delete spectrum and RDS data
-    r = requests.delete(ELASTICSEARCH + 'spectrum/_query', params='refresh=true&q=config_id:' + config_id)
-    if r.status_code != 200:
-      return "Elasticsearch error deleting spectrum and RDS data", r.status_code
-    # delete config
-    r = requests.delete(ELASTICSEARCH + 'spectrum/config/' + config_id, params='refresh=true')
-    if r.status_code != 200:
-      return "Elasticsearch error deleting config set", r.status_code
+    # delete config and associated data
+    data_store.Config(config_id).delete()
+
+# FIXME noone should be able to delete the running sweep
+@application.route('/config/<config_id>', methods=['GET', 'DELETE'])
+@role_required(['admin'])
+def config(config_id):
+  if request.method == 'GET':
+    try:
+      return json.dumps(_config_dict(data_store.Config(config_id).read()))
+    except StoreError as e:
+      return e.message, 500
+  else:
+    try:
+      _delete(config_id)
+    except StoreError as e:
+      return e.message, 500
     return json.dumps({ 'status': 'OK' })
 
-@application.route('/range/<config_id>')
-@role_required(['admin', 'freq', 'data'])
-def range(config_id):
-  r = requests.get(ELASTICSEARCH + 'spectrum/sweep/_search', params='size=1&q=config_id:' + config_id + '&fields=timestamp&sort=timestamp:desc')
-  if r.status_code != 200:
-    return "Elasticsearch error getting range", r.status_code
-  ret = { 'count': r.json()['hits']['total'] }
-  if ret['count'] > 0:
-    ret['range'] = int(r.json()['hits']['hits'][0]['fields']['timestamp'][0])
-  return json.dumps(ret)
+@application.route('/configs/<config_ids>', methods=['DELETE'])
+@role_required(['admin'])
+def configs_delete(config_ids):
+  try:
+    for config_id in config_ids.split(','):
+      _delete(config_id)
+  except StoreError as e:
+    return e.message, 500
+  return json.dumps({ 'status': 'OK' })
 
-def _range_search(config_id):
-  q = 'config_id:' + config_id
-  if 'start' in request.args and 'end' in request.args:
-    q += '+AND+timestamp:[' + request.args['start'] + '+TO+' + request.args['end'] + ']'
-  return 'size=1000000&q=' + q + '&fields=*&sort=timestamp'
+
+def _int_arg(name):
+  x = request.args.get(name)
+  return None if x is None else int(x)
 
 @application.route('/data/<config_id>')
 @role_required(['admin', 'freq', 'data'])
 def data(config_id):
-  r = requests.get(ELASTICSEARCH + 'spectrum/sweep/_search', params=_range_search(config_id))
-  if r.status_code != 200:
-    return "Elasticsearch error getting spectrum data", r.status_code
-  return json.dumps({ 'data': r.json()['hits']['hits'] })
+  range = (_int_arg('start'), _int_arg('end'))
+  try:
+    config = data_store.Config(config_id).read()
+    data = {}
+    data['spectrum'] = list(config.iter_spectrum(*range))
+    data['audio'] = list(config.iter_audio(*range))
+    data['rds'] = {
+      'name': list(config.iter_rds_name(*range)),
+      'text': list(config.iter_rds_text(*range))
+    }
+    return json.dumps(data)
+  except StoreError as e:
+    return e.message, 500
 
-@application.route('/audio/<config_id>')
+@application.route('/audio/<config_id>/<freq_n>/<timestamp>')
 @role_required(['admin', 'freq', 'data'])
-def audio(config_id):
-  r = requests.get(ELASTICSEARCH + 'spectrum/audio/_search', params=_range_search(config_id))
-  if r.status_code != 200:
-    return "Elasticsearch error getting audio data", r.status_code
-  return json.dumps({ 'data': r.json()['hits']['hits'] })
-
-@application.route('/rds/name/<config_id>')
-@role_required(['admin', 'freq', 'data'])
-def rsd_name(config_id):
-  r = requests.get(ELASTICSEARCH + 'spectrum/name/_search', params=_range_search(config_id))
-  if r.status_code != 200:
-    return "Elasticsearch error getting RSD name data", r.status_code
-  return json.dumps({ 'data': r.json()['hits']['hits'] })
-
-@application.route('/rds/text/<config_id>')
-@role_required(['admin', 'freq', 'data'])
-def rds_text(config_id):
-  r = requests.get(ELASTICSEARCH + 'spectrum/text/_search', params=_range_search(config_id))
-  if r.status_code != 200:
-    return "Elasticsearch error getting RDS text data", r.status_code
-  return json.dumps({ 'data': r.json()['hits']['hits'] })
-
-@application.route('/audio/<config_id>/<sweep_n>/<freq_n>')
-@role_required(['admin', 'freq', 'data'])
-def wav_stream(config_id, sweep_n, freq_n):
-  if '/' in config_id or '\\' in config_id:
+def audio_stream(config_id, freq_n, timestamp):
+  if '.' in config_id or '/' in config_id or '\\' in config_id:
     return 'Bad parameter', 400
   try:
-    int(sweep_n), int(freq_n)
+    int(timestamp), int(freq_n)
   except ValueError:
     return 'Bad parameter', 400
-  base = '/'.join([SAMPLES_DIRECTORY, config_id, sweep_n, freq_n])
+  base = data_store.Config(config_id).audio_path(timestamp, freq_n)
   for ext in ['mp3', 'ogg', 'wav']:
     path = '{0}.{1}'.format(base, ext)
     try:
       return send_file_partial(path)
-    except OSError:
+    except IOError:
       pass
   return 'File not found', 404
 
 @application.route('/users')
-@role_required([ 'admin' ])
+@role_required(['admin'])
 def user_list():
   def _namise_data(name, data):
     data['name'] = name
@@ -352,6 +320,11 @@ def user_list():
     return data
   users = [_namise_data(name, data) for name, data in iter_users()]
   return json.dumps({ 'data': users })
+
+@application.route('/current')
+@role_required(['admin', 'freq', 'data'])
+def logged_in_users():
+  return json.dumps({ 'data': application.logged_in_users })
 
 @application.route('/user/<name>', methods=['GET', 'PUT', 'DELETE'])
 @role_required(['admin'])
@@ -417,7 +390,6 @@ def user_details():
     return json.dumps(data)
   if request.method == 'POST':
     data = request.get_json()
-    print data
     if data is None:
       return "No user data", 400
     if 'oldPassword' in data and 'newPassword' in data:
@@ -479,30 +451,65 @@ def _iter_export(config, hits):
 @application.route('/export/<config_id>', methods=['GET', 'POST'])
 @role_required(['admin', 'freq', 'data'])
 def export(config_id):
-  config = get_config(config_id)
-  r = requests.get('%s/spectrum/sweep/_search?size=1000000&sort=timestamp&fields=*&q=config_id:%s' % (ELASTICSEARCH, config_id))
-  if r.status_code != 200:
-    return r.text, r.status_code
-  export = _iter_export(config, r.json()['hits']['hits'])
+  config = data_store.Config(config_id).read()
+  try:
+    export = _iter_export(config.values, list(config.iter_spectrum()))
+  except StoreError as e:
+    return e.message, 500
   if request.method == 'GET':
     return Response(export, mimetype='text/csv')
   else:
-    path = '/'.join([EXPORT_DIRECTORY, config_id + '.csv'])
+    path = os.path.join(EXPORT_DIRECTORY, config_id + '.csv')
     with open(path, 'w') as f:
       for x in export:
         f.write(x)
     return json.dumps({ 'path': path })
 
 
-#FIXME should return labels and values, not just values - might use various back ends
 @application.route('/stats')
 @role_required(['admin'])
 def get_stats():
-  r = requests.get(ELASTICSEARCH + 'spectrum/_stats/docs,store')
-  if r.status_code != 200:
-    return None
-  stats = r.json()['indices']['spectrum']['primaries']
-  return json.dumps({ 'doc_count': stats['docs']['count'], 'size_in_bytes': stats['store']['size_in_bytes'] })
+  return json.dumps(data_store.stats())
+
+
+@application.route('/ui')
+@role_required(['admin', 'freq', 'data'])
+def get_ui_settings():
+  return json.dumps(current_user.data.get('ui') or {})
+
+@application.route('/ui/<key>', methods=['PUT'])
+@role_required(['admin', 'freq', 'data'])
+def set_ui_setting(key):
+  value = request.get_json()
+  if not update_user(current_user.name, 'ui', {key: value}):
+    return "Logged in user does not exist", 500
+  return json.dumps({'status': 'OK'})
+
+
+@application.route('/log/<log>')
+@role_required(['admin'])
+def get_log(log):
+  path = local_path('logs/{0}.log'.format(log))
+  if not os.path.exists(path):
+    return "No log {0}".format(path), 400
+  try:
+    n = int(request.args.get('n', 10))
+  except ValueError:
+    return "Bad parameter", 400
+  level = request.args.get('level', '\n')
+  if level not in ('\n', 'DEBUG', 'INFO', 'WARN', 'ERROR'):
+    return "Bad parameter", 400
+  with open(path) as f:
+    return Response(list(tail.iter_tail(f, n, level)), mimetype='text/plain')
+
+
+@application.route('/pi/<command>')
+@role_required(['admin'])
+def pi_command(command):
+  if command in ['shutdown', 'reboot']:
+    os.system("{0} {1}".format(local_path('bin/pi_control'), command))
+    return "OK"
+  return "Command not recognized: " + command, 400
 
 
 if __name__ == "__main__":

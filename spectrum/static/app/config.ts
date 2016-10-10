@@ -1,10 +1,13 @@
-//FIXME this should probably be named ConfigSet and update clients of the class accordingly; or possibly rename this.config to this.fields or this.data or something
 export class Config {
 
-  constructor(public config_id: string, public timestamp: number, public config: any) {
-    this.config_id = config_id;
+  constructor(public id: string, public values: any, public timestamp: number, public first: number, public latest: number, public count: number, public errors: any[]) {
+    this.id = id;
+    this.values = values;
     this.timestamp = timestamp;
-    this.config = config;
+    this.first = first;
+    this.latest = latest;
+    this.count = count;
+    this.errors = errors;
   }
 
 }

@@ -1,7 +1,22 @@
 <psm-widget>
-  <span>{{user.name}} ({{user._roleLabel}})</span>
+  <button type="button" class="btn btn-link" data-toggle="modal" data-target="#loggedInUsersModal">{{user.name}} ({{user._roleLabel}})</button>
   <a href="/logout" role="button" class="btn btn-link">Log Out</a>
   <button type="button" (click)="resetPasswordForm()" class="btn btn-link" data-toggle="modal" data-target="#changePasswordModal">Change Password</button>
+  <div id="loggedInUsersModal" class="modal fade" role="dialog">
+    <form role="form" #form="ngForm">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title">Logged in users</h4>
+          </div>
+          <div class="modal-body">
+            <p *ngFor="let name of loggedInUsers">{{name}}</p>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
   <div id="changePasswordModal" class="modal fade" role="dialog">
     <form role="form" #form="ngForm">
       <div class="modal-dialog">

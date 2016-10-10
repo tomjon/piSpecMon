@@ -1,14 +1,17 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
+import { Chart } from './chart';
 import { WidgetComponent } from './widget.component';
+import { Data} from './data';
 import { WATERFALL_CHART_OPTIONS, HZ_LABELS } from './constants';
-import { _d3 as d3, dt_format, insertLineBreaks } from './d3_import';
+import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
 
 declare var $;
 
 @Component({
   selector: 'psm-waterfall',
   directives: [ WidgetComponent ],
-  template: `<psm-widget [hidden]="isHidden()" title="Waterfall" class="chart">
+  inputs: [ 'data', 'show' ],
+  template: `<psm-widget [hidden]="isHidden()" title="Waterfall" class="chart" (show)="onShow($event)">
                <form class="form-inline controls" role="form">
                  <div *ngIf="showSamples" class="form-group">
                    <audio #audio controls preload='none'></audio>
@@ -17,17 +20,23 @@ declare var $;
                <form class="form-inline" role="form">
                  <span class="infoText">{{infoText}}</span>
                  <label for="samples">Overlay audio samples</label>
-                 <input type="checkbox" name="samples" [disabled]="audio.length == 0" [(ngModel)]="showSamples">
+                 <input type="checkbox" name="samples" [disabled]="! data || data.audio.length == 0" [(ngModel)]="showSamples">
                </form>
-               <svg #chart (click)="onClick($event)"
-                 viewBox="0 0 ${WATERFALL_CHART_OPTIONS.width} ${WATERFALL_CHART_OPTIONS.height}"
-                 preserveAspectRatio="xMidYMid meet">
-                 <svg:g #group />
-               </svg>
+               <div class="waterfall">
+                 <svg #chart (click)="onClick($event)"
+                   viewBox="0 0 ${WATERFALL_CHART_OPTIONS.width} ${WATERFALL_CHART_OPTIONS.height}"
+                   preserveAspectRatio="xMidYMid meet">
+                   <svg:g />
+                 </svg>
+                 <canvas #canvas width="${WATERFALL_CHART_OPTIONS.width}" height="${WATERFALL_CHART_OPTIONS.height}"></canvas>
+                 <canvas #overlay [hidden]="! showSamples" width="${WATERFALL_CHART_OPTIONS.width}" height="${WATERFALL_CHART_OPTIONS.height}"></canvas>
+               </div>
              </psm-widget>`
 })
-export class WaterfallComponent {
+export class WaterfallComponent extends Chart {
   svg: any;
+  context: any;
+  overctx: any;
   g: any;
   heat: any;
   x: any;
@@ -41,19 +50,17 @@ export class WaterfallComponent {
   margin: any;
 
   infoText: string = "";
-  _showSamples: boolean = false;
-
-  @Input() freqs: any;
-  @Input() data: any;
-  @Input() audio: any;
-  @Input('names') rdsNames: any;
+  showSamples: boolean = false;
 
   @ViewChild('chart') chart;
   @ViewChild('text') text;
-  @ViewChild('group') group;
   @ViewChild('audio') audioControl;
+  @ViewChild('canvas') canvas;
+  @ViewChild('overlay') overlay;
 
-  constructor() { }
+  constructor() {
+    super(1); //FIXME this puts the waterfall chart in a later frame than the others - can maybe be removed if drawing the waterfall is quicker
+  }
 
   ngOnInit() {
     this.margin = WATERFALL_CHART_OPTIONS.margin;
@@ -64,35 +71,44 @@ export class WaterfallComponent {
     this.y = d3.time.scale().range([0, this.height]);
 
     this.xAxis = d3.svg.axis().scale(this.x).orient("bottom");
-    this.yAxis = d3.svg.axis().scale(this.y).orient("left").tickFormat(dt_format);
-//    if (WATERFALL_CHART_OPTIONS.x_ticks) this.xAxis().ticks(WATERFALL_CHART_OPTIONS.x_ticks);
-//    if (WATERFALL_CHART_OPTIONS.y_ticks) this.yAxis().ticks(WATERFALL_CHART_OPTIONS.y_ticks);
+    this.yAxis = d3.svg.axis().scale(this.y).orient("left");
 
     this.heat = d3.scale.linear().domain(WATERFALL_CHART_OPTIONS.heat).range(["blue", "yellow", "red"]).clamp(true);
 
     this.svg = d3.select(this.chart.nativeElement);
     this.g = this.svg.insert("g", ":first-child")
                  .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
+
+    this.context = this.canvas.nativeElement.getContext("2d");
+    this.overctx = this.overlay.nativeElement.getContext("2d");
   }
 
   isHidden() {
-    return this.data.levels == undefined || this.freqs.freqs || this.data.levels.length < 1;
+    return this.data == undefined || this.data.spectrum.levels == undefined || this.data.freqs.freqs || this.data.spectrum.levels.length < 1;
   }
 
-  ngOnChanges() {
-    if (! this.svg) return; // ngOnChanges() happens before ngOnInit()!
+  private rect(context: any, i: number, j: number, fill: string) {
+    context.fillStyle = fill;
+    context.fillRect(this.margin.left + i * this.rw, 1 + this.margin.top + j * this.rh, this.rw + 1, this.rh + 1);
+  }
+
+  plot() {
+    if (! this.svg) return;
 
     this.g.selectAll("g *").remove();
+    this.overctx.clearRect(0, 0, this.overctx.canvas.width, this.overctx.canvas.height);
+    this.infoText = "";
 
     if (this.isHidden()) return;
 
-    let data = this.data.levels;
+    let data = this.data.spectrum.levels;
 
-    var f0 = +this.freqs.range[0];
-    var f1 = +this.freqs.range[1];
-    let df = +this.freqs.range[2];
+    var f0 = +this.data.freqs.range[0];
+    var f1 = +this.data.freqs.range[1];
+    let df = +this.data.freqs.range[2];
     this.x.domain([f0 - df/2, f1 + df/2]);
     this.y.domain(d3.extent(data, d => d.fields.timestamp));
+    timeTicks(this.yAxis, this.y.domain(), WATERFALL_CHART_OPTIONS.y_ticks);
 
     this.g.append("g")
         .attr("class", "x axis")
@@ -103,7 +119,7 @@ export class WaterfallComponent {
         .attr("x", 40)
         .attr("y", 6)
         .style("text-anchor", "end")
-        .text(HZ_LABELS[this.freqs.exp]);
+        .text(HZ_LABELS[this.data.freqs.exp]);
 
     this.g.append("g")
         .attr("class", "y axis")
@@ -114,33 +130,21 @@ export class WaterfallComponent {
         .style("text-anchor", "end")
         .text("Time");
 
-     this.svg.selectAll('g.y.axis g text').each(insertLineBreaks);
+    this.svg.selectAll('g.y.axis g text').each(insertLineBreaks);
 
-     this.rw = this.width / data[0].fields.level.length;
-     this.rh = this.height / data.length;
+    this.rw = this.width / data[0].fields.level.length;
+    this.rh = this.height / data.length;
 
-     let g = this.g.selectAll('g.row')
-                 .data(data)
-                 .enter().append('g').attr("class", 'row')
-                 .attr('transform', (d, i) => `translate(1, ${this.rh * i - 1})`);
-
-     g.selectAll('rect')
-      .data(d => d.fields.level.map(v => [v, d.fields.sweep_n]))
-      .enter().append('rect')
-      .attr('x', (d, i) => this.rw * i)
-      .attr('width', this.rw + 1)
-      .attr('height', this.rh + 1)
-      .classed('sample', (d, i) => this.audio[`${d[1]}_${i}`] != undefined)
-      .attr('fill', (d, i) => this.heat(d[0]))
-      .on('click', (d, i) => {
-        if (! this.showSamples) return;
-        let audio = this.audio[`${d[1]}_${i}`];
-        if (audio == undefined) return;
-        let control = this.audioControl.nativeElement;
-        control.src = `/audio/${audio.config_id}/${audio.sweep_n}/${audio.freq_n}`;
-        control.load();
-        control.play();
-      });
+    for (let y_idx in data) {
+      let row = data[y_idx];
+      for (let x_idx in row.fields.level) {
+        let level = row.fields.level[x_idx];
+        this.rect(this.context, +x_idx, +y_idx, this.heat(level));
+        if (this.data.audio[`${y_idx}_${x_idx}`] != undefined) {
+          this.rect(this.overctx, +x_idx, +y_idx, 'green');
+        }
+      }
+    }
   }
 
   //FIXME much copied from frequency chart, abstract?
@@ -148,46 +152,44 @@ export class WaterfallComponent {
     // find SVG co-ordinates of click...
     let p = this.chart.nativeElement.createSVGPoint();
     p.x = e.clientX;
-    p.y = e.clientY;
+    p.y = e.clientY - this.margin.top;
     let z = p.matrixTransform(this.chart.nativeElement.getScreenCTM().inverse());
 
     // find frequency of click...
     let f = this.x.invert(z.x - this.margin.left);
-    let i = Math.round((f - this.freqs.range[0]) / this.freqs.range[2]);
-    f = +this.freqs.range[0] + i * this.freqs.range[2]; // 'snap' to an actual frequency value
-    f = f.toFixed(-Math.log10(this.freqs.range[2]));
-    if (i < 0 || i >= this.data.levels[0].fields.level.length) {
+    let i = Math.round((f - this.data.freqs.range[0]) / this.data.freqs.range[2]);
+    f = +this.data.freqs.range[0] + i * this.data.freqs.range[2]; // 'snap' to an actual frequency value
+    f = f.toFixed(-Math.log10(this.data.freqs.range[2]));
+    if (i < 0 || i >= this.data.spectrum.levels[0].fields.level.length) {
       // out of bounds - hide info text
       this.infoText = "";
       return;
     }
 
     // find timestamp of click...
-    let j = Math.round(z.y / this.rh) - 1;
-    if (j < 0 || j >= this.data.levels.length) {
+    let j = Math.floor(z.y / this.rh);
+    if (j < 0 || j >= this.data.spectrum.levels.length) {
       // out of bounds - hide info text
       this.infoText = "";
       return;
     }
-    let t = this.data.levels[j].fields.timestamp;
+    let t = this.data.spectrum.levels[j].fields.timestamp;
 
     // formulate info text
-    let v = this.data.levels[j].fields.level[i];
-    this.infoText = `${v}dB at ${f}${HZ_LABELS[this.freqs.exp]}`;
-    if (this.rdsNames[i]) this.infoText += ` (${this.rdsNames[i]})`;
-    this.infoText += ` at ${dt_format(new Date(+t))}`;
-  }
+    let v = this.data.spectrum.levels[j].fields.level[i];
+    this.infoText = `${v}dB at ${f}${HZ_LABELS[this.data.freqs.exp]}`;
+    if (this.data.rdsNames[i]) this.infoText += ` (${this.data.rdsNames[i]})`;
+    this.infoText += ` at ${dt_format(new Date(t))}`;
 
-  set showSamples(value: boolean) {
-    this._showSamples = value;
-    if (value) {
-      $(".sample").attr("class", 'sample audio');
-    } else {
-      $(".sample").attr("class", 'sample');
+    // if it's an audio sample, play it (and we are showing samples)
+    if (this.showSamples) {
+      let audio = this.data.audio[`${j}_${i}`];
+      if (audio != undefined) {
+        let control = this.audioControl.nativeElement;
+        control.src = audio;
+        control.load();
+        control.play();
+      }
     }
-  }
-
-  get showSamples() {
-    return this._showSamples;
   }
 }

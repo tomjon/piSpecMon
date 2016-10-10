@@ -11,6 +11,8 @@ import errno
 import traceback
 import sys
 
+import fs_datastore as data_store
+
 """ Process management module. Use this to provide a process which responds to signals and reads config
     and writes status using the file system, and writes data to the provided data source.
 """
@@ -48,17 +50,19 @@ class Process (object):
     except OSError as e:
       raise ProcessError("Bad PID ({0}): {1}".format(errno.errorcode[e.errno], pid))
 
+  #FIXME isn't this a duplicate of the Client function?
   def read_status(self):
     if not os.path.isfile(self.status_file):
       return { }
     stat = os.stat(self.status_file)
     with open(status_file, 'r') as f:
       status = json.loads(f.read())
-      status['timestamp'] = stat.st_mtime
+      status['timestamp'] = int(1000 * stat.st_mtime)
       status['config_id'] = self.config_id
       return status
 
   def write_status(self, status):
+    status['config_id'] = self.config_id
     log.debug("Writing status {0}".format(json.dumps(status)))
     tmp = self.status_file + '_tmp'
     with open(tmp, 'w') as f:
@@ -87,9 +91,10 @@ class Process (object):
         self.config_id = self._read_config()
         if self.config_id is not None:
           log.debug("Read config id {0}".format(self.config_id))
-          config = get_config(self.config_id)
+          config = data_store.Config(self.config_id).read()
+          log.debug("Running with config: {0}".format(json.dumps(config.values)))
           self._stop = False
-          for status in iterator(self.config_id, config):
+          for status in iterator(config):
             self.write_status(status)
             if self._stop:
               break
@@ -154,7 +159,7 @@ class Client:
     stat = os.stat(self.process.status_file)
     with open(self.process.status_file, 'r') as f:
       status = json.loads(f.read())
-      status['timestamp'] = stat.st_mtime
+      status['timestamp'] = int(1000 * stat.st_mtime)
 
     if self.error is not None:
       status['error'] = self.error

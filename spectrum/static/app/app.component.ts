@@ -1,11 +1,12 @@
 import { Component, ViewChild } from '@angular/core';
 import { LoginComponent } from './login.component';
 import { DetailsComponent } from './details.component';
+import { LogsComponent } from './logs.component';
 import { StatsComponent } from './stats.component';
+import { PiComponent } from './pi.component';
 import { RigComponent } from './rig.component';
 import { AudioComponent } from './audio.component';
 import { RdsComponent } from './rds.component';
-import { SweepComponent } from './sweep.component';
 import { ScanComponent } from './scan.component';
 import { ErrorComponent } from './error.component';
 import { TableComponent } from './table.component';
@@ -13,10 +14,12 @@ import { ChartsComponent } from './charts.component';
 import { DataService } from './data.service';
 import { ErrorService } from './error.service';
 import { MessageService } from './message.service';
+import { UiSettingsService } from './ui-settings.service';
 import { User } from './user';
 import { Config } from './config';
 import { TICK_INTERVAL } from './constants';
 import { HTTP_PROVIDERS } from '@angular/http';
+import { DatePipe } from './date.pipe';
 
 // Add the RxJS Observable operators we need in this app
 import './rxjs-operators';
@@ -32,8 +35,9 @@ let modelSort = function (a, b) {
 @Component({
   selector: 'psm-app',
   templateUrl: 'templates/app.html',
-  directives: [ LoginComponent, ErrorComponent, DetailsComponent, StatsComponent, RigComponent, AudioComponent, RdsComponent, TableComponent, SweepComponent, ScanComponent, ChartsComponent ],
-  providers: [ DataService, ErrorService, MessageService, HTTP_PROVIDERS ]
+  directives: [ LoginComponent, ErrorComponent, DetailsComponent, PiComponent, LogsComponent, StatsComponent, RigComponent, AudioComponent, RdsComponent, TableComponent, ScanComponent, ChartsComponent ],
+  providers: [ DataService, ErrorService, MessageService, UiSettingsService, HTTP_PROVIDERS ],
+  pipes: [ DatePipe ]
 })
 export class AppComponent {
   user: User = new User();
@@ -43,12 +47,16 @@ export class AppComponent {
   parities: any[] = [ ];
 
   config: Config;
-  fields: any;
+  values: any;
   status: any = { worker: { }, monkey: { } };
+
+  version: string;
 
   constructor(private dataService: DataService, private messageService: MessageService) { }
 
   ngOnInit() {
+    this.dataService.getVersion()
+                    .subscribe(version => this.version = version);
     this.dataService.getCurrentUser()
                     .subscribe(user => { this.user = user; this.checkSuperior() });
     this.dataService.getCaps()
@@ -71,7 +79,7 @@ export class AppComponent {
 
   setConfig(config: Config) {
     this.config = config;
-    this.fields = config ? config.config : undefined;
+    this.values = config ? config.values : undefined;
   }
 
   private checkSuperior() {
@@ -79,5 +87,9 @@ export class AppComponent {
       let s = this.user._superior;
       this.messageService.show(`Downgraded to Data Viewer. ${s.real} is logged in as ${s._roleLabel} - contact them at ${s.email} or on ${s.tel}`);
     }
+  }
+
+  get errors(): any[] {
+    return this.config ? this.config.errors : [];
   }
 }

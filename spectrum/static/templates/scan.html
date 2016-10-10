@@ -1,5 +1,5 @@
 <psm-widget title="Scanner">
-  <form role="form" (ngSubmit)="onStart()" #form="ngForm">
+  <form role="form" #form="ngForm" novalidate>
     <div class="form-group">
       <label for="model">Mode</label>
       <select class="form-control" [disabled]="loading || worker.config_id" [(ngModel)]="config.scan.mode" name="model">
@@ -8,53 +8,79 @@
     </div>
     <div class="form-group">
       <label for="start">Frequency range</label>
+      <input [disabled]="loading || standby || worker.config_id" type="checkbox" (ngModelChange)="allowFreqs = allowRange" [(ngModel)]="allowRange" class="toggle" name="range">
       <div>
         <div class="psm-input-group col-lg-3">
-          <input [disabled]="loading || standby || worker.config_id" type="text" required class="form-control" [(ngModel)]="config.freqs.range[0]" name="start" #start="ngModel">
+          <input [disabled]="loading || standby || worker.config_id || ! allowRange" type="text" required class="form-control" [(ngModel)]="config.freqs.range[0]" name="start" #start="ngModel">
           <div class="help">start</div>
         </div>
         <div class="psm-input-group col-lg-3">
-          <input [disabled]="loading || standby || worker.config_id" type="text" required class="form-control" [(ngModel)]="config.freqs.range[1]" name="end" #end="ngModel">
+          <input [disabled]="loading || standby || worker.config_id || ! allowRange" type="text" required class="form-control" [(ngModel)]="config.freqs.range[1]" name="end" #end="ngModel">
           <div class="help">end</div>
         </div>
         <div class="psm-input-group col-lg-3">
-          <input [disabled]="loading || standby || worker.config_id" type="text" required class="form-control" [(ngModel)]="config.freqs.range[2]" name="step" #step="ngModel">
+          <input [disabled]="loading || standby || worker.config_id || ! allowRange" type="text" required class="form-control" [(ngModel)]="config.freqs.range[2]" name="step" #step="ngModel">
           <div class="help">step</div>
         </div>
         <div class="psm-input-group col-lg-3">
-          <select class="form-control" [disabled]="loading || standby || worker.config_id" [(ngModel)]="config.freqs.exp" name="units">
+          <select class="form-control" [disabled]="loading || standby || worker.config_id || ! allowRange" [(ngModel)]="config.freqs.exp" name="units">
             <option *ngFor="let u of units" value="{{u.value}}">{{u.label}}</option>
           </select>
           <div class="help">units</div>
         </div>
       </div>
     </div>
-    <div [hidden]="validNumber(start) && validNumber(end) && validNumber(step)" class="alert alert-danger">
+    <div [hidden]="! allowRange || (validNumber(start) && validNumber(end) && validNumber(step))" class="alert alert-danger">
       Frequency range is a required parameter, and must consist of numbers
     </div>
-    <div [hidden]="! validNumber(start) || ! validNumber(end) || ! validNumber(step) || validRange()" class="alert alert-danger">
+    <div [hidden]="! allowRange || ! validNumber(start) || ! validNumber(end) || ! validNumber(step) || validRange()" class="alert alert-danger">
       Invalid range: end frequency must be greater than start frequency
+    </div>
+    <div class="form-group freqlist">
+      <label>Discrete frequencies</label>
+      <input [disabled]="loading || standby || worker.config_id" type="checkbox" (ngModelChange)="allowRange = allowFreqs" [(ngModel)]="allowFreqs" class="toggle" name="freqs">
+    </div>
+    <div class="form-group" *ngFor="let freq of config.freqs.freqs; let n = index; let last = last">
+      <div class="psm-input-group col-lg-3">
+        <input [disabled]="loading || standby || worker.config_id || ! allowFreqs" type="text" required class="form-control" [(ngModel)]="freq.f" [ngModelOptions]="{standalone: true}">
+        <div *ngIf="last" class="help">value</div>
+      </div>
+      <div class="psm-input-group col-lg-3">
+        <select class="form-control" [disabled]="loading || standby || worker.config_id || ! allowFreqs" [(ngModel)]="freq.exp" [ngModelOptions]="{standalone: true}">
+          <option *ngFor="let u of units" value="{{u.value}}">{{u.label}}</option>
+        </select>
+        <div *ngIf="last" class="help">units</div>
+      </div>
+      <div class="psm-input-group col-lg-3">
+        <button class="form-control" [disabled]="! numeric(freq.f) || ! allowFreqs" (click)="onInsert(n)">Insert</button>
+      </div>
+      <div class="psm-input-group col-lg-3">
+        <button class="form-control" [disabled]="config.freqs.freqs.length <= 1 || ! allowFreqs" (click)="onDelete(n)">Delete</button>
+      </div>
+    </div>
+    <div [hidden]="! allowFreqs || validFreqs()" class="alert alert-danger">
+      Discrete frequency values are required, and must consist of numbers
     </div>
     <div class="form-group">
       <div class="psm-input-group col-lg-6">
         <label for="rds">Decode RDS</label>
         <select [disabled]="loading || standby || worker.config_id" class="form-control" [(ngModel)]="config.scan.rds" name="rds">
-          <option value="true">Yes</option>
-          <option value="false">No</option>
+          <option value="true">On</option>
+          <option value="false">Off</option>
         </select>
       </div>
       <div class="psm-input-group col-lg-6">
         <label for="audio">Collect audio</label>
         <select [disabled]="loading || standby || worker.config_id" class="form-control" [(ngModel)]="config.scan.audio" name="audio">
-          <option value="true">Yes</option>
-          <option value="false">No</option>
+          <option value="true">On</option>
+          <option value="false">Off</option>
         </select>
       </div>
     </div>
     <div *ngIf="worker.config_id || worker.error" [ngClass]="{ status: true, error: worker.error != undefined }">
-      <h2 *ngIf="worker.timestamp">Scan status at {{time(worker.timestamp * 1000)}}</h2>
+      <h2 *ngIf="worker.timestamp">Scan status at {{worker.timestamp | date}}</h2>
       <div *ngIf="worker.sweep">
-        <span>Sweep started {{time(worker.sweep.timestamp)}}</span>
+        <span>Sweep started {{worker.sweep.timestamp | date}}</span>
         <span *ngFor="let peak of worker.sweep.peaks">Peak {{peak.strength}}dB at {{freq(peak.freq_n)}}</span>
         <span *ngIf="worker.sweep.previous">{{worker.sweep.previous.strength}}dB at {{freq(worker.sweep.previous.freq_n)}}</span>
         <span *ngIf="worker.sweep.current">Reading strength at {{freq(worker.sweep.current.freq_n)}}...</span>
@@ -63,15 +89,15 @@
       <span *ngIf="worker.error">{{worker.error}}</span>
     </div>
     <div *ngIf="monkey.timestamp || monkey.error" [ngClass]="{ status: true, error: monkey.error != undefined }">
-      <h2 *ngIf="monkey.timestamp">RDS status at {{time(monkey.timestamp * 1000)}}</h2>
+      <h2 *ngIf="monkey.timestamp">RDS status at {{monkey.timestamp | date}}</h2>
       <span *ngIf="monkey.freq_n && ! monkey.strength">Receiving on {{freq(monkey.freq_n)}}</span>
       <span *ngIf="monkey.strength">Decoding on {{freq(monkey.freq_n)}}, strength {{monkey.strength}}</span>
       <span *ngIf="monkey.name">Station name: {{monkey.name}}</span>
       <span *ngIf="monkey.text"><i>{{monkey.text}}</i></span>
       <span *ngIf="monkey.error">{{monkey.error}}</span>
     </div>
-    <button (click)="onReset()" class="btn btn-default" [disabled]="loading || standby || form.form.pristine || worker.config_id">Reset</button>
-    <button type="submit" class="btn btn-default" [disabled]="loading || standby || ! form.form.valid || ! validRange() || worker.config_id">Start</button>
-    <button (click)="onStop()" class="btn btn-default" [disabled]="loading || standby || ! worker.config_id">Stop</button>
+    <button (click)="onReset()" class="btn btn-default" [disabled]="loading || standby || running || form.form.pristine">Reset</button>
+    <button (click)="onStart()" class="btn btn-default" [disabled]="loading || standby || running || ! validScan()">Start</button>
+    <button (click)="onStop()" class="btn btn-default" [disabled]="loading || standby || ! running">Stop</button>
   </form>
 </psm-widget>

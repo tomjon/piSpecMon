@@ -4,12 +4,13 @@ import { MessageService } from './message.service';
 import { DataService } from './data.service';
 import { User } from './user';
 import { Config } from './config';
-import { dt_format } from './d3_import';
-import { HZ_LABELS } from './constants';
+import { DatePipe } from './date.pipe';
+import { UnitsPipe } from './units.pipe';
 
 @Component({
   selector: 'psm-table',
   directives: [ WidgetComponent ],
+  pipes: [ DatePipe, UnitsPipe ],
   templateUrl: 'templates/table.html'
 })
 export class TableComponent {
@@ -17,13 +18,14 @@ export class TableComponent {
   @Input() user: User;
   @Output('select') select = new EventEmitter<Config>();
 
-  sets: Config[] = [ ];
+  configs: Config[] = [ ];
   checked: any = { };
   selected: string;
 
   // true when waiting for (real) status after startup
   standby: boolean = true;
 
+  // id of the running config set, if any
   config_id: string;
 
   @ViewChild(WidgetComponent) widgetComponent;
@@ -33,16 +35,24 @@ export class TableComponent {
   @Input('status') set _status(status) {
     if (status == undefined) return;
     this.standby = false;
-    this.config_id = status.config_id;
-    if (status.config_id && ! this.sets.find(set => set.config_id == status.config_id)) {
-      this.widgetComponent.busy(this.dataService.getConfig(status.config_id))
-                          .subscribe(config => this.sets.push(config));
+    this.config_id = status.worker.config_id || status.monkey.config_id;
+    if (! this.config_id) return;
+
+    let config: Config = this.configs.find(set => set.id == this.config_id);
+    if (! config) {
+      // if we are seeing a new config, add it to the table
+      this.widgetComponent.busy(this.dataService.getConfig(this.config_id))
+                          .subscribe(config => this.configs.push(config));
+    } else {
+      // otherwise, update the one we have
+      if (status.worker.latest) config.latest = status.worker.latest;
+      if (status.worker.sweep) config.count = status.worker.sweep.sweep_n;
     }
   }
 
   ngOnInit() {
-    this.widgetComponent.busy(this.dataService.getSweepSets())
-                        .subscribe(sets => this.sets = sets);
+    this.widgetComponent.busy(this.dataService.getConfigs())
+                        .subscribe(configs => this.configs = configs);
   }
 
   onSelect(config_id, e) {
@@ -53,9 +63,12 @@ export class TableComponent {
   }
 
   private getConfig(config_id: string): Config {
-    for (let set of this.sets) {
-      if (set.config_id == config_id) {
-        return set;
+    if (config_id == undefined) {
+      return null;
+    }
+    for (let config of this.configs) {
+      if (config.id == config_id) {
+        return config;
       }
     }
     return null;
@@ -70,8 +83,8 @@ export class TableComponent {
   }
 
   onCheckAll() {
-    for (let s of this.sets) {
-      if (s.config_id != this.config_id) this.checked[s.config_id] = true;
+    for (let config of this.configs) {
+      if (config.id != this.config_id) this.checked[config.id] = true;
     }
   }
 
@@ -80,18 +93,22 @@ export class TableComponent {
   }
 
   get maxChecked(): number {
-    return this.sets.length - (this.config_id ? 1 : 0);
+    return this.configs.length - (this.config_id ? 1 : 0);
   }
 
   onDelete() {
-    //FIXME need to overhaul server API - and provide a way to delete multiple sweep sets in one go
-    for (let id of this.checkedIds()) {
-      this.widgetComponent.busy(this.dataService.deleteSweepSet(id))
-                          .subscribe(() => {
+    let ids = this.checkedIds();
+    this.widgetComponent.busy(this.dataService.deleteConfigs(ids))
+                        .subscribe(() => {
+                          for (let id of ids) {
                             delete this.checked[id];
-                            this.sets.splice(this.sets.findIndex(s => s.config_id == id), 1);
-                          });
-    }
+                            this.configs.splice(this.configs.findIndex(c => c.id == id), 1);
+                            if (this.selected == id) {
+                              this.selected = undefined;
+                              this.select.emit(null);
+                            }
+                          }
+                        });
   }
 
   onExport() {
@@ -103,10 +120,6 @@ export class TableComponent {
     window.open('/export/' + this.selected, '_blank');
   }
 
-  formatTime(timestamp): string {
-    return dt_format(new Date(timestamp));
-  }
-
   mode(value): string {
     for (let m of this.modes) {
       if (m.mode == value) {
@@ -116,11 +129,11 @@ export class TableComponent {
     return null;
   }
 
-  units(value): string {
-    return HZ_LABELS[value];
-  }
-
   get loading() {
     return this.widgetComponent.loading;
+  }
+
+  running(config: Config): boolean {
+    return config.id == this.config_id;
   }
 }
