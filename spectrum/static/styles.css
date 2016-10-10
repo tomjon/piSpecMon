@@ -37,9 +37,9 @@ line.vertical, line.horizontal {
   float: left;
 }
 .chart form {
-  float: right;
+  position: absolute;
+  right: 30px;
   margin-top: 10px;
-	margin-bottom: 0px;
 }
 psm-frequency span {
   margin-right: 15px;
