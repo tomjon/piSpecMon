@@ -58,9 +58,9 @@ text.info {
   opacity: 0;
 }
 form.controls {
-	float: left;
-	margin-left: 100px;
-	margin-top: 8px;
+  position: absolute;
+  left: 160px;
+  margin-top: 6px;
 }
 psm-waterfall .waterfall {
   position: relative;
