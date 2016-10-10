@@ -167,7 +167,7 @@ export class WaterfallComponent extends Chart {
     }
 
     // find timestamp of click...
-    let j = Math.round(z.y / this.rh);
+    let j = Math.floor(z.y / this.rh);
     if (j < 0 || j >= this.data.spectrum.levels.length) {
       // out of bounds - hide info text
       this.infoText = "";
