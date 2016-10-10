@@ -4,6 +4,7 @@ import hashlib
 import binascii
 import os
 import os.path
+import tempfile
 
 
 class UsersError(Exception):
@@ -157,10 +158,9 @@ def get_user(username):
 
 def _rewrite_users(username, user_fn=None):
     username = unicode(username)
-    temp_path = local_path(USERS_FILE + '.tmp')
-    error = None
     try:
-        with open(temp_path, 'w') as f:
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            error = None
             ok = False
             for user in _iter_users():
                 if user.name != username:
@@ -177,7 +177,7 @@ def _rewrite_users(username, user_fn=None):
                 raise error
             return ok
     finally:
-        os.rename(temp_path, local_path(USERS_FILE))
+        os.rename(f.name, local_path(USERS_FILE))
 
 
 def set_user(username, data):
