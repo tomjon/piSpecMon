@@ -1,4 +1,0 @@
-{
-  size: 10,
-  fields: [ "timestamp", "config" ]
-}
