@@ -30,9 +30,10 @@ RADIO_ON_SLEEP_SECS = 1.0
 # user session inactivity timeout
 USER_TIMEOUT_SECS = 60
 
-# audio samples directory, and how often (in s) the wav2mp3 converter should run
-SAMPLES_DIRECTORY = 'samples'
-CONVERT_PERIOD = 300
+# data directories
+DATA_PATH = 'data'
+SAMPLES_PATH = 'samples'
+SETTINGS_PATH = 'settings'
 
-DATA_DIR = 'data'
-SETTINGS_DIR = 'settings'
+# how often (in s) the wav2mp3 converter should run
+CONVERT_PERIOD = 300

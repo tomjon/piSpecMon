@@ -236,7 +236,7 @@ def configs():
 
 def _delete(config_id):
     # delete audio samples...
-    samples_path = os.path.join(current_app.root_path, SAMPLES_DIRECTORY, config_id)
+    samples_path = os.path.join(current_app.root_path, SAMPLES_PATH, config_id)
     if os.path.isdir(samples_path):
       shutil.rmtree(samples_path)
     # delete config and associated data

@@ -5,7 +5,7 @@ import time
 import json
 import os.path
 import requests
-from config import ELASTICSEARCH, SAMPLES_DIRECTORY
+from config import ELASTICSEARCH, SAMPLES_PATH
 from common import log, StoreError, local_path, fs_size, fs_free
 
 
@@ -180,7 +180,7 @@ class Config(object):
     def audio_path(self, timestamp, freq_n):
         """ Return a (base) path at which an audio sample is stored.
         """
-        return os.path.join(SAMPLES_DIRECTORY, self.id, freq_n, timestamp)
+        return os.path.join(SAMPLES_PATH, self.id, freq_n, timestamp)
 
     def iter_audio(self, start=None, end=None):
         """ Yield (timestamp, freq_n, path) for stored audio samples in the range (or all).
@@ -310,9 +310,9 @@ def stats():
         raise ElasticsearchError(req)
     values = req.json()['indices']['spectrum']['primaries']
     return {
-        'audio': fs_size(SAMPLES_DIRECTORY),
+        'audio': fs_size(SAMPLES_PATH),
         'size': values['store']['size_in_bytes'],
-        'free': fs_free(SAMPLES_DIRECTORY)
+        'free': fs_free(SAMPLES_PATH)
     }
 
 
