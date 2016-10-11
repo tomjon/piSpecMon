@@ -21,7 +21,7 @@ class RdsApi(object):
     """ Fake RDS API implementation.
     """
 
-    def __init__(self, device, use_hard_mute=True):
+    def __init__(self, *_):
         self.mhz = None
         self.t0 = 0
 
