@@ -4,9 +4,9 @@
 from time import time
 from random import choice
 
-STRENGTH_DELAY = 5
-NAME_DELAY = 10
-TEXT_DELAY = 20
+STRENGTH_DELAY = 2
+NAME_DELAY = 4
+TEXT_DELAY = 6
 
 STRENGTH = 40
 

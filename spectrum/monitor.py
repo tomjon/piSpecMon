@@ -70,7 +70,7 @@ class TimeoutError (RigError):
   pass
 
 
-class Monitor:
+class Monitor (object):
 
   def __init__(self, model=1, data_bits=None, stop_bits=None, rate=None, parity=None,
                      write_delay=None, pathname=None, set_check=0, retries=0, interval=0,
@@ -132,17 +132,20 @@ class Monitor:
       raise TimeoutError(self.rig, fn.__name__, tries)
     raise RigError(self.rig, fn.__name__, tries)
 
-  # return strength, or None if the freq can't be set
-  def get_strength(self, freq):
+  def set_frequency(self, freq):
     if self.set_check == 0:
       self._check(self.rig.set_freq, Hamlib.RIG_VFO_CURR, freq)
     else:
       for _ in xrange(self.set_check):
         self._check(self.rig.set_freq, Hamlib.RIG_VFO_CURR, freq)
         if freq == self._check(self.rig.get_freq, Hamlib.RIG_VFO_CURR):
-          break
-      else:
-        return None
+          return True
+      return False
+
+  # return strength, or None if the freq can't be set (only sets freq if given)
+  def get_strength(self, freq=None):
+    if freq is not None and not self.set_frequency(freq):
+      return None
     return self._check(self.rig.get_strength, Hamlib.RIG_VFO_CURR)
 
   def set_mode(self, mode):
@@ -150,27 +153,39 @@ class Monitor:
       width = self._check(self.rig.passband_normal, mode)
       self._check(self.rig.set_mode, mode, width, Hamlib.RIG_VFO_CURR)
 
-  def record(self, freq, rate, duration, path, device):
-    strength = self.get_strength(freq) #FIXME is this a bit odd? or do we want the strength data at start/end?
-    if strength is None:
-      return None
-    audio = ossaudiodev.open(device, 'r')
-    audio.channels(CHANNELS)
-    audio.setfmt(FORMAT)
-    audio.speed(rate)
-    wav = wave.open(path, 'w')
-    wav.setnchannels(CHANNELS)
-    wav.setsampwidth(SAMPLE_WIDTH)
-    wav.setframerate(rate)
-    for _ in xrange(duration):
-      data = audio.read(rate * CHANNELS * SAMPLE_WIDTH)
-      wav.writeframes(data)
-    wav.close()
-    audio.close()
-    return strength
-
   def power_off(self):
     self.rig.set_powerstat(Hamlib.RIG_POWER_OFF)
+
+
+class Recorder (object):
+
+  def __init__(self, path, device):
+    self.path = path
+    self.device = device
+
+  def __enter__(self):
+    self.audio = ossaudiodev.open(self.device, 'r')
+    self.wav = wave.open(self.path, 'w')
+    return self
+
+  def record(self, monitor, freq, rate, duration):
+    if not monitor.set_frequency(freq):
+      raise Exception("could not set frequency")
+    self.audio.channels(CHANNELS)
+    self.audio.setfmt(FORMAT)
+    self.audio.speed(rate)
+    self.wav.setnchannels(CHANNELS)
+    self.wav.setsampwidth(SAMPLE_WIDTH)
+    self.wav.setframerate(rate)
+    yield monitor.get_strength()
+    for _ in xrange(duration):
+      data = self.audio.read(rate * CHANNELS * SAMPLE_WIDTH)
+      self.wav.writeframes(data)
+      yield monitor.get_strength()
+
+  def __exit__(self, *args):
+    self.wav.close()
+    self.audio.close()
 
 
 if __name__ == "__main__":

@@ -14,31 +14,37 @@ def poll(fn, condition, timeout):
   t0 = time()
   while True:
     v = fn()
-    if condition(v):
-      return v
-    if time() - t0 > timeout:
-      return None
+    c = condition(v)
+    yield v, c
+    if c or time() - t0 > timeout:
+      return
     sleep(MONKEY_POLL)
 
 
 def iterator(config):
   scan_config = parse_config(config.values)
+  rds = config.values['rds']
 
-  with RdsApi(config.values['rds']['device']) as api:
+  with RdsApi(rds['device']) as api:
     while True:
       for idx, freq in scan(**scan_config):
-        progress = UpdatableDict()
-        yield progress('freq_n', idx)
+        status = UpdatableDict()
+        yield status('freq_n', idx)
+
         api.set_frequency(freq)
-        strength = poll(api.get_strength, lambda s: s >= config.values['rds']['strength_threshold'], config.values['rds']['strength_timeout'])
-        if strength is None:
+        for strength, ok in poll(api.get_strength, lambda s: s >= rds['strength_threshold'], rds['strength_timeout']):
+          yield status('strength', strength)
+
+        if not ok:
           continue
-        yield progress('strength', strength)
+
         t0 = time()
-        name = poll(api.get_name, lambda n: n is not None, config.values['rds']['rds_timeout'])
-        if name is None:
+        for name, ok in poll(api.get_name, lambda n: n is not None, rds['rds_timeout']):
+          status['strength'] = api.get_strength()
+          yield status('name', name)
+
+        if not ok:
           continue
-        yield progress('name', name)
 
         try:
           config.write_rds_name(now(), idx, name)
@@ -46,16 +52,19 @@ def iterator(config):
           return
 
         text0 = None
-        while time() < t0 + config.values['rds']['rds_timeout']:
+        while time() < t0 + rds['rds_timeout']:
           text = api.get_text()
+          status['strength'] = api.get_strength()
+          yield status('text', text)
+
           if text is not None and text != text0:
             text0 = text
-            yield progress('text', text)
-
             try:
               config.write_rds_text(now(), idx, text)
             except StoreError:
               return
+
+          sleep(MONKEY_POLL)
 
 
 class Monkey (Process):

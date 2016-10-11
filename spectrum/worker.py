@@ -3,7 +3,7 @@ from common import *
 
 import requests
 import json
-from monitor import Monitor, TimeoutError, get_capabilities
+from monitor import Monitor, TimeoutError, get_capabilities, Recorder
 from power import power_on
 from time import sleep
 import os, os.path
@@ -101,7 +101,6 @@ def iterator(config):
     if monitor is not None:
       monitor.close()
 
-#FIXME how/whether to interrupt audio recording?
 def record(status, config, monitor, freqs):
   log.debug("Recording audio from {0} frequencies".format(len(freqs)))
   for idx, freq in freqs:
@@ -119,7 +118,11 @@ def record(status, config, monitor, freqs):
 
     audio = config.values['audio']
     log.info("Recording audio at {0}Hz and storing in {1}".format(freq, path))
-    monitor.record(freq, audio['rate'], audio['duration'], path, audio['path'])
+
+    with Recorder(path, audio['path']) as r:
+      for strength in r.record(monitor, freq, audio['rate'], audio['duration']):
+        status['sweep']['record']['strength'] = strength
+        yield status
 
 
 class Worker (Process):
