@@ -1,7 +1,8 @@
-from config import *
-from common import parse_config
+""" Functions for powering on/off the rig.
+"""
 from time import sleep
 import fs_datastore as data_store
+from common import parse_config
 from monitor import Monitor
 try:
     import RPi.GPIO as GPIO
@@ -10,6 +11,8 @@ except ImportError:
 
 
 def power_on():
+    """ Turn on the rig.
+    """
     try:
         # if we're on a Pi, we can import GPIO and use it to turn on the rig
         GPIO.setmode(GPIO.BCM) # There are two ways of numbering pins. We choose I/O chip numbering
@@ -28,6 +31,8 @@ def power_on():
 
 
 def power_off():
+    """ Turn off the rig.
+    """
     rig = data_store.Settings('rig').read()
     parse_config(rig.values)
     monitor = Monitor(**rig.values)
