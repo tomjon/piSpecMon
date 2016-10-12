@@ -3,7 +3,7 @@
 from time import sleep, time
 from config import MONKEY_PID, MONKEY_CONFIG, MONKEY_STATUS, MONKEY_POLL
 from common import log, parse_config, scan, now, StoreError
-from process import Process, UpdatableDict
+from process import Process
 try:
     from rds import RdsApi
 except ImportError:
@@ -23,7 +23,7 @@ def _poll(fn, condition, timeout):
 
 
 # iterator for monkey.start() yields status of RDS decoding
-def _iterator(config):
+def _iterator(config, status):
     scan_config = parse_config(config.values)
     rds = config.values['rds']
 
@@ -32,20 +32,23 @@ def _iterator(config):
             for idx, freq in scan(**scan_config):
                 log.debug("Scanning %s", freq)
 
-                status = UpdatableDict()
-                yield status('freq_n', idx)
+                status.clear()
+                status['freq_n'] = idx
+                yield
 
                 api.set_frequency(freq)
                 condition = lambda s: s >= rds['strength_threshold']
                 for strength, ok in _poll(api.get_strength, condition, rds['strength_timeout']):
-                    yield status('strength', strength)
+                    status['strength'] = strength
+                    yield
                 if not ok: # pylint: disable=undefined-loop-variable
                     continue
 
                 time_0 = time()
                 for name, ok in _poll(api.get_name, lambda n: n is not None, rds['rds_timeout']):
                     status['strength'] = api.get_strength()
-                    yield status('name', name)
+                    status['name'] = name
+                    yield
                 if not ok: # pylint: disable=undefined-loop-variable
                     continue
 
@@ -59,7 +62,8 @@ def _iterator(config):
                 while time() < time_0 + rds['rds_timeout']:
                     text = api.get_text()
                     status['strength'] = api.get_strength()
-                    yield status('text', text)
+                    status['text'] = text
+                    yield
 
                     if text is not None and text != text_0:
                         text_0 = text
@@ -72,15 +76,8 @@ def _iterator(config):
                     sleep(MONKEY_POLL)
 
 
-class Monkey(Process):
-    """ Define the monkey process.
-    """
-    def __init__(self):
-        super(Monkey, self).__init__(MONKEY_PID, MONKEY_CONFIG, MONKEY_STATUS)
-
-
 if __name__ == "__main__":
     #pylint: disable=invalid-name
-    monkey = Monkey()
+    monkey = Process(MONKEY_PID, MONKEY_CONFIG, MONKEY_STATUS)
     monkey.init()
     monkey.start(_iterator)

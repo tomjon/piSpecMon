@@ -11,14 +11,6 @@ import fs_datastore as data_store
 from common import log, local_path
 
 
-class UpdatableDict(dict):
-    """ Status object passed to status iterator functions.
-    """
-    def __call__(self, key, value):
-        self[key] = value
-        return self
-
-
 class Process(object):
     """ Start the process with start(), after supplying the pid file, config file and
         status file names.
@@ -86,7 +78,8 @@ class Process(object):
                     config = data_store.Config(self.config_id).read()
                     log.debug("Running with config: %s", json.dumps(config.values))
                     self._stop = False
-                    for status in iterator(config):
+                    status = {}
+                    for _ in iterator(config, status):
                         self._write_status(status)
                         if self._stop:
                             break

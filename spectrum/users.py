@@ -5,6 +5,7 @@ import binascii
 import os
 import os.path
 import tempfile
+import json
 
 
 class UsersError(Exception):
