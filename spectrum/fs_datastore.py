@@ -436,70 +436,70 @@ if __name__ == '__main__':
         os.mkdir(LOCAL_DATA)
         os.mkdir(LOCAL_SETTINGS)
 
-        settings = Settings('foo')
-        settings.read({'test': 'value'})
-        assert settings.values == {'test': 'value'}
-        settings.read()
-        assert settings.values == {'test': 'value'}
-        settings = Settings('foo')
-        settings.read()
-        assert settings.values == {'test': 'value'}
-        settings.write({'a': 'b'})
-        assert settings.values == {'a': 'b'}
-        settings.read()
-        assert settings.values == {'a': 'b'}
+        _s = Settings('foo')
+        _s.read({'test': 'value'})
+        assert _s.values == {'test': 'value'}
+        _s.read()
+        assert _s.values == {'test': 'value'}
+        _s = Settings('foo')
+        _s.read()
+        assert _s.values == {'test': 'value'}
+        _s.write({'a': 'b'})
+        assert _s.values == {'a': 'b'}
+        _s.read()
+        assert _s.values == {'a': 'b'}
 
-        config = Config()
-        config.write(1066, {'config': 'values'})
-        assert config.values == {'config': 'values'}
+        _c = Config()
+        _c.write(1066, {'config': 'values'})
+        assert _c.values == {'config': 'values'}
 
-        config.write_spectrum(1066, [10, 20, -30])
-        config.write_spectrum(1080, [1, 2, 3])
-        config.write_spectrum(1200, [0, 0, 0])
-        config.write_spectrum(1300, [10, 10, 12])
-        assert list(config.iter_spectrum()) == [(1066, (10, 20, -30)),
-                                                (1080, (1, 2, 3)),
-                                                (1200, (0, 0, 0)),
-                                                (1300, (10, 10, 12))]
-        assert list(config.iter_spectrum(1073, 1260)) == [(1080, (1, 2, 3)),
-                                                          (1200, (0, 0, 0))]
-        assert list(config.iter_spectrum(1080, 1300)) == [(1080, (1, 2, 3)),
-                                                          (1200, (0, 0, 0)),
-                                                          (1300, (10, 10, 12))]
-        assert list(config.iter_spectrum(1066, 1200)) == [(1066, (10, 20, -30)),
-                                                          (1080, (1, 2, 3)),
-                                                          (1200, (0, 0, 0))]
-        assert list(config.iter_spectrum(500, 1500)) == [(1066, (10, 20, -30)),
-                                                         (1080, (1, 2, 3)),
-                                                         (1200, (0, 0, 0)),
-                                                         (1300, (10, 10, 12))]
-        assert list(config.iter_spectrum(1070, 1074)) == []
+        _c.write_spectrum(1066, [10, 20, -30])
+        _c.write_spectrum(1080, [1, 2, 3])
+        _c.write_spectrum(1200, [0, 0, 0])
+        _c.write_spectrum(1300, [10, 10, 12])
+        assert list(_c.iter_spectrum()) == [(1066, (10, 20, -30)),
+                                            (1080, (1, 2, 3)),
+                                            (1200, (0, 0, 0)),
+                                            (1300, (10, 10, 12))]
+        assert list(_c.iter_spectrum(1073, 1260)) == [(1080, (1, 2, 3)),
+                                                      (1200, (0, 0, 0))]
+        assert list(_c.iter_spectrum(1080, 1300)) == [(1080, (1, 2, 3)),
+                                                      (1200, (0, 0, 0)),
+                                                      (1300, (10, 10, 12))]
+        assert list(_c.iter_spectrum(1066, 1200)) == [(1066, (10, 20, -30)),
+                                                      (1080, (1, 2, 3)),
+                                                      (1200, (0, 0, 0))]
+        assert list(_c.iter_spectrum(500, 1500)) == [(1066, (10, 20, -30)),
+                                                     (1080, (1, 2, 3)),
+                                                     (1200, (0, 0, 0)),
+                                                     (1300, (10, 10, 12))]
+        assert list(_c.iter_spectrum(1070, 1074)) == []
 
-        config.write_audio(1066, 4)
-        config.write_audio(1080, 6)
-        assert list(config.iter_audio()) == [(1066, 4), (1080, 6)]
-        assert list(config.iter_audio(1050, 1070)) == [(1066, 4)]
+        _c.write_audio(1066, 4)
+        _c.write_audio(1080, 6)
+        assert list(_c.iter_audio()) == [(1066, 4), (1080, 6)]
+        assert list(_c.iter_audio(1050, 1070)) == [(1066, 4)]
 
-        config.write_rds_name(1066, 1, 'Radio 7')
-        config.write_rds_name(1080, 4, 'Bilbo')
-        config.write_rds_name(1090, 1, 'Frodo')
-        config.write_rds_name(1280, 6, 'Wikipedia')
-        assert list(config.iter_rds_name()) == [(1066, 1, 'Radio 7'),
-                                                (1080, 4, 'Bilbo'),
-                                                (1090, 1, 'Frodo'),
-                                                (1280, 6, 'Wikipedia')]
-        assert list(config.iter_rds_name(1050, 1300)) == [(1066, 1, 'Radio 7'),
-                                                          (1080, 4, 'Bilbo'),
-                                                          (1090, 1, 'Frodo'),
-                                                          (1280, 6, 'Wikipedia')]
-        assert list(config.iter_rds_name(1050, 1085)) == [(1066, 1, 'Radio 7'),
-                                                          (1080, 4, 'Bilbo')]
-        assert list(config.iter_rds_name(1090, 1300)) == [(1090, 1, 'Frodo'),
-                                                          (1280, 6, 'Wikipedia')]
+        _c.write_rds_name(1066, 1, 'Radio 7')
+        _c.write_rds_name(1080, 4, 'Bilbo')
+        _c.write_rds_name(1090, 1, 'Frodo')
+        _c.write_rds_name(1280, 6, 'Wikipedia')
+        assert list(_c.iter_rds_name()) == [(1066, 1, 'Radio 7'),
+                                            (1080, 4, 'Bilbo'),
+                                            (1090, 1, 'Frodo'),
+                                            (1280, 6, 'Wikipedia')]
+        assert list(_c.iter_rds_name(1050, 1300)) == [(1066, 1, 'Radio 7'),
+                                                      (1080, 4, 'Bilbo'),
+                                                      (1090, 1, 'Frodo'),
+                                                      (1280, 6, 'Wikipedia')]
+        assert list(_c.iter_rds_name(1050, 1085)) == [(1066, 1, 'Radio 7'),
+                                                      (1080, 4, 'Bilbo')]
+        assert list(_c.iter_rds_name(1090, 1300)) == [(1090, 1, 'Frodo'),
+                                                      (1280, 6, 'Wikipedia')]
 
-        config = Config()
-        config.write(999, {})
-        config.read()
-        list(config.iter_spectrum())
+        _c = Config()
+        _c.write(999, {})
+        _c.read()
+        list(_c.iter_spectrum())
     finally:
         shutil.rmtree('.test')
