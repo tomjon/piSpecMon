@@ -100,19 +100,20 @@ def parse_config(config):
     """
     _convert(config)
     scan_config = {}
-    for x in config['freqs']:
-        # x is either 'range' or 'freqs'
-        if x == 'range':
-            exp = int(config['freqs']['exp'])
-            scan_config[x] = [int(10 ** exp * float(f)) for f in config['freqs'][x]]
-            scan_config[x][1] += scan_config[x][2] / 2 # ensure to include the end of the range
-        elif x == 'freqs':
-            scan_config[x] = [int(10 ** int(f['exp']) * float(f['f'])) for f in config['freqs'][x]]
+    if 'freqs' in config:
+        for x in config['freqs']:
+            # x is either 'range' or 'freqs'
+            if x == 'range':
+                exp = int(config['freqs']['exp'])
+                scan_config[x] = [int(10 ** exp * float(f)) for f in config['freqs'][x]]
+                scan_config[x][1] += scan_config[x][2] / 2 # ensure to include the end of the range
+            elif x == 'freqs':
+                scan_config[x] = [int(10 ** int(f['exp']) * float(f['f'])) for f in config['freqs'][x]]
+            else:
+                raise ValueError("Bad key in config.freqs")
+            break
         else:
-            raise ValueError("Bad key in config.freqs")
-        break
-    else:
-        raise ValueError("No frequencies in config")
+            raise ValueError("No frequencies in config.freqs")
     return scan_config
 
 

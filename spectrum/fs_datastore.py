@@ -384,7 +384,9 @@ class Settings(object):
         """ Read settings value, using the defaults given if it is not already set.
         """
         if not os.path.exists(self.path):
-            self.values = defaults or {}
+            if defaults is None:
+                raise StoreError("No defaults and no settings for {0}".format(self.id))
+            self.values = defaults
             self.write()
             return self
         with open(self.path) as f:

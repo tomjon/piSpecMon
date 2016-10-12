@@ -280,6 +280,8 @@ class Settings(object):
         req = requests.get(_url('settings/{0}', self.id), params=params)
         log.debug("get_settings status code %s: %s", req.status_code, req.json())
         if req.status_code == 404:
+            if defaults is None:
+                raise StoreError("No defaults and no settings for {0}".format(self.id))
             log.info("Initialising settings: %s", self.id)
             self.values = defaults or {}
             self.write()
