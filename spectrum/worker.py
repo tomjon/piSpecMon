@@ -135,7 +135,7 @@ if __name__ == "__main__":
 
   worker = Worker()
   worker.init()
-  with open(log_filename, 'a') as f:
+  with open(log.path, 'a') as f:
     Hamlib.rig_set_debug_file(f)
     Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
     worker.start(iterator)

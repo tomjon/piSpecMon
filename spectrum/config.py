@@ -1,5 +1,5 @@
-# configuration settings used by worker.py and server.py
 #FIXME use yaml
+LOG_SIZE = 1024 * 1024
 
 VERSION_FILE = '/version'
 

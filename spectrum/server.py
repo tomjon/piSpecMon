@@ -140,8 +140,8 @@ else:
 application.login_manager.init_app(application)
 
 # Also add log handlers to Flask's logger for cases where Werkzeug isn't used as the underlying WSGI server
-application.logger.addHandler(rfh)
-application.logger.addHandler(ch)
+for handler in log.handlers:
+  application.logger.addHandler(handler)
 
 log.info("{0} rig models".format(len(application.caps['models'])))
 
