@@ -41,7 +41,7 @@ export class TableComponent {
     let config: Config = this.configs.find(set => set.id == this.config_id);
     if (! config) {
       // if we are seeing a new config, add it to the table
-      this.widgetComponent.busy(this.dataService.getConfig(this.config_id))
+      this.widgetComponent.busy(this.dataService.getConfig(this.config_id)[0])
                           .subscribe(config => this.configs.push(config));
     } else {
       // otherwise, update the one we have
@@ -51,14 +51,14 @@ export class TableComponent {
   }
 
   ngOnInit() {
-    this.widgetComponent.busy(this.dataService.getConfigs())
+    this.widgetComponent.busy(this.dataService.getConfig())
                         .subscribe(configs => this.configs = configs);
   }
 
   onSelect(config_id, e) {
     if (e.target.tagName != 'INPUT') {
       this.selected = this.selected == config_id ? undefined : config_id;
-      this.select.emit(this.getConfig(this.selected));
+      this.select.emit(this.getConfig(this.selected)[0]);
     }
   }
 
@@ -98,7 +98,7 @@ export class TableComponent {
 
   onDelete() {
     let ids = this.checkedIds();
-    this.widgetComponent.busy(this.dataService.deleteConfigs(ids))
+    this.widgetComponent.busy(this.dataService.deleteConfig(ids))
                         .subscribe(() => {
                           for (let id of ids) {
                             delete this.checked[id];

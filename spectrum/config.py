@@ -1,5 +1,6 @@
 """ Configuration constants.
 """
+import Hamlib
 
 #FIXME use yaml
 LOG_SIZE = 1024 * 1024
@@ -40,3 +41,15 @@ SETTINGS_PATH = 'settings'
 
 # how often (in s) the wav2mp3 converter should run
 CONVERT_PERIOD = 300
+
+# default model is PSM test if it exists, otherwise AR8200
+try:
+    DEFAULT_MODEL = Hamlib.RIG_MODEL_PSMTEST
+except AttributeError:
+    DEFAULT_MODEL = Hamlib.RIG_MODEL_AR8200
+
+# default settings
+DEFAULT_RIG_SETTINGS = {'model': DEFAULT_MODEL}
+DEFAULT_AUDIO_SETTINGS = {'path': '/dev/dsp1', 'rate': 44100, 'period': 600, 'duration': 10, 'threshold': -20}
+DEFAULT_RDS_SETTINGS = {'device': '/dev/ttyACM0', 'strength_threshold': 40, 'strength_timeout': 20, 'rds_timeout': 300}
+DEFAULT_SCAN_SETTINGS = {'freqs': {'range': [87.5, 108.0, 0.1], 'exp': 6, 'freqs': [{'f': '', 'exp': 6}]}, 'monitor': {'radio_on': 1}, 'scan': {'mode': 64, 'rds': True, 'audio': False}}

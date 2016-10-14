@@ -1,11 +1,14 @@
-from config import *
-from common import *
+""" Module provides functions for manipulating the users.passwords file (which is very much
+    like /etc/passwords).
+"""
 import hashlib
 import binascii
 import os
 import os.path
 import tempfile
 import json
+from config import USERS_FILE, ROUNDS
+from common import local_path
 
 
 class UsersError(Exception):
@@ -40,27 +43,34 @@ class IncorrectPasswordError(UsersError):
 
 # class used only by the module to store user data
 class _UserEntry(object):
-
-    def __init__(self, name, salt, hash, data, line=None):
+    def __init__(self, name, salt, hash_value, data, line=None):
         self.name = name
         self.salt = salt
-        self.hash = hash
+        self.hash = hash_value
         self.data = data
-        self._line = line
+        self.line = line
 
     def check_name(self, name):
+        """ Return whether the user name is as specified.
+        """
         return self.name == name
 
     def set_name(self, name):
+        """ Set the user name.
+        """
         if name is not None:
             self.name = name
         return self
 
     def set_data(self, data):
+        """ Set the user data.
+        """
         self.data = data
         return self
 
     def update_data(self, *args):
+        """ Update the user data.
+        """
         if len(args) > 0:
             data = self.data
             for arg in args[:-1]:
@@ -76,10 +86,10 @@ def _iter_users(append_user=None):
     try:
         with open(local_path(USERS_FILE), 'r+' if append_user is not None else 'r') as f:
             for line in f:
-                name, salt, hash, data = line.split('\t', 3)
+                name, salt, hash_value, data = line.split('\t', 3)
                 salt = binascii.unhexlify(salt)
-                hash = binascii.unhexlify(hash)
-                yield _UserEntry(name, salt, hash, json.loads(data), line)
+                hash_value = binascii.unhexlify(hash_value)
+                yield _UserEntry(name, salt, hash_value, json.loads(data), line)
             if append_user is not None:
                 # if we got here, the file pointer is at the end of the file
                 _write_user(f, append_user)
@@ -100,8 +110,8 @@ def _write_user(f, user):
 
 def _new_user(username, password, data):
     salt = os.urandom(32)
-    hash = hashlib.pbkdf2_hmac('sha256', password, salt, ROUNDS)
-    return _UserEntry(username, salt, hash, data)
+    hash_value = hashlib.pbkdf2_hmac('sha256', password, salt, ROUNDS)
+    return _UserEntry(username, salt, hash_value, data)
 
 
 def create_user(username, password, data):
@@ -131,8 +141,8 @@ def check_user(username, password):
         raise InvalidUsername()
     for user in _iter_users():
         if user.name == username:
-            hash = hashlib.pbkdf2_hmac('sha256', password, user.salt, ROUNDS)
-            if hash == user.hash:
+            hash_value = hashlib.pbkdf2_hmac('sha256', password, user.salt, ROUNDS)
+            if hash_value == user.hash:
                 return user.data
     # fake attempt so hackers can't guess validity of usernames by time taken
     hashlib.pbkdf2_hmac('sha256', password, b'foo', ROUNDS)
@@ -165,17 +175,17 @@ def _rewrite_users(username, user_fn=None):
             ok = False
             for user in _iter_users():
                 if user.name != username:
-                    f.write(user._line)
+                    f.write(user.line)
                 else:
                     ok = True
                     if user_fn is not None:
                         try:
                             user = user_fn(user)
-                        except Exception as e:
+                        except UsersError as e:
                             error = e
                         _write_user(f, user)
             if error is not None:
-                raise error
+                raise error # pylint: disable=raising-bad-type
             return ok
     finally:
         os.rename(f.name, local_path(USERS_FILE))

@@ -23,6 +23,7 @@ class Process(object):
         self._stop = False
         self._tidy = True
         self.config_id = None
+        self.status = {}
 
     def read_pid(self):
         """ Read and verify the PID file.
@@ -43,12 +44,12 @@ class Process(object):
             raise ProcessError("Bad PID ({0}): {1}".format(errno.errorcode[e.errno], pid))
 
     # write status to the status file
-    def _write_status(self, status):
-        status['config_id'] = self.config_id
-        log.debug("Writing status %s", json.dumps(status))
+    def _write_status(self):
+        self.status['config_id'] = self.config_id
+        log.debug("Writing status %s", json.dumps(self.status))
         tmp = self.status_file + '_tmp'
         with open(tmp, 'w') as f:
-            f.write(json.dumps(status))
+            f.write(json.dumps(self.status))
         os.rename(tmp, self.status_file)
 
     # define signal handler for given signal in order to exit cleanly
@@ -66,7 +67,7 @@ class Process(object):
         with open(self.config_file) as f:
             return f.read().strip()
 
-    def start(self, iterator):
+    def start(self):
         """ Start the process, writing status yielded by iterator.
         """
         log.info("STARTING")
@@ -78,9 +79,10 @@ class Process(object):
                     config = data_store.Config(self.config_id).read()
                     log.debug("Running with config: %s", json.dumps(config.values))
                     self._stop = False
-                    status = {}
-                    for _ in iterator(config, status):
-                        self._write_status(status)
+                    #FIXME status can be handled better, maybe even never delete the status file
+                    self.status.clear()
+                    for _ in self.iterator(config):
+                        self._write_status()
                         if self._stop:
                             break
                     if os.path.isfile(self.status_file):
@@ -123,6 +125,12 @@ class Process(object):
         """ Return a client for the process.
         """
         return Client(self)
+
+    def iterator(self, _): # pylint: disable=no-self-use
+        """ Sub-classes should implement.
+        """
+        return
+        yield # pylint: disable=unreachable
 
 
 class Client(object):

@@ -135,9 +135,9 @@ export class DataService {
   }
 
   getLoggedInUsers(): Observable<string[]> {
-    return this.http.get(this.baseUrl + 'current')
+    return this.http.get(`${this.baseUrl}users?current`)
                     .map(res => res.json().data)
-                    .catch(this.errorHandler("set current user details"));
+                    .catch(this.errorHandler("get logged in users"));
   }
 
   logout(): Observable<void> {
@@ -150,24 +150,16 @@ export class DataService {
                     .catch(this.errorHandler(`pi command: ${command}`));
   }
 
-  getConfig(config_id: string): Observable<Config> {
-    let url = this.baseUrl + 'config/' + config_id;
+  getConfig(config_id?: string): Observable<Config> {
+    let url = `${this.baseUrl}config`;
+    if (config_id) url = `${url}/${config_id}`;
     return this.http.get(url)
-                    .map(res => {
-                      let data = res.json();
-                      return new Config(data.id, data.values, +data.timestamp, +data.first, +data.latest, +data.count, data.errors);
-                    })
+                    .map(res => res.json().data.map(c => new Config(c.id, c.values, c.timestamp, c.first, c.latest, c.count, c.errors)))
                     .catch(this.errorHandler("get config set"));
   }
 
-  getConfigs(): Observable<Config[]> {
-    return this.http.get(this.baseUrl + 'config')
-                    .map(res => res.json().data.map(c => new Config(c.id, c.values, c.timestamp, c.first, c.latest, c.count, c.errors)))
-                    .catch(this.errorHandler("get scan configs"));
-  }
-
-  deleteConfigs(config_ids: string[]): Observable<void> {
-    return this.http.delete(this.baseUrl + 'configs/' + config_ids.join(','))
+  deleteConfig(config_ids: string[]): Observable<void> {
+    return this.http.delete(`${this.baseUrl}config/${config_ids.join(',')}`)
                     .catch(this.errorHandler("delete config"));
   }
 
