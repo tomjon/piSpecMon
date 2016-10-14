@@ -4,7 +4,6 @@ import logging
 import logging.handlers
 import sys
 import os
-import os.path
 import itertools
 import time
 from config import LOG_SIZE

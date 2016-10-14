@@ -32,10 +32,8 @@
     The format file contains the timestamp of config creation, and the number of
     frequencies per sweep (i.e. the length of the strengths array).
 """
-
 import json
 import os
-import os.path
 import shutil
 import struct
 from config import DATA_PATH, SAMPLES_PATH, SETTINGS_PATH

@@ -3,7 +3,6 @@
 """
 import json
 import os
-import os.path
 import signal
 import errno
 import sys

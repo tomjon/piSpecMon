@@ -4,7 +4,6 @@
 import hashlib
 import binascii
 import os
-import os.path
 import tempfile
 import json
 from config import USERS_FILE, ROUNDS

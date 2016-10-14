@@ -2,7 +2,6 @@
 """
 import json
 import os
-import os.path
 import shutil
 import re
 import mimetypes

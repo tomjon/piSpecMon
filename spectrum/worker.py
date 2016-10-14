@@ -1,7 +1,6 @@
 """ Define Worker process, for scanning the spectrum using the rig.
 """
 import os
-import os.path
 import traceback
 from time import sleep
 from process import Process
