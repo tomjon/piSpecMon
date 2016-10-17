@@ -58,9 +58,11 @@ class Config(ConfigBase):
     """
 
     @staticmethod
-    def iter():
+    def iter(config_ids=None):
         """ Yield stored Config objects.
         """
+        if config_ids is not None:
+            raise StoreError("iter by config id not implemented")
         params = {'size': 10000, 'fields': 'json,timestamp', 'sort': 'timestamp'}
         req = requests.get(_url('config/_search'), params=params)
         if req.status_code != 200:

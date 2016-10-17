@@ -299,16 +299,10 @@ def config_endpoint(config_ids=None):
         c_dict = config.__dict__
         c_dict['errors'] = list(config.iter_error())
         return c_dict
-    def _get_config_dict(config_id):
-        config = data_store.Config(config_id=config_id).read()
-        return _config_dict(config)
     try:
         if request.method == 'GET':
-            #FIXME add Config.iter(..) for getting a list of ids
-            if config_ids is None:
-                data = [_config_dict(x) for x in data_store.Config.iter()]
-            else:
-                data = [_get_config_dict(config_id) for config_id in config_ids.split(',')]
+            ids = config_ids.split(',') if config_ids is not None else None
+            data = [_config_dict(x) for x in data_store.Config.iter(config_ids=ids)]
             return json.dumps({'data': data})
         else:
             if not user_has_role(['admin']):

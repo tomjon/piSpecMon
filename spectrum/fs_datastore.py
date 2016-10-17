@@ -112,19 +112,20 @@ class Config(ConfigBase):
         self.n_freq = None
 
     @staticmethod
-    def iter(debug=False):
+    def iter(config_ids=None):
         """ Yield stored Config objects.
         """
-        with open(LOCAL_INDEX) as f:
-            for config_id in f:
-                config_id = config_id.strip()
-                if len(config_id) == 0 or config_id[0] == '.':
-                    continue
-                config = Config(config_id=config_id)
-                config.read(debug)
-                yield config
+        def _iter_ids():
+            with open(LOCAL_INDEX) as f:
+                for config_id in f:
+                    yield config_id.strip()
 
-    def read(self, debug=False):
+        for config_id in _iter_ids() if config_ids is None else config_ids:
+            config = Config(config_id=config_id)
+            config.read()
+            yield config
+
+    def read(self):
         """ Read config attributes from the data store.
         """
         path = os.path.join(LOCAL_DATA, self.id)
@@ -146,21 +147,13 @@ class Config(ConfigBase):
             if not os.path.exists(path):
                 continue
             with open(path) as f:
-                if debug:
-                    print self.id, name,
                 firsts.append(_T_STRUCT.fread(f))
-                if debug:
-                    print firsts[-1],
                 if f.tell() == 0:
                     continue
                 f.seek(-offset, os.SEEK_END)
                 latests.append(_T_STRUCT.fread(f))
-                if debug:
-                    print latests[-1],
                 f.seek(0, os.SEEK_END)
                 counts[name] = f.tell() / _T_STRUCT.size
-                if debug:
-                    print
         self.first = min(firsts) if len(firsts) > 0 else None
         self.latest = max(latests) if len(latests) > 0 else None
         self.count = counts[SPECTRUM_TIMES] if SPECTRUM_TIMES in counts else 0
@@ -437,7 +430,7 @@ if __name__ == '__main__':
         assert _s.values == {'a': 'b'}
 
         _c = Config()
-        _c.write(1066, {'config': 'values'})
+        _c.write(1060, {'config': 'values'})
         assert _c.values == {'config': 'values'}
 
         _c.write_spectrum(1066, [10, 20, -30])
@@ -488,5 +481,8 @@ if __name__ == '__main__':
         _c.write(999, {})
         _c.read()
         list(_c.iter_spectrum())
+
+        assert [c.id for c in Config.iter()] == ['1060', '999']
+        assert [c.id for c in Config.iter(config_ids=['999'])] == ['999']
     finally:
         shutil.rmtree('.test')
