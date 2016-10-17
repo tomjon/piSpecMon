@@ -33,7 +33,9 @@ _load_settings(CONFIG_FILE)
 _parse_args()
 
 # set the default rig model based on whether the PSM test model is available in Hamlib
-try:
-    DEFAULT_RIG_SETTINGS['model'] = Hamlib.RIG_MODEL_PSMTEST # pylint: disable=undefined-variable
-except AttributeError:
-    DEFAULT_RIG_SETTINGS['model'] = Hamlib.RIG_MODEL_AR8200 # pylint: disable=undefined-variable
+# pylint: disable=undefined-variable
+if 'model' not in DEFAULT_RIG_SETTINGS:
+    try:
+        DEFAULT_RIG_SETTINGS['model'] = Hamlib.RIG_MODEL_PSMTEST
+    except AttributeError:
+        DEFAULT_RIG_SETTINGS['model'] = Hamlib.RIG_MODEL_AR8200
