@@ -1,0 +1,76 @@
+%YAML 1.1
+---
+log_size: 1048576
+version_file: /version
+
+# path where Flask's secret key is stored
+secret_key: secret.key
+
+# Worker (spectrum scanner)
+worker:
+    pid   : .worker_pid
+    config: .worker_config
+    status: .worker_status
+
+# Monkey (RDS decoder)
+monkey:
+    pid   : .monkey_pid
+    config: .monkey_config
+    status: .monkey_status
+    poll  : 1.0
+
+elasticsearch: http://localhost:9200/
+export_directory: /tmp
+
+users_file: users.passwords
+rounds: 100000
+
+# user session inactivity timeout
+user_timeout_secs: 60
+
+# GPIO radio 'on' script settings
+radio_on:
+    switch: 21 # BCM numbering
+    sleep_secs: 1.0
+
+# data directories
+data_path: data
+samples_path: samples
+settings_path: settings
+
+# how often (in s) the wav2mp3 converter should run
+convert_period: 300
+
+# default settings - if left empty, rig model is set later using Hamlib
+default:
+    rig_settings:
+        model:
+        pathname: /foo
+        data_bits: 8
+        rate: 9600
+        stop_bits: 1
+        parity: 2
+        attenuation: False
+        radio_on: 2
+        set_check: 2
+        retries: 2
+        interval: 1000
+        write_delay: 50
+
+    audio_settings:
+        path: /dev/dsp1
+        rate: 44100
+        period: 600
+        duration: 10
+        threshold: -20
+
+    rds_settings:
+        device: /dev/ttyACM0
+        strength_threshold: 40
+        strength_timeout: 20
+        rds_timeout: 300
+
+    scan_settings:
+        freqs: {range: [87.5, 108.0, 0.1], exp: 6, freqs: [{f: '', exp: 6}]}
+        monitor: {radio_on: 1}
+        scan: {mode: 64, rds: true, audio: false}
