@@ -126,9 +126,11 @@ class Monitor(object):
         """
         self._check(self.rig.open)
         if self.attenuation is not None:
-            #FIXME can we get the legal attenuation values from Hamlib?
-            #FIXME There's gran_t but where is that used?
-            attenuation = 20 if self.attenuation else 0
+            gran = self.rig.get_level_gran(Hamlib.RIG_LEVEL_ATT)
+            if isinstance(self.attentuation, bool):
+                attentuation = gran.max.i if self.attentuation else gran.min.i
+            else:
+                attentuation = self.attenuation
             self._check(self.rig.set_level, Hamlib.RIG_LEVEL_ATT, attenuation, Hamlib.RIG_VFO_CURR)
         return self
 
