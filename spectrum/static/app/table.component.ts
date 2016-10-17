@@ -58,7 +58,7 @@ export class TableComponent {
   onSelect(config_id, e) {
     if (e.target.tagName != 'INPUT') {
       this.selected = this.selected == config_id ? undefined : config_id;
-      this.select.emit(this.getConfig(this.selected)[0]);
+      this.select.emit(this.getConfig(this.selected));
     }
   }
 
