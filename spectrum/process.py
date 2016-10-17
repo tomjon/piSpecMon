@@ -75,7 +75,7 @@ class Process(object):
                 self.config_id = self._read_config()
                 if self.config_id is not None:
                     log.debug("Read config id %s", self.config_id)
-                    config = data_store.Config(self.config_id).read()
+                    config = data_store.Config(config_id=self.config_id).read()
                     log.debug("Running with config: %s", json.dumps(config.values))
                     self._stop = False
                     #FIXME status can be handled better, maybe even never delete the status file

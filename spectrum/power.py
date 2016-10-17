@@ -33,7 +33,7 @@ def power_on():
 def power_off():
     """ Turn off the rig.
     """
-    rig = data_store.Settings('rig').read()
+    rig = data_store.Settings(config_id='rig').read()
     parse_config(rig.values)
     monitor = Monitor(**rig.values)
     monitor.open()

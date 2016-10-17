@@ -3,11 +3,10 @@
 
 import time
 import json
-import os.path
 import requests
 from config import ELASTICSEARCH, SAMPLES_PATH
-from common import log, StoreError, local_path, fs_size, fs_free
-
+from common import log, local_path, fs_size, fs_free
+from datastore import ConfigBase, SettingsBase, StoreError
 
 REFRESH = {'refresh': 'true'}
 
@@ -54,17 +53,9 @@ class ElasticsearchError(StoreError):
         super(ElasticsearchError, self).__init__(text)
 
 
-class Config(object):
-    """ A wrapper for config id, timestamp, and values.
+class Config(ConfigBase):
+    """ Config implementation for Elasticsearch.
     """
-
-    def __init__(self, _id=None, values=None, timestamp=None, first=None, latest=None, count=None):
-        self.id = _id
-        self.values = values
-        self.timestamp = timestamp
-        self.first = first
-        self.latest = latest
-        self.count = count
 
     @staticmethod
     def iter():
@@ -177,11 +168,6 @@ class Config(object):
         if req.status_code != 201:
             raise ElasticsearchError(req)
 
-    def audio_path(self, timestamp, freq_n):
-        """ Return a (base) path at which an audio sample is stored.
-        """
-        return os.path.join(SAMPLES_PATH, self.id, freq_n, timestamp)
-
     def iter_audio(self, start=None, end=None):
         """ Yield (timestamp, freq_n, path) for stored audio samples in the range (or all).
         """
@@ -265,13 +251,9 @@ class Config(object):
             raise ElasticsearchError(req)
 
 
-class Settings(object):
-    """ A wrapper for settings id and value.
+class Settings(SettingsBase):
+    """ Elasticsearch implementation of Settings.
     """
-
-    def __init__(self, _id=None, values=None):
-        self.id = _id
-        self.values = values
 
     def read(self, defaults=None):
         """ Read settings value, using the defaults given if it is not already set.

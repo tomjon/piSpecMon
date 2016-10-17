@@ -5,7 +5,8 @@ import traceback
 from time import sleep
 from process import Process
 from config import WORKER_PID, WORKER_CONFIG, WORKER_STATUS, RADIO_ON_SLEEP_SECS
-from common import log, parse_config, now, scan, StoreError
+from common import log, parse_config, now, scan
+from datastore import StoreError
 from monitor import Monitor, TimeoutError, Recorder
 from power import power_on
 

@@ -17,7 +17,8 @@ from flask_login import LoginManager, login_user, login_required, current_user, 
 from config import DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, \
                    DEFAULT_SCAN_SETTINGS, SECRET_KEY, VERSION_FILE, USER_TIMEOUT_SECS, \
                    SAMPLES_PATH, EXPORT_DIRECTORY
-from common import log, StoreError, local_path, now
+from common import log, local_path, now
+from datastore import StoreError
 from users import check_user, get_user, set_user, iter_users, update_user, \
                   create_user, delete_user, set_password, IncorrectPasswordError, UsersError
 import tail
@@ -37,10 +38,10 @@ class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
         self.before_request(self.check_user_timeout)
         self.caps = get_capabilities()
         log.info("%d rig models", len(self.caps['models']))
-        self.rig = data_store.Settings('rig').read(DEFAULT_RIG_SETTINGS)
-        self.audio = data_store.Settings('audio').read(DEFAULT_AUDIO_SETTINGS)
-        self.rds = data_store.Settings('rds').read(DEFAULT_RDS_SETTINGS)
-        self.scan = data_store.Settings('scan').read(DEFAULT_SCAN_SETTINGS)
+        self.rig = data_store.Settings(settings_id='rig').read(DEFAULT_RIG_SETTINGS)
+        self.audio = data_store.Settings(settings_id='audio').read(DEFAULT_AUDIO_SETTINGS)
+        self.rds = data_store.Settings(settings_id='rds').read(DEFAULT_RDS_SETTINGS)
+        self.scan = data_store.Settings(settings_id='scan').read(DEFAULT_SCAN_SETTINGS)
         self.worker = Worker().client()
         self.monkey = Monkey().client()
 
@@ -299,7 +300,7 @@ def config_endpoint(config_ids=None):
         c_dict['errors'] = list(config.iter_error())
         return c_dict
     def _get_config_dict(config_id):
-        config = data_store.Config(config_id).read()
+        config = data_store.Config(config_id=config_id).read()
         return _config_dict(config)
     try:
         if request.method == 'GET':
@@ -320,7 +321,7 @@ def config_endpoint(config_ids=None):
                 if os.path.isdir(samples_path):
                     shutil.rmtree(samples_path)
                 # delete config and associated data
-                data_store.Config(config_id).delete()
+                data_store.Config(config_id=config_id).delete()
             return json.dumps({})
     except StoreError as e:
         return e.message, 500
@@ -339,7 +340,7 @@ def data_endpoint(config_id):
 
     interval = (_int_arg('start'), _int_arg('end'))
     try:
-        config = data_store.Config(config_id).read()
+        config = data_store.Config(config_id=config_id).read()
         data = {}
         data['spectrum'] = list(config.iter_spectrum(*interval))
         data['audio'] = list(config.iter_audio(*interval))
@@ -363,7 +364,7 @@ def audio_endpoint(config_id, freq_n, timestamp):
         int(timestamp), int(freq_n)
     except ValueError:
         return 'Bad parameter', 400
-    base = data_store.Config(config_id).audio_path(timestamp, freq_n)
+    base = data_store.Config(config_id=config_id).audio_path(timestamp, freq_n)
     for ext in ['mp3', 'ogg', 'wav']:
         path = '{0}.{1}'.format(base, ext)
         try:
@@ -510,7 +511,7 @@ def export_endpoint(config_id):
             yield ','.join([str(v) if v > -128 else '' for v in hit['fields']['level']])
             yield '\n'
 
-    config = data_store.Config(config_id).read()
+    config = data_store.Config(config_id=config_id).read()
     try:
         export = _iter_export(config.values, list(config.iter_spectrum()))
     except StoreError as e:

@@ -128,12 +128,3 @@ def fs_free(path):
     """
     result = os.popen('df -k {0}'.format(local_path(path))).read()
     return int(result.split('\n')[1].split()[3]) * 1024
-
-
-class StoreError(Exception):
-    """ Exception specific to data store implementations.
-    """
-    def __init__(self, message):
-        super(StoreError, self).__init__()
-        log.error(message)
-        self.message = message

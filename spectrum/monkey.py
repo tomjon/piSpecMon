@@ -2,7 +2,8 @@
 """
 from time import sleep, time
 from config import MONKEY_PID, MONKEY_CONFIG, MONKEY_STATUS, MONKEY_POLL
-from common import log, parse_config, scan, now, StoreError
+from common import log, parse_config, scan, now
+from datastore import StoreError
 from process import Process
 try:
     from rds import RdsApi

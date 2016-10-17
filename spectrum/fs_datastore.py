@@ -37,8 +37,8 @@ import os
 import shutil
 import struct
 from config import DATA_PATH, SAMPLES_PATH, SETTINGS_PATH
-from common import StoreError, local_path, fs_size, fs_free
-
+from common import local_path, fs_size, fs_free
+from datastore import ConfigBase, SettingsBase, StoreError
 
 # constants for naming paths
 INDEX = 'index'
@@ -104,17 +104,11 @@ _T_STRUCT = Struct('Q')
 _N_STRUCT = Struct('I')
 
 
-class Config(object):
-    """ A wrapper for config id, timestamp, and values.
+class Config(ConfigBase):
+    """ File system implementation of Config.
     """
-
-    def __init__(self, _id=None, values=None, timestamp=None, first=None, latest=None, count=0):
-        self.id = _id
-        self.values = values
-        self.timestamp = timestamp
-        self.first = first
-        self.latest = latest
-        self.count = count
+    def __init__(self, **args):
+        super(Config, self).__init__(**args)
         self.n_freq = None
 
     @staticmethod
@@ -126,7 +120,7 @@ class Config(object):
                 config_id = config_id.strip()
                 if len(config_id) == 0 or config_id[0] == '.':
                     continue
-                config = Config(config_id)
+                config = Config(config_id=config_id)
                 config.read(debug)
                 yield config
 
@@ -302,11 +296,6 @@ class Config(object):
         _struct = Struct('{0}b'.format(self.n_freq), True)
         self._write_data(SPECTRUM_TIMES, SPECTRUM_DATA, timestamp, _struct, strengths)
 
-    def audio_path(self, timestamp, freq_n):
-        """ Return a (base) path at which an audio sample is stored.
-        """
-        return os.path.join(SAMPLES_PATH, self.id, str(freq_n), str(timestamp))
-
     def iter_audio(self, start=None, end=None):
         """ Yield (timestamp, freq_n) for stored audio samples in the range (or all).
         """
@@ -369,13 +358,11 @@ class Config(object):
         self._write_freq_data(ERROR_TIMES, ERROR_DATA, timestamp, 0, str(error))
 
 
-class Settings(object):
-    """ A wrapper for settings id and value.
+class Settings(SettingsBase):
+    """ File system implementation of Settings.
     """
-
-    def __init__(self, _id, values=None):
-        self.id = _id
-        self.values = values
+    def __init__(self, **args):
+        super(Settings, self).__init__(**args)
         self.path = os.path.join(LOCAL_SETTINGS, self.id)
 
     def read(self, defaults=None):
@@ -436,12 +423,12 @@ if __name__ == '__main__':
         os.mkdir(LOCAL_DATA)
         os.mkdir(LOCAL_SETTINGS)
 
-        _s = Settings('foo')
+        _s = Settings(settings_id='foo')
         _s.read({'test': 'value'})
         assert _s.values == {'test': 'value'}
         _s.read()
         assert _s.values == {'test': 'value'}
-        _s = Settings('foo')
+        _s = Settings(settings_id='foo')
         _s.read()
         assert _s.values == {'test': 'value'}
         _s.write({'a': 'b'})
