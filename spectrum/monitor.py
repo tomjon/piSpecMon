@@ -127,10 +127,10 @@ class Monitor(object):
         self._check(self.rig.open)
         if self.attenuation is not None:
             gran = self.rig.get_level_gran(Hamlib.RIG_LEVEL_ATT)
-            if isinstance(self.attentuation, bool):
-                attentuation = gran.max.i if self.attentuation else gran.min.i
+            if isinstance(self.attenuation, bool):
+                attenuation = gran.max.i if self.attenuation else gran.min.i
             else:
-                attentuation = self.attenuation
+                attenuation = self.attenuation
             self._check(self.rig.set_level, Hamlib.RIG_LEVEL_ATT, attenuation, Hamlib.RIG_VFO_CURR)
         return self
 
