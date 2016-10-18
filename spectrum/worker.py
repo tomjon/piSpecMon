@@ -68,6 +68,7 @@ class Worker(Process):
 
                 self.status['sweep'] = {'timestamp': time_0, 'peaks': []}
                 self.status['sweep']['sweep_n'] = config.count + sweep_n
+                yield
 
                 for idx, freq in scan(**scan_config):
                     log.debug("Scanning frequency %s (%s)", freq, idx)
@@ -96,9 +97,6 @@ class Worker(Process):
 
                 for key in ('previous', 'current', 'record'):
                     self.status['sweep'].pop(key, None)
-
-                #FIXME since this is the same as sweep timestamp, why can't we just use that in UI?
-                self.status['latest'] = time_0
                 yield
 
                 config.write_spectrum(time_0, strengths)
