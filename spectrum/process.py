@@ -78,7 +78,6 @@ class Process(object):
                     config = data_store.Config(config_id=self.config_id).read()
                     log.debug("Running with config: %s", json.dumps(config.values))
                     self._stop = False
-                    #FIXME status can be handled better, maybe even never delete the status file
                     self.status.clear()
                     for _ in self.iterator(config):
                         self._write_status()

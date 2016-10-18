@@ -38,10 +38,14 @@ class Monkey(Process):
 
         with RdsApi(rds['device']) as api:
             while True:
+                self.status.clear()
+                self.status['started'] = now()
+
                 for idx, freq in scan(**scan_config):
                     log.debug("Scanning %s", freq)
 
-                    self.status.clear()
+                    for key in ('strength', 'name', 'text'):
+                        self.status.pop(key, None)
                     self.status['freq_n'] = idx
                     yield
 
