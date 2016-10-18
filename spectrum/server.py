@@ -285,12 +285,12 @@ def monitor():
                            'monkey': application.monkey.status()})
 
 
-# FIXME noone should be able to delete the running sweep
 @application.route('/config')
 @application.route('/config/<config_ids>', methods=['GET', 'DELETE'])
 @role_required(['admin', 'freq', 'data'])
 def config_endpoint(config_ids=None):
-    """ Endpoint for obtaining or deleting config objects by id.
+    """ Endpoint for obtaining or deleting config objects by id (or all config objects
+        if no config ids specified - only for GET).
     """
     # turn a config object into a dictionary representation, including any errors
     def _config_dict(config):
@@ -308,6 +308,11 @@ def config_endpoint(config_ids=None):
             if config_ids is None:
                 return "No config ids specified to delete", 400
             for config_id in config_ids.split(','):
+                # check the config id is not in use
+                if application.worker.status().get('config_id', None) == config_id:
+                    return "Cannot delete config under running spectrum sweep", 400
+                if application.monkey.status().get('config_id', None) == config_id:
+                    return "Cannot delete config under running RDS sweep", 400
                 # delete audio samples...
                 samples_path = os.path.join(current_app.root_path, SAMPLES_PATH, config_id)
                 if os.path.isdir(samples_path):
