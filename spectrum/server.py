@@ -256,6 +256,8 @@ def monitor():
     if request.method == 'PUT':
         if 'config_id' in application.worker.status():
             return "Worker already running", 400
+        if 'config_id' in application.monkey.status():
+            return "Monkey already running", 400
         values = json.loads(request.get_data())
         values['rig'] = application.rig.values
         values['audio'] = application.audio.values
@@ -267,7 +269,7 @@ def monitor():
             return e.message, 500
 
         application.worker.start(config.id)
-        if config.values['scan']['rds'] == 'true':
+        if config.values['scan']['rds']:
             application.monkey.start(config.id)
 
         return json.dumps({})
