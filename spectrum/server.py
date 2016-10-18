@@ -231,7 +231,7 @@ def caps():
 @application.route('/rig', methods=['GET', 'PUT'])
 @application.route('/audio', methods=['GET', 'PUT'])
 @application.route('/rds', methods=['GET', 'PUT'])
-@application.route('/scan', methods=['GET', 'PUT']) #FIXME at present, this is not being called
+@application.route('/scan', methods=['GET', 'PUT'])
 @role_required(['admin', 'freq'])
 def settings():
     """ Settings API: endpoints for serving and putting settings.
