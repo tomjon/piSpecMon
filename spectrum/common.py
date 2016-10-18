@@ -54,11 +54,11 @@ def now():
     return int(time.time() * 1000)
 
 
-def scan(freqs=None, frange=None, **_):
+def scan(freqs=None, range=None, **_): # pylint: disable=redefined-builtin
     """ Iterate frequency indices and frequency values in the specified list and range.
     """
     idx = 0
-    for freq in itertools.chain(freqs or [], xrange(*frange) if frange is not None else []):
+    for freq in itertools.chain(freqs or [], xrange(*range) if range is not None else []):
         yield idx, freq
         idx += 1
 

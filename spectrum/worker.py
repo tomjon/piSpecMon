@@ -59,7 +59,7 @@ class Worker(Process):
             monitor.set_mode(config.values['scan']['mode'])
             sweep_n = 0
             while True:
-                log.debug("Scan: %s", config.values['scan'])
+                log.debug("Scan: %s %s", config.values['scan'], scan_config)
 
                 time_0 = now()
                 strengths = []
@@ -70,6 +70,8 @@ class Worker(Process):
                 self.status['sweep']['sweep_n'] = config.count + sweep_n
 
                 for idx, freq in scan(**scan_config):
+                    log.debug("Scanning frequency %s (%s)", freq, idx)
+
                     if 'current' in self.status['sweep']:
                         self.status['sweep']['previous'] = self.status['sweep']['current']
                     self.status['sweep']['current'] = {'freq_n': idx}
