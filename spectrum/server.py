@@ -91,6 +91,12 @@ class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
 
 application = SecuredStaticFlask(__name__) # pylint: disable=invalid-name
 
+@application.after_request
+def after_request(response):
+    """ Have Flask do this to the response for every request.
+    """
+    response.headers.add('Accept-Ranges', 'bytes')
+    return response
 
 def send_file_partial(path):
     """ See http://blog.asgaard.co.uk/2012/08/03/http-206-partial-content-for-flask-python
@@ -184,14 +190,6 @@ def role_required(roles):
             return application.login_manager.unauthorized()
         return _decorated_view
     return _role_decorator
-
-
-@application.after_request #FIXME move this on to application class? (works?)
-def after_request(response):
-    """ Have Flask do this to the response for every request.
-    """
-    response.headers.add('Accept-Ranges', 'bytes')
-    return response
 
 
 @application.route('/', methods=['GET', 'POST'])
