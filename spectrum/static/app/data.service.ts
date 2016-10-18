@@ -23,6 +23,12 @@ export class DataService {
                     .catch(this.errorHandler("get rig models"));
   }
 
+  getScan(): Observable<any> {
+    return this.http.get(this.baseUrl + 'scan')
+                    .map(res => res.json())
+                    .catch(this.errorHandler("get default scan configuration"));
+  }
+
   getRig(): Observable<any> {
     return this.http.get(this.baseUrl + 'rig')
                     .map(res => res.json())

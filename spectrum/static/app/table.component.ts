@@ -41,8 +41,8 @@ export class TableComponent {
     let config: Config = this.configs.find(set => set.id == this.config_id);
     if (! config) {
       // if we are seeing a new config, add it to the table
-      this.widgetComponent.busy(this.dataService.getConfig(this.config_id)[0])
-                          .subscribe(config => this.configs.push(config));
+      this.widgetComponent.busy(this.dataService.getConfig(this.config_id))
+                          .subscribe(config => this.configs.push(config[0]));
     } else {
       // otherwise, update the one we have
       if (status.worker.latest) config.latest = status.worker.latest;

@@ -3,7 +3,7 @@ import { DataService } from './data.service';
 import { WidgetComponent } from './widget.component';
 import { Config } from './config';
 import { DatePipe } from './date.pipe';
-import { DEFAULTS, HZ_LABELS } from './constants';
+import { HZ_LABELS } from './constants';
 
 declare var $;
 
@@ -14,14 +14,14 @@ declare var $;
   pipes: [ DatePipe ]
 })
 export class ScanComponent {
-  @Input() modes: any[] = [ ];
-
+  defaults: any;
   input: any;
-
-  units: any[] = [ ];
   config: any;
+
   worker: any = { };
   monkey: any = { };
+
+  units: any[] = [ ];
 
   // true when waiting for (real) status after startup or start/stop buttons pressed
   standby: boolean = true;
@@ -32,38 +32,44 @@ export class ScanComponent {
   @ViewChild(WidgetComponent) widgetComponent;
   @ViewChild('form') form;
 
-  constructor(private dataService: DataService) { }
+  @Input() modes: any[] = [ ];
 
   @Input('status') set _status(status: any) {
-    if (status == undefined) return;
+    if (! this.defaults || status == undefined) return;
     this.standby = false;
     this.worker = status.worker;
     this.monkey = status.monkey;
   }
 
   @Input('config') set _config(config: Config) {
-    if (this.worker.config_id) return;
+    if (! this.defaults || this.worker.config_id) return;
     this.input = config;
     if (this.input == undefined) {
       this.widgetComponent.pristine(this.form, false);
       return;
     }
-    this.config = $.extend(true, {}, DEFAULTS, this.input);
+    this.config = $.extend(true, {}, this.defaults, this.input);
     this.allowRange = this.input.freqs.range != undefined;
-    this.allowFreqs = this.input.freqs.freqs != undefined;
+    this.allowFreqs = this.input.freqs.freqs != undefined && this.input.freqs.freqs[0].f;
     this.widgetComponent.pristine(this.form);
   }
+
+  constructor(private dataService: DataService) { }
 
   ngOnInit() {
     for (let value in HZ_LABELS) {
       this.units.push({ value: value, label: HZ_LABELS[value] });
     }
-    this.config = $.extend(true, { }, DEFAULTS);
-    this.widgetComponent.pristine(this.form);
+    this.widgetComponent.busy(this.dataService.getScan())
+                        .subscribe(defaults => {
+                          this.defaults = defaults;
+                          this.config = $.extend(true, { }, this.defaults);
+                          this.widgetComponent.pristine(this.form);
+                        });
   }
 
   onReset() {
-    if (this.input == undefined) this.input = DEFAULTS;
+    if (this.input == undefined) this.input = this.defaults;
     this._config = this.input;
   }
 

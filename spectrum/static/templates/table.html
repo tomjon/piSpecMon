@@ -29,8 +29,8 @@
             </span>
           </span>
         </td>
-        <td class="feature">{{config.values.scan.rds == 'true' ? '✔' : '✘' }}</td>
-        <td class="feature">{{config.values.scan.audio == 'true' ? '✔' : '✘'}}</td>
+        <td class="feature">{{config.values.scan.rds ? '✔' : '✘' }}</td>
+        <td class="feature">{{config.values.scan.audio ? '✔' : '✘'}}</td>
         <td *ngIf="user.roleIn(['admin'])">
           <input *ngIf="! running(config)" type="checkbox" [disabled]="standby" [(ngModel)]="checked[config.id]">
           <span *ngIf="running(config)" class="running">&#x25FC;</span>
