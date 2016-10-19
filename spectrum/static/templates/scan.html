@@ -90,7 +90,7 @@
     </div>
     <div *ngIf="monkey.timestamp || monkey.error" [ngClass]="{ status: true, error: monkey.error != undefined }">
       <h2 *ngIf="monkey.timestamp">RDS status at {{monkey.timestamp | date}}</h2>
-      <span>Scan started {{monkey.started | date}}</span>
+      <span *ngIf="monkey.started">Scan started {{monkey.started | date}}</span>
       <span *ngIf="monkey.freq_n != undefined">Receiving on {{freq(monkey.freq_n)}}</span>
       <span *ngIf="monkey.strength != undefined">Strength: {{monkey.strength}}</span>
       <span *ngIf="monkey.name">Station name: {{monkey.name}}</span>

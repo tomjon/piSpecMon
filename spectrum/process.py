@@ -148,7 +148,7 @@ class Client(object):
         except ProcessError as e:
             self.error = e.message
         if self.pid is None and self.error is None:
-            self.error = "No worker process"
+            self.error = "No {0} process".format(self.process.__class__.__name__.lower())
         return self.pid
 
     def status(self):
@@ -157,12 +157,12 @@ class Client(object):
         self.read_pid()
 
         if not os.path.isfile(self.process.status_file):
-            return {}
-        stat = os.stat(self.process.status_file)
-        with open(self.process.status_file, 'r') as f:
-            status = json.loads(f.read())
+            status = {}
+        else:
+            stat = os.stat(self.process.status_file)
+            with open(self.process.status_file, 'r') as f:
+                status = json.loads(f.read())
             status['timestamp'] = int(1000 * stat.st_mtime)
-
         if self.error is not None:
             status['error'] = self.error
         return status
