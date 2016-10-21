@@ -6,7 +6,8 @@ import os
 import signal
 import errno
 import sys
-import fs_datastore as data_store
+from fs_datastore import FsDataStore
+from config import FS_DATA_PATH, FS_DATA_SETTINGS, FS_DATA_SAMPLES
 from common import log, local_path
 
 
@@ -23,6 +24,7 @@ class Process(object):
         self._tidy = True
         self.config_id = None
         self.status = {}
+        self.data_store = FsDataStore(FS_DATA_PATH, FS_DATA_SETTINGS, FS_DATA_SAMPLES)
 
     def read_pid(self):
         """ Read and verify the PID file.
@@ -75,7 +77,7 @@ class Process(object):
                 self.config_id = self._read_config()
                 if self.config_id is not None:
                     log.debug("Read config id %s", self.config_id)
-                    config = data_store.Config(config_id=self.config_id).read()
+                    config = self.data_store.config(self.config_id).read()
                     log.debug("Running with config: %s", json.dumps(config.values))
                     self._stop = False
                     self.status.clear()

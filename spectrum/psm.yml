@@ -33,10 +33,11 @@ radio_on:
     switch: 21 # BCM numbering
     sleep_secs: 1.0
 
-# data directories
-data_path: data
-samples_path: samples
-settings_path: settings
+# data directories (FsDataStore)
+fs_data:
+    path: data
+    samples: samples
+    settings: settings
 
 # how often (in s) the wav2mp3 converter should run
 convert_period: 300
