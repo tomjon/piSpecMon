@@ -81,17 +81,17 @@
       <h2 *ngIf="worker.timestamp">Scan status at {{worker.timestamp | date}}</h2>
       <div *ngIf="worker.sweep">
         <span>Scan started {{worker.sweep.timestamp | date}}</span>
-        <span *ngFor="let peak of worker.sweep.peaks">Peak {{peak.strength}}dB at {{freq(peak.freq_n)}}</span>
-        <span *ngIf="worker.sweep.previous">{{worker.sweep.previous.strength}}dB at {{freq(worker.sweep.previous.freq_n)}}</span>
-        <span *ngIf="worker.sweep.current">Reading strength at {{freq(worker.sweep.current.freq_n)}}...</span>
-        <span *ngIf="worker.sweep.record">Recording audio sample at {{freq(worker.sweep.record.freq_n)}}...</span>
+        <span *ngFor="let peak of worker.sweep.peaks">Peak {{peak.strength}}dB at {{peak.freq_n | freq:config}}</span>
+        <span *ngIf="worker.sweep.previous">{{worker.sweep.previous.strength}}dB at {{worker.sweep.previous.freq_n | freq:config}}</span>
+        <span *ngIf="worker.sweep.current">Reading strength at {{worker.sweep.current.freq_n | freq:config}}...</span>
+        <span *ngIf="worker.sweep.record">Recording audio sample at {{worker.sweep.record.freq_n | freq:config}}...</span>
       </div>
       <span *ngIf="worker.error">{{worker.error}}</span>
     </div>
     <div *ngIf="monkey.timestamp || monkey.error" [ngClass]="{ status: true, error: monkey.error != undefined }">
       <h2 *ngIf="monkey.timestamp">RDS status at {{monkey.timestamp | date}}</h2>
       <span *ngIf="monkey.started">Scan started {{monkey.started | date}}</span>
-      <span *ngIf="monkey.freq_n != undefined">Receiving on {{freq(monkey.freq_n)}}</span>
+      <span *ngIf="monkey.freq_n != undefined">Receiving on {{monkey.freq_n | freq:config}}</span>
       <span *ngIf="monkey.strength != undefined">Strength: {{monkey.strength}}</span>
       <span *ngIf="monkey.name">Station name: {{monkey.name}}</span>
       <span *ngIf="monkey.text"><i>{{monkey.text}}</i></span>

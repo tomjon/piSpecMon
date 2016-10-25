@@ -45,7 +45,6 @@ export class Data {
       }
       this.audio[`${sweep_n - 1}_${freq_n}`] = `/audio/${config_id}/${freq_n}/${audio_t}`;
     }
-    console.log(this.audio);
   }
 
   mapRdsNames(data: any[]) {

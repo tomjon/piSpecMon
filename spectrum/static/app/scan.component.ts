@@ -3,6 +3,7 @@ import { DataService } from './data.service';
 import { WidgetComponent } from './widget.component';
 import { Config } from './config';
 import { DatePipe } from './date.pipe';
+import { FreqPipe } from './freq.pipe';
 import { HZ_LABELS } from './constants';
 
 declare var $;
@@ -11,7 +12,7 @@ declare var $;
   selector: 'psm-scan',
   templateUrl: 'templates/scan.html',
   directives: [ WidgetComponent ],
-  pipes: [ DatePipe ]
+  pipes: [ DatePipe, FreqPipe ]
 })
 export class ScanComponent {
   defaults: any;
@@ -117,16 +118,6 @@ export class ScanComponent {
 
   validScan(): boolean {
     return this.form.form.valid && ((this.validRange && this.validRange()) || (this.validFreqs && this.validFreqs()));
-  }
-
-  freq(freq_n: number): string {
-    if (this.allowRange) {
-      let f = +this.config.freqs.range[0] + this.config.freqs.range[2] * freq_n;
-      return `${f.toFixed(-Math.log10(this.config.freqs.range[2]))}${HZ_LABELS[this.config.freqs.exp]}`;
-    } else {
-      let f = this.config.freqs.freqs[freq_n].f;
-      return `${f}${HZ_LABELS[this.config.freqs.freqs[freq_n].exp]}`;
-    }
   }
 
   get running(): boolean {

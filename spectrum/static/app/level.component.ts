@@ -1,6 +1,7 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { WidgetComponent } from './widget.component';
 import { Chart } from './chart';
+import { FreqPipe } from './freq.pipe';
 import { LEVEL_CHART_OPTIONS, HZ_LABELS, MAX_N } from './constants';
 import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
 
@@ -60,6 +61,10 @@ export class LevelComponent extends Chart {
   @ViewChild('chart') chart;
   @ViewChild('text') text;
   @ViewChild('selectN') selectN;
+
+  constructor(private freq: FreqPipe) {
+    super();
+  }
 
   ngOnInit() {
     this.margin = LEVEL_CHART_OPTIONS.margin;
@@ -159,27 +164,12 @@ export class LevelComponent extends Chart {
         .attr("id", idx => `level_line_${idx}`)
         .style("stroke", d => this.colour(d));
 
-    let discreteFn = idx => {
-      let freq = this.data.freqs.freqs[idx];
-      let s = (+freq.f).toFixed(3) + ' ' + HZ_LABELS[freq.exp];
-      if (this.data.rdsNames[idx]) s += ` (${this.data.rdsNames[idx]})`;
-      return s;
-    };
-
-    let rangeFn = idx => {
-      var range = this.data.freqs.range;
-      var f = +range[0] + idx * +range[2];
-      let s = +f.toFixed(3) + ' ' + HZ_LABELS[this.data.freqs.exp];
-      if (this.data.rdsNames[idx]) s += ` (${this.data.rdsNames[idx]})`;
-      return s;
-    };
-
     // plot label for top frequency list
     freq.append("text")
         .attr("x", this.width + 24)
         .attr("y", (idx, i) => 16 * i)
         .attr("dy", 12)
-        .text(this.data.freqs.freqs ? discreteFn : rangeFn)
+        .text(idx => this.freq.transform(idx, this.data))
         .style("stroke", idx => this.colour(idx))
         .classed("freqLabel", true)
         .on('click', idx => {

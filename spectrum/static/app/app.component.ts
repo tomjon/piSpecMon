@@ -20,6 +20,7 @@ import { Config } from './config';
 import { TICK_INTERVAL } from './constants';
 import { HTTP_PROVIDERS } from '@angular/http';
 import { DatePipe } from './date.pipe';
+import { FreqPipe } from './freq.pipe';
 
 // Add the RxJS Observable operators we need in this app
 import './rxjs-operators';
@@ -36,7 +37,7 @@ let modelSort = function (a, b) {
   selector: 'psm-app',
   templateUrl: 'templates/app.html',
   directives: [ LoginComponent, ErrorComponent, DetailsComponent, PiComponent, LogsComponent, StatsComponent, RigComponent, AudioComponent, RdsComponent, TableComponent, ScanComponent, ChartsComponent ],
-  providers: [ DataService, ErrorService, MessageService, UiSettingsService, HTTP_PROVIDERS ],
+  providers: [ DataService, ErrorService, MessageService, UiSettingsService, HTTP_PROVIDERS, FreqPipe ],
   pipes: [ DatePipe ]
 })
 export class AppComponent {
