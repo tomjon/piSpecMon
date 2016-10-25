@@ -27,3 +27,22 @@
 *.i*86
 *.x86_64
 *.hex
+
+# Project specifics
+pi_control
+secret.key
+example_queries/
+*.pyc
+*.bak
+.*
+logs/
+samples/
+data/
+settings/
+users.passwords
+spectrum/static/app/*.js
+spectrum/static/app/*.map
+spectrum/static/node_modules
+spectrum/static/typings
+.cache/
+spectrum.egg-info
