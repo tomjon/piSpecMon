@@ -3,12 +3,12 @@
 import os
 import traceback
 from time import sleep
-from process import Process
-from config import WORKER_PID, WORKER_CONFIG, WORKER_STATUS, RADIO_ON_SLEEP_SECS
-from common import log, parse_config, now, scan
-from datastore import StoreError
-from monitor import Monitor, TimeoutError, Recorder
-from power import power_on
+from spectrum.process import Process
+from spectrum.config import WORKER_PID, WORKER_CONFIG, WORKER_STATUS, RADIO_ON_SLEEP_SECS
+from spectrum.common import log, parse_config, now, scan
+from spectrum.datastore import StoreError
+from spectrum.monitor import Monitor, TimeoutError, Recorder
+from spectrum.power import power_on
 
 
 # try fn() handling timeout errors until the number of attempts is exceeded

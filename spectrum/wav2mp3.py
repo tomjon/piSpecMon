@@ -2,8 +2,8 @@
 """
 import os
 from pydub import AudioSegment
-from config import SAMPLES_PATH, CONVERT_PERIOD
-from common import log
+from spectrum.config import SAMPLES_PATH, CONVERT_PERIOD
+from spectrum.common import log
 
 def convert(dir_path, wav_filename):
     """ Convert the wav file specified by the given path and filename to mp3.

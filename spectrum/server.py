@@ -8,19 +8,20 @@ import mimetypes
 import functools
 from time import time
 from datetime import datetime
-from worker import Worker
-from monkey import Monkey
-from monitor import get_capabilities
-from fs_datastore import FsDataStore, StoreError
 from flask import Flask, current_app, redirect, request, Response, send_file
 from flask_login import LoginManager, login_user, login_required, current_user, logout_user
-from config import DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, \
-                   DEFAULT_SCAN_SETTINGS, SECRET_KEY, VERSION_FILE, USER_TIMEOUT_SECS, \
-                   FS_DATA_PATH, FS_DATA_SETTINGS, FS_DATA_SAMPLES, EXPORT_DIRECTORY
-from common import log, local_path, now
-from users import check_user, get_user, set_user, iter_users, update_user, \
-                  create_user, delete_user, set_password, IncorrectPasswordError, UsersError
-import tail
+from spectrum.worker import Worker
+from spectrum.monkey import Monkey
+from spectrum.tail import iter_tail
+from spectrum.monitor import get_capabilities
+from spectrum.fs_datastore import FsDataStore, StoreError
+from spectrum.config import DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, \
+                            DEFAULT_SCAN_SETTINGS, SECRET_KEY, VERSION_FILE, USER_TIMEOUT_SECS, \
+                            FS_DATA_PATH, FS_DATA_SETTINGS, FS_DATA_SAMPLES, EXPORT_DIRECTORY
+from spectrum.common import log, local_path, now
+from spectrum.users import check_user, get_user, set_user, iter_users, update_user, \
+                           create_user, delete_user, set_password, IncorrectPasswordError, \
+                           UsersError
 
 
 class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
@@ -316,7 +317,7 @@ def config_endpoint(config_ids=None):
                 if application.monkey.status().get('config_id', None) == config_id:
                     return "Cannot delete config under running RDS sweep", 400
                 # delete audio samples... #FIXME this should be through the data store
-                samples_path = os.path.join(current_app.root_path, SAMPLES_PATH, config_id)
+                samples_path = os.path.join(current_app.root_path, FS_DATA_SAMPLES, config_id)
                 if os.path.isdir(samples_path):
                     shutil.rmtree(samples_path)
                 # delete config and associated data
@@ -563,7 +564,7 @@ def log_endpoint(name):
     if level not in ('\n', 'DEBUG', 'INFO', 'WARN', 'ERROR'):
         return "Bad parameter", 400
     with open(path) as f:
-        return Response(list(tail.iter_tail(f, n, level)), mimetype='text/plain')
+        return Response(list(iter_tail(f, n, level)), mimetype='text/plain')
 
 
 @application.route('/pi/<command>')

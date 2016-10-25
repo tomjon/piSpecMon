@@ -1,14 +1,14 @@
 """ Module defining the Monkey process, for decoding RDS using the Monkey board.
 """
 from time import sleep, time
-from config import MONKEY_PID, MONKEY_CONFIG, MONKEY_STATUS, MONKEY_POLL
-from common import log, parse_config, scan, now
-from datastore import StoreError
-from process import Process
+from spectrum.config import MONKEY_PID, MONKEY_CONFIG, MONKEY_STATUS, MONKEY_POLL
+from spectrum.common import log, parse_config, scan, now
+from spectrum.datastore import StoreError
+from spectrum.process import Process
 try:
-    from rds import RdsApi
+    from spectrum.rds import RdsApi
 except ImportError:
-    from fake_rds import RdsApi
+    from spectrum.fake_rds import RdsApi
 
 
 def poll(fn, condition, timeout):

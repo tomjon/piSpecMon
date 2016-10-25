@@ -6,7 +6,7 @@ import sys
 import os
 import itertools
 import time
-from config import LOG_SIZE
+from spectrum.config import LOG_SIZE
 
 
 def local_path(filename):

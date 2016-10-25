@@ -1,9 +1,10 @@
 """ Functions for powering on/off the rig.
 """
 from time import sleep
-import fs_datastore as data_store
-from common import parse_config
-from monitor import Monitor
+from spectrum.fs_datastore import FsDataStore
+from spectrum.common import parse_config
+from spectrum.config import FS_DATA_PATH, FS_DATA_SETTINGS, FS_DATA_SAMPLES
+from spectrum.monitor import Monitor
 try:
     import RPi.GPIO as GPIO
 except ImportError:
@@ -33,7 +34,8 @@ def power_on():
 def power_off():
     """ Turn off the rig.
     """
-    rig = data_store.Settings(config_id='rig').read()
+    fsds = FsDataStore(FS_DATA_PATH, FS_DATA_SETTINGS, FS_DATA_SAMPLES)
+    rig = fsds.settings('rig').read()
     parse_config(rig.values)
     monitor = Monitor(**rig.values)
     monitor.open()

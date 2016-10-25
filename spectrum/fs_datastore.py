@@ -36,8 +36,8 @@ import json
 import os
 import shutil
 import struct
-from common import local_path, fs_size, fs_free
-from datastore import ConfigBase, SettingsBase, StoreError
+from spectrum.common import local_path, fs_size, fs_free
+from spectrum.datastore import ConfigBase, SettingsBase, StoreError
 
 
 class _Struct(struct.Struct):
@@ -90,9 +90,13 @@ class FsDataStore(object): #FIXME will presumably subclass a DataStore class, if
                 pass
 
     def config(self, config_id=None):
+        """ Return a Config object for the given config id.
+        """
         return Config(self, config_id=config_id)
 
-    def settings(self, settings_id):
+    def settings(self, settings_id=None):
+        """ Return a Settings object for the given settings id.
+        """
         return Settings(self, settings_id=settings_id)
 
     def iter_config(self, config_ids=None):
@@ -210,7 +214,7 @@ class Config(ConfigBase):
     def delete(self):
         """ Delete the config and all associated data from the data store.
         """
-        _tmp = '{0}_tmp'.format(self._data_store._local_index)
+        _tmp = '{0}_tmp'.format(self._data_store.local_index)
         with open(self._data_store.local_index) as f_index, open(_tmp, 'w') as f_tmp:
             for config_id in f_index:
                 config_id = config_id.strip()

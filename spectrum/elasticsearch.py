@@ -1,12 +1,11 @@
 """ Data store implementation powered by Elasticsearch.
 """
-
 import time
 import json
 import requests
-from config import ELASTICSEARCH, SAMPLES_PATH
-from common import log, local_path, fs_size, fs_free
-from datastore import ConfigBase, SettingsBase, StoreError
+from spectrum.config import ELASTICSEARCH, SAMPLES_PATH
+from spectrum.common import log, local_path, fs_size, fs_free
+from spectrum.datastore import ConfigBase, SettingsBase, StoreError
 
 REFRESH = {'refresh': 'true'}
 

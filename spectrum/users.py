@@ -6,8 +6,8 @@ import binascii
 import os
 import tempfile
 import json
-from config import USERS_FILE, ROUNDS
-from common import local_path
+from spectrum.config import USERS_FILE, ROUNDS
+from spectrum.common import local_path
 
 
 class UsersError(Exception):

@@ -1,7 +1,7 @@
 """ Common data store definitions.
 """
 import os
-from common import log
+from spectrum.common import log
 
 
 class StoreError(Exception):
@@ -18,8 +18,8 @@ class ConfigBase(object):
         and sweep count.
     """
     def __init__(self, data_store,
-                       config_id=None, values=None, timestamp=None, \
-                       first=None, latest=None, count=None):
+                 config_id=None, values=None, timestamp=None,
+                 first=None, latest=None, count=None):
         self._data_store = data_store
         self.id = config_id
         self.values = values

@@ -6,9 +6,9 @@ import os
 import signal
 import errno
 import sys
-from fs_datastore import FsDataStore
-from config import FS_DATA_PATH, FS_DATA_SETTINGS, FS_DATA_SAMPLES
-from common import log, local_path
+from spectrum.fs_datastore import FsDataStore
+from spectrum.config import FS_DATA_PATH, FS_DATA_SETTINGS, FS_DATA_SAMPLES
+from spectrum.common import log, local_path
 
 
 class Process(object):

@@ -8,7 +8,7 @@ import Hamlib
 try:
     import ossaudiodev
 except ImportError:
-    import fake_ossaudiodev as ossaudiodev
+    import spectrum.fake_ossaudiodev as ossaudiodev
 
 CHANNELS = 1
 FORMAT = ossaudiodev.AFMT_S16_LE
