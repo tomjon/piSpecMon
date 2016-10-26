@@ -1,6 +1,7 @@
 """ Common data store definitions.
 """
 import os
+import shutil
 from spectrum.common import log
 
 
@@ -31,7 +32,14 @@ class ConfigBase(object):
     def audio_path(self, timestamp, freq_n):
         """ Return a (base) path at which an audio sample is stored.
         """
-        return os.path.join(self._data_store.local_samples, self.id, str(freq_n), str(timestamp))
+        return os.path.join(self._data_store.samples_path, self.id, str(freq_n), str(timestamp))
+
+    def _delete_audio(self):
+        """ Delete all audio samples stored for the config.
+        """
+        samples_path = os.path.join(self._data_store.samples_path, self.id)
+        if os.path.isdir(samples_path):
+            shutil.rmtree(samples_path)
 
 
 class SettingsBase(object): # pylint: disable=too-few-public-methods

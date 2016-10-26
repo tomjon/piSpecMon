@@ -34,7 +34,7 @@ _parse_args()
 
 # set the default rig model based on whether the PSM test model is available in Hamlib
 # pylint: disable=undefined-variable
-if 'model' not in DEFAULT_RIG_SETTINGS:
+if not DEFAULT_RIG_SETTINGS.get('model', None):
     try:
         DEFAULT_RIG_SETTINGS['model'] = Hamlib.RIG_MODEL_PSMTEST
     except AttributeError:

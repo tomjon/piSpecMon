@@ -36,7 +36,7 @@ import json
 import os
 import shutil
 import struct
-from spectrum.common import local_path, fs_size, fs_free
+from spectrum.common import fs_size, fs_free
 from spectrum.datastore import ConfigBase, SettingsBase, StoreError
 
 
@@ -73,20 +73,20 @@ class FsDataStore(object): #FIXME will presumably subclass a DataStore class, if
     """
     INDEX = 'index'
 
-    def __init__(self, data_path, settings_path, samples_path):
+    def __init__(self, data_path):
         super(FsDataStore, self).__init__()
-        self.local_data = local_path(data_path)
-        self.local_settings = local_path(settings_path)
-        self.local_samples = local_path(samples_path)
-        self.local_index = os.path.join(self.local_data, self.INDEX)
+        self.data_path = os.path.join(data_path, 'data')
+        self.settings_path = os.path.join(data_path, 'settings')
+        self.samples_path = os.path.join(data_path, 'samples')
+        self.index_path = os.path.join(self.data_path, self.INDEX)
 
         # initialise directories
-        if not os.path.exists(self.local_data):
-            os.mkdir(self.local_data)
-        if not os.path.exists(self.local_settings):
-            os.mkdir(self.local_settings)
-        if not os.path.exists(self.local_index):
-            with open(self.local_index, 'w'):
+        if not os.path.exists(self.data_path):
+            os.mkdir(self.data_path)
+        if not os.path.exists(self.settings_path):
+            os.mkdir(self.settings_path)
+        if not os.path.exists(self.index_path):
+            with open(self.index_path, 'w'):
                 pass
 
     def config(self, config_id=None):
@@ -103,7 +103,7 @@ class FsDataStore(object): #FIXME will presumably subclass a DataStore class, if
         """ Yield stored Config objects.
         """
         def _iter_ids():
-            with open(self.local_index) as f:
+            with open(self.index_path) as f:
                 for config_id in f:
                     yield config_id.strip()
 
@@ -116,9 +116,9 @@ class FsDataStore(object): #FIXME will presumably subclass a DataStore class, if
         """ Return a dictionary of usage statistics name/values.
         """
         return {
-            'audio': fs_size(self.local_samples),
-            'size': fs_size(self.local_data),
-            'free': fs_free(self.local_data)
+            'audio': fs_size(self.samples_path),
+            'size': fs_size(self.data_path),
+            'free': fs_free(self.data_path)
         }
 
 
@@ -157,7 +157,7 @@ class Config(ConfigBase):
     def read(self):
         """ Read config attributes from the data store.
         """
-        path = os.path.join(self._data_store.local_data, self.id)
+        path = os.path.join(self._data_store.data_path, self.id)
         with open(os.path.join(path, self.CONFIG)) as f:
             self.values = json.loads(f.read())
         with open(os.path.join(path, self.FORMAT)) as f:
@@ -194,9 +194,9 @@ class Config(ConfigBase):
         if values is not None:
             self.values = values
         self.id = str(timestamp)
-        path = os.path.join(self._data_store.local_data, self.id)
+        path = os.path.join(self._data_store.data_path, self.id)
         os.mkdir(path)
-        with open(self._data_store.local_index, 'a') as f:
+        with open(self._data_store.index_path, 'a') as f:
             f.write(self.id)
             f.write('\n')
         with open(os.path.join(path, self.CONFIG), 'w') as f:
@@ -214,21 +214,22 @@ class Config(ConfigBase):
     def delete(self):
         """ Delete the config and all associated data from the data store.
         """
-        _tmp = '{0}_tmp'.format(self._data_store.local_index)
-        with open(self._data_store.local_index) as f_index, open(_tmp, 'w') as f_tmp:
+        _tmp = '{0}_tmp'.format(self._data_store.index_path)
+        with open(self._data_store.index_path) as f_index, open(_tmp, 'w') as f_tmp:
             for config_id in f_index:
                 config_id = config_id.strip()
                 if config_id == self.id:
                     continue
                 f_tmp.write(config_id)
                 f_tmp.write('\n')
-        os.rename(_tmp, self._data_store.local_index)
-        shutil.rmtree(os.path.join(self._data_store.local_data, self.id))
+        os.rename(_tmp, self._data_store.index_path)
+        shutil.rmtree(os.path.join(self._data_store.data_path, self.id))
+        self._delete_audio()
         self.id = None # render config object useless (id no longer valid)
 
     def _iter_data(self, times_file, data_file, start, end, _struct):
         seek = False
-        path = os.path.join(self._data_store.local_data, self.id)
+        path = os.path.join(self._data_store.data_path, self.id)
         t_path = os.path.join(path, times_file)
         d_path = os.path.join(path, data_file)
         if not os.path.exists(t_path) or not os.path.exists(d_path):
@@ -246,7 +247,7 @@ class Config(ConfigBase):
                 yield timestamp, _struct.fread(f_d)
 
     def _write_data(self, times_file, data_file, timestamp, _struct, data):
-        path = os.path.join(self._data_store.local_data, self.id)
+        path = os.path.join(self._data_store.data_path, self.id)
         with open(os.path.join(path, times_file), 'a') as f:
             _T_STRUCT.fwrite(f, timestamp)
         with open(os.path.join(path, data_file), 'a') as f:
@@ -254,7 +255,7 @@ class Config(ConfigBase):
 
     def _iter_freq_data(self, times_file, data_file, start=None, end=None):
         timestamp0, offset0 = None, None
-        path = os.path.join(self._data_store.local_data, self.id)
+        path = os.path.join(self._data_store.data_path, self.id)
         t_path = os.path.join(path, times_file)
         d_path = os.path.join(path, data_file)
         if not os.path.exists(t_path) or not os.path.exists(d_path):
@@ -281,7 +282,7 @@ class Config(ConfigBase):
                 yield timestamp0, _N_STRUCT.fread(f_d), f_d.read(size)
 
     def _write_freq_data(self, times_file, data_file, timestamp, freq_n, data):
-        path = os.path.join(self._data_store.local_data, self.id)
+        path = os.path.join(self._data_store.data_path, self.id)
         with open(os.path.join(path, times_file), 'a') as f_t, \
              open(os.path.join(path, data_file), 'a') as f_d:
             _T_STRUCT.fwrite(f_t, timestamp)
@@ -295,7 +296,7 @@ class Config(ConfigBase):
         if self.values is None:
             raise StoreError("Uninitialised config (call read or write)")
         if self.n_freq is None:
-            path = os.path.join(self._data_store.local_data, self.id)
+            path = os.path.join(self._data_store.data_path, self.id)
             with open(os.path.join(path, self.FORMAT), 'r') as f:
                 _T_STRUCT.fread(f)
                 self.n_freq = _N_STRUCT.fread(f)
@@ -312,7 +313,7 @@ class Config(ConfigBase):
             raise StoreError("Uninitialised config (call read or write)")
         if self.n_freq is None:
             self.n_freq = len(strengths)
-            path = os.path.join(self._data_store.local_data, self.id)
+            path = os.path.join(self._data_store.data_path, self.id)
             with open(os.path.join(path, self.FORMAT), 'a') as f:
                 _N_STRUCT.fwrite(f, self.n_freq)
         _struct = _Struct('{0}b'.format(self.n_freq), True)
@@ -385,7 +386,7 @@ class Settings(SettingsBase):
     """
     def __init__(self, data_store, **args):
         super(Settings, self).__init__(data_store, **args)
-        self.path = os.path.join(data_store.local_settings, self.id)
+        self.path = os.path.join(data_store.settings_path, self.id)
 
     def read(self, defaults=None):
         """ Read settings value, using the defaults given if it is not already set.

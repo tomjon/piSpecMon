@@ -4,42 +4,34 @@ import os
 import traceback
 from time import sleep
 from spectrum.process import Process
-from spectrum.config import WORKER_PID, WORKER_CONFIG, WORKER_STATUS, RADIO_ON_SLEEP_SECS
 from spectrum.common import log, parse_config, now, scan
 from spectrum.datastore import StoreError
 from spectrum.monitor import Monitor, TimeoutError, Recorder
 from spectrum.power import power_on
 
 
-# try fn() handling timeout errors until the number of attempts is exceeded
-def _timeout_try(attempts, fn, *args):
-    timeout_count = 0
-    while True:
-        try:
-            return fn(*args)
-        except TimeoutError as e:
-            if timeout_count < attempts:
-                timeout_count += 1
-                log.error(e)
-                log.info("Attempting to power on")
-                power_on()
-                sleep(RADIO_ON_SLEEP_SECS) # give the rig chance to power up
-            else:
-                raise e
-
-
-# open the rig for monitoring
-def _monitor_open(config):
-    monitor = Monitor(**config.values['rig'])
-    monitor.open()
-    return monitor
-
-
 class Worker(Process):
     """ Process implementation for spectrum scanning using the rig.
     """
-    def __init__(self):
-        super(Worker, self).__init__(WORKER_PID, WORKER_CONFIG, WORKER_STATUS)
+    def __init__(self, data_store, run_path, radio_on_sleep_secs):
+        super(Worker, self).__init__(data_store, run_path)
+        self.radio_on_sleep_secs = radio_on_sleep_secs
+
+    # try fn() handling timeout errors until the number of attempts is exceeded
+    def _timeout_try(self, attempts, fn, *args):
+        timeout_count = 0
+        while True:
+            try:
+                return fn(*args)
+            except TimeoutError as e:
+                if timeout_count < attempts:
+                    timeout_count += 1
+                    log.error(e)
+                    log.info("Attempting to power on")
+                    power_on()
+                    sleep(self.radio_on_sleep_secs) # give the rig chance to power up
+                else:
+                    raise e
 
     def iterator(self, config):
         """ Scan the spectrum, storing data through the config object, and yield status.
@@ -53,9 +45,15 @@ class Worker(Process):
         self.status.clear()
         yield
 
+        # open the rig for monitoring
+        def _monitor_open(config):
+            monitor = Monitor(**config.values['rig'])
+            monitor.open()
+            return monitor
+
         monitor = None
         try:
-            monitor = _timeout_try(attempts, _monitor_open, config)
+            monitor = self._timeout_try(attempts, _monitor_open, config)
             monitor.set_mode(config.values['scan']['mode'])
             sweep_n = 0
             while True:
@@ -78,7 +76,7 @@ class Worker(Process):
                     self.status['sweep']['current'] = {'freq_n': idx}
                     yield
 
-                    strength = _timeout_try(attempts, monitor.get_strength, freq)
+                    strength = self._timeout_try(attempts, monitor.get_strength, freq)
                     self.status['sweep']['current']['strength'] = strength
                     yield
 
@@ -139,10 +137,12 @@ class Worker(Process):
 
 
 if __name__ == "__main__":
-    #pylint: disable=invalid-name
+    #pylint: disable=invalid-name,ungrouped-imports
     import Hamlib
+    from spectrum.fs_datastore import FsDataStore
+    from spectrum.config import DATA_PATH, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS
 
-    worker = Worker()
+    worker = Worker(FsDataStore(DATA_PATH), WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS)
     worker.init()
     with open(log.path, 'a') as f:
         Hamlib.rig_set_debug_file(f)

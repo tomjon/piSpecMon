@@ -6,27 +6,18 @@ import sys
 import os
 import itertools
 import time
-from spectrum.config import LOG_SIZE
+from spectrum.config import LOG_PATH, LOG_SIZE
 
 
-def local_path(filename):
-    """ Return a path local to the module path.
+def get_logger():
+    """ Get a logger based on the system path.
     """
-    dirname = os.path.dirname(__file__)
-    return os.path.join(dirname, filename)
-
-
-def _create_logger():
-    log_dir = local_path('logs')
-    if not os.path.exists(log_dir):
-        os.mkdir(log_dir)
-
     logger = logging.getLogger('werkzeug') # use this name so flask doesn't use its own logger
     logger.setLevel(logging.DEBUG)
 
     # create file handler which logs even debug messages (these end up in log file)
     logger.filename = '{0}.log'.format(os.path.basename(sys.argv[0]).replace('.py', ''))
-    logger.path = os.path.join(log_dir, logger.filename)
+    logger.path = os.path.join(LOG_PATH, logger.filename)
     rf_handler = logging.handlers.RotatingFileHandler(logger.path, maxBytes=LOG_SIZE, backupCount=0)
     rf_handler.setLevel(logging.INFO)
 
@@ -45,7 +36,24 @@ def _create_logger():
 
     return logger
 
-log = _create_logger() # pylint: disable=invalid-name
+#FIXME replace with per-process invocation?
+log = get_logger() # pylint: disable=invalid-name
+
+
+class FakeLogger(object):
+    """ Fake logger that does nothing.
+    """
+    def error(self, *_): # pylint: disable=missing-docstring
+        pass
+
+    def warn(self, *_): # pylint: disable=missing-docstring
+        pass
+
+    def info(self, *_): # pylint: disable=missing-docstring
+        pass
+
+    def debug(self, *_): # pylint: disable=missing-docstring
+        pass
 
 
 def now():
@@ -119,12 +127,17 @@ def parse_config(config):
 def fs_size(path):
     """ Return file system usage at the given path.
     """
-    result = os.popen('du -sk {0}'.format(local_path(path))).read()
-    return int(result.split('\t')[0]) * 1024
-
+    result = os.popen('du -sk {0}'.format(path)).read()
+    try:
+        return int(result.split('\t')[0]) * 1024
+    except ValueError:
+        return 0
 
 def fs_free(path):
     """ Return file system space free for the volume containing the given path.
     """
-    result = os.popen('df -k {0}'.format(local_path(path))).read()
-    return int(result.split('\n')[1].split()[3]) * 1024
+    result = os.popen('df -k {0}'.format(path)).read()
+    try:
+        return int(result.split('\n')[1].split()[3]) * 1024
+    except ValueError:
+        return 0

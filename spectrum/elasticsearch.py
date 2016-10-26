@@ -4,7 +4,7 @@ import time
 import json
 import requests
 from spectrum.config import ELASTICSEARCH, SAMPLES_PATH
-from spectrum.common import log, local_path, fs_size, fs_free
+from spectrum.common import log, fs_size, fs_free
 from spectrum.datastore import ConfigBase, SettingsBase, StoreError
 
 REFRESH = {'refresh': 'true'}
@@ -31,7 +31,7 @@ def _wait_for_elasticsearch():
 def _create_index():
     # create index (harmless if it already exists)
     _wait_for_elasticsearch()
-    with open(local_path('create.json')) as f:
+    with open('create.json') as f:
         req = requests.put('{0}spectrum'.format(ELASTICSEARCH), data=f.read())
         log.debug("Code %s creating index", req.status_code)
     _wait_for_elasticsearch()

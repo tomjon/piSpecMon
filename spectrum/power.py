@@ -3,7 +3,7 @@
 from time import sleep
 from spectrum.fs_datastore import FsDataStore
 from spectrum.common import parse_config
-from spectrum.config import FS_DATA_PATH, FS_DATA_SETTINGS, FS_DATA_SAMPLES
+from spectrum.config import RADIO_ON_SLEEP_SECS, DATA_PATH
 from spectrum.monitor import Monitor
 try:
     import RPi.GPIO as GPIO
@@ -34,7 +34,7 @@ def power_on():
 def power_off():
     """ Turn off the rig.
     """
-    fsds = FsDataStore(FS_DATA_PATH, FS_DATA_SETTINGS, FS_DATA_SAMPLES)
+    fsds = FsDataStore(DATA_PATH)
     rig = fsds.settings('rig').read()
     parse_config(rig.values)
     monitor = Monitor(**rig.values)

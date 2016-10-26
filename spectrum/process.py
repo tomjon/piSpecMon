@@ -6,25 +6,23 @@ import os
 import signal
 import errno
 import sys
-from spectrum.fs_datastore import FsDataStore
-from spectrum.config import FS_DATA_PATH, FS_DATA_SETTINGS, FS_DATA_SAMPLES
-from spectrum.common import log, local_path
+from spectrum.common import log
 
 
 class Process(object):
-    """ Start the process with start(), after supplying the pid file, config file and
-        status file names.
+    """ Start the process with start(), after supplying the data store, pid file,
+        config file and status file names.
     """
-    def __init__(self, pid_file, config_file, status_file):
-        self.pid_file = local_path(pid_file)
-        self.config_file = local_path(config_file)
-        self.status_file = local_path(status_file)
+    def __init__(self, data_store, run_path):
+        self.data_store = data_store
+        self.pid_file = os.path.join(run_path, 'pid')
+        self.config_file = os.path.join(run_path, 'config')
+        self.status_file = os.path.join(run_path, 'status')
         self._exit = False
         self._stop = False
         self._tidy = True
         self.config_id = None
         self.status = {}
-        self.data_store = FsDataStore(FS_DATA_PATH, FS_DATA_SETTINGS, FS_DATA_SAMPLES)
 
     def read_pid(self):
         """ Read and verify the PID file.

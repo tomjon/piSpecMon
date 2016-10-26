@@ -1,23 +1,19 @@
 %YAML 1.1
 ---
-log_size: 1048576
 version_file: /version
 
-# path where Flask's secret key is stored
-secret_key: secret.key
+log:
+    path: /var/log/psm
+    size: 1048576
 
 # Worker (spectrum scanner)
 worker:
-    pid   : .worker_pid
-    config: .worker_config
-    status: .worker_status
+    run_path: /var/run/psm/worker
 
 # Monkey (RDS decoder)
 monkey:
-    pid   : .monkey_pid
-    config: .monkey_config
-    status: .monkey_status
-    poll  : 1.0
+    run_path: /var/run/psm/monkey
+    poll: 1.0
 
 elasticsearch: http://localhost:9200/
 export_directory: /tmp
@@ -33,11 +29,14 @@ radio_on:
     switch: 21 # BCM numbering
     sleep_secs: 1.0
 
-# data directories (FsDataStore)
-fs_data:
-    path: data
-    samples: samples
-    settings: settings
+# data directory (FsDataStore)
+data_path: /var/lib/psm
+
+# file in which Flask's secret key is stored (under data directory)
+secret_key: secret.key
+
+# location of the pi_control binary
+pi_control_path: /usr/bin/pi_control
 
 # how often (in s) the wav2mp3 converter should run
 convert_period: 300

@@ -1,7 +1,6 @@
 """ Module defining the Monkey process, for decoding RDS using the Monkey board.
 """
 from time import sleep, time
-from spectrum.config import MONKEY_PID, MONKEY_CONFIG, MONKEY_STATUS, MONKEY_POLL
 from spectrum.common import log, parse_config, scan, now
 from spectrum.datastore import StoreError
 from spectrum.process import Process
@@ -27,8 +26,9 @@ def poll(fn, condition, timeout):
 class Monkey(Process):
     """ Process implementation for decoding RDS using the Monkey board.
     """
-    def __init__(self):
-        super(Monkey, self).__init__(MONKEY_PID, MONKEY_CONFIG, MONKEY_STATUS)
+    def __init__(self, data_store, run_path, _poll):
+        super(Monkey, self).__init__(data_store, run_path)
+        self.poll = _poll
 
     def iterator(self, config):
         """ Decode RDS, store data via the config object, and yield status.
@@ -86,11 +86,14 @@ class Monkey(Process):
                             except StoreError:
                                 return
 
-                        sleep(MONKEY_POLL)
+                        sleep(self.poll)
 
 
 if __name__ == "__main__":
     #pylint: disable=invalid-name
-    monkey = Monkey()
+    from spectrum.config import DATA_PATH, MONKEY_RUN_PATH, MONKEY_POLL
+    from spectrum.fs_datastore import FsDataStore
+
+    monkey = Monkey(FsDataStore(DATA_PATH), MONKEY_RUN_PATH, MONKEY_POLL)
     monkey.init()
     monkey.start()

@@ -2,7 +2,6 @@
 """
 import json
 import os
-import shutil
 import re
 import mimetypes
 import functools
@@ -17,11 +16,11 @@ from spectrum.monitor import get_capabilities
 from spectrum.fs_datastore import FsDataStore, StoreError
 from spectrum.config import DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, \
                             DEFAULT_SCAN_SETTINGS, SECRET_KEY, VERSION_FILE, USER_TIMEOUT_SECS, \
-                            FS_DATA_PATH, FS_DATA_SETTINGS, FS_DATA_SAMPLES, EXPORT_DIRECTORY
-from spectrum.common import log, local_path, now
-from spectrum.users import check_user, get_user, set_user, iter_users, update_user, \
-                           create_user, delete_user, set_password, IncorrectPasswordError, \
-                           UsersError
+                            DATA_PATH, EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, USERS_FILE, \
+                            WORKER_RUN_PATH, MONKEY_RUN_PATH, RADIO_ON_SLEEP_SECS, MONKEY_POLL, \
+                            ROUNDS
+from spectrum.common import log, now
+from spectrum.users import Users, IncorrectPasswordError, UsersError
 
 
 class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
@@ -38,13 +37,14 @@ class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
         self.before_request(self.check_user_timeout)
         self.caps = get_capabilities()
         log.info("%d rig models", len(self.caps['models']))
-        self.data_store = FsDataStore(FS_DATA_PATH, FS_DATA_SETTINGS, FS_DATA_SAMPLES)
+        self.data_store = FsDataStore(DATA_PATH)
+        self.users = Users(USERS_FILE, ROUNDS)
         self.rig = self.data_store.settings('rig').read(DEFAULT_RIG_SETTINGS)
         self.audio = self.data_store.settings('audio').read(DEFAULT_AUDIO_SETTINGS)
         self.rds = self.data_store.settings('rds').read(DEFAULT_RDS_SETTINGS)
         self.scan = self.data_store.settings('scan').read(DEFAULT_SCAN_SETTINGS)
-        self.worker = Worker().client()
-        self.monkey = Monkey().client()
+        self.worker = Worker(self.data_store, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS).client()
+        self.monkey = Monkey(self.data_store, MONKEY_RUN_PATH, MONKEY_POLL).client()
 
     def _init_logging(self):
         # add log handlers to Flask's logger for when Werkzeug isn't the underlying WSGI server
@@ -53,7 +53,7 @@ class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
 
     def _init_secret_key(self):
         # set up secret key for sessions
-        path = local_path(SECRET_KEY)
+        path = os.path.join(DATA_PATH, SECRET_KEY)
         if not os.path.exists(path):
             self.secret_key = os.urandom(24)
             with open(path, 'w') as f:
@@ -157,16 +157,16 @@ def load_user(username, password=None):
     """ User loader for flask-login.
     """
     if password is not None:
-        user = User(username, check_user(username, password))
+        user = User(username, application.users.check_user(username, password))
     else:
         if username not in application.logged_in_users:
             return None # log out this user, who was logged in before server restart
-        user = User(username, get_user(username))
+        user = User(username, application.users.get_user(username))
     if user.data['role'] != 'data':
         for name in application.logged_in_users:
             if name == user.name:
                 break
-            data = get_user(name)
+            data = application.users.get_user(name)
             if data['role'] != 'data':
                 user.data['role'] = 'data'
                 user.data['superior'] = data
@@ -316,10 +316,6 @@ def config_endpoint(config_ids=None):
                     return "Cannot delete config under running spectrum sweep", 400
                 if application.monkey.status().get('config_id', None) == config_id:
                     return "Cannot delete config under running RDS sweep", 400
-                # delete audio samples... #FIXME this should be through the data store
-                samples_path = os.path.join(current_app.root_path, FS_DATA_SAMPLES, config_id)
-                if os.path.isdir(samples_path):
-                    shutil.rmtree(samples_path)
                 # delete config and associated data
                 application.data_store.config(config_id).delete()
             return json.dumps({})
@@ -394,7 +390,7 @@ def users_endpoint():
     else:
         if not user_has_role(['admin']):
             return "Need 'admin' privilege to get details of other users", 400
-        data = [_namise_data(name, data) for name, data in iter_users()]
+        data = [_namise_data(name, data) for name, data in application.users.iter_users()]
     return json.dumps({'data': data})
 
 
@@ -409,7 +405,7 @@ def user_endpoint(name=None):
             return "Need 'admin' privilege to use this endpoint", 400
         try:
             if request.method == 'GET':
-                data = get_user(name)
+                data = application.users.get_user(name)
                 if data is None:
                     return "No such user '{0}'".format(name), 404
                 data['name'] = name
@@ -422,15 +418,15 @@ def user_endpoint(name=None):
                 data = request.get_json()
                 if data is None or 'user' not in data:
                     return "No user data", 400
-                if set_user(name, data['user']):
+                if application.users.set_user(name, data['user']):
                     return json.dumps({}), 200
                 password = data.get('password')
                 if password is None:
                     return "No password parameter", 400
-                create_user(name, password, data['user'])
+                application.users.create_user(name, password, data['user'])
                 return json.dumps({'status': 'Created'}), 201
             if request.method == 'DELETE':
-                if delete_user(name):
+                if application.users.delete_user(name):
                     return json.dumps({})
                 else:
                     return "No such user '{0}'".format(name), 404
@@ -447,7 +443,8 @@ def user_endpoint(name=None):
                 return "No user data", 400
             if 'oldPassword' in data and 'newPassword' in data:
                 try:
-                    set_password(current_user.name, data['oldPassword'], data['newPassword'])
+                    old, new = data['oldPassword'], data['newPassword']
+                    application.users.set_password(current_user.name, old, new)
                 except IncorrectPasswordError:
                     return "Bad password", 400
                 del data['oldPassword'], data['newPassword']
@@ -456,7 +453,7 @@ def user_endpoint(name=None):
             if 'user' in data:
                 if 'role' in data['user']:
                     del data['user']['role'] # a user cannot change their own role
-                if not update_user(current_user.name, data['user']):
+                if not application.users.update_user(current_user.name, data['user']):
                     return "Logged in user does not exist", 500
             return json.dumps({})
     return "Not found", 404
@@ -543,7 +540,7 @@ def ui_endpoint(key=None):
     if key is None:
         return json.dumps(current_user.data.get('ui') or {})
     value = request.get_json()
-    if not update_user(current_user.name, 'ui', {key: value}):
+    if not application.users.update_user(current_user.name, 'ui', {key: value}):
         return "Logged in user does not exist", 500
     return json.dumps({})
 
@@ -553,7 +550,7 @@ def ui_endpoint(key=None):
 def log_endpoint(name):
     """ Endpoint for serving the contents of a log file.
     """
-    path = local_path('logs/{0}.log'.format(name))
+    path = os.path.join(LOG_PATH, '{0}.log'.format(name))
     if not os.path.exists(path):
         return "No log {0}".format(path), 400
     try:
@@ -573,7 +570,7 @@ def pi_endpoint(command):
     """ Endpoint for executing a Pi control command.
     """
     if command in ['shutdown', 'reboot']:
-        os.system("{0} {1}".format(local_path('bin/pi_control'), command))
+        os.system("{0} {1}".format(PI_CONTROL_PATH, command))
         return "OK"
     return "Command not recognized: " + command, 400
 
