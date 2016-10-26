@@ -5,7 +5,7 @@ import sys
 import yaml
 import Hamlib
 
-CONFIG_FILE = 'psm.yml'
+CONFIG_FILE = '/etc/psm.yml'
 
 # load configuration settings from the YML file at the given path, converting keys
 # to upper case and concatenating keys from the top two levels of dictionaries

@@ -2,6 +2,8 @@
 
 (cd .. && sudo -H pip install -e .)
 
+sudo cp psm.yml /etc
+
 function vbl {
   echo `python -c "import spectrum.config; print spectrum.config.$1"`
 }

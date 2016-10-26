@@ -87,13 +87,3 @@ class Monkey(Process):
                                 return
 
                         sleep(self.poll)
-
-
-if __name__ == "__main__":
-    #pylint: disable=invalid-name
-    from spectrum.config import DATA_PATH, MONKEY_RUN_PATH, MONKEY_POLL
-    from spectrum.fs_datastore import FsDataStore
-
-    monkey = Monkey(FsDataStore(DATA_PATH), MONKEY_RUN_PATH, MONKEY_POLL)
-    monkey.init()
-    monkey.start()
