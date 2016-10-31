@@ -53,13 +53,12 @@ class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
 
     def _init_secret_key(self):
         # set up secret key for sessions
-        path = os.path.join(DATA_PATH, SECRET_KEY)
-        if not os.path.exists(path):
+        if not os.path.exists(SECRET_KEY):
             self.secret_key = os.urandom(24)
-            with open(path, 'w') as f:
+            with open(SECRET_KEY, 'w') as f:
                 f.write(self.secret_key)
         else:
-            with open(path) as f:
+            with open(SECRET_KEY) as f:
                 self.secret_key = f.read()
 
     def send_static_file(self, filename):

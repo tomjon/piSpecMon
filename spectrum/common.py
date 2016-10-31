@@ -34,6 +34,7 @@ def get_logger():
     logger.addHandler(rf_handler)
     logger.addHandler(c_handler)
 
+    logger.info("Obtained logger")
     return logger
 
 #FIXME replace with per-process invocation?

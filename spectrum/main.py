@@ -7,6 +7,7 @@ from spectrum.config import DATA_PATH, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS, \
                             USERS_FILE, ROUNDS
 from spectrum.worker import Worker
 from spectrum.monkey import Monkey
+from spectrum.wav2mp3 import walk_convert
 from spectrum.users import Users
 from spectrum.power import power_on, power_off
 from spectrum.common import log

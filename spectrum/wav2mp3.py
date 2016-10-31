@@ -17,7 +17,7 @@ def convert(dir_path, wav_filename):
 def walk_convert(root_dir):
     """ Walk the file system starting at root_dir, converting wav files to mp3.
     """
-    log.debug("Walking from path: %s", root_dir)
+    log.info("Walking from path: %s", root_dir)
     for dir_path, _, filenames in os.walk(root_dir):
         for filename in filenames:
             if filename.endswith('.wav'):

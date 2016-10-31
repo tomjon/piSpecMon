@@ -18,8 +18,11 @@ monkey:
 elasticsearch: http://localhost:9200/
 export_directory: /tmp
 
-users_file: users.passwords
+users_file: /var/lib/psm/users.passwords
 rounds: 100000
+
+# file in which Flask's secret session key is stored
+secret_key: /var/run/psm/secret.key
 
 # user session inactivity timeout
 user_timeout_secs: 60
@@ -31,9 +34,6 @@ radio_on:
 
 # data directory (FsDataStore)
 data_path: /var/lib/psm
-
-# file in which Flask's secret key is stored (under data directory)
-secret_key: secret.key
 
 # location of the pi_control binary
 pi_control_path: /usr/bin/pi_control

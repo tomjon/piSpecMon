@@ -7,10 +7,13 @@ hash npm 2>/dev/null || {
 }
 (cd spectrum/static && npm run tsc)
 
+# build Python egg (includes javascript built above)
 sudo -H pip install -e .
 
+# copy default config to /etc/psm.yml
 sudo cp spectrum/psm.yml /etc
 
+# function returning config values, ultimately from the YML
 function vbl {
   echo `python -c "import spectrum.config; print spectrum.config.$1"`
 }
@@ -37,6 +40,27 @@ sudo chown $USER: $RUN_PATH
 RUN_PATH=`vbl MONKEY_RUN_PATH`
 sudo mkdir -p $RUN_PATH
 sudo chown $USER: $RUN_PATH
+
+# allow server to create the secret key file
+KEY_DIR=`vbl SECRET_KEY`
+sudo chown $USER: `dirname $KEY_DIR`
+
+# install the systemd service descriptors
+(cd spectrum/bin && {
+sudo cp psm.*.service /lib/systemd/system
+sudo systemctl daemon-reload
+sudo systemctl enable psm.*.service
+sudo systemctl restart psm.*.service
+})
+
+# install the Web API server in Apache
+sudo mkdir -p /var/www/psm
+sudo cp spectrum/bin/wsgi.py /var/www/psm
+sudo apt-get install libapache2-mod-wsgi
+sudo cp spectrum/bin/psm.server.conf /etc/apache2/sites-available
+sudo a2dissite 000-default
+sudo a2ensite psm.server
+sudo service apache2 restart
 
 # build the pi_control binary
 PI_CONTROL_PATH=`vbl PI_CONTROL_PATH`
