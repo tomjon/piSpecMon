@@ -27,6 +27,9 @@ secret_key: /var/run/psm/secret.key
 # user session inactivity timeout
 user_timeout_secs: 60
 
+# location of the SSMTP configuration file (fixed by ssmtp package)
+ssmtp_conf: /etc/ssmtp/ssmtp.conf
+
 # GPIO radio 'on' script settings
 radio_on:
     switch: 21 # BCM numbering

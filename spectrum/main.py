@@ -4,7 +4,7 @@ import sys
 from spectrum.fs_datastore import FsDataStore
 from spectrum.config import DATA_PATH, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS, \
                             MONKEY_RUN_PATH, MONKEY_POLL, CONVERT_PERIOD, \
-                            USERS_FILE, ROUNDS
+                            USERS_FILE, ROUNDS, SSMTP_CONF
 from spectrum.worker import Worker
 from spectrum.monkey import Monkey
 from spectrum.wav2mp3 import walk_convert
@@ -56,3 +56,18 @@ def power():
 
     if sys.argv[1] == 'off':
         power_off()
+
+
+def email():
+    if len(sys.argv) != 2:
+        print "Usage: {0} <email password>".format(sys.argv[0])
+        sys.exit(1)
+
+    with open(SSMTP_CONF) as f:
+        if 'AuthPass=' in f.read():
+            print "Password already set"
+            sys.exit(1)
+
+    with open(SSMTP_CONF, 'a') as f:
+        f.write("AuthPass={0}\n".format(sys.argv[1]))
+

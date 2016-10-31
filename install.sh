@@ -45,7 +45,13 @@ sudo chown $USER: $RUN_PATH
 KEY_DIR=`vbl SECRET_KEY`
 sudo chown $USER: `dirname $KEY_DIR`
 
-# install the systemd service descriptors
+# install the SSMTP config
+SSMTP_CONF=`vbl SSMTP_CONF`
+sudo apt-get install ssmtp mailutils
+sudo cp spectrum/bin/ssmtp.conf $SSMTP_CONF
+sudo chown $USER: $SSMTP_CONF
+
+# install the systemd service descriptors and restart services
 (cd spectrum/bin && {
 sudo cp psm.*.service /lib/systemd/system
 sudo systemctl daemon-reload
@@ -68,3 +74,8 @@ gcc -o spectrum/bin/pi_control spectrum/pi_control.c
 sudo cp spectrum/bin/pi_control $PI_CONTROL_PATH
 sudo chown root: $PI_CONTROL_PATH
 sudo chmod a+s $PI_CONTROL_PATH
+
+# remind about post install steps
+echo
+echo "Now run psm-email to set the pispecmon email account password"
+echo "and psm-users to set up the first admin account"

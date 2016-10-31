@@ -107,6 +107,7 @@ setup(
             'psm-monkey=spectrum.main:monkey',
             'psm-users=spectrum.main:users',
             'psm-power=spectrum.main:power',
+            'psm-email=spectrum.main:email',
             'psm-wav2mp3=spectrum.main:wav2mp3',
         ],
     },
