@@ -1,6 +1,8 @@
-import Hamlib
+""" Package entry points to run processes and complete set-up.
+"""
 import time
 import sys
+import Hamlib
 from spectrum.fs_datastore import FsDataStore
 from spectrum.config import DATA_PATH, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS, \
                             MONKEY_RUN_PATH, MONKEY_POLL, CONVERT_PERIOD, \
@@ -14,21 +16,27 @@ from spectrum.common import log
 
 
 def worker():
-    worker = Worker(FsDataStore(DATA_PATH), WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS)
-    worker.init()
+    """ Run the worker process, for collecting spectrum data.
+    """
+    worker_process = Worker(FsDataStore(DATA_PATH), WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS)
+    worker_process.init()
     with open(log.path, 'a') as f:
         Hamlib.rig_set_debug_file(f)
         Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
-        worker.start()
+        worker_process.start()
 
 
 def monkey():
-    monkey = Monkey(FsDataStore(DATA_PATH), MONKEY_RUN_PATH, MONKEY_POLL)
-    monkey.init()
-    monkey.start()
+    """ Run the monkey process, for collecting RDS data.
+    """
+    monkey_process = Monkey(FsDataStore(DATA_PATH), MONKEY_RUN_PATH, MONKEY_POLL)
+    monkey_process.init()
+    monkey_process.start()
 
 
 def wav2mp3():
+    """ Run the wav to mp3 conversion process.
+    """
     fsds = FsDataStore(DATA_PATH)
     while True:
         walk_convert(fsds.samples_path)
@@ -37,16 +45,20 @@ def wav2mp3():
 
 
 def users():
+    """ Create an admin user based on command line arguments.
+    """
     if len(sys.argv) != 3:
         print "Usage: {0} <username> <password>".format(sys.argv[0])
         sys.exit(1)
 
-    users = Users(USERS_FILE, ROUNDS)
-    users.create_user(sys.argv[1], sys.argv[2], {'role': 'admin'})
+    user_manager = Users(USERS_FILE, ROUNDS)
+    user_manager.create_user(sys.argv[1], sys.argv[2], {'role': 'admin'})
     print "User {0} created".format(sys.argv[1])
 
 
 def power():
+    """ Power on or off the radio.
+    """
     if len(sys.argv) != 2 or sys.argv[1] not in ('on', 'off'):
         print "Usage: {0} [on|off]".format(sys.argv[0])
         sys.exit(1)
@@ -59,6 +71,8 @@ def power():
 
 
 def email():
+    """ Set the email password.
+    """
     if len(sys.argv) != 2:
         print "Usage: {0} <email password>".format(sys.argv[0])
         sys.exit(1)
@@ -70,4 +84,3 @@ def email():
 
     with open(SSMTP_CONF, 'a') as f:
         f.write("AuthPass={0}\n".format(sys.argv[1]))
-
