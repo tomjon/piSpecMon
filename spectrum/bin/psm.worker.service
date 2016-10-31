@@ -6,11 +6,10 @@ After=network-online.target psm.elasticsearch.service
 
 [Service]
 Type=idle
-ExecStart=/usr/bin/python -u /home/ses/spectrum/piSpecMon/spectrum/worker.py
+ExecStart=/usr/local/bin/psm-worker
 Restart=always
 RestartSec=1
-WorkingDirectory=/home/ses/spectrum/piSpecMon/spectrum
-
+WorkingDirectory=~
 User=ses
 Group=pi
 

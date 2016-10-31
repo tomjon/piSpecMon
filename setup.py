@@ -4,10 +4,10 @@
     https://packaging.python.org/en/latest/distributing.html
     https://github.com/pypa/sampleproject
 """
-
-# Always prefer setuptools over distutils
 from setuptools import setup, find_packages
 import subprocess
+import os
+
 
 with open('README.md') as f:
     long_description = f.read()
@@ -27,11 +27,11 @@ setup(
     url=subprocess.check_output(['git', 'config', '--get', 'remote.origin.url']),
 
     # Author details
-    #author='The Python Packaging Authority',
-    #author_email='pypa-dev@googlegroups.com',
+    author='Tom Winch',
+    author_email='tom.winch@ofcom.org.uk',
 
     # Choose your license
-    #license='MIT',
+    license='GPL',
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
@@ -43,10 +43,10 @@ setup(
 
         # Indicate who your project is intended for
         #'Intended Audience :: Developers',
-        #'Topic :: Software Development :: Build Tools',
+        'Intended Audience :: End Users/Desktop',
 
         # Pick your license as you wish (should match "license" above)
-        #'License :: OSI Approved :: MIT License',
+        'License :: OSI Approved :: GNU General Public License (GPL)',
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
@@ -54,7 +54,7 @@ setup(
     ],
 
     # What does your project relate to?
-    #keywords='sample setuptools development',
+    keywords='spectrum sweep',
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
@@ -63,6 +63,12 @@ setup(
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
     #   py_modules=["my_module"],
+
+    # There are optimizations in Python eggs that allows it to read .py files
+    # even from a compressed format (think of Java's JAR format), but since we
+    # have data files ( HTML and CSS again ) we need to tell setuptools to turn
+    # off this behavior with zip_safe=False
+    zip_safe=False,
 
     # List run-time dependencies here.  These will be installed by pip when
     # your project is installed. For an analysis of "install_requires" vs pip's
@@ -82,9 +88,9 @@ setup(
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
-    #package_data={
-    #    'sample': ['package_data.dat'],
-    #},
+    package_data={
+        'spectrum': ['{0}/*'.format(dir_path[9:]) for dir_path, _, _ in os.walk('spectrum/static')],
+    },
 
     # Although 'package_data' is the preferred approach, in some case you may
     # need to place data files outside of your packages. See:
@@ -97,8 +103,11 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points={
         'console_scripts': [
-            'worker=spectrum.main:worker',
-            'monkey=spectrum.main:monkey',
+            'psm-worker=spectrum.main:worker',
+            'psm-monkey=spectrum.main:monkey',
+            'psm-users=spectrum.main:users',
+            'psm-power=spectrum.main:power',
+            'psm-server=spectrum.main:server'
         ],
     },
 )

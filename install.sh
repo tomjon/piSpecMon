@@ -1,8 +1,15 @@
 #!/bin/bash
 
-(cd .. && sudo -H pip install -e .)
+# compile typescript into javascript
+hash npm 2>/dev/null || {
+  curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
+  sudo apt-get install nodejs
+}
+(cd spectrum/static && npm run tsc)
 
-sudo cp psm.yml /etc
+sudo -H pip install -e .
+
+sudo cp spectrum/psm.yml /etc
 
 function vbl {
   echo `python -c "import spectrum.config; print spectrum.config.$1"`
@@ -33,14 +40,7 @@ sudo chown $USER: $RUN_PATH
 
 # build the pi_control binary
 PI_CONTROL_PATH=`vbl PI_CONTROL_PATH`
-gcc -o bin/pi_control pi_control.c
-sudo cp bin/pi_control $PI_CONTROL_PATH
+gcc -o spectrum/bin/pi_control spectrum/pi_control.c
+sudo cp spectrum/bin/pi_control $PI_CONTROL_PATH
 sudo chown root: $PI_CONTROL_PATH
 sudo chmod a+s $PI_CONTROL_PATH
-
-# compile typescript into javascript
-hash npm 2>/dev/null || {
-  curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
-  sudo apt-get install nodejs
-}
-cd static; npm run tsc

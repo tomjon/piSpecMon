@@ -2,7 +2,6 @@
 """
 import os
 from pydub import AudioSegment
-from spectrum.config import SAMPLES_PATH, CONVERT_PERIOD
 from spectrum.common import log
 
 def convert(dir_path, wav_filename):
@@ -25,11 +24,3 @@ def walk_convert(root_dir):
                 wav_path, mp3_path = convert(dir_path, filename)
                 if os.path.exists(mp3_path):
                     os.remove(wav_path)
-
-if __name__ == "__main__":
-    import time
-
-    while True:
-        walk_convert(SAMPLES_PATH)
-        log.debug("Sleeping for %ds", CONVERT_PERIOD)
-        time.sleep(CONVERT_PERIOD)

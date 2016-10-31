@@ -576,8 +576,5 @@ def pi_endpoint(command):
 
 
 if __name__ == "__main__":
-    import sys
-
-    if 'debug' in sys.argv:
-        application.debug = True
+    application.debug = True
     application.run(host='0.0.0.0', port=8080)

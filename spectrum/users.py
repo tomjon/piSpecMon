@@ -226,17 +226,3 @@ class Users(object):
         self.check_user(username, old_password)
         fn = lambda user: self._new_user(username, new_password, user.data)
         return self._rewrite_users(username, fn)
-
-
-if __name__ == "__main__":
-    # pylint: disable=invalid-name
-    import sys
-    from spectrum.config import USERS_FILE, ROUNDS
-
-    if len(sys.argv) != 3:
-        print "Usage: python {0} <username> <password>".format(sys.argv[0])
-        sys.exit(1)
-
-    users = Users(USERS_FILE, ROUNDS)
-    users.create_user(sys.argv[1], sys.argv[2], {'role': 'admin'})
-    print "User {0} created".format(sys.argv[1])
