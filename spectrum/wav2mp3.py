@@ -24,3 +24,4 @@ def walk_convert(root_dir):
                 wav_path, mp3_path = convert(dir_path, filename)
                 if os.path.exists(mp3_path):
                     os.remove(wav_path)
+    log.info("Done")
