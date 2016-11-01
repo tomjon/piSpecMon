@@ -1,7 +1,11 @@
-from spectrum.tail import *
+""" Unit tests for the tail module.
+"""
 import StringIO
+from spectrum.tail import iter_tail
 
 def test():
+    """ Test the iter_tail function.
+    """
     f = StringIO.StringIO("""2016-10-03 10:01:44,838 - INFO - "GET /monitor HTTP/1.1" 200 -
 2016-10-03 10:02:41,003 - DEBUG - No message
 2016-10-03 10:03:10,123 - DEBUG - Continue

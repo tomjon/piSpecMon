@@ -40,48 +40,52 @@ class Monkey(Process):
                 self.status['started'] = now()
 
                 for idx, freq in scan(**scan_config):
-                    log.debug("Scanning %s", freq)
+                    self._decode_freq(config, rds, api, idx, freq)
 
-                    for key in ('strength', 'name', 'text'):
-                        self.status.pop(key, None)
-                    self.status['freq_n'] = idx
-                    yield
+    # decode RDS from a single frequency
+    def _decode_freq(self, config, rds, api, idx, freq):
+        log.debug("Scanning %s", freq)
 
-                    api.set_frequency(freq)
-                    condition = lambda s: s >= rds['strength_threshold']
-                    for strength, ok in self._poll(api.get_strength, condition, rds['strength_timeout']):
-                        self.status['strength'] = strength
-                        yield
-                    if not ok: # pylint: disable=undefined-loop-variable
-                        continue
+        for key in ('strength', 'name', 'text'):
+            self.status.pop(key, None)
+        self.status['freq_n'] = idx
+        yield
 
-                    time_0 = time()
-                    for name, ok in self._poll(api.get_name, lambda n: n is not None, rds['rds_timeout']):
-                        self.status['strength'] = api.get_strength()
-                        self.status['name'] = name
-                        yield
-                    if not ok: # pylint: disable=undefined-loop-variable
-                        continue
+        api.set_frequency(freq)
+        condition = lambda s: s >= rds['strength_threshold']
+        for strength, ok in self._poll(api.get_strength, condition, rds['strength_timeout']):
+            self.status['strength'] = strength
+            yield
+        if not ok: # pylint: disable=undefined-loop-variable
+            return
 
-                    log.debug("Found RDS name %s", name) # pylint: disable=undefined-loop-variable
-                    try:
-                        config.write_rds_name(now(), idx, name) # pylint: disable=undefined-loop-variable
-                    except StoreError:
-                        return
+        time_0 = time()
+        for name, ok in self._poll(api.get_name, lambda n: n is not None, rds['rds_timeout']):
+            self.status['strength'] = api.get_strength()
+            self.status['name'] = name
+            yield
+        if not ok: # pylint: disable=undefined-loop-variable
+            return
 
-                    text_0 = None
-                    while time() < time_0 + rds['rds_timeout']:
-                        text = api.get_text()
-                        self.status['strength'] = api.get_strength()
-                        self.status['text'] = text
-                        yield
+        log.debug("Found RDS name %s", name) # pylint: disable=undefined-loop-variable
+        try:
+            config.write_rds_name(now(), idx, name) # pylint: disable=undefined-loop-variable
+        except StoreError:
+            return
 
-                        if text is not None and text != text_0:
-                            text_0 = text
-                            log.debug("Found RDS text %s", text)
-                            try:
-                                config.write_rds_text(now(), idx, text)
-                            except StoreError:
-                                return
+        text_0 = None
+        while time() < time_0 + rds['rds_timeout']:
+            text = api.get_text()
+            self.status['strength'] = api.get_strength()
+            self.status['text'] = text
+            yield
 
-                        sleep(self.poll)
+            if text is not None and text != text_0:
+                text_0 = text
+                log.debug("Found RDS text %s", text)
+                try:
+                    config.write_rds_text(now(), idx, text)
+                except StoreError:
+                    return
+
+            sleep(self.poll)
