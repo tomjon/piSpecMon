@@ -2,7 +2,7 @@
 """
 import pytest
 import os
-from spectrum.users import Users, IncorrectPasswordError
+from spectrum.users import Users, IncorrectPasswordError, UserAlreadyExistsError
 
 
 @pytest.fixture()
@@ -62,3 +62,16 @@ def test_user(users):
     # finally, delete the user
     users.delete_user('name')
     assert len(list(users.iter_users())) == 0
+
+
+def test_name_clash(users):
+    """ Check correct behaviour for clashing user names.
+    """
+    DATA = {'foo': 'bar'}
+    users.create_user('name', 'pass', DATA)
+
+    with pytest.raises(UserAlreadyExistsError):
+        users.create_user('name', 'pass', {})
+
+    assert users.get_user('name') == DATA
+    assert len(list(users.iter_users())) == 1
