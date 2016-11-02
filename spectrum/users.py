@@ -153,7 +153,7 @@ class Users(object):
         raise IncorrectPasswordError()
 
     def iter_users(self):
-        """ Yield user data, incorporating 'name' into the data.
+        """ Yield user names and data.
         """
         for user in self._iter_users():
             yield user.name, user.data
@@ -217,8 +217,8 @@ class Users(object):
         """ Set the password to be new_password for the given username if the
             old_password matches the currently stored password hash.
 
-            Returns whether a user with the given name existed (if not, nothing
-            is done).
+            Raises IncorrectPasswordError if the user did not exist or the old
+            password is incorrect.
         """
         username = unicode(username)
         old_password = unicode(old_password)

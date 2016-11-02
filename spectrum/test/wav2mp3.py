@@ -5,7 +5,7 @@ import shutil
 import pytest
 from spectrum.wav2mp3 import walk_convert
 
-#FIXME only tests one export from wav2mp3
+#FIXME only tests one export from wav2mp3, also use a real .wav and check the .mp3 output
 
 @pytest.fixture()
 def sample():
