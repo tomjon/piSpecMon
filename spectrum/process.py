@@ -181,6 +181,12 @@ class Client(object):
         if self.read_pid() is not None:
             os.kill(self.pid, signal.SIGUSR1)
 
+    def exit(self, tidy=True):
+        """ Tell the process to exit.
+        """
+        if self.read_pid() is not None:
+            os.kill(self.pid, signal.SIGINT if tidy else signal.SIGTERM)
+
 
 class ProcessError(Exception):
     """ Class for process specific exceptions.
