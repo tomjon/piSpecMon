@@ -14,7 +14,7 @@ class UsersError(Exception):
     pass
 
 
-class UnitialisedError(UsersError):
+class UninitialisedError(UsersError):
     """ Raised when the username/password file does not exist.
     """
     pass
@@ -102,7 +102,7 @@ class Users(object):
                     # if we got here, the file pointer is at the end of the file
                     self._write_user(f, append_user)
         except IOError:
-            raise UnitialisedError()
+            raise UninitialisedError()
 
     def _write_user(self, f, user): # pylint: disable=no-self-use
         f.write(user.name)
