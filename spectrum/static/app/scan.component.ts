@@ -2,6 +2,7 @@ import { Component, Input, ViewChild } from '@angular/core';
 import { DataService } from './data.service';
 import { WidgetComponent } from './widget.component';
 import { Config } from './config';
+import { User } from './user';
 import { DatePipe } from './date.pipe';
 import { FreqPipe } from './freq.pipe';
 import { HZ_LABELS } from './constants';
@@ -34,10 +35,11 @@ export class ScanComponent {
   @ViewChild('form') form;
 
   @Input() modes: any[] = [ ];
+  @Input() user: User;
 
   @Input('status') set _status(status: any) {
-    if (! this.defaults || status == undefined) return;
-    this.standby = false;
+    if (status == undefined) return;
+    if (this.defaults != undefined) this.standby = false;
     this.worker = status.worker;
     this.monkey = status.monkey;
   }
@@ -61,12 +63,16 @@ export class ScanComponent {
     for (let value in HZ_LABELS) {
       this.units.push({ value: value, label: HZ_LABELS[value] });
     }
-    this.widgetComponent.busy(this.dataService.getScan())
-                        .subscribe(defaults => {
-                          this.defaults = defaults;
-                          this.config = $.extend(true, { }, this.defaults);
-                          this.widgetComponent.pristine(this.form);
-                        });
+    if (this.user.roleIn(['admin', 'freq'])) {
+      this.widgetComponent.busy(this.dataService.getScan())
+                          .subscribe(defaults => {
+                            this.defaults = defaults;
+                            this.config = $.extend(true, { }, this.defaults);
+                            this.widgetComponent.pristine(this.form);
+                          });
+    } else {
+      this.standby = false;
+    }
   }
 
   onReset() {

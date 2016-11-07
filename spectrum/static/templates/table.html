@@ -9,7 +9,7 @@
         <th>Frequencies</th>
         <th class="feature">RDS</th>
         <th class="feature">Audio</th>
-        <th *ngIf="user.roleIn(['admin'])">&nbsp;</th>
+        <th class="indicator">&nbsp;</th>
       </tr>
     </thead>
     <tbody>
@@ -31,9 +31,11 @@
         </td>
         <td class="feature">{{config.values.scan.rds ? '✔' : '✘' }}</td>
         <td class="feature">{{config.values.scan.audio ? '✔' : '✘'}}</td>
-        <td *ngIf="user.roleIn(['admin'])">
-          <input *ngIf="! running(config)" type="checkbox" [disabled]="standby" [(ngModel)]="checked[config.id]">
-          <span *ngIf="running(config)" class="running">&#x25FC;</span>
+        <td class="indicator">
+          <div *ngIf="user.roleIn(['admin']) || running(config)">
+            <input *ngIf="! running(config)" type="checkbox" [disabled]="standby" [(ngModel)]="checked[config.id]">
+            <span *ngIf="running(config)" class="running">&#x25FC;</span>
+          </div>
         </td>
       </tr>
     </tbody>

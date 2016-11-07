@@ -146,6 +146,9 @@ tbody tr {
 .feature {
   text-align: center;
 }
+.indicator {
+  width: 30px;
+}
 
 /* specials for range display */
 .range-slider {

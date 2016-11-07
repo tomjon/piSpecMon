@@ -41,7 +41,7 @@ let modelSort = function (a, b) {
   pipes: [ DatePipe ]
 })
 export class AppComponent {
-  user: User = new User();
+  user: User;
   models: any[] = [ ];
   modes: any[] = [ ];
   rates: any[] = [ ];
