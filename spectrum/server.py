@@ -492,24 +492,23 @@ def export_endpoint(config_id):
     """ Export data endpoint for writing file locally (POST) or streaming the output (GET).
     """
     # yield export data
-    def _iter_export(config, hits):
+    def _iter_export(config):
         yield '#TimeDate,'
-        if 'freqs' in config['freqs']:
-            yield ','.join(freq['f'] * 10 ** int(freq['exp']) for freq in config['freqs']['freqs'])
+        if 'freqs' in config.values['freqs']:
+            yield ','.join(freq['f'] * 10 ** int(freq['exp']) for freq in config.values['freqs']['freqs'])
         else:
-            e = 10 ** int(config['freqs']['exp'])
-            yield ','.join(str(f) for f in xrange(*[int(x * e) for x in config['freqs']['range']]))
+            e = 10 ** int(config.values['freqs']['exp'])
+            yield ','.join(str(f) for f in xrange(*[int(x * e) for x in config.values['freqs']['range']]))
         yield '\n'
-        for hit in hits:
-            time_0 = datetime.fromtimestamp(hit['fields']['timestamp'][0] / 1000.0)
-            yield str(time_0)
+        for timestamp, strengths in config.iter_spectrum():
+            yield str(datetime.fromtimestamp(timestamp / 1000))
             yield ','
-            yield ','.join([str(v) if v > -128 else '' for v in hit['fields']['level']])
+            yield ','.join([str(v) if v > -128 else '' for v in strengths])
             yield '\n'
 
     config = application.data_store.config(config_id).read()
     try:
-        export = _iter_export(config.values, list(config.iter_spectrum()))
+        export = _iter_export(config)
     except StoreError as e:
         return e.message, 500
     if request.method == 'GET':
