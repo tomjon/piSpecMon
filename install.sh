@@ -46,27 +46,32 @@ KEY_DIR=`vbl SECRET_KEY`
 sudo chown $USER: `dirname $KEY_DIR`
 
 # install the SSMTP config
-SSMTP_CONF=`vbl SSMTP_CONF`
-sudo apt-get install ssmtp mailutils
-sudo cp spectrum/bin/ssmtp.conf $SSMTP_CONF
-sudo chown $USER: $SSMTP_CONF
+hash apt-get 2>/dev/null && (
+  SSMTP_CONF=`vbl SSMTP_CONF`
+  sudo apt-get install ssmtp mailutils
+  sudo cp spectrum/bin/ssmtp.conf $SSMTP_CONF
+  sudo chown $USER: $SSMTP_CONF
+)
 
 # install the systemd service descriptors and restart services
-(cd spectrum/bin && {
-sudo cp psm.*.service /lib/systemd/system
-sudo systemctl daemon-reload
-sudo systemctl enable psm.*.service
-sudo systemctl restart psm.*.service
-})
+hash systemctl 2>/dev/null && (
+  cd spectrum/bin
+  sudo cp psm.*.service /lib/systemd/system
+  sudo systemctl daemon-reload
+  sudo systemctl enable psm.*.service
+  sudo systemctl restart psm.*.service
+)
 
 # install the Web API server in Apache
-sudo mkdir -p /var/www/psm
-sudo cp spectrum/bin/wsgi.py /var/www/psm
-sudo apt-get install libapache2-mod-wsgi
-sudo cp spectrum/bin/psm.server.conf /etc/apache2/sites-available
-sudo a2dissite 000-default
-sudo a2ensite psm.server
-sudo service apache2 restart
+hash a2ensite 2>/dev/null && (
+  sudo mkdir -p /var/www/psm
+  sudo cp spectrum/bin/wsgi.py /var/www/psm
+  sudo apt-get install libapache2-mod-wsgi
+  sudo cp spectrum/bin/psm.server.conf /etc/apache2/sites-available
+  sudo a2dissite 000-default
+  sudo a2ensite psm.server
+  sudo service apache2 restart
+)
 
 # build the pi_control binary
 PI_CONTROL_PATH=`vbl PI_CONTROL_PATH`
