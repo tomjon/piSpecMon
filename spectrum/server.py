@@ -19,7 +19,7 @@ from spectrum.config import DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAUL
                             DATA_PATH, EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, USERS_FILE, \
                             WORKER_RUN_PATH, MONKEY_RUN_PATH, RADIO_ON_SLEEP_SECS, MONKEY_POLL, \
                             ROUNDS
-from spectrum.common import log, now
+from spectrum.common import log, now, parse_config, scan
 from spectrum.users import Users, IncorrectPasswordError, UsersError
 
 
@@ -492,13 +492,9 @@ def export_endpoint(config_id):
     """ Export data endpoint for writing file locally (POST) or streaming the output (GET).
     """
     # yield export data
-    def _iter_export(config):
+    def _iter_export(scan_config):
         yield '#TimeDate,'
-        if 'freqs' in config.values['freqs']:
-            yield ','.join(freq['f'] * 10 ** int(freq['exp']) for freq in config.values['freqs']['freqs'])
-        else:
-            e = 10 ** int(config.values['freqs']['exp'])
-            yield ','.join(str(f) for f in xrange(*[int(x * e) for x in config.values['freqs']['range']]))
+        yield ','.join([str(freq) for idx, freq in scan(**scan_config)])
         yield '\n'
         for timestamp, strengths in config.iter_spectrum():
             yield str(datetime.fromtimestamp(timestamp / 1000))
@@ -507,10 +503,8 @@ def export_endpoint(config_id):
             yield '\n'
 
     config = application.data_store.config(config_id).read()
-    try:
-        export = _iter_export(config)
-    except StoreError as e:
-        return e.message, 500
+    scan_config = parse_config(config.values)
+    export = _iter_export(scan_config)
     if request.method == 'GET':
         return Response(export, mimetype='text/csv')
     else:
