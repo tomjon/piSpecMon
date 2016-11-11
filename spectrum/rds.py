@@ -3,6 +3,7 @@
 from ctypes import cdll, create_unicode_buffer, CDLL, c_char_p, c_long, c_int, pointer
 from ctypes.util import find_library
 from os.path import exists
+from spectrum.common import check_device
 
 
 LIBRARY = 'keystonecomm'
@@ -23,9 +24,7 @@ class RdsApi(object):
     """ Ctypes wrapper for the Keystone monkey board comms DLL.
     """
     def __init__(self, device, use_hard_mute=True):
-        if not exists(device):
-            raise Exception("No device {0}".format(device))
-        self.device = device
+        self.device = check_device(device)
         self.use_hard_mute = use_hard_mute
         self._buffer = create_unicode_buffer(300)
 

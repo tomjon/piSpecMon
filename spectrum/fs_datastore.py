@@ -158,11 +158,14 @@ class Config(ConfigBase):
         """ Read config attributes from the data store.
         """
         path = os.path.join(self._data_store.data_path, self.id)
-        with open(os.path.join(path, self.CONFIG)) as f:
-            self.values = json.loads(f.read())
-        with open(os.path.join(path, self.FORMAT)) as f:
-            self.timestamp = _T_STRUCT.fread(f)
-            self.n_freq = _N_STRUCT.fread(f)
+        try:
+            with open(os.path.join(path, self.CONFIG)) as f:
+                self.values = json.loads(f.read())
+            with open(os.path.join(path, self.FORMAT)) as f:
+                self.timestamp = _T_STRUCT.fread(f)
+                self.n_freq = _N_STRUCT.fread(f)
+        except IOError as e:
+            raise StoreError(str(e))
         firsts = []
         latests = []
         counts = {}

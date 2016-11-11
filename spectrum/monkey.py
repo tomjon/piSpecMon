@@ -9,7 +9,6 @@ try:
 except ImportError:
     from spectrum.fake_rds import RdsApi
 
-
 class Monkey(Process):
     """ Process implementation for decoding RDS using the Monkey board.
     """
@@ -34,13 +33,15 @@ class Monkey(Process):
         scan_config = parse_config(config.values)
         rds = config.values['rds']
 
-        with RdsApi(rds['device']) as api:
+        with RdsApi(config.values['rig']['rds_device']) as api:
             while True:
                 self.status.clear()
                 self.status['started'] = now()
+                yield
 
                 for idx, freq in scan(**scan_config):
-                    self._decode_freq(config, rds, api, idx, freq)
+                    for _ in self._decode_freq(config, rds, api, idx, freq):
+                        yield
 
     # decode RDS from a single frequency
     def _decode_freq(self, config, rds, api, idx, freq):

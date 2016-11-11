@@ -105,10 +105,6 @@ class Worker(Process):
                         yield
 
                 sweep_n += 1
-        except Exception as e: # pylint: disable=broad-except
-            log.error(e)
-            traceback.print_exc()
-            config.write_error(now(), e)
         finally:
             if monitor is not None:
                 monitor.close()
@@ -120,17 +116,14 @@ class Worker(Process):
             self.status['sweep']['record'] = {'freq_n': idx}
             yield
 
-            try:
-                path = '{0}.wav'.format(config.write_audio(now(), idx))
-                if not os.path.exists(os.path.dirname(path)):
-                    os.makedirs(os.path.dirname(path))
-            except StoreError:
-                return
+            path = '{0}.wav'.format(config.write_audio(now(), idx))
+            if not os.path.exists(os.path.dirname(path)):
+                os.makedirs(os.path.dirname(path))
 
             audio = config.values['audio']
             log.info("Recording audio at %sHz and storing in %s", freq, path)
 
-            with Recorder(path, audio['path']) as recorder:
+            with Recorder(path, config.values['rig']['audio_device']) as recorder:
                 for strength in recorder.record(monitor, freq, audio['rate'], audio['duration']):
                     self.status['sweep']['record']['strength'] = strength
                     yield

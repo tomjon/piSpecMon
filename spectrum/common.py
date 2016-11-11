@@ -142,3 +142,10 @@ def fs_free(path):
         return int(result.split('\n')[1].split()[3]) * 1024
     except ValueError:
         return 0
+
+def check_device(value):
+    """ Check that the input specifies a valid device path, and return that path.
+    """
+    if os.path.basename(value) != value:
+        raise Exception("Bad device specifier: {0}".format(value))
+    return '/dev/{0}'.format(value)

@@ -48,7 +48,6 @@ convert_period: 300
 default:
     rig_settings:
         model:
-        pathname: /foo
         data_bits: 8
         rate: 9600
         stop_bits: 1
@@ -59,16 +58,17 @@ default:
         retries: 2
         interval: 1000
         write_delay: 50
+        rig_device: ttyUSB0
+        audio_device: dsp1
+        rds_device: ttyACM0
 
     audio_settings:
-        path: /dev/dsp1
         rate: 44100
         period: 600
         duration: 10
         threshold: -20
 
     rds_settings:
-        device: /dev/ttyACM0
         strength_threshold: 40
         strength_timeout: 20
         rds_timeout: 300

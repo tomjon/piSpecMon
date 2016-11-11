@@ -5,6 +5,7 @@ import inspect
 import wave
 from time import sleep
 import Hamlib
+from spectrum.common import check_device
 try:
     import ossaudiodev
 except ImportError:
@@ -85,7 +86,7 @@ class Monitor(object):
     """
 
     def __init__(self, model=1, data_bits=None, stop_bits=None, rate=None, parity=None,  # pylint: disable=too-many-arguments
-                 write_delay=None, pathname=None, set_check=0, retries=0, interval=0,
+                 write_delay=None, rig_device=None, set_check=0, retries=0, interval=0,
                  attenuation=None, **_):
         """ Arguments:
 
@@ -95,7 +96,7 @@ class Monitor(object):
             rate - if not None, set rate on the rig port
             parity - if not None, set parity on the rig port
             write_delay - if not None, set write delay on the rig port (ms)
-            pathname - is not None, set path name on the rig port
+            rig_device - is not None, set path name on the rig port
             set_check - 0 = set frequency and hope, N = set/check N times before failing
             retries - retry after error or timeout this many times
             interval - if > 0, pause this many ms before retrying (doubles each retry)
@@ -114,8 +115,8 @@ class Monitor(object):
             self.rig.state.rigport.parm.serial.parity = parity
         if write_delay is not None:
             self.rig.state.rigport.write_delay = write_delay
-        if pathname is not None:
-            self.rig.state.rigport.pathname = str(pathname)
+        if rig_device is not None:
+            self.rig.state.rigport.pathname = check_device(rig_device)
         self.attenuation = attenuation
         self.set_check = set_check
         self.retries = retries
@@ -193,7 +194,7 @@ class Recorder(object): # pylint: disable=too-few-public-methods
     """
     def __init__(self, path, device):
         self.path = path
-        self.device = device
+        self.device = check_device(device)
         self.audio = None
         self.wav = None
 

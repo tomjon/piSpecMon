@@ -6,7 +6,9 @@ import os
 import signal
 import errno
 import sys
-from spectrum.common import log
+import traceback
+from spectrum.common import log, now
+from spectrum.datastore import StoreError
 
 
 class Process(object):
@@ -75,16 +77,26 @@ class Process(object):
                 self.config_id = self._read_config()
                 if self.config_id is not None:
                     log.debug("Read config id %s", self.config_id)
-                    config = self.data_store.config(self.config_id).read()
-                    log.debug("Running with config: %s", json.dumps(config.values))
-                    self._stop = False
-                    self.status.clear()
-                    for _ in self.iterator(config):
-                        self._write_status()
-                        if self._stop:
-                            break
-                    if os.path.isfile(self.status_file):
-                        os.remove(self.status_file)
+                    try:
+                        config = self.data_store.config(self.config_id).read()
+                    except StoreError as e:
+                        log.error("No config for id: %s", self.config_id)
+                        os.remove(self.config_file)
+                    else:
+                        log.debug("Running with config: %s", json.dumps(config.values))
+                        self._stop = False
+                        self.status.clear()
+                        try:
+                            for _ in self.iterator(config):
+                                self._write_status()
+                                if self._stop:
+                                    break
+                        except Exception as e: # pylint: disable=broad-except
+                            log.error(e)
+                            traceback.print_exc()
+                            config.write_error(now(), e)
+                if os.path.isfile(self.status_file):
+                    os.remove(self.status_file)
                 if self._tidy and os.path.isfile(self.config_file):
                     os.remove(self.config_file)
                 if self._exit:
