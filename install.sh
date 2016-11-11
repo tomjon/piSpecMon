@@ -75,10 +75,11 @@ hash a2ensite 2>/dev/null && (
 
 # build the pi_control binary
 PI_CONTROL_PATH=`vbl PI_CONTROL_PATH`
-gcc -o spectrum/bin/pi_control spectrum/pi_control.c
-sudo cp spectrum/bin/pi_control $PI_CONTROL_PATH
-sudo chown root: $PI_CONTROL_PATH
-sudo chmod a+s $PI_CONTROL_PATH
+gcc -o spectrum/bin/pi_control spectrum/pi_control.c && (
+  sudo cp spectrum/bin/pi_control $PI_CONTROL_PATH
+  sudo chown root: $PI_CONTROL_PATH
+  sudo chmod a+s $PI_CONTROL_PATH
+)
 
 # remind about post install steps
 echo
