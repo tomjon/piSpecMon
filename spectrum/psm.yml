@@ -51,7 +51,7 @@ default:
         data_bits: 8
         rate: 9600
         stop_bits: 1
-        parity: 2
+        parity: 0
         attenuation: False
         radio_on: 2
         set_check: 2
