@@ -1,0 +1,9 @@
+[Unit]
+Description=picofssd script
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python -u /usr/local/bin/picofssd.py
+
+[Install]
+WantedBy=multi-user.target
