@@ -1,9 +1,16 @@
 [Unit]
 Description=3G modem driver
+After=multi-user.target
 
 [Service]
-Type=oneshot
-ExecStart=/home/ses/umtskeeper/umtskeeper --sakisoperators "USBINTERFACE='0' OTHER='USBMODEM' USBMODEM='12d1:1003' APN='3internet' APN_USER='0' APN_PASS='0'" --sakisswitches "--sudo --console" --devicename 'Huawei' --log --silent --monthstart 8 --nat 'no' --httpserver &>> /home/ses/umtskeeper/error.log
+Type=idle
+ExecStart=/home/ses/spectrum/piSpecMon/spectrum/bin/umtskeeper.sh
+Restart=always
+RestartSec=1
+WorkingDirectory=/home/ses/spectrum/piSpecMon/spectrum
+
+User=ses
+Group=pi
 
 [Install]
 WantedBy=multi-user.target

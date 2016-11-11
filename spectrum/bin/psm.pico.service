@@ -1,9 +1,16 @@
 [Unit]
 Description=picofssd script
+After=multi-user.target
 
 [Service]
-Type=oneshot
+Type=idle
 ExecStart=/usr/bin/python -u /usr/local/bin/picofssd.py
+Restart=always
+RestartSec=1
+WorkingDirectory=/home/ses/spectrum/piSpecMon/spectrum
+
+User=ses
+Group=pi
 
 [Install]
 WantedBy=multi-user.target

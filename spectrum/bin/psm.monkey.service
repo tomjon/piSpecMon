@@ -1,8 +1,8 @@
 [Unit]
 Description=Pi Spectrum Monitor Monkey Service
 After=multi-user.target
-Wants=network-online.target psm.elasticsearch.service
-After=network-online.target psm.elasticsearch.service
+Wants=network-online.target
+After=network-online.target 
 
 [Service]
 Type=idle

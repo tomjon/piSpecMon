@@ -53,6 +53,9 @@ hash apt-get 2>/dev/null && (
   sudo chown $USER: $SSMTP_CONF
 )
 
+# check umtskeeper is installed
+[ -e /home/ses/umtskeeper ] || echo "***** please install umtskeeper with pi:ses ownership"
+
 # install the systemd service descriptors and restart services
 hash systemctl 2>/dev/null && (
   cd spectrum/bin
