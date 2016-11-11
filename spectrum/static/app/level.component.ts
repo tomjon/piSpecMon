@@ -124,6 +124,7 @@ export class LevelComponent extends Chart {
         d3.max(data, function (d) { return d3.max(d.timestamp.buckets, function (v) { return v.level.value }) })
       ]);
     }
+    this.yAxis.tickFormat(d => '');
     timeTicks(this.xAxis, this.x.domain(), LEVEL_CHART_OPTIONS.x_ticks);
 
     this.svg.append("g")
@@ -141,11 +142,7 @@ export class LevelComponent extends Chart {
 
     this.svg.append("g")
         .attr("class", "y axis")
-        .call(this.yAxis)
-        .append("text")
-        .attr("x", -10)
-        .attr("y", -10)
-        .text("dB");
+        .call(this.yAxis);
 
     let freq = this.svg.selectAll(".freq")
                    .data(freq_idxs)
