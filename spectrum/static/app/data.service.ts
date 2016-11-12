@@ -11,10 +11,19 @@ export class DataService {
 
   constructor(private http: Http, private errorService: ErrorService) { }
 
-  getVersion(): Observable<any> {
-    return this.http.get(this.baseUrl + 'version')
-                    .map(res => res.text())
-                    .catch(this.errorHandler("get version"));
+  getIdent(): Observable<any> {
+    return this.http.get(`${this.baseUrl}ident`)
+                    .map(res => res.json())
+                    .catch(this.errorHandler("get ident (version, title and description)"));
+  }
+
+  setIdent(ident: any): Observable<void> {
+    let body = JSON.stringify(ident);
+    let headers = new Headers({ 'Content-Type': 'application/json' });
+    let options = new RequestOptions({ headers: headers });
+    return this.http.put(`${this.baseUrl}ident`, body, options)
+                    .map(res => res.json())
+                    .catch(this.errorHandler("set ident"));
   }
 
   getCaps(): Observable<any> {

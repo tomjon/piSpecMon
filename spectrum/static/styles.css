@@ -4,10 +4,6 @@
 .header img {
   margin-right: 20px;
 }
-.version {
-  font-size: small;
-  margin-left: 20px;
-}
 
 .error {
   color: red;

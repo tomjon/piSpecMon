@@ -5,6 +5,8 @@ import os
 import re
 import mimetypes
 import functools
+import datetime
+from slugify import slugify
 from time import time
 from datetime import datetime
 from flask import Flask, current_app, redirect, request, Response, send_file
@@ -43,6 +45,7 @@ class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
         self.audio = self.data_store.settings('audio').read(DEFAULT_AUDIO_SETTINGS)
         self.rds = self.data_store.settings('rds').read(DEFAULT_RDS_SETTINGS)
         self.scan = self.data_store.settings('scan').read(DEFAULT_SCAN_SETTINGS)
+        self.description = self.data_store.settings('description').read('')
         self.worker = Worker(self.data_store, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS).client()
         self.monkey = Monkey(self.data_store, MONKEY_RUN_PATH, MONKEY_POLL).client()
 
@@ -88,6 +91,21 @@ class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
             logout_user()
             return "User session timed out", 403
         return None
+
+    def get_ident(self):
+        ident = {}
+
+        path = os.path.join(self.root_path, VERSION_FILE)
+        with open(path) as f:
+            ident['version'] = f.read()
+
+        ident['name'] = os.popen('uname -n').read()
+        ident['description'] = self.description.values
+        return ident
+
+    def set_ident(self, ident):
+        if user_has_role(['admin', 'freq']) and 'description' in ident:
+            self.description.write(ident['description'])
 
 application = SecuredStaticFlask(__name__) # pylint: disable=invalid-name
 
@@ -210,14 +228,18 @@ def favicon():
     return send_file(path, mimetype='image/vnd.microsoft.icon')
 
 
-# version string
-@application.route('/version')
+# id: name, version and description
+@application.route('/ident', methods=['GET', 'PUT'])
 @role_required(['admin', 'freq', 'data'])
-def version():
-    """ Serve the version file.
+def id_endpoint():
+    """ Serve or set the ident.
     """
-    path = os.path.join(application.root_path, VERSION_FILE)
-    return send_file(path, mimetype='text/plain')
+    if request.method == 'GET':
+        return json.dumps(application.get_ident())
+    else:
+        application.set_ident(request.get_json())
+        return json.dumps({})
+
 
 # rig capabilities API
 @application.route('/caps')
@@ -262,6 +284,7 @@ def monitor():
         values['rig'] = application.rig.values
         values['audio'] = application.audio.values
         values['rds'] = application.rds.values
+        values['ident'] = application.get_ident()
 
         try:
             config = application.data_store.config().write(now(), values)
@@ -503,12 +526,21 @@ def export_endpoint(config_id):
             yield '\n'
 
     config = application.data_store.config(config_id).read()
+    ident = config.values['ident']
     scan_config = parse_config(config.values)
     export = _iter_export(scan_config)
+
+    date = datetime.fromtimestamp(config.timestamp / 1000.0)
+    date_s = date.strftime("%Y-%m-%d-%H-%M-%S")
+    #name = slugify('{0}_{1}_{2}'.format(date_s, ident['name'], ident['description']))
+    name = '_'.join([slugify(x) for x in [date_s, ident['name'], ident['description']]])
+
     if request.method == 'GET':
-        return Response(export, mimetype='text/csv')
+        response = Response(export, mimetype='text/csv')
+        response.headers['Content-Disposition'] = 'attachment; filename={0}.csv'.format(name)
+        return response
     else:
-        path = os.path.join(EXPORT_DIRECTORY, config_id + '.csv')
+        path = os.path.join(EXPORT_DIRECTORY, '{0}.csv'.format(name))
         with open(path, 'w') as f:
             for x in export:
                 f.write(x)
