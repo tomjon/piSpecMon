@@ -4,7 +4,7 @@ After=multi-user.target
 
 [Service]
 Type=idle
-ExecStart=/usr/bin/python -u /home/ses/spectrum/piSpecMon/spectrum/wav2mp3.py
+ExecStart=/usr/bin/python -u /usr/local/bin/psm-wav2mp3
 Restart=always
 RestartSec=1
 WorkingDirectory=/home/ses/spectrum/piSpecMon/spectrum

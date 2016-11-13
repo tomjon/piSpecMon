@@ -1,7 +1,8 @@
 import { Component, ViewChild } from '@angular/core';
 import { Chart } from './chart';
 import { WidgetComponent } from './widget.component';
-import { Data} from './data';
+import { FreqPipe } from './freq.pipe';
+import { Data } from './data';
 import { WATERFALL_CHART_OPTIONS, HZ_LABELS } from './constants';
 import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
 
@@ -58,7 +59,7 @@ export class WaterfallComponent extends Chart {
   @ViewChild('canvas') canvas;
   @ViewChild('overlay') overlay;
 
-  constructor() {
+  constructor(private freq: FreqPipe) {
     super(1); //FIXME this puts the waterfall chart in a later frame than the others - can maybe be removed if drawing the waterfall is quicker
   }
 
@@ -158,8 +159,6 @@ export class WaterfallComponent extends Chart {
     // find frequency of click...
     let f = this.x.invert(z.x - this.margin.left);
     let i = Math.round((f - this.data.freqs.range[0]) / this.data.freqs.range[2]);
-    f = +this.data.freqs.range[0] + i * this.data.freqs.range[2]; // 'snap' to an actual frequency value
-    f = f.toFixed(-Math.log10(this.data.freqs.range[2]));
     if (i < 0 || i >= this.data.spectrum.levels[0].fields.level.length) {
       // out of bounds - hide info text
       this.infoText = "";
@@ -177,9 +176,7 @@ export class WaterfallComponent extends Chart {
 
     // formulate info text
     let v = this.data.spectrum.levels[j].fields.level[i];
-    this.infoText = `${v}dB at ${f}${HZ_LABELS[this.data.freqs.exp]}`;
-    if (this.data.rdsNames[i]) this.infoText += ` (${this.data.rdsNames[i]})`;
-    this.infoText += ` at ${dt_format(new Date(t))}`;
+    this.infoText = `${v}dB at ${this.freq.transform(i, this.data)} at ${dt_format(new Date(t))}`;
 
     // if it's an audio sample, play it (and we are showing samples)
     if (this.showSamples) {

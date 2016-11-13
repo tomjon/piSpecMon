@@ -42,16 +42,20 @@ export class TableComponent {
     if (! config) {
       // if we are seeing a new config, add it to the table
       this.widgetComponent.busy(this.dataService.getConfig(this.config_id))
-                          .subscribe(config => this.configs.push(config));
+                          .subscribe(config => this.configs.push(config[0]));
     } else {
       // otherwise, update the one we have
-      if (status.worker.latest) config.latest = status.worker.latest;
-      if (status.worker.sweep) config.count = status.worker.sweep.sweep_n;
+      if (status.worker.sweep) {
+        config.count = status.worker.sweep.sweep_n;
+        if (status.worker.sweep.timestamp) {
+          config.latest = status.worker.sweep.timestamp;
+        }
+      }
     }
   }
 
   ngOnInit() {
-    this.widgetComponent.busy(this.dataService.getConfigs())
+    this.widgetComponent.busy(this.dataService.getConfig())
                         .subscribe(configs => this.configs = configs);
   }
 
@@ -98,7 +102,7 @@ export class TableComponent {
 
   onDelete() {
     let ids = this.checkedIds();
-    this.widgetComponent.busy(this.dataService.deleteConfigs(ids))
+    this.widgetComponent.busy(this.dataService.deleteConfig(ids))
                         .subscribe(() => {
                           for (let id of ids) {
                             delete this.checked[id];

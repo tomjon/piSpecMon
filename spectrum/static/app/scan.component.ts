@@ -2,8 +2,10 @@ import { Component, Input, ViewChild } from '@angular/core';
 import { DataService } from './data.service';
 import { WidgetComponent } from './widget.component';
 import { Config } from './config';
+import { User } from './user';
 import { DatePipe } from './date.pipe';
-import { DEFAULTS, HZ_LABELS } from './constants';
+import { FreqPipe } from './freq.pipe';
+import { HZ_LABELS } from './constants';
 
 declare var $;
 
@@ -11,17 +13,17 @@ declare var $;
   selector: 'psm-scan',
   templateUrl: 'templates/scan.html',
   directives: [ WidgetComponent ],
-  pipes: [ DatePipe ]
+  pipes: [ DatePipe, FreqPipe ]
 })
 export class ScanComponent {
-  @Input() modes: any[] = [ ];
-
+  defaults: any;
   input: any;
-
-  units: any[] = [ ];
   config: any;
+
   worker: any = { };
   monkey: any = { };
+
+  units: any[] = [ ];
 
   // true when waiting for (real) status after startup or start/stop buttons pressed
   standby: boolean = true;
@@ -32,38 +34,49 @@ export class ScanComponent {
   @ViewChild(WidgetComponent) widgetComponent;
   @ViewChild('form') form;
 
-  constructor(private dataService: DataService) { }
+  @Input() modes: any[] = [ ];
+  @Input() user: User;
 
   @Input('status') set _status(status: any) {
     if (status == undefined) return;
-    this.standby = false;
+    if (this.defaults != undefined) this.standby = false;
     this.worker = status.worker;
     this.monkey = status.monkey;
   }
 
   @Input('config') set _config(config: Config) {
-    if (this.worker.config_id) return;
+    if (! this.defaults || this.worker.config_id) return;
     this.input = config;
     if (this.input == undefined) {
       this.widgetComponent.pristine(this.form, false);
       return;
     }
-    this.config = $.extend(true, {}, DEFAULTS, this.input);
+    this.config = $.extend(true, {}, this.defaults, this.input);
     this.allowRange = this.input.freqs.range != undefined;
-    this.allowFreqs = this.input.freqs.freqs != undefined;
+    this.allowFreqs = this.input.freqs.freqs != undefined && this.input.freqs.freqs[0].f;
     this.widgetComponent.pristine(this.form);
   }
+
+  constructor(private dataService: DataService) { }
 
   ngOnInit() {
     for (let value in HZ_LABELS) {
       this.units.push({ value: value, label: HZ_LABELS[value] });
     }
-    this.config = $.extend(true, { }, DEFAULTS);
-    this.widgetComponent.pristine(this.form);
+    if (this.user.roleIn(['admin', 'freq'])) {
+      this.widgetComponent.busy(this.dataService.getScan())
+                          .subscribe(defaults => {
+                            this.defaults = defaults;
+                            this.config = $.extend(true, { }, this.defaults);
+                            this.widgetComponent.pristine(this.form);
+                          });
+    } else {
+      this.standby = false;
+    }
   }
 
   onReset() {
-    if (this.input == undefined) this.input = DEFAULTS;
+    if (this.input == undefined) this.input = this.defaults;
     this._config = this.input;
   }
 
@@ -111,16 +124,6 @@ export class ScanComponent {
 
   validScan(): boolean {
     return this.form.form.valid && ((this.validRange && this.validRange()) || (this.validFreqs && this.validFreqs()));
-  }
-
-  freq(freq_n: number): string {
-    if (this.allowRange) {
-      let f = +this.config.freqs.range[0] + this.config.freqs.range[2] * freq_n;
-      return `${f.toFixed(-Math.log10(this.config.freqs.range[2]))}${HZ_LABELS[this.config.freqs.exp]}`;
-    } else {
-      let f = this.config.freqs.freqs[freq_n].f;
-      return `${f}${HZ_LABELS[this.config.freqs.freqs[freq_n].exp]}`;
-    }
   }
 
   get running(): boolean {

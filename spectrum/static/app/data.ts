@@ -39,12 +39,11 @@ export class Data {
     for (let a of audio) {
       let audio_t = a[0];
       let freq_n = a[1];
-      while (sweep_t == null || audio_t > sweep_t) {
+      while (sweep_t == null || (sweep_t != 0 && audio_t > sweep_t)) {
         let sweep = this.spectrum.levels[++sweep_n];
-        if (! sweep) return;
-        sweep_t = sweep.fields.timestamp;
+        sweep_t = sweep ? sweep.fields.timestamp : 0;
       }
-      this.audio[`${sweep_n}_${freq_n}`] = `/audio/${config_id}/${freq_n}/${audio_t}`;
+      this.audio[`${sweep_n - 1}_${freq_n}`] = `/audio/${config_id}/${freq_n}/${audio_t}`;
     }
   }
 

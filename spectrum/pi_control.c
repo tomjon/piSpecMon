@@ -18,7 +18,7 @@ void usage(char *argv[]) {
         if (i > 0) {
             printf("|");
         }
-        printf(commands[i][0]);
+        printf("%s", commands[i][0]);
     }
     printf("]\n");
 }

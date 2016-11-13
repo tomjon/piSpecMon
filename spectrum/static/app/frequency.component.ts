@@ -1,6 +1,7 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { WidgetComponent } from './widget.component';
 import { DatePipe } from './date.pipe';
+import { FreqPipe } from './freq.pipe';
 import { Chart } from './chart';
 import { FREQUENCY_CHART_OPTIONS, HZ_LABELS } from './constants';
 import { _d3 as d3 } from './d3_import';
@@ -58,6 +59,10 @@ export class FrequencyComponent extends Chart {
   @ViewChild('chart') chart;
   @ViewChild('text') text;
 
+  constructor(private freq: FreqPipe) {
+    super();
+  }
+
   ngOnInit() {
     this.margin = FREQUENCY_CHART_OPTIONS.margin;
     this.width = FREQUENCY_CHART_OPTIONS.width - this.margin.left - this.margin.right,
@@ -68,8 +73,6 @@ export class FrequencyComponent extends Chart {
 
     this.xAxis = d3.svg.axis().scale(this.x).orient("bottom");
     this.yAxis = d3.svg.axis().scale(this.y).orient("left");
-//    if (FREQUENCY_CHART_OPTIONS.x_ticks) this.xAxis().ticks(FREQUENCY_CHART_OPTIONS.x_ticks);
-//    if (FREQUENCY_CHART_OPTIONS.y_ticks) this.yAxis().ticks(FREQUENCY_CHART_OPTIONS.y_ticks);
 
     this.line = d3.svg.line()
                   .y(d => this.y(d.v))
@@ -102,6 +105,7 @@ export class FrequencyComponent extends Chart {
     } else {
       this.y.domain(d3.extent(agg, d => d.v));
     }
+    this.yAxis.tickFormat(d => '');
 
     this.line.x((d, i) => this.x(+this.data.freqs.range[0] + i * this.data.freqs.range[2]));
 
@@ -118,11 +122,7 @@ export class FrequencyComponent extends Chart {
 
     this.svg.append("g")
         .attr("class", "y axis")
-        .call(this.yAxis)
-        .append("text")
-        .attr("x", -10)
-        .attr("y", -10)
-        .text("dB");
+        .call(this.yAxis);
 
     this.svg.append("path")
         .datum(agg)
@@ -152,16 +152,13 @@ export class FrequencyComponent extends Chart {
       this.infoText = "";
       return;
     }
-    f = +this.data.freqs.range[0] + i * this.data.freqs.range[2]; // 'snap' to an actual frequency value
-    f = f.toFixed(-Math.log10(this.data.freqs.range[2]));
 
     // decide where to show the info text and lines
     this.showX = this.margin.left + this.x(f);
     this.adjustX = z.x > this.width / 2 ? -150 : 0;
     let v = this.data.spectrum.agg[this.sweep][i] ? this.data.spectrum.agg[this.sweep][i].v : 0;
     this.showY = this.y(v) + this.margin.top;
-    this.infoText = `${v}dB at ${f}${HZ_LABELS[this.data.freqs.exp]}`;
-    if (this.data.rdsNames[i]) this.infoText += ` (${this.data.rdsNames[i]})`;
+    this.infoText = `${v}dB at ${this.freq.transform(i, this.data)}`;
     setTimeout(() => this.textWidth = this.text.nativeElement.getComputedTextLength());
     this.showInfo = true;
   }

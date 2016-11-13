@@ -1,13 +1,11 @@
 """ Data store implementation powered by Elasticsearch.
 """
-
 import time
 import json
-import os.path
 import requests
-from config import ELASTICSEARCH, SAMPLES_DIRECTORY
-from common import log, StoreError, local_path, fs_size, fs_free
-
+from spectrum.config import ELASTICSEARCH, SAMPLES_PATH
+from spectrum.common import log, fs_size, fs_free
+from spectrum.datastore import ConfigBase, SettingsBase, StoreError
 
 REFRESH = {'refresh': 'true'}
 
@@ -33,7 +31,7 @@ def _wait_for_elasticsearch():
 def _create_index():
     # create index (harmless if it already exists)
     _wait_for_elasticsearch()
-    with open(local_path('create.json')) as f:
+    with open('create.json') as f:
         req = requests.put('{0}spectrum'.format(ELASTICSEARCH), data=f.read())
         log.debug("Code %s creating index", req.status_code)
     _wait_for_elasticsearch()
@@ -54,22 +52,16 @@ class ElasticsearchError(StoreError):
         super(ElasticsearchError, self).__init__(text)
 
 
-class Config(object):
-    """ A wrapper for config id, timestamp, and values.
+class Config(ConfigBase):
+    """ Config implementation for Elasticsearch.
     """
 
-    def __init__(self, _id=None, values=None, timestamp=None, first=None, latest=None, count=None):
-        self.id = _id
-        self.values = values
-        self.timestamp = timestamp
-        self.first = first
-        self.latest = latest
-        self.count = count
-
     @staticmethod
-    def iter():
+    def iter(config_ids=None):
         """ Yield stored Config objects.
         """
+        if config_ids is not None:
+            raise StoreError("iter by config id not implemented")
         params = {'size': 10000, 'fields': 'json,timestamp', 'sort': 'timestamp'}
         req = requests.get(_url('config/_search'), params=params)
         if req.status_code != 200:
@@ -177,11 +169,6 @@ class Config(object):
         if req.status_code != 201:
             raise ElasticsearchError(req)
 
-    def audio_path(self, timestamp, freq_n):
-        """ Return a (base) path at which an audio sample is stored.
-        """
-        return os.path.join(SAMPLES_DIRECTORY, self.id, freq_n, timestamp)
-
     def iter_audio(self, start=None, end=None):
         """ Yield (timestamp, freq_n, path) for stored audio samples in the range (or all).
         """
@@ -265,13 +252,9 @@ class Config(object):
             raise ElasticsearchError(req)
 
 
-class Settings(object):
-    """ A wrapper for settings id and value.
+class Settings(SettingsBase):
+    """ Elasticsearch implementation of Settings.
     """
-
-    def __init__(self, _id=None, values=None):
-        self.id = _id
-        self.values = values
 
     def read(self, defaults=None):
         """ Read settings value, using the defaults given if it is not already set.
@@ -280,6 +263,8 @@ class Settings(object):
         req = requests.get(_url('settings/{0}', self.id), params=params)
         log.debug("get_settings status code %s: %s", req.status_code, req.json())
         if req.status_code == 404:
+            if defaults is None:
+                raise StoreError("No defaults and no settings for {0}".format(self.id))
             log.info("Initialising settings: %s", self.id)
             self.values = defaults or {}
             self.write()
@@ -310,9 +295,9 @@ def stats():
         raise ElasticsearchError(req)
     values = req.json()['indices']['spectrum']['primaries']
     return {
-        'audio': fs_size(SAMPLES_DIRECTORY),
+        'audio': fs_size(SAMPLES_PATH),
         'size': values['store']['size_in_bytes'],
-        'free': fs_free(SAMPLES_DIRECTORY)
+        'free': fs_free(SAMPLES_PATH)
     }
 
 

@@ -1,0 +1,79 @@
+%YAML 1.1
+---
+version_file: /version
+
+log:
+    path: /var/log/psm
+    size: 1048576
+
+# Worker (spectrum scanner)
+worker:
+    run_path: /var/run/psm/worker
+
+# Monkey (RDS decoder)
+monkey:
+    run_path: /var/run/psm/monkey
+    poll: 1.0
+
+elasticsearch: http://localhost:9200/
+export_directory: /tmp
+
+users_file: /var/lib/psm/users.passwords
+rounds: 100000
+
+# file in which Flask's secret session key is stored
+secret_key: /var/run/psm/secret.key
+
+# user session inactivity timeout
+user_timeout_secs: 60
+
+# location of the SSMTP configuration file (fixed by ssmtp package)
+ssmtp_conf: /etc/ssmtp/ssmtp.conf
+
+# GPIO radio 'on' script settings
+radio_on:
+    switch: 21 # BCM numbering
+    sleep_secs: 1.0
+
+# data directory (FsDataStore)
+data_path: /var/lib/psm
+
+# location of the pi_control binary
+pi_control_path: /usr/bin/pi_control
+
+# how often (in s) the wav2mp3 converter should run
+convert_period: 300
+
+# default settings - if left empty, rig model is set later using Hamlib
+default:
+    rig_settings:
+        model:
+        data_bits: 8
+        rate: 9600
+        stop_bits: 1
+        parity: 0
+        attenuation: False
+        radio_on: 2
+        set_check: 2
+        retries: 2
+        interval: 1000
+        write_delay: 50
+        rig_device: ttyUSB0
+        audio_device: dsp1
+        rds_device: ttyACM0
+
+    audio_settings:
+        rate: 44100
+        period: 600
+        duration: 10
+        threshold: -20
+
+    rds_settings:
+        strength_threshold: 40
+        strength_timeout: 20
+        rds_timeout: 300
+
+    scan_settings:
+        freqs: {range: [87.5, 108.0, 0.1], exp: 6, freqs: [{f: '', exp: 6}]}
+        monitor: {radio_on: 1}
+        scan: {mode: 64, rds: true, audio: false}

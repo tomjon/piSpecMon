@@ -1,7 +1,7 @@
 <div *ngIf="user" class="container-fluid">
   <div class="row">
     <div class="col-lg-12">
-      <h1 class="header"><img src="ofcom.gif" alt="Ofcom"> Spectrum Monitor <span class="version">{{version}}</span></h1>
+      <h1 class="header"><img src="ofcom.gif" alt="Ofcom"> <span class="name" *ngIf="ident">{{ident.name}}</span> <span class="description" *ngIf="ident">({{ident.description}})</span></h1>
       <psm-login [user]="user"></psm-login>
     </div>
   </div>
@@ -13,6 +13,7 @@
     </div>
     <div class="col-lg-3">
       <psm-error></psm-error>
+      <psm-ident [user]="user" (ident)="setIdent($event)"></psm-ident>
       <psm-details [user]="user"></psm-details>
       <psm-logs *ngIf="user.roleIn(['admin'])"></psm-logs>
       <psm-pi *ngIf="user.roleIn(['admin'])"></psm-pi>
@@ -20,7 +21,7 @@
       <psm-rig *ngIf="user.roleIn(['admin'])" [models]="models" [rates]="rates" [parities]="parities"></psm-rig>
       <psm-audio *ngIf="user.roleIn(['admin', 'freq'])"></psm-audio>
       <psm-rds *ngIf="user.roleIn(['admin', 'freq'])"></psm-rds>
-      <psm-scan *ngIf="user.roleIn(['admin', 'freq'])" [modes]="modes" [config]="values" [status]="status"></psm-scan>
+      <psm-scan [user]="user" [modes]="modes" [config]="values" [status]="status"></psm-scan>
     </div>
   </div>
 </div>

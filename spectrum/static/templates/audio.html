@@ -1,13 +1,6 @@
 <psm-widget title="Audio">
   <form role="form" #form="ngForm">
     <div class="form-group">
-      <label for="path">Audio device path</label>
-      <input [disabled]="loading" type="text" required class="form-control" [(ngModel)]="audio.path" name="path" #path="ngModel">
-    </div>
-    <div [hidden]="path.valid || path.pristine" class="alert alert-danger">
-      Audio device path is a required parameter
-    </div>
-    <div class="form-group">
       <div class="psm-input-group col-lg-6">
         <label for="rate">Rate (samples /s)</label>
         <select class="form-control" [disabled]="loading" [(ngModel)]="audio.rate" name="rate">

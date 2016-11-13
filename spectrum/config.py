@@ -1,38 +1,41 @@
-# configuration settings used by worker.py and server.py
-#FIXME use yaml
+""" Parse config in YAML format. Starts with the default config file, then applies
+    settings from any .yml paths found on the command line.
+"""
+import sys
+import yaml
+import Hamlib
 
-VERSION_FILE = '/version'
+CONFIG_FILE = '/etc/psm.yml'
 
-# path where Flask's secret key is stored
-SECRET_KEY = 'secret.key'
+# load configuration settings from the YML file at the given path, converting keys
+# to upper case and concatenating keys from the top two levels of dictionaries
+# (so you can't have dictionaries for values at the top level)
+def _load_settings(path):
+    def _setattr(key, value):
+        setattr(sys.modules[__name__], key.upper(), value)
 
-# worker configuration
-WORKER_PID = '.worker_pid'
-WORKER_CONFIG = '.worker_config'
-WORKER_STATUS = '.worker_status'
+    with open(path) as f:
+        config = yaml.load(f)
+        for key, value in config.iteritems():
+            if isinstance(value, dict):
+                for key2, value2 in value.iteritems():
+                    _setattr('_'.join((key, key2)), value2)
+            else:
+                _setattr(key, value)
 
-ELASTICSEARCH = 'http://localhost:9200/'
-EXPORT_DIRECTORY = '/tmp'
+# load settings from any YML files specified on the command line (overriding previous)
+def _parse_args():
+    for arg in sys.argv:
+        if arg.endswith('.yml'):
+            _load_settings(arg)
 
-USERS_FILE = 'users.passwords'
-ROUNDS = 10 ** 5
+_load_settings(CONFIG_FILE)
+_parse_args()
 
-# Monkey config (RDS decoder)
-MONKEY_PID = '.monkey_pid'
-MONKEY_CONFIG = '.monkey_config'
-MONKEY_STATUS = '.monkey_status'
-MONKEY_POLL = 1.0
-
-# GPIO radio 'on' script settings
-RADIO_ON_SWITCH = 21 # BCM numbering
-RADIO_ON_SLEEP_SECS = 1.0
-
-# user session inactivity timeout
-USER_TIMEOUT_SECS = 60
-
-# audio samples directory, and how often (in s) the wav2mp3 converter should run
-SAMPLES_DIRECTORY = 'samples'
-CONVERT_PERIOD = 300
-
-DATA_DIR = 'data'
-SETTINGS_DIR = 'settings'
+# set the default rig model based on whether the PSM test model is available in Hamlib
+# pylint: disable=undefined-variable
+if not DEFAULT_RIG_SETTINGS.get('model', None):
+    try:
+        DEFAULT_RIG_SETTINGS['model'] = Hamlib.RIG_MODEL_PSMTEST
+    except AttributeError:
+        DEFAULT_RIG_SETTINGS['model'] = Hamlib.RIG_MODEL_AR8200

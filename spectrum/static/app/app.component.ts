@@ -1,5 +1,6 @@
 import { Component, ViewChild } from '@angular/core';
 import { LoginComponent } from './login.component';
+import { IdentComponent } from './ident.component';
 import { DetailsComponent } from './details.component';
 import { LogsComponent } from './logs.component';
 import { StatsComponent } from './stats.component';
@@ -20,6 +21,7 @@ import { Config } from './config';
 import { TICK_INTERVAL } from './constants';
 import { HTTP_PROVIDERS } from '@angular/http';
 import { DatePipe } from './date.pipe';
+import { FreqPipe } from './freq.pipe';
 
 // Add the RxJS Observable operators we need in this app
 import './rxjs-operators';
@@ -35,12 +37,12 @@ let modelSort = function (a, b) {
 @Component({
   selector: 'psm-app',
   templateUrl: 'templates/app.html',
-  directives: [ LoginComponent, ErrorComponent, DetailsComponent, PiComponent, LogsComponent, StatsComponent, RigComponent, AudioComponent, RdsComponent, TableComponent, ScanComponent, ChartsComponent ],
-  providers: [ DataService, ErrorService, MessageService, UiSettingsService, HTTP_PROVIDERS ],
+  directives: [ LoginComponent, ErrorComponent, IdentComponent, DetailsComponent, PiComponent, LogsComponent, StatsComponent, RigComponent, AudioComponent, RdsComponent, TableComponent, ScanComponent, ChartsComponent ],
+  providers: [ DataService, ErrorService, MessageService, UiSettingsService, HTTP_PROVIDERS, FreqPipe ],
   pipes: [ DatePipe ]
 })
 export class AppComponent {
-  user: User = new User();
+  user: User;
   models: any[] = [ ];
   modes: any[] = [ ];
   rates: any[] = [ ];
@@ -50,13 +52,11 @@ export class AppComponent {
   values: any;
   status: any = { worker: { }, monkey: { } };
 
-  version: string;
+  ident: any;
 
   constructor(private dataService: DataService, private messageService: MessageService) { }
 
   ngOnInit() {
-    this.dataService.getVersion()
-                    .subscribe(version => this.version = version);
     this.dataService.getCurrentUser()
                     .subscribe(user => { this.user = user; this.checkSuperior() });
     this.dataService.getCaps()
@@ -80,6 +80,10 @@ export class AppComponent {
   setConfig(config: Config) {
     this.config = config;
     this.values = config ? config.values : undefined;
+  }
+
+  setIdent(ident: any) {
+    this.ident = ident;
   }
 
   private checkSuperior() {

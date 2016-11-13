@@ -1,4 +1,4 @@
-<psm-widget title="Rig">
+<psm-widget title="Configuration">
   <form role="form" #rigForm="ngForm">
     <div class="form-group">
       <label for="model">Model</label>
@@ -7,11 +7,11 @@
       </select>
     </div>
     <div class="form-group">
-      <label for="path">Serial port path</label>
-      <input [disabled]="loading" type="text" required class="form-control" required [(ngModel)]="rig.pathname" name="path" #path="ngModel">
+      <label for="rig_device">Rig serial port device</label>
+      <input [disabled]="loading" type="text" required class="form-control" required [(ngModel)]="rig.rig_device" name="rig_device" #rig_device="ngModel">
     </div>
-    <div [hidden]="path.valid || path.pristine" class="alert alert-danger">
-      Serial port path is a required parameter
+    <div [hidden]="rig_device.valid || rig_device.pristine" class="alert alert-danger">
+      Serial port device is a required parameter
     </div>
     <div class="form-group">
       <div class="psm-input-group col-lg-6">
@@ -94,6 +94,22 @@
           <option value="false">Off</option>
         </select>
       </div>
+    </div>
+    <div class="form-group">
+      <div class="psm-input-group col-lg-6">
+        <label for="audio_device">Audio device</label>
+        <input [disabled]="loading" type="text" required class="form-control" [(ngModel)]="rig.audio_device" name="audio_device" #audio_device="ngModel">
+      </div>
+      <div class="psm-input-group col-lg-6">
+        <label for="rds_device">RDS device</label>
+        <input [disabled]="loading" type="text" required class="form-control" [(ngModel)]="rig.rds_device" name="rds_device" #rds_device="ngModel">
+      </div>
+    </div>
+    <div [hidden]="audio_device.valid || audio_device.pristine" class="alert alert-danger">
+      Audio device path is a required parameter
+    </div>
+    <div [hidden]="rds_device.valid || rds_device.pristine" class="alert alert-danger">
+      RDS device path is a required parameter
     </div>
     <button (click)="onReset()" class="btn btn-default" [disabled]="loading || rigForm.form.pristine">Reset</button>
     <button (click)="onSubmit()" class="btn btn-default" [disabled]="loading || ! rigForm.form.valid || rigForm.form.pristine">Submit</button>

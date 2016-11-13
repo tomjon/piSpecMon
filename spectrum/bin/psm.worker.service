@@ -1,16 +1,15 @@
 [Unit]
 Description=Pi Spectrum Monitor Worker Service
 After=multi-user.target
-Wants=network-online.target psm.elasticsearch.service
-After=network-online.target psm.elasticsearch.service
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 Type=idle
-ExecStart=/usr/bin/python -u /home/ses/spectrum/piSpecMon/spectrum/worker.py
+ExecStart=/usr/local/bin/psm-worker
 Restart=always
 RestartSec=1
-WorkingDirectory=/home/ses/spectrum/piSpecMon/spectrum
-
+WorkingDirectory=~
 User=ses
 Group=pi
 

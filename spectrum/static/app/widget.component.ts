@@ -48,6 +48,7 @@ export class WidgetComponent {
 
   pristine(form: any, value?: boolean): void {
     if (value == undefined) value = true; // default argument value not working, weirdly
+    if (! form) return;
     form['_touched'] = ! value;
     form['_pristine'] = value;
     form.form['_touched'] = ! value;

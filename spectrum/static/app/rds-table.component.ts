@@ -21,7 +21,7 @@ import { Data } from './data';
                    <th>Timestamp</th>
                    <th>Text</th>
                  </tr>
-                 <tr *ngFor="let entry of data.rdsText[idx]">
+                 <tr *ngFor="let entry of data.rdsText[idx].slice().reverse()">
                    <td>{{entry.timestamp | date}}</td>
                    <td>{{entry.text}}
                  </tr>
