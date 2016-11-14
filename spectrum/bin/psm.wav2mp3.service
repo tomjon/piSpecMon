@@ -7,10 +7,10 @@ Type=idle
 ExecStart=/usr/bin/python -u /usr/local/bin/psm-wav2mp3
 Restart=always
 RestartSec=1
-WorkingDirectory=/home/ses/spectrum/piSpecMon/spectrum
+WorkingDirectory=~
 
 User=ses
-Group=pi
+Group=ses
 
 [Install]
 WantedBy=multi-user.target

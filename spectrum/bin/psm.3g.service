@@ -4,13 +4,14 @@ After=multi-user.target
 
 [Service]
 Type=idle
-ExecStart=/home/ses/spectrum/piSpecMon/spectrum/bin/umtskeeper.sh
+ExecStart=/home/ses/umtskeeper/umtskeeper --sakisoperators "USBINTERFACE='0' OTHER='USBMODEM' USBMODEM='12d1:1003' APN='3internet' APN_USER='0' APN_PASS='0'" --sakisswitches "--sudo --console" --devicename 'Huawei' --log --silent --monthstart 8 --nat 'no' --httpserver
 Restart=always
 RestartSec=1
-WorkingDirectory=/home/ses/spectrum/piSpecMon/spectrum
+WorkingDirectory=~
+KillSignal=SIGINT
 
 User=ses
-Group=pi
+Group=ses
 
 [Install]
 WantedBy=multi-user.target
