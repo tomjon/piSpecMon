@@ -10,7 +10,7 @@ ExecStart=/usr/local/bin/psm-worker
 Restart=always
 RestartSec=1
 WorkingDirectory=~
-RuntimeDirectory=psm/worker
+RuntimeDirectory=psm-worker
 User=ses
 Group=ses
 
