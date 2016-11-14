@@ -10,8 +10,9 @@ ExecStart=/usr/local/bin/psm-worker
 Restart=always
 RestartSec=1
 WorkingDirectory=~
+RuntimeDirectory=psm
 User=ses
-Group=pi
+Group=ses
 
 [Install]
 WantedBy=multi-user.target
