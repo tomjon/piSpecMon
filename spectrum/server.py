@@ -17,10 +17,9 @@ from spectrum.tail import iter_tail
 from spectrum.monitor import get_capabilities
 from spectrum.fs_datastore import FsDataStore, StoreError
 from spectrum.config import DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, \
-                            DEFAULT_SCAN_SETTINGS, SECRET_KEY, VERSION_FILE, USER_TIMEOUT_SECS, \
+                            DEFAULT_SCAN_SETTINGS, VERSION_FILE, USER_TIMEOUT_SECS, ROUNDS, \
                             DATA_PATH, EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, USERS_FILE, \
-                            WORKER_RUN_PATH, MONKEY_RUN_PATH, RADIO_ON_SLEEP_SECS, MONKEY_POLL, \
-                            ROUNDS
+                            WORKER_RUN_PATH, MONKEY_RUN_PATH, RADIO_ON_SLEEP_SECS, MONKEY_POLL
 from spectrum.common import log, now, parse_config, scan
 from spectrum.users import Users, IncorrectPasswordError, UsersError
 
@@ -31,7 +30,7 @@ class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
     def __init__(self, name):
         super(SecuredStaticFlask, self).__init__(name)
         self._init_logging()
-        self._init_secret_key()
+        self.secret_key = os.urandom(24)
         self.login_manager = LoginManager()
         self.login_manager.init_app(self)
         self.logged_in_users = []
@@ -53,16 +52,6 @@ class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
         # add log handlers to Flask's logger for when Werkzeug isn't the underlying WSGI server
         for handler in log.handlers:
             self.logger.addHandler(handler)
-
-    def _init_secret_key(self):
-        # set up secret key for sessions
-        if not os.path.exists(SECRET_KEY):
-            self.secret_key = os.urandom(24)
-            with open(SECRET_KEY, 'w') as f:
-                f.write(self.secret_key)
-        else:
-            with open(SECRET_KEY) as f:
-                self.secret_key = f.read()
 
     def send_static_file(self, filename):
         """ Send a static file (overriding Flask's version).
