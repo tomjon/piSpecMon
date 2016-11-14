@@ -10,7 +10,7 @@ ExecStart=/usr/local/bin/psm-monkey
 Restart=always
 RestartSec=1
 WorkingDirectory=~
-RuntimeDirectory=psm
+RuntimeDirectory=psm/monkey
 User=ses
 Group=ses
 

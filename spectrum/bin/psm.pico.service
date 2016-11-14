@@ -9,8 +9,8 @@ Restart=always
 RestartSec=1
 WorkingDirectory=~
 
-User=root
-Group=root
+User=ses
+Group=ses
 
 [Install]
 WantedBy=multi-user.target
