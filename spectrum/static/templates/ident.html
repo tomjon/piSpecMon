@@ -15,7 +15,7 @@
       <label for="version">Software version</label>
       <input disabled="true" type="text" class="form-control" [(ngModel)]="ident.version" name="version">
     </div>
-    <button (click)="onReset()" class="btn btn-default" [disabled]="loading || form.form.pristine">Reset</button>
-    <button (click)="onSubmit()" class="btn btn-default" [disabled]="loading || ! form.form.valid || form.form.pristine">Submit</button>
+    <button *ngIf="user.roleIn(['admin', 'freq'])" (click)="onReset()" class="btn btn-default" [disabled]="loading || form.form.pristine">Reset</button>
+    <button *ngIf="user.roleIn(['admin', 'freq'])" (click)="onSubmit()" class="btn btn-default" [disabled]="loading || ! form.form.valid || form.form.pristine">Submit</button>
   </form>
 </psm-widget>
