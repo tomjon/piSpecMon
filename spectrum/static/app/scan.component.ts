@@ -9,6 +9,16 @@ import { HZ_LABELS } from './constants';
 
 declare var $;
 
+/**
+ * Scan component has two modes:
+ * 1. when there is no running scan, then either: show the current sweep selection
+ *    in the inputs, or defaults if no selection
+ *      (Reset returns the inputs back to either the selection, or the defaults)
+ * 2. when there is a running scan, inputs show the running config values and are
+ *    disabled, and the status is displayed
+ * When the user is only a data viewer, don't show the inputs at all. If there
+ * is also no running scan, show a brief message to this effect.
+ */
 @Component({
   selector: 'psm-scan',
   templateUrl: 'templates/scan.html',
@@ -44,8 +54,7 @@ export class ScanComponent {
     this.monkey = status.monkey;
   }
 
-  @Input('config') set _config(config: Config) {
-    if (! this.defaults || this.worker.config_id) return;
+  @Input('config') set _config(config: any) {
     this.input = config;
     if (this.input == undefined) {
       this.widgetComponent.pristine(this.form, false);
@@ -76,7 +85,7 @@ export class ScanComponent {
   }
 
   onReset() {
-    if (this.input == undefined) this.input = this.defaults;
+    if (this.input == undefined) this._config = this.defaults;
     this._config = this.input;
   }
 
@@ -96,11 +105,11 @@ export class ScanComponent {
   onStop() {
     this.standby = true;
     this.widgetComponent.busy(this.dataService.stopMonitor())
-                        .subscribe();
+                        .subscribe(() => { this.input = this.defaults });
   }
 
   get loading() {
-    return this.widgetComponent.loading;
+    return this.widgetComponent.loading || this.standby;
   }
 
   numeric(v): boolean {
@@ -111,30 +120,34 @@ export class ScanComponent {
     return (input.valid && $.isNumeric(input.model)) || input.pristine;
   }
 
-  validRange(): boolean {
+  get validRange(): boolean {
     return +(this.config.freqs.range[0]) + +(this.config.freqs.range[2]) <= +(this.config.freqs.range[1]);
   }
 
-  validFreqs(): boolean {
+  get validFreqs(): boolean {
     for (let freq of this.config.freqs.freqs) {
       if (! this.numeric(freq.f)) return false;
     }
     return true;
   }
 
-  validScan(): boolean {
-    return this.form.form.valid && ((this.validRange && this.validRange()) || (this.validFreqs && this.validFreqs()));
+  // return whether the inputs represent a valid scan
+  get validScan(): boolean {
+    return this.form.form.valid && (this.validRange || this.validFreqs);
   }
 
+  // return whether a scan is running
   get running(): boolean {
     return this.worker.timestamp || this.monkey.timestamp;
   }
 
+  // insert a discrete frequency at position n
   onInsert(n: number) {
     let fs = this.config.freqs.freqs;
     fs.splice(n + 1, 0, { f: "", exp: fs[n].exp });
   }
 
+  // delete a discrete frequency at position n
   onDelete(n: number) {
     this.config.freqs.freqs.splice(n, 1);
   }

@@ -122,6 +122,9 @@ rect.audio {
 .freqlist {
   margin-bottom: 0;
 }
+psm-scan .message {
+  padding-bottom: 10px;
+}
 
 /* specials for the sweep table component */
 tbody tr {
