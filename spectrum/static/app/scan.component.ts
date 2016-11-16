@@ -133,7 +133,7 @@ export class ScanComponent {
 
   // return whether the inputs represent a valid scan
   get validScan(): boolean {
-    return this.form.form.valid && (this.validRange || this.validFreqs);
+    return (this.allowRange && this.validRange) || (this.allowFreqs && this.validFreqs);
   }
 
   // return whether a scan is running
