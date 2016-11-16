@@ -214,11 +214,11 @@ class Recorder(object): # pylint: disable=too-few-public-methods
         self.wav.setnchannels(CHANNELS)
         self.wav.setsampwidth(SAMPLE_WIDTH)
         self.wav.setframerate(rate)
-        yield monitor.get_strength()
+        yield #monitor.get_strength()
         for _ in xrange(duration):
             data = self.audio.read(rate * CHANNELS * SAMPLE_WIDTH)
             self.wav.writeframes(data)
-            yield monitor.get_strength()
+            yield #monitor.get_strength()
 
     def __exit__(self, *args):
         self.wav.close()
