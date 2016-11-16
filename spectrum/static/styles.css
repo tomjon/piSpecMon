@@ -168,12 +168,12 @@ psm-login span {
   margin-right: 10px;
 }
 
-/* specials for RDS text display */
-psm-rds-table table, psm-rds-table div {
+/* specials for Audio samples and RDS text display */
+psm-sample-table table, psm-sample-table div, psm-rds-table table, psm-rds-table div {
   clear: both;
   margin-bottom: 10px;
 }
-psm-rds-table th, psm-rds-table td {
+psm-sample-table th, psm-sample-table td, psm-rds-table th, psm-rds-table td {
   padding: 5px
 }
 

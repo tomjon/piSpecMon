@@ -9,6 +9,7 @@ export class Data {
   freqs: any;
   count: number;
   spectrum: any;
+  samples: any;
   audio: any;
   rdsNames: any;
   rdsText: any;
@@ -32,6 +33,8 @@ export class Data {
   }
 
   mapAudio(audio: any[], config_id: string) {
+    // want this.samples to be a lookup from freq_n to a list of { timestamp: .., path: .. }
+    this.samples = {};
     // want this.audio to be a lookup like this.audio[{sweep_n}_{freq_n}] = ..
     this.audio = { length: audio.length };
     let sweep_n = -1;
@@ -39,11 +42,14 @@ export class Data {
     for (let a of audio) {
       let audio_t = a[0];
       let freq_n = a[1];
+      let path = `/audio/${config_id}/${freq_n}/${audio_t}`;
+      if (! this.samples[freq_n]) this.samples[freq_n] = [];
+      this.samples[freq_n].push({ timestamp: audio_t, path: path });
       while (sweep_t == null || (sweep_t != 0 && audio_t > sweep_t)) {
         let sweep = this.spectrum.levels[++sweep_n];
         sweep_t = sweep ? sweep.fields.timestamp : 0;
       }
-      this.audio[`${sweep_n - 1}_${freq_n}`] = `/audio/${config_id}/${freq_n}/${audio_t}`;
+      this.audio[`${sweep_n - 1}_${freq_n}`] = path;
     }
   }
 

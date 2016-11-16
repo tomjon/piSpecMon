@@ -3,6 +3,7 @@ import { Observable } from 'rxjs/Observable';
 import { FrequencyComponent } from './frequency.component';
 import { LevelComponent } from './level.component';
 import { WaterfallComponent } from './waterfall.component';
+import { SampleTableComponent } from './sample-table.component';
 import { RdsTableComponent } from './rds-table.component';
 import { DataService } from './data.service';
 import { Config } from './config';
@@ -11,7 +12,7 @@ import { Data } from './data';
 @Component({
   selector: 'psm-charts',
   templateUrl: 'templates/charts.html',
-  directives: [ FrequencyComponent, LevelComponent, WaterfallComponent, RdsTableComponent ]
+  directives: [ FrequencyComponent, LevelComponent, WaterfallComponent, SampleTableComponent, RdsTableComponent ]
 })
 export class ChartsComponent {
   config: Config;
