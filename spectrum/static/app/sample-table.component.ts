@@ -22,7 +22,7 @@ import { Data } from './data';
                    <th>Timestamp</th>
                    <th>Sample</th>
                  </tr>
-                 <tr *ngFor="let sample of samples[freq_n]">
+                 <tr *ngFor="let sample of samples[freq_n].slice().reverse()">
                    <td>{{sample.timestamp | date}}</td>
                    <td><audio controls src="{{sample.path}}" preload="none"></audio></td>
                  </tr>
