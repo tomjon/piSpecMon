@@ -44,10 +44,6 @@ RUN_PATH=`vbl MONKEY_RUN_PATH`
 sudo mkdir -p $RUN_PATH
 sudo chown $USER: $RUN_PATH
 
-# allow server to create the secret key file
-KEY_DIR=`vbl SECRET_KEY`
-sudo chown $USER: `dirname $KEY_DIR`
-
 # install the SSMTP config
 hash apt-get 2>/dev/null && (
   SSMTP_CONF=`vbl SSMTP_CONF`
