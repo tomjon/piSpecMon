@@ -77,6 +77,7 @@ class Monkey(Process):
         text_0 = None
         while time() < time_0 + rds['rds_timeout']:
             text = api.get_text()
+            text = text.encode('ascii', 'ignore') #FIXME should be able to store Unicode
             self.status['strength'] = api.get_strength()
             self.status['text'] = text
             yield
