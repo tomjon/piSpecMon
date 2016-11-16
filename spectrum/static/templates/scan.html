@@ -42,11 +42,11 @@
     </div>
     <div class="form-group" *ngFor="let freq of config.freqs.freqs; let n = index; let last = last">
       <div class="psm-input-group col-lg-3">
-        <input [disabled]="loading || worker.config_id || ! allowFreqs" type="text" required class="form-control" [(ngModel)]="freq.f" [ngModelOptions]="{standalone: true}">
+        <input [disabled]="loading || worker.config_id || ! allowFreqs" type="text" required class="form-control" [(ngModel)]="freq.f" name="value_{{n}}">
         <div *ngIf="last" class="help">value</div>
       </div>
       <div class="psm-input-group col-lg-3">
-        <select class="form-control" [disabled]="loading || worker.config_id || ! allowFreqs" [(ngModel)]="freq.exp" [ngModelOptions]="{standalone: true}">
+        <select class="form-control" [disabled]="loading || worker.config_id || ! allowFreqs" [(ngModel)]="freq.exp" name="units_{{n}}">
           <option *ngFor="let u of units" value="{{u.value}}">{{u.label}}</option>
         </select>
         <div *ngIf="last" class="help">units</div>
