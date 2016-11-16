@@ -145,7 +145,8 @@ export class Data {
 
           let v = this.spectrum.agg[x][idx].v;
 
-          if (idx > 0 && idx + 1 < this.spectrum.agg[x].length) {
+          // peak detection - only do this when scanning a range
+          if (this.freqs.range && idx > 0 && idx + 1 < this.spectrum.agg[x].length) {
             if (this.spectrum.agg[x][idx - 1].v >= v || v < this.spectrum.agg[x][idx + 1].v) {
               continue;
             }
