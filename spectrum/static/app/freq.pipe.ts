@@ -26,21 +26,4 @@ export class FreqPipe implements PipeTransform {
     }
     return r;
   }
-//    f = +this.data.freqs.range[0] + i * this.data.freqs.range[2]; // 'snap' to an actual frequency value
-//    f = f.toFixed(-Math.log10(this.data.freqs.range[2]));
-
-// let freq = this.data.freqs.freqs[idx];
-// let s = (+freq.f).toFixed(3) + ' ' + HZ_LABELS[freq.exp];
-// OR
-// var range = this.data.freqs.range;
-// var f = +range[0] + idx * +range[2];
-// let s = +f.toFixed(3) + ' ' + HZ_LABELS[this.data.freqs.exp];
-
-//if (this.allowRange) {
-//  let f = +this.config.freqs.range[0] + this.config.freqs.range[2] * freq_n;
-//  return `${f.toFixed(-Math.log10(this.config.freqs.range[2]))}${HZ_LABELS[this.config.freqs.exp]}`;
-//} else {
-//  let f = this.config.freqs.freqs[freq_n].f;
-//  return `${f}${HZ_LABELS[this.config.freqs.freqs[freq_n].exp]}`;
-//}
 }

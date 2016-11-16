@@ -56,6 +56,8 @@ export class AppComponent {
 
   constructor(private dataService: DataService, private messageService: MessageService) { }
 
+  @ViewChild('table') table;
+
   ngOnInit() {
     this.dataService.getCurrentUser()
                     .subscribe(user => { this.user = user; this.checkSuperior() });
@@ -72,14 +74,38 @@ export class AppComponent {
   monitor() {
     this.dataService.getMonitor()
                     .subscribe(
-                      status => this.status = status,
+                      status => this.setStatus(status),
                       error => window.location.assign('/')
                     );
   }
 
   setConfig(config: Config) {
     this.config = config;
-    this.values = config ? config.values : undefined;
+    if (config != undefined && ! this.running) this.values = config.values;
+  }
+
+  private get running(): boolean {
+    if (! this.status) return false;
+    if (this.status.worker && this.status.worker.config_id) return true;
+    if (this.status.monkey && this.status.monkey.config_id) return true;
+    return false;
+  }
+
+  setStatus(status: any) {
+    this.status = status;
+    if (status != undefined) {
+      let config_id: string = undefined;
+      if (status.worker) {
+        config_id = status.worker.config_id;
+      }
+      if (config_id == undefined && status.monkey) {
+        config_id = status.monkey.config_id;
+      }
+      if (config_id != undefined) {
+        let config: Config = this.table.getConfig(config_id);
+        if (config != undefined) this.values = config.values;
+      }
+    }
   }
 
   setIdent(ident: any) {
