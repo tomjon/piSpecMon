@@ -5,10 +5,9 @@ import os
 import re
 import mimetypes
 import functools
-import datetime
-from slugify import slugify
 from time import time
 from datetime import datetime
+from slugify import slugify
 from flask import Flask, current_app, redirect, request, Response, send_file
 from flask_login import LoginManager, login_user, login_required, current_user, logout_user
 from spectrum.worker import Worker
@@ -82,6 +81,8 @@ class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
         return None
 
     def get_ident(self):
+        """ Get identification information about the PSM unit.
+        """
         ident = {}
 
         path = os.path.join(self.root_path, VERSION_FILE)
@@ -93,6 +94,8 @@ class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
         return ident
 
     def set_ident(self, ident):
+        """ Set identification information about the PSM unit.
+        """
         if user_has_role(['admin', 'freq']) and 'description' in ident:
             self.description.write(ident['description'])
 
@@ -506,7 +509,7 @@ def export_endpoint(config_id):
     # yield export data
     def _iter_export(scan_config):
         yield '#TimeDate,'
-        yield ','.join([str(freq) for idx, freq in scan(**scan_config)])
+        yield ','.join([str(freq) for _, freq in scan(**scan_config)])
         yield '\n'
         for timestamp, strengths in config.iter_spectrum():
             yield str(datetime.fromtimestamp(timestamp / 1000))
