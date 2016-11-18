@@ -2,7 +2,6 @@
 """
 from ctypes import cdll, create_unicode_buffer, CDLL, c_char_p, c_long, c_int, pointer
 from ctypes.util import find_library
-from os.path import exists
 from spectrum.common import check_device
 
 

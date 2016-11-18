@@ -4,10 +4,12 @@
 cd "${0%/*}"
 
 # compile typescript into javascript
-hash npm 2>/dev/null || {
+hash npm 2>/dev/null || ({
   curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
   sudo apt-get install nodejs
-}
+  cd spectrum/static
+  npm install
+})
 (cd spectrum/static && npm run tsc)
 
 # build Python egg (includes javascript built above)
@@ -43,10 +45,6 @@ sudo chown $USER: $RUN_PATH
 RUN_PATH=`vbl MONKEY_RUN_PATH`
 sudo mkdir -p $RUN_PATH
 sudo chown $USER: $RUN_PATH
-
-# allow server to create the secret key file
-KEY_DIR=`vbl SECRET_KEY`
-sudo chown $USER: `dirname $KEY_DIR`
 
 # install the SSMTP config
 hash apt-get 2>/dev/null && (

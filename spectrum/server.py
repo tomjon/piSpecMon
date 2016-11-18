@@ -5,10 +5,9 @@ import os
 import re
 import mimetypes
 import functools
-import datetime
-from slugify import slugify
 from time import time
 from datetime import datetime
+from slugify import slugify
 from flask import Flask, current_app, redirect, request, Response, send_file
 from flask_login import LoginManager, login_user, login_required, current_user, logout_user
 from spectrum.worker import Worker
@@ -60,8 +59,6 @@ class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
                     not current_user.is_anonymous and \
                     current_user.is_authenticated
         if filename == 'login.html' or logged_in:
-            if self.debug and filename == 'index.html':
-                filename = 'index-debug.html'
             return super(SecuredStaticFlask, self).send_static_file(filename)
         else:
             return redirect('/')
@@ -82,6 +79,8 @@ class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
         return None
 
     def get_ident(self):
+        """ Get identification information about the PSM unit.
+        """
         ident = {}
 
         path = os.path.join(self.root_path, VERSION_FILE)
@@ -93,6 +92,8 @@ class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
         return ident
 
     def set_ident(self, ident):
+        """ Set identification information about the PSM unit.
+        """
         if user_has_role(['admin', 'freq']) and 'description' in ident:
             self.description.write(ident['description'])
 
@@ -201,7 +202,7 @@ def role_required(roles):
 
 @application.route('/', methods=['GET', 'POST'])
 def main():
-    """ Redirect / to /static/xxx.html where xxx is either index or login.
+    """ Redirect / to index or login page.
     """
     if current_user is not None and not current_user.is_anonymous and current_user.is_authenticated:
         return redirect("/static/index.html")
@@ -506,7 +507,7 @@ def export_endpoint(config_id):
     # yield export data
     def _iter_export(scan_config):
         yield '#TimeDate,'
-        yield ','.join([str(freq) for idx, freq in scan(**scan_config)])
+        yield ','.join([str(freq) for _, freq in scan(**scan_config)])
         yield '\n'
         for timestamp, strengths in config.iter_spectrum():
             yield str(datetime.fromtimestamp(timestamp / 1000))
@@ -589,5 +590,7 @@ def pi_endpoint(command):
 
 
 if __name__ == "__main__":
-    application.debug = True
+    import sys
+
+    application.debug = 'debug' in sys.argv
     application.run(host='0.0.0.0', port=8080)

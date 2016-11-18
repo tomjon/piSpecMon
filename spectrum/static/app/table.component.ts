@@ -66,16 +66,16 @@ export class TableComponent {
     }
   }
 
-  private getConfig(config_id: string): Config {
+  getConfig(config_id: string): Config {
     if (config_id == undefined) {
-      return null;
+      return undefined;
     }
     for (let config of this.configs) {
       if (config.id == config_id) {
         return config;
       }
     }
-    return null;
+    return undefined;
   }
 
   checkedIds(): string[] {
