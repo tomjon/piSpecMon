@@ -1,11 +1,9 @@
 """ Define Worker process, for scanning the spectrum using the rig.
 """
 import os
-import traceback
 from time import sleep
 from spectrum.process import Process
 from spectrum.common import log, parse_config, now, scan
-from spectrum.datastore import StoreError
 from spectrum.monitor import Monitor, TimeoutError, Recorder
 from spectrum.power import power_on
 

@@ -5,11 +5,11 @@ import inspect
 import wave
 from time import sleep
 import Hamlib
-from spectrum.common import check_device
 try:
     import ossaudiodev
 except ImportError:
     import spectrum.fake_ossaudiodev as ossaudiodev
+from spectrum.common import check_device
 
 CHANNELS = 1
 FORMAT = ossaudiodev.AFMT_S16_LE

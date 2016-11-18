@@ -21,7 +21,7 @@ def power_on():
     except NameError as e:
         # otherwise, nothing we can do
         log.info("No GPIO: can not power on: %s", str(e))
-    else:    
+    else:
         GPIO.setup(RADIO_ON_SWITCH, GPIO.OUT, initial=GPIO.LOW)
         sleep(RADIO_ON_SLEEP_SECS)
         GPIO.output(RADIO_ON_SWITCH, GPIO.HIGH)

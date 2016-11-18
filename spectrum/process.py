@@ -19,7 +19,7 @@ class Process(object):
         self.data_store = data_store
         try:
             os.makedirs(run_path)
-        except:
+        except OSError:
             pass
         self.pid_file = os.path.join(run_path, 'pid')
         self.config_file = os.path.join(run_path, 'config')
