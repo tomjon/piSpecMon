@@ -5,15 +5,19 @@ import time
 import httplib
 import json
 import os
+import pytest
 from spectrum.process import Process
 from spectrum.datastore import ConfigBase, SettingsBase
 from spectrum.common import log
 from spectrum.users import IncorrectPasswordError, InvalidUsername
 import spectrum.server as server
 
-
+LOGIN = {'username': 'bilbo', 'password': 'baggins'}
 USER_DATA = { 'role': 'data' }
 DESCRIPTION = 'description message'
+USER_TIMEOUT_SECS = 2
+PI_CONTROL_PATH = ''
+TEST_VERSION = 'v1.test'
 
 class MockConfig(ConfigBase):
     def read(self):
@@ -37,14 +41,14 @@ class MockDataStore(object):
 
 class MockUsers(object):
     def check_user(self, username, password):
-        if username == 'bilbo':
-            if password == 'baggins':
+        if username == LOGIN['username']:
+            if password == LOGIN['password']:
                 return USER_DATA
             raise IncorrectPasswordError()
         raise InvalidUsername()
 
     def get_user(self, username):
-        return USER_DATA if username == 'bilbo' else None
+        return USER_DATA if username == LOGIN['username'] else None
 
 class MockWorkerClient(object):
     pass
@@ -52,12 +56,10 @@ class MockWorkerClient(object):
 class MockMonkeyClient(object):
     pass
 
-
-def test(tmpdir):
-    USER_TIMEOUT_SECS = 2
-    PI_CONTROL_PATH = ''
-    TEST_VERSION = 'v1.test'
-
+@pytest.fixture()
+def api(tmpdir):
+    """ Pytest fixture returning a configured test web API.
+    """
     log_path = os.path.join(str(tmpdir), 'logs')
     os.makedirs(log_path)
 
@@ -71,8 +73,10 @@ def test(tmpdir):
     server.application.initialise(MockDataStore(), MockUsers(), MockWorkerClient(), MockMonkeyClient(),
                                   {}, {}, {}, {}, log_path, version_file, USER_TIMEOUT_SECS,
                                   export_directory, PI_CONTROL_PATH)
-    api = server.application.test_client()
+    return server.application.test_client()
 
+
+def test_login(api):
     # root URL should redirect to /login.html
     rv = api.get('/', follow_redirects=True)
     assert 'enter your' in rv.data
@@ -82,7 +86,7 @@ def test(tmpdir):
     assert rv.status_code == httplib.UNAUTHORIZED
 
     # log in, which should redirect to /index.html
-    rv = api.post('/login', data={'username': 'bilbo', 'password': 'baggins'}, follow_redirects=True)
+    rv = api.post('/login', data=LOGIN, follow_redirects=True)
     assert rv.status_code == httplib.OK
     assert '<title>' in rv.data
 
@@ -103,3 +107,11 @@ def test(tmpdir):
     ident = json.loads(rv.data)
     assert ident['version'] == TEST_VERSION
     assert ident['description'] == DESCRIPTION
+
+    # let my login lapse, then log back in
+    time.sleep(USER_TIMEOUT_SECS + 1)
+    rv = api.get('/ident')
+    assert rv.status_code == httplib.UNAUTHORIZED
+    rv = api.post('/login', data=LOGIN, follow_redirects=True)
+    assert rv.status_code == httplib.OK
+    assert '<title>' in rv.data
