@@ -4,6 +4,7 @@ import multiprocessing
 import time
 import httplib
 import json
+import os
 from spectrum.process import Process
 from spectrum.datastore import ConfigBase, SettingsBase
 from spectrum.common import log
@@ -51,10 +52,27 @@ class MockWorkerClient(object):
 class MockMonkeyClient(object):
     pass
 
-server.application.initialise(MockDataStore(), MockUsers(), MockWorkerClient(), MockMonkeyClient())
-api = server.application.test_client()
 
 def test(tmpdir):
+    USER_TIMEOUT_SECS = 2
+    PI_CONTROL_PATH = ''
+    TEST_VERSION = 'v1.test'
+
+    log_path = os.path.join(str(tmpdir), 'logs')
+    os.makedirs(log_path)
+
+    version_file = os.path.join(str(tmpdir), 'version')
+    with open(version_file, 'w') as f:
+        f.write(TEST_VERSION)
+
+    export_directory = os.path.join(str(tmpdir), 'export')
+    os.makedirs(export_directory)
+
+    server.application.initialise(MockDataStore(), MockUsers(), MockWorkerClient(), MockMonkeyClient(),
+                                  {}, {}, {}, {}, log_path, version_file, USER_TIMEOUT_SECS,
+                                  export_directory, PI_CONTROL_PATH)
+    api = server.application.test_client()
+
     # root URL should redirect to /login.html
     rv = api.get('/', follow_redirects=True)
     assert 'enter your' in rv.data
@@ -82,4 +100,6 @@ def test(tmpdir):
     # now try /ident again
     rv = api.get('/ident')
     assert rv.status_code == httplib.OK
-    assert json.loads(rv.data)['description'] == DESCRIPTION
+    ident = json.loads(rv.data)
+    assert ident['version'] == TEST_VERSION
+    assert ident['description'] == DESCRIPTION

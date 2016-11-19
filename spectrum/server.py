@@ -13,9 +13,6 @@ from flask_login import LoginManager, login_user, login_required, current_user, 
 from spectrum.tail import iter_tail
 from spectrum.monitor import get_capabilities
 from spectrum.datastore import StoreError
-from spectrum.config import DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, \
-                            DEFAULT_SCAN_SETTINGS, LOG_PATH, VERSION_FILE, USER_TIMEOUT_SECS, \
-                            EXPORT_DIRECTORY, PI_CONTROL_PATH
 from spectrum.common import log, now, parse_config, scan
 from spectrum.users import IncorrectPasswordError, UsersError
 
@@ -33,7 +30,9 @@ class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
         self._init_logging()
         LoginManager().init_app(self)
 
-    def initialise(self, data_store, users, worker_client, monkey_client):
+    def initialise(self, data_store, users, worker_client, monkey_client, default_rig_settings,
+                   default_audio_settings, default_rds_settings, default_scan_settings,
+                   log_path, version_file, user_timeout_secs, export_directory, pi_control_path):
         """ Finish initialising the application.
         """
         # pylint: disable=attribute-defined-outside-init
@@ -45,13 +44,18 @@ class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
         log.info("%d rig models", len(self.caps['models']))
         self.data_store = data_store
         self.users = users
-        self.rig = self.data_store.settings('rig').read(DEFAULT_RIG_SETTINGS)
-        self.audio = self.data_store.settings('audio').read(DEFAULT_AUDIO_SETTINGS)
-        self.rds = self.data_store.settings('rds').read(DEFAULT_RDS_SETTINGS)
-        self.scan = self.data_store.settings('scan').read(DEFAULT_SCAN_SETTINGS)
+        self.rig = self.data_store.settings('rig').read(default_rig_settings)
+        self.audio = self.data_store.settings('audio').read(default_audio_settings)
+        self.rds = self.data_store.settings('rds').read(default_rds_settings)
+        self.scan = self.data_store.settings('scan').read(default_scan_settings)
         self.description = self.data_store.settings('description').read('')
         self.worker = worker_client
         self.monkey = monkey_client
+        self.log_path = log_path
+        self.version_file = version_file
+        self.user_timeout_secs = user_timeout_secs
+        self.export_directory = export_directory
+        self.pi_control_path = pi_control_path
 
     def _init_logging(self):
         # add log handlers to Flask's logger for when Werkzeug isn't the underlying WSGI server
@@ -74,7 +78,7 @@ class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
         """
         # check for user timeouts
         for name in self.logged_in_users:
-            if not self.debug and time() > self.request_times[name] + USER_TIMEOUT_SECS:
+            if not self.debug and time() > self.request_times[name] + self.user_timeout_secs:
                 self.logged_in_users.remove(name)
         # check whether current user has been logged out?
         if not hasattr(current_user, 'name'):
@@ -89,7 +93,7 @@ class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
         """
         ident = {}
 
-        path = os.path.join(self.root_path, VERSION_FILE)
+        path = os.path.join(self.root_path, self.version_file)
         with open(path) as f:
             ident['version'] = f.read()
 
@@ -535,7 +539,7 @@ def export_endpoint(config_id):
         response.headers['Content-Disposition'] = 'attachment; filename={0}.csv'.format(name)
         return response
     else:
-        path = os.path.join(EXPORT_DIRECTORY, '{0}.csv'.format(name))
+        path = os.path.join(application.export_directory, '{0}.csv'.format(name))
         with open(path, 'w') as f:
             for x in export:
                 f.write(x)
@@ -569,7 +573,7 @@ def ui_endpoint(key=None):
 def log_endpoint(name):
     """ Endpoint for serving the contents of a log file.
     """
-    path = os.path.join(LOG_PATH, '{0}.log'.format(name))
+    path = os.path.join(application.log_path, '{0}.log'.format(name))
     if not os.path.exists(path):
         return "No log {0}".format(path), 400
     try:
@@ -589,6 +593,6 @@ def pi_endpoint(command):
     """ Endpoint for executing a Pi control command.
     """
     if command in ['shutdown', 'reboot']:
-        os.system("{0} {1}".format(PI_CONTROL_PATH, command))
+        os.system("{0} {1}".format(application.pi_control_path, command))
         return "OK"
     return "Command not recognized: " + command, 400
