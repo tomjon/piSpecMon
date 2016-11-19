@@ -103,6 +103,7 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points={
         'console_scripts': [
+            'psm-server=spectrum.main:server',
             'psm-worker=spectrum.main:worker',
             'psm-monkey=spectrum.main:monkey',
             'psm-users=spectrum.main:users',

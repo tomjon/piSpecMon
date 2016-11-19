@@ -22,30 +22,37 @@ from spectrum.config import DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAUL
 from spectrum.common import log, now, parse_config, scan
 from spectrum.users import Users, IncorrectPasswordError, UsersError
 
-
 class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
     """ Sub-class Flask to secure static files.
+    
+        The curious looking two-step initialisation is so that the application instance can
+        be created at import time for the decorators to work.
+        
+        None of the methods on this class form part of the module API. The web endpoints are
+        the module API.
     """
     def __init__(self, name):
         super(SecuredStaticFlask, self).__init__(name)
+
+    def initialise(self, login_manager, data_store, users, worker_client, monkey_client):
         self._init_logging()
         self.secret_key = os.urandom(24)
-        self.login_manager = LoginManager()
+        self.login_manager = login_manager #FIXME not used elsewhere - just call init_app?
         self.login_manager.init_app(self)
         self.logged_in_users = []
         self.request_times = {}
         self.before_request(self.check_user_timeout)
         self.caps = get_capabilities()
         log.info("%d rig models", len(self.caps['models']))
-        self.data_store = FsDataStore(DATA_PATH)
-        self.users = Users(USERS_FILE, ROUNDS)
+        self.data_store = data_store
+        self.users = users
         self.rig = self.data_store.settings('rig').read(DEFAULT_RIG_SETTINGS)
         self.audio = self.data_store.settings('audio').read(DEFAULT_AUDIO_SETTINGS)
         self.rds = self.data_store.settings('rds').read(DEFAULT_RDS_SETTINGS)
         self.scan = self.data_store.settings('scan').read(DEFAULT_SCAN_SETTINGS)
         self.description = self.data_store.settings('description').read('')
-        self.worker = Worker(self.data_store, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS).client()
-        self.monkey = Monkey(self.data_store, MONKEY_RUN_PATH, MONKEY_POLL).client()
+        self.worker = worker_client
+        self.monkey = monkey_client
 
     def _init_logging(self):
         # add log handlers to Flask's logger for when Werkzeug isn't the underlying WSGI server
@@ -223,7 +230,7 @@ def favicon():
 # id: name, version and description
 @application.route('/ident', methods=['GET', 'PUT'])
 @role_required(['admin', 'freq', 'data'])
-def id_endpoint():
+def ident_endpoint():
     """ Serve or set the ident.
     """
     if request.method == 'GET':
@@ -524,7 +531,6 @@ def export_endpoint(config_id):
 
     date = datetime.fromtimestamp(config.timestamp / 1000.0)
     date_s = date.strftime("%Y-%m-%d-%H-%M-%S")
-    #name = slugify('{0}_{1}_{2}'.format(date_s, ident['name'], ident['description']))
     name = '_'.join([slugify(x) for x in [date_s, ident['name'], ident['description']]])
 
     if request.method == 'GET':
@@ -589,8 +595,3 @@ def pi_endpoint(command):
         os.system("{0} {1}".format(PI_CONTROL_PATH, command))
         return "OK"
     return "Command not recognized: " + command, 400
-
-
-if __name__ == "__main__":
-    application.debug = True
-    application.run(host='0.0.0.0', port=8080)

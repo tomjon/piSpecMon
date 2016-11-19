@@ -7,12 +7,30 @@ from spectrum.fs_datastore import FsDataStore
 from spectrum.config import DATA_PATH, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS, \
                             MONKEY_RUN_PATH, MONKEY_POLL, CONVERT_PERIOD, \
                             USERS_FILE, ROUNDS, SSMTP_CONF
+from spectrum.config import DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, \
+                            DEFAULT_SCAN_SETTINGS, VERSION_FILE, USER_TIMEOUT_SECS, ROUNDS, \
+                            DATA_PATH, EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, USERS_FILE, \
+                            WORKER_RUN_PATH, MONKEY_RUN_PATH, RADIO_ON_SLEEP_SECS, MONKEY_POLL
 from spectrum.worker import Worker
 from spectrum.monkey import Monkey
 from spectrum.wav2mp3 import walk_convert
 from spectrum.users import Users
 from spectrum.power import power_on, power_off
+from spectrum.server import application
 from spectrum.common import log
+
+
+def init_application():
+    worker_client = Worker(self.data_store, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS).client()
+    monkey_client = Monkey(self.data_store, MONKEY_RUN_PATH, MONKEY_POLL).client()
+    application.initialise(LoginManager(), FsDataStore(DATA_PATH), Users(USERS_FILE, ROUNDS), worker_client, monkey_client)
+    return application
+
+
+def server():
+    init_application()
+    application.debug = True
+    application.run(host='0.0.0.0', port=8080)
 
 
 def worker():
