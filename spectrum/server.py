@@ -10,35 +10,34 @@ from datetime import datetime
 from slugify import slugify
 from flask import Flask, current_app, redirect, request, Response, send_file
 from flask_login import LoginManager, login_user, login_required, current_user, logout_user
-from spectrum.worker import Worker
-from spectrum.monkey import Monkey
 from spectrum.tail import iter_tail
 from spectrum.monitor import get_capabilities
-from spectrum.fs_datastore import FsDataStore, StoreError
+from spectrum.datastore import StoreError
 from spectrum.config import DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, \
-                            DEFAULT_SCAN_SETTINGS, VERSION_FILE, USER_TIMEOUT_SECS, ROUNDS, \
-                            DATA_PATH, EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, USERS_FILE, \
-                            WORKER_RUN_PATH, MONKEY_RUN_PATH, RADIO_ON_SLEEP_SECS, MONKEY_POLL
+                            DEFAULT_SCAN_SETTINGS, LOG_PATH, VERSION_FILE, USER_TIMEOUT_SECS, \
+                            EXPORT_DIRECTORY, PI_CONTROL_PATH
 from spectrum.common import log, now, parse_config, scan
-from spectrum.users import Users, IncorrectPasswordError, UsersError
+from spectrum.users import IncorrectPasswordError, UsersError
 
 class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
     """ Sub-class Flask to secure static files.
-    
+
         The curious looking two-step initialisation is so that the application instance can
         be created at import time for the decorators to work.
-        
+
         None of the methods on this class form part of the module API. The web endpoints are
         the module API.
     """
     def __init__(self, name):
         super(SecuredStaticFlask, self).__init__(name)
-
-    def initialise(self, login_manager, data_store, users, worker_client, monkey_client):
         self._init_logging()
+        LoginManager().init_app(self)
+
+    def initialise(self, data_store, users, worker_client, monkey_client):
+        """ Finish initialising the application.
+        """
+        # pylint: disable=attribute-defined-outside-init
         self.secret_key = os.urandom(24)
-        self.login_manager = login_manager #FIXME not used elsewhere - just call init_app?
-        self.login_manager.init_app(self)
         self.logged_in_users = []
         self.request_times = {}
         self.before_request(self.check_user_timeout)
@@ -202,7 +201,7 @@ def role_required(roles):
                 application.request_times[current_user.name] = time()
             if user_has_role(roles):
                 return login_required(func)(*args, **kwargs)
-            return application.login_manager.unauthorized()
+            return application.login_manager.unauthorized() # pylint: disable=no-member
         return _decorated_view
     return _role_decorator
 
@@ -392,7 +391,7 @@ def audio_endpoint(config_id, freq_n, timestamp):
 @application.route('/users')
 @role_required(['admin', 'freq', 'data'])
 def users_endpoint():
-    """ Endpont for listing user details. If the query string parameter
+    """ Endpoint for listing user details. If the query string parameter
         'current' is specified, just list currently logged in users.
     """
     def _namise_data(name, data):
@@ -417,7 +416,7 @@ def users_endpoint():
 @application.route('/user/<name>', methods=['GET', 'PUT', 'DELETE'])
 @role_required(['admin', 'freq', 'data'])
 def user_endpoint(name=None):
-    """ End point for user manangement.
+    """ Endpoint for user manangement.
     """
     if name is not None:
         if not user_has_role(['admin']):

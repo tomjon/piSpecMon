@@ -21,9 +21,10 @@ from spectrum.common import log
 
 
 def init_application():
-    worker_client = Worker(self.data_store, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS).client()
-    monkey_client = Monkey(self.data_store, MONKEY_RUN_PATH, MONKEY_POLL).client()
-    application.initialise(LoginManager(), FsDataStore(DATA_PATH), Users(USERS_FILE, ROUNDS), worker_client, monkey_client)
+    data_store = FsDataStore(DATA_PATH)
+    worker_client = Worker(data_store, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS).client()
+    monkey_client = Monkey(data_store, MONKEY_RUN_PATH, MONKEY_POLL).client()
+    application.initialise(data_store, Users(USERS_FILE, ROUNDS), worker_client, monkey_client)
     return application
 
 
