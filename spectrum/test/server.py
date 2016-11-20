@@ -115,3 +115,4 @@ def test_login(api):
     rv = api.post('/login', data=LOGIN, follow_redirects=True)
     assert rv.status_code == httplib.OK
     assert '<title>' in rv.data
+
