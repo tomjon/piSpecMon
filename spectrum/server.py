@@ -18,7 +18,7 @@ application = WebApplication(__name__) # pylint: disable=invalid-name
 
 
 @application.route('/', methods=['GET', 'POST'])
-def main():
+def main_endpoint():
     """ Redirect / to index or login page.
     """
     if current_user is not None and not current_user.is_anonymous and current_user.is_authenticated:
@@ -28,7 +28,7 @@ def main():
 
 
 @application.route('/favicon.ico')
-def favicon():
+def favicon_endpoint():
     """ Serve a favicon.
     """
     path = os.path.join(application.root_path, 'static', 'favicon.ico')

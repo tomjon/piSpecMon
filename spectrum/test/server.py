@@ -76,6 +76,12 @@ def api(tmpdir):
     return server.application.test_client()
 
 
+def test_favicon(api):
+    # can get a favicon even when not logged in
+    rv = api.get('/favicon.ico')
+    assert rv.status_code == httplib.OK
+    assert rv.headers['Content-Type'].startswith('image/')
+
 def test_login(api):
     # root URL should redirect to /login.html
     rv = api.get('/', follow_redirects=True)
