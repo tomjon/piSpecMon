@@ -7,8 +7,8 @@ from spectrum.fs_datastore import FsDataStore
 from spectrum.config import DATA_PATH, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS, MONKEY_RUN_PATH, \
                             MONKEY_POLL, CONVERT_PERIOD, USERS_FILE, ROUNDS, SSMTP_CONF, \
                             DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, \
-                            DEFAULT_SCAN_SETTINGS, VERSION_FILE, USER_TIMEOUT_SECS, ROUNDS, \
-                            EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, USERS_FILE
+                            DEFAULT_SCAN_SETTINGS, VERSION_FILE, USER_TIMEOUT_SECS, \
+                            EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH
 from spectrum.worker import Worker
 from spectrum.monkey import Monkey
 from spectrum.wav2mp3 import walk_convert
@@ -19,6 +19,8 @@ from spectrum.common import log
 
 
 def init_application():
+    """ Initiliase the web application object imported from spectrum.server.
+    """
     data_store = FsDataStore(DATA_PATH)
     worker_client = Worker(data_store, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS).client()
     monkey_client = Monkey(data_store, MONKEY_RUN_PATH, MONKEY_POLL).client()
@@ -30,6 +32,8 @@ def init_application():
 
 
 def server():
+    """ Run the Flask web server.
+    """
     init_application()
     application.debug = True
     application.run(host='0.0.0.0', port=8080)
