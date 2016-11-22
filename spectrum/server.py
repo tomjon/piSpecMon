@@ -2,206 +2,23 @@
 """
 import json
 import os
-import re
-import mimetypes
-import functools
 from time import time
 from datetime import datetime
 from slugify import slugify
-from flask import Flask, current_app, redirect, request, Response, send_file
-from flask_login import LoginManager, login_user, login_required, current_user, logout_user
-from spectrum.worker import Worker
-from spectrum.monkey import Monkey
+from flask import redirect, request, Response, send_file
+from flask_login import login_user, current_user, logout_user
 from spectrum.tail import iter_tail
-from spectrum.monitor import get_capabilities
-from spectrum.fs_datastore import FsDataStore, StoreError
-from spectrum.config import DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, \
-                            DEFAULT_SCAN_SETTINGS, VERSION_FILE, USER_TIMEOUT_SECS, ROUNDS, \
-                            DATA_PATH, EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, USERS_FILE, \
-                            WORKER_RUN_PATH, MONKEY_RUN_PATH, RADIO_ON_SLEEP_SECS, MONKEY_POLL
+from spectrum.datastore import StoreError
 from spectrum.common import log, now, parse_config, scan
-from spectrum.users import Users, IncorrectPasswordError, UsersError
+from spectrum.users import IncorrectPasswordError, UsersError
+from spectrum.webapp import WebApplication
 
 
-class SecuredStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
-    """ Sub-class Flask to secure static files.
-    """
-    def __init__(self, name):
-        super(SecuredStaticFlask, self).__init__(name)
-        self._init_logging()
-        self.secret_key = os.urandom(24)
-        self.login_manager = LoginManager()
-        self.login_manager.init_app(self)
-        self.logged_in_users = []
-        self.request_times = {}
-        self.before_request(self.check_user_timeout)
-        self.caps = get_capabilities()
-        log.info("%d rig models", len(self.caps['models']))
-        self.data_store = FsDataStore(DATA_PATH)
-        self.users = Users(USERS_FILE, ROUNDS)
-        self.rig = self.data_store.settings('rig').read(DEFAULT_RIG_SETTINGS)
-        self.audio = self.data_store.settings('audio').read(DEFAULT_AUDIO_SETTINGS)
-        self.rds = self.data_store.settings('rds').read(DEFAULT_RDS_SETTINGS)
-        self.scan = self.data_store.settings('scan').read(DEFAULT_SCAN_SETTINGS)
-        self.description = self.data_store.settings('description').read('')
-        self.worker = Worker(self.data_store, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS).client()
-        self.monkey = Monkey(self.data_store, MONKEY_RUN_PATH, MONKEY_POLL).client()
-
-    def _init_logging(self):
-        # add log handlers to Flask's logger for when Werkzeug isn't the underlying WSGI server
-        for handler in log.handlers:
-            self.logger.addHandler(handler)
-
-    def send_static_file(self, filename):
-        """ Send a static file (overriding Flask's version).
-        """
-        logged_in = current_user is not None and \
-                    not current_user.is_anonymous and \
-                    current_user.is_authenticated
-        if filename == 'login.html' or logged_in:
-            return super(SecuredStaticFlask, self).send_static_file(filename)
-        else:
-            return redirect('/')
-
-    def check_user_timeout(self):
-        """ Check for user timeout since last request.
-        """
-        # check for user timeouts
-        for name in self.logged_in_users:
-            if not self.debug and time() > self.request_times[name] + USER_TIMEOUT_SECS:
-                self.logged_in_users.remove(name)
-        # check whether current user has been logged out?
-        if not hasattr(current_user, 'name'):
-            return None
-        if current_user.name not in self.logged_in_users:
-            logout_user()
-            return "User session timed out", 403
-        return None
-
-    def get_ident(self):
-        """ Get identification information about the PSM unit.
-        """
-        ident = {}
-
-        path = os.path.join(self.root_path, VERSION_FILE)
-        with open(path) as f:
-            ident['version'] = f.read()
-
-        ident['name'] = os.popen('uname -n').read()
-        ident['description'] = self.description.values
-        return ident
-
-    def set_ident(self, ident):
-        """ Set identification information about the PSM unit.
-        """
-        if user_has_role(['admin', 'freq']) and 'description' in ident:
-            self.description.write(ident['description'])
-
-application = SecuredStaticFlask(__name__) # pylint: disable=invalid-name
-
-@application.after_request
-def after_request(response):
-    """ Have Flask do this to the response for every request.
-    """
-    response.headers.add('Accept-Ranges', 'bytes')
-    return response
-
-def send_file_partial(path):
-    """ See http://blog.asgaard.co.uk/2012/08/03/http-206-partial-content-for-flask-python
-
-        We need this for supporting media files with Safari (at least).
-    """
-    range_header = request.headers.get('Range', None)
-    if not range_header:
-        return send_file(path)
-
-    byte1, byte2 = 0, None
-
-    groups = re.search(r'(\d+)-(\d*)', range_header).groups()
-
-    if groups[0]:
-        byte1 = int(groups[0])
-    if groups[1]:
-        byte2 = int(groups[1])
-
-    if byte2 is None:
-        return send_file(path)
-
-    path = os.path.join(current_app.root_path, path)
-    size = os.path.getsize(path)
-
-    length = size - byte1 + 1
-    if byte2 is not None:
-        length = byte2 - byte1 + 1
-
-    data = None
-    with open(path, 'rb') as f:
-        f.seek(byte1)
-        data = f.read(length)
-
-    res = Response(data, 206, mimetype=mimetypes.guess_type(path)[0], direct_passthrough=True)
-    res.headers.add('Content-Range', 'bytes {0}-{1}/{2}'.format(byte1, byte1 + length - 1, size))
-    return res
-
-
-class User(object):
-    """ User session class for flask-login.
-    """
-    def __init__(self, username, data):
-        self.name = username
-        self.data = data
-        self.is_authenticated = True
-        self.is_active = True
-        self.is_anonymous = False
-
-    def get_id(self):
-        """ Get the user id (we use the user name).
-        """
-        return self.name
-
-@application.login_manager.user_loader
-def load_user(username, password=None):
-    """ User loader for flask-login.
-    """
-    if password is not None:
-        user = User(username, application.users.check_user(username, password))
-    else:
-        if username not in application.logged_in_users:
-            return None # log out this user, who was logged in before server restart
-        user = User(username, application.users.get_user(username))
-    if user.data['role'] != 'data':
-        for name in application.logged_in_users:
-            if name == user.name:
-                break
-            data = application.users.get_user(name)
-            if data['role'] != 'data':
-                user.data['role'] = 'data'
-                user.data['superior'] = data
-                break
-    return user
-
-def user_has_role(roles):
-    """ Return whether the user has one of the specified list of roles.
-    """
-    return hasattr(current_user, 'data') and current_user.data['role'] in roles
-
-def role_required(roles):
-    """ Define a decorator for specifying which roles can access which endpoints.
-    """
-    def _role_decorator(func):
-        @functools.wraps(func)
-        def _decorated_view(*args, **kwargs):
-            if hasattr(current_user, 'name'):
-                application.request_times[current_user.name] = time()
-            if user_has_role(roles):
-                return login_required(func)(*args, **kwargs)
-            return application.login_manager.unauthorized()
-        return _decorated_view
-    return _role_decorator
+application = WebApplication(__name__) # pylint: disable=invalid-name
 
 
 @application.route('/', methods=['GET', 'POST'])
-def main():
+def main_endpoint():
     """ Redirect / to index or login page.
     """
     if current_user is not None and not current_user.is_anonymous and current_user.is_authenticated:
@@ -211,7 +28,7 @@ def main():
 
 
 @application.route('/favicon.ico')
-def favicon():
+def favicon_endpoint():
     """ Serve a favicon.
     """
     path = os.path.join(application.root_path, 'static', 'favicon.ico')
@@ -220,8 +37,8 @@ def favicon():
 
 # id: name, version and description
 @application.route('/ident', methods=['GET', 'PUT'])
-@role_required(['admin', 'freq', 'data'])
-def id_endpoint():
+@application.role_required(['admin', 'freq', 'data'])
+def ident_endpoint():
     """ Serve or set the ident.
     """
     if request.method == 'GET':
@@ -233,7 +50,7 @@ def id_endpoint():
 
 # rig capabilities API
 @application.route('/caps')
-@role_required(['admin', 'freq', 'data'])
+@application.role_required(['admin', 'freq', 'data'])
 def caps():
     """ Serve rig capabilities JSON.
     """
@@ -244,7 +61,7 @@ def caps():
 @application.route('/audio', methods=['GET', 'PUT'])
 @application.route('/rds', methods=['GET', 'PUT'])
 @application.route('/scan', methods=['GET', 'PUT'])
-@role_required(['admin', 'freq'])
+@application.role_required(['admin', 'freq'])
 def settings():
     """ Settings API: endpoints for serving and putting settings.
     """
@@ -257,7 +74,7 @@ def settings():
 
 
 @application.route('/monitor', methods=['GET', 'PUT', 'DELETE'])
-@role_required(['admin', 'freq', 'data'])
+@application.role_required(['admin', 'freq', 'data'])
 def monitor():
     """ Monitor API.
 
@@ -302,7 +119,7 @@ def monitor():
 
 @application.route('/config')
 @application.route('/config/<config_ids>', methods=['GET', 'DELETE'])
-@role_required(['admin', 'freq', 'data'])
+@application.role_required(['admin', 'freq', 'data'])
 def config_endpoint(config_ids=None):
     """ Endpoint for obtaining or deleting config objects by id (or all config objects
         if no config ids specified - only for GET).
@@ -318,7 +135,7 @@ def config_endpoint(config_ids=None):
             data = [_config_dict(x) for x in application.data_store.iter_config(config_ids=ids)]
             return json.dumps({'data': data})
         else:
-            if not user_has_role(['admin']):
+            if not application.user_has_role(['admin']):
                 return "Need 'admin' privilege to delete", 400
             if config_ids is None:
                 return "No config ids specified to delete", 400
@@ -336,7 +153,7 @@ def config_endpoint(config_ids=None):
 
 
 @application.route('/data/<config_id>')
-@role_required(['admin', 'freq', 'data'])
+@application.role_required(['admin', 'freq', 'data'])
 def data_endpoint(config_id):
     """ Get spectrum, audio and RDS data for the specified config id. A range may be
         specified using 'start' and 'end' query string parameters.
@@ -362,7 +179,7 @@ def data_endpoint(config_id):
 
 
 @application.route('/audio/<config_id>/<freq_n>/<timestamp>')
-@role_required(['admin', 'freq', 'data'])
+@application.role_required(['admin', 'freq', 'data'])
 def audio_endpoint(config_id, freq_n, timestamp):
     """ Endpoint for streaming audio sample data.
     """
@@ -376,16 +193,16 @@ def audio_endpoint(config_id, freq_n, timestamp):
     for ext in ['mp3', 'ogg', 'wav']:
         path = '{0}.{1}'.format(base, ext)
         try:
-            return send_file_partial(path)
-        except IOError:
-            pass
+            return application.send_file_partial(path)
+        except IOError as e:
+            log.error("Error sending file partial: %s", e)
     return 'File not found', 404
 
 
 @application.route('/users')
-@role_required(['admin', 'freq', 'data'])
+@application.role_required(['admin', 'freq', 'data'])
 def users_endpoint():
-    """ Endpont for listing user details. If the query string parameter
+    """ Endpoint for listing user details. If the query string parameter
         'current' is specified, just list currently logged in users.
     """
     def _namise_data(name, data):
@@ -400,7 +217,7 @@ def users_endpoint():
     if request.args.get('current') is not None:
         data = application.logged_in_users
     else:
-        if not user_has_role(['admin']):
+        if not application.user_has_role(['admin']):
             return "Need 'admin' privilege to get details of other users", 400
         data = [_namise_data(name, data) for name, data in application.users.iter_users()]
     return json.dumps({'data': data})
@@ -408,12 +225,12 @@ def users_endpoint():
 
 @application.route('/user', methods=['GET', 'POST'])
 @application.route('/user/<name>', methods=['GET', 'PUT', 'DELETE'])
-@role_required(['admin', 'freq', 'data'])
+@application.role_required(['admin', 'freq', 'data'])
 def user_endpoint(name=None):
-    """ End point for user manangement.
+    """ Endpoint for user manangement.
     """
     if name is not None:
-        if not user_has_role(['admin']):
+        if not application.user_has_role(['admin']):
             return "Need 'admin' privilege to use this endpoint", 400
         try:
             if request.method == 'GET':
@@ -479,7 +296,7 @@ def login_endpoint():
         username = request.form['username']
         password = request.form['password']
         try:
-            user = load_user(username, password)
+            user = application.load_user(username, password)
             login_user(user)
             application.request_times[user.name] = time()
             application.logged_in_users.append(user.name)
@@ -488,7 +305,7 @@ def login_endpoint():
     return redirect('/')
 
 @application.route('/logout')
-@role_required(['admin', 'freq', 'data'])
+@application.role_required(['admin', 'freq', 'data'])
 def logout_endpoint():
     """ Logout endpoint.
     """
@@ -500,7 +317,7 @@ def logout_endpoint():
 
 
 @application.route('/export/<config_id>', methods=['GET', 'POST'])
-@role_required(['admin', 'freq', 'data'])
+@application.role_required(['admin', 'freq', 'data'])
 def export_endpoint(config_id):
     """ Export data endpoint for writing file locally (POST) or streaming the output (GET).
     """
@@ -522,7 +339,6 @@ def export_endpoint(config_id):
 
     date = datetime.fromtimestamp(config.timestamp / 1000.0)
     date_s = date.strftime("%Y-%m-%d-%H-%M-%S")
-    #name = slugify('{0}_{1}_{2}'.format(date_s, ident['name'], ident['description']))
     name = '_'.join([slugify(x) for x in [date_s, ident['name'], ident['description']]])
 
     if request.method == 'GET':
@@ -530,7 +346,7 @@ def export_endpoint(config_id):
         response.headers['Content-Disposition'] = 'attachment; filename={0}.csv'.format(name)
         return response
     else:
-        path = os.path.join(EXPORT_DIRECTORY, '{0}.csv'.format(name))
+        path = os.path.join(application.export_directory, '{0}.csv'.format(name))
         with open(path, 'w') as f:
             for x in export:
                 f.write(x)
@@ -538,7 +354,7 @@ def export_endpoint(config_id):
 
 
 @application.route('/stats')
-@role_required(['admin'])
+@application.role_required(['admin'])
 def stats_endpoint():
     """ Endpoint for serving data store stats.
     """
@@ -547,7 +363,7 @@ def stats_endpoint():
 
 @application.route('/ui')
 @application.route('/ui/<key>', methods=['PUT'])
-@role_required(['admin', 'freq', 'data'])
+@application.role_required(['admin', 'freq', 'data'])
 def ui_endpoint(key=None):
     """ Endpoint for managing a user's UI settings.
     """
@@ -560,11 +376,11 @@ def ui_endpoint(key=None):
 
 
 @application.route('/log/<name>')
-@role_required(['admin'])
+@application.role_required(['admin'])
 def log_endpoint(name):
     """ Endpoint for serving the contents of a log file.
     """
-    path = os.path.join(LOG_PATH, '{0}.log'.format(name))
+    path = os.path.join(application.log_path, '{0}.log'.format(name))
     if not os.path.exists(path):
         return "No log {0}".format(path), 400
     try:
@@ -579,18 +395,11 @@ def log_endpoint(name):
 
 
 @application.route('/pi/<command>')
-@role_required(['admin'])
+@application.role_required(['admin'])
 def pi_endpoint(command):
     """ Endpoint for executing a Pi control command.
     """
     if command in ['shutdown', 'reboot']:
-        os.system("{0} {1}".format(PI_CONTROL_PATH, command))
+        os.system("{0} {1}".format(application.pi_control_path, command))
         return "OK"
     return "Command not recognized: " + command, 400
-
-
-if __name__ == "__main__":
-    import sys
-
-    application.debug = 'debug' in sys.argv
-    application.run(host='0.0.0.0', port=8080)
