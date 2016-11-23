@@ -8,7 +8,7 @@ from spectrum.config import DATA_PATH, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS, MON
                             MONKEY_POLL, CONVERT_PERIOD, USERS_FILE, ROUNDS, SSMTP_CONF, \
                             DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, \
                             DEFAULT_SCAN_SETTINGS, VERSION_FILE, USER_TIMEOUT_SECS, \
-                            EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH
+                            EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, PICO_PATH
 from spectrum.worker import Worker
 from spectrum.monkey import Monkey
 from spectrum.wav2mp3 import walk_convert
@@ -27,7 +27,7 @@ def init_application():
     application.initialise(data_store, Users(USERS_FILE, ROUNDS), worker_client, monkey_client,
                            DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS,
                            DEFAULT_SCAN_SETTINGS, LOG_PATH, VERSION_FILE, USER_TIMEOUT_SECS,
-                           EXPORT_DIRECTORY, PI_CONTROL_PATH)
+                           EXPORT_DIRECTORY, PI_CONTROL_PATH, PICO_PATH)
     return application
 
 

@@ -100,7 +100,7 @@ def api(tmpdir):
     server.application.initialise(MockDataStore(), MockUsers(), MockWorkerClient(),
                                   MockMonkeyClient(), {}, {}, {}, {}, log_path,
                                   version_file, USER_TIMEOUT_SECS,
-                                  export_directory, PI_CONTROL_PATH)
+                                  export_directory, PI_CONTROL_PATH, '')
     return server.application.test_client()
 
 

@@ -2,6 +2,7 @@
 """
 import json
 import os
+import subprocess
 from time import time
 from datetime import datetime
 from slugify import slugify
@@ -403,3 +404,17 @@ def pi_endpoint(command):
         os.system("{0} {1}".format(application.pi_control_path, command))
         return "OK"
     return "Command not recognized: " + command, 400
+
+
+@application.route('/pico')
+@application.role_required(['admin'])
+def pico_endpoint():
+    """ Endpoint for returning the output of pico_status.py.
+    """
+    result = {}
+    try:
+        python = subprocess.check_output(['which', 'python']).strip()
+        result['text'] = subprocess.check_output([python, application.pico_path], stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        result['error'] = e.output
+    return json.dumps(result)

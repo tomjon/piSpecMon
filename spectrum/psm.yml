@@ -38,6 +38,9 @@ data_path: /var/lib/psm
 # location of the pi_control binary
 pi_control_path: /usr/bin/pi_control
 
+# location of the pico_status script
+pico_path: /usr/local/bin/pico_status.py
+
 # how often (in s) the wav2mp3 converter should run
 convert_period: 300
 
