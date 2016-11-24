@@ -8,10 +8,12 @@ log:
 
 # Worker (spectrum scanner)
 worker:
+    config_file: /var/lib/psm/worker-config_id
     run_path: /var/run/psm-worker
 
 # Monkey (RDS decoder)
 monkey:
+    config_file: /var/lib/psm/monkey-config_id
     run_path: /var/run/psm-monkey
     poll: 1.0
 
