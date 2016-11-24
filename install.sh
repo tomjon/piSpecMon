@@ -60,8 +60,10 @@ hash apt-get 2>/dev/null && (
 # install the systemd service descriptors and restart services
 hash systemctl 2>/dev/null && (
   cd spectrum/bin
+  sudo cp psm.target /lib/systemd/system
   sudo cp psm.*.service /lib/systemd/system
   sudo systemctl daemon-reload
+  sudo systemctl enable psm.target
   sudo systemctl enable psm.*.service
   sudo systemctl restart psm.*.service
 )

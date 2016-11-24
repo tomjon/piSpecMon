@@ -1,9 +1,10 @@
 [Unit]
 Description=Create /dev/dsp* for audio devices
+After=sound.target
 
 [Service]
 Type=oneshot
 ExecStart=/sbin/modprobe snd_pcm_oss
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=psm.target

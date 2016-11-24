@@ -1,6 +1,5 @@
 [Unit]
 Description=Send email to central server
-Wants=network-online.target
 After=network-online.target
 
 [Service]
@@ -8,4 +7,4 @@ Type=oneshot
 ExecStart=/home/ses/piSpecMon/spectrum/bin/mail.sh
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=psm.target
