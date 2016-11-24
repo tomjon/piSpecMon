@@ -12,8 +12,8 @@ except ImportError:
 class Monkey(Process):
     """ Process implementation for decoding RDS using the Monkey board.
     """
-    def __init__(self, data_store, run_path, poll):
-        super(Monkey, self).__init__(data_store, run_path)
+    def __init__(self, data_store, run_path, config_file, poll):
+        super(Monkey, self).__init__(data_store, run_path, config_file)
         self.poll = poll
 
     # execute v=fn() until condition(v) is True, or the timeout is exceeded
