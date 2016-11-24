@@ -149,3 +149,8 @@ def check_device(value):
     if os.path.basename(value) != value:
         raise Exception("Bad device specifier: {0}".format(value))
     return '/dev/{0}'.format(value)
+
+def psm_name():
+    """ Return the box name.
+    """
+    return os.popen('uname -n').read().strip()

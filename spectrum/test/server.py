@@ -6,7 +6,6 @@ import httplib
 import json
 import os
 import pytest
-from spectrum.process import Process
 from spectrum.datastore import ConfigBase, SettingsBase
 from spectrum.common import log
 from spectrum.users import IncorrectPasswordError, InvalidUsername
@@ -83,6 +82,12 @@ class MockMonkeyClient(object):
     """
     pass
 
+class MockQueue(object):
+    """ In-memory queue implementation.
+    """
+    pass
+
+
 @pytest.fixture()
 def api(tmpdir):
     """ Pytest fixture returning a configured test web API.
@@ -100,7 +105,8 @@ def api(tmpdir):
     server.application.initialise(MockDataStore(), MockUsers(), MockWorkerClient(),
                                   MockMonkeyClient(), {}, {}, {}, {}, log_path,
                                   version_file, USER_TIMEOUT_SECS,
-                                  export_directory, PI_CONTROL_PATH, '')
+                                  export_directory, PI_CONTROL_PATH, '',
+                                  MockQueue(), 1, '')
     return server.application.test_client()
 
 

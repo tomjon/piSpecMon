@@ -7,28 +7,40 @@ from spectrum.fs_datastore import FsDataStore
 from spectrum.config import DATA_PATH, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS, MONKEY_RUN_PATH, \
                             MONKEY_POLL, CONVERT_PERIOD, USERS_FILE, ROUNDS, SSMTP_CONF, \
                             DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, \
-                            DEFAULT_SCAN_SETTINGS, VERSION_FILE, USER_TIMEOUT_SECS, \
-                            EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, PICO_PATH
+                            DEFAULT_SCAN_SETTINGS, VERSION_FILE, USER_TIMEOUT_SECS, PICO_PATH, \
+                            EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, WORKER_CONFIG_FILE, \
+                            MONKEY_CONFIG_FILE, EVENT_PATH, EVENT_POLL_SECS, EVENT_OVERSEER_URL
 from spectrum.worker import Worker
 from spectrum.monkey import Monkey
 from spectrum.wav2mp3 import walk_convert
 from spectrum.users import Users
 from spectrum.power import power_on, power_off
 from spectrum.server import application
-from spectrum.common import log
+from spectrum.queue import Queue
+from spectrum.event import EventManager
+from spectrum.overseer import application as overseer_app
+from spectrum.common import log, psm_name
 
 
 def init_application():
     """ Initiliase the web application object imported from spectrum.server.
     """
     data_store = FsDataStore(DATA_PATH)
-    worker_client = Worker(data_store, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS).client()
-    monkey_client = Monkey(data_store, MONKEY_RUN_PATH, MONKEY_POLL).client()
+    worker_client = Worker(data_store, WORKER_RUN_PATH, WORKER_CONFIG_FILE, RADIO_ON_SLEEP_SECS).client()
+    monkey_client = Monkey(data_store, MONKEY_RUN_PATH, MONKEY_CONFIG_FILE, MONKEY_POLL).client()
     application.initialise(data_store, Users(USERS_FILE, ROUNDS), worker_client, monkey_client,
                            DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS,
                            DEFAULT_SCAN_SETTINGS, LOG_PATH, VERSION_FILE, USER_TIMEOUT_SECS,
-                           EXPORT_DIRECTORY, PI_CONTROL_PATH, PICO_PATH)
+                           EXPORT_DIRECTORY, PI_CONTROL_PATH, PICO_PATH, Queue(EVENT_PATH),
+                           EVENT_POLL_SECS, EVENT_OVERSEER_URL)
     return application
+
+
+def init_overseer():
+    """ Initialise the overseer application object imported from spectrum.overseer.
+    """
+    overseer_app.initialise({})
+    return overseer_app
 
 
 def server():
@@ -42,7 +54,7 @@ def server():
 def worker():
     """ Run the worker process, for collecting spectrum data.
     """
-    worker_process = Worker(FsDataStore(DATA_PATH), WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS)
+    worker_process = Worker(FsDataStore(DATA_PATH), WORKER_RUN_PATH, WORKER_CONFIG_FILE, RADIO_ON_SLEEP_SECS)
     worker_process.init()
     with open(log.path, 'a') as f:
         Hamlib.rig_set_debug_file(f)
@@ -53,7 +65,7 @@ def worker():
 def monkey():
     """ Run the monkey process, for collecting RDS data.
     """
-    monkey_process = Monkey(FsDataStore(DATA_PATH), MONKEY_RUN_PATH, MONKEY_POLL)
+    monkey_process = Monkey(FsDataStore(DATA_PATH), MONKEY_RUN_PATH, MONKEY_CONFIG_FILE, MONKEY_POLL)
     monkey_process.init()
     monkey_process.start()
 
@@ -108,3 +120,18 @@ def email():
 
     with open(SSMTP_CONF, 'a') as f:
         f.write("AuthPass={0}\n".format(sys.argv[1]))
+
+
+def event():
+    """ Run the PSM Event Manager.
+    """
+    manager = EventManager(psm_name(), Queue(EVENT_PATH), EVENT_POLL_SECS, EVENT_OVERSEER_URL)
+    manager.run()
+
+
+def overseer():
+    """ Run the Overseer web server.
+    """
+    init_overseer()
+    overseer_app.debug = True
+    overseer_app.run(host='0.0.0.0', port=8081)

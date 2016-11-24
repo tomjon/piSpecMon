@@ -46,6 +46,11 @@ RUN_PATH=`vbl MONKEY_RUN_PATH`
 sudo mkdir -p $RUN_PATH
 sudo chown $USER: $RUN_PATH
 
+# create the event queue directory
+EVENT_PATH=`vbl EVENT_PATH`
+sudo mkdir -p $EVENT_PATH
+sudo chown $USER: $EVENT_PATH
+
 # install the SSMTP config
 hash apt-get 2>/dev/null && (
   SSMTP_CONF=`vbl SSMTP_CONF`

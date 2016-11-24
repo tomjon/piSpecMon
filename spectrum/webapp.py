@@ -1,4 +1,4 @@
-""" Flask server for the Server API.
+""" Define a WebApplication that will be used by server.py to provide endpoints.
 """
 import os
 import re
@@ -8,7 +8,8 @@ from time import time
 from flask import Flask, current_app, redirect, request, Response, send_file
 from flask_login import LoginManager, login_required, current_user, logout_user
 from spectrum.monitor import get_capabilities
-from spectrum.common import log
+from spectrum.event import EventManager
+from spectrum.common import log, psm_name
 
 
 class User(object):
@@ -46,7 +47,8 @@ class WebApplication(Flask): # pylint: disable=too-many-instance-attributes
 
     def initialise(self, data_store, users, worker_client, monkey_client, default_rig_settings,
                    default_audio_settings, default_rds_settings, default_scan_settings, log_path,
-                   version_file, user_timeout_secs, export_directory, pi_control_path, pico_path):
+                   version_file, user_timeout_secs, export_directory, pi_control_path, pico_path,
+                   event_queue, event_poll_secs, event_overseer_url):
         """ Finish initialising the application.
         """
         # pylint: disable=attribute-defined-outside-init
@@ -71,6 +73,13 @@ class WebApplication(Flask): # pylint: disable=too-many-instance-attributes
         self.export_directory = export_directory
         self.pi_control_path = pi_control_path
         self.pico_path = pico_path
+
+        self.ident = {'name': psm_name()}
+        with open(os.path.join(self.root_path, self.version_file)) as f:
+            self.ident['version'] = f.read()
+        self.ident['description'] = self.description.values
+
+        self.event_manager = EventManager(self.ident['name'], event_queue, event_poll_secs, event_overseer_url)
 
     def _init_logging(self):
         # add log handlers to Flask's logger for when Werkzeug isn't the underlying WSGI server
@@ -180,21 +189,9 @@ class WebApplication(Flask): # pylint: disable=too-many-instance-attributes
             return "User session timed out", 403
         return None
 
-    def get_ident(self):
-        """ Get identification information about the PSM unit.
-        """
-        ident = {}
-
-        path = os.path.join(self.root_path, self.version_file)
-        with open(path) as f:
-            ident['version'] = f.read()
-
-        ident['name'] = os.popen('uname -n').read()
-        ident['description'] = self.description.values
-        return ident
-
     def set_ident(self, ident):
         """ Set identification information about the PSM unit.
         """
         if self.user_has_role(['admin', 'freq']) and 'description' in ident:
+            self.ident['description'] = ident['description']
             self.description.write(ident['description'])

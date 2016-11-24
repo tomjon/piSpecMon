@@ -43,9 +43,10 @@ def ident_endpoint():
     """ Serve or set the ident.
     """
     if request.method == 'GET':
-        return json.dumps(application.get_ident())
+        return json.dumps(application.ident)
     else:
         application.set_ident(request.get_json())
+        application.event_manager.write_event('ident', application.ident)
         return json.dumps({})
 
 
@@ -92,7 +93,7 @@ def monitor():
         values['rig'] = application.rig.values
         values['audio'] = application.audio.values
         values['rds'] = application.rds.values
-        values['ident'] = application.get_ident()
+        values['ident'] = application.ident
 
         try:
             config = application.data_store.config().write(now(), values)
