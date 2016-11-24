@@ -124,7 +124,6 @@ export class LevelComponent extends Chart {
         d3.max(data, function (d) { return d3.max(d.timestamp.buckets, function (v) { return v.level.value }) })
       ]);
     }
-    this.yAxis.tickFormat(d => '');
     timeTicks(this.xAxis, this.x.domain(), LEVEL_CHART_OPTIONS.x_ticks);
 
     this.svg.append("g")
@@ -132,17 +131,22 @@ export class LevelComponent extends Chart {
         .attr("transform", "translate(0," + this.height + ")")
         .call(this.xAxis)
         .append("text")
+        .attr("text-anchor", "end")
+        .attr("y", -6)
         .attr("transform", "translate(" + this.width + ",0)")
-        .attr("x", 40)
-        .attr("y", 6)
-        .style("text-anchor", "end")
         .text("Time");
 
     this.svg.selectAll('g.x.axis g text').each(insertLineBreaks);
 
     this.svg.append("g")
         .attr("class", "y axis")
-        .call(this.yAxis);
+        .call(this.yAxis)
+        .append("text")
+        .attr("text-anchor", "end")
+        .attr("y", 6)
+        .attr("dy", ".75em")
+        .attr("transform", "rotate(-90)")
+        .text("Indicative Level");
 
     let freq = this.svg.selectAll(".freq")
                    .data(freq_idxs)
