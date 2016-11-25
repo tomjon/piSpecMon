@@ -50,7 +50,7 @@ convert_period: 300
 event:
     path: /var/lib/psm/events
     poll_secs: 10
-    overseer_url: http://localhost:8081
+    overseer_url: 
     overseer_key: 
 
 # overseer settings
