@@ -51,7 +51,7 @@ event:
     path: /var/lib/psm/events
     poll_secs: 10
     overseer_url: http://localhost:8081
-    overseer_key: rabbits
+    overseer_key: 
 
 # overseer settings
 overseer:

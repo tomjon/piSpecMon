@@ -106,7 +106,7 @@ def api(tmpdir):
                                   MockMonkeyClient(), {}, {}, {}, {}, log_path,
                                   version_file, USER_TIMEOUT_SECS,
                                   export_directory, PI_CONTROL_PATH, '',
-                                  MockQueue(), 1, '')
+                                  MockQueue(), 1)
     return server.application.test_client()
 
 
