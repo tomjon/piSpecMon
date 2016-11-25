@@ -48,7 +48,7 @@ class WebApplication(Flask): # pylint: disable=too-many-instance-attributes
     def initialise(self, data_store, users, worker_client, monkey_client, default_rig_settings,
                    default_audio_settings, default_rds_settings, default_scan_settings, log_path,
                    version_file, user_timeout_secs, export_directory, pi_control_path, pico_path,
-                   event_queue, event_poll_secs, event_overseer_url):
+                   event_queue, event_poll_secs):
         """ Finish initialising the application.
         """
         # pylint: disable=attribute-defined-outside-init
@@ -79,7 +79,7 @@ class WebApplication(Flask): # pylint: disable=too-many-instance-attributes
             self.ident['version'] = f.read()
         self.ident['description'] = self.description.values
 
-        self.event_manager = EventManager(self.ident['name'], event_queue, event_poll_secs, event_overseer_url)
+        self.event_manager = EventManager(self.ident['name'], event_queue, event_poll_secs)
 
     def _init_logging(self):
         # add log handlers to Flask's logger for when Werkzeug isn't the underlying WSGI server

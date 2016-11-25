@@ -6,6 +6,9 @@ import binascii
 import os
 import tempfile
 import json
+import re
+
+USERNAME_RE = re.compile(r'^[A-Za-z0-9._-]+$')
 
 
 class UsersError(Exception):
@@ -119,6 +122,10 @@ class Users(object):
         hash_value = hashlib.pbkdf2_hmac('sha256', password, salt, self.rounds)
         return _UserEntry(username, salt, hash_value, data)
 
+    def _validate_username(self, username):
+        if USERNAME_RE.match(username) is None:
+            raise InvalidUsername()
+
     def create_user(self, username, password, data):
         """ Create a password hash from the given password and store the salt
             and resulting hash, along with username and any user data, in the
@@ -128,8 +135,7 @@ class Users(object):
         """
         username = unicode(username)
         password = unicode(password)
-        if not username.isalnum():
-            raise InvalidUsername()
+        self._validate_username(username)
         user = self._new_user(username, password, data)
         for user in self._iter_users(user):
             if user.check_name(username):
@@ -141,8 +147,7 @@ class Users(object):
         """
         username = unicode(username)
         password = unicode(password)
-        if not username.isalnum():
-            raise InvalidUsername()
+        self._validate_username(username)
         for user in self._iter_users():
             if user.name == username:
                 hash_value = hashlib.pbkdf2_hmac('sha256', password, user.salt, self.rounds)

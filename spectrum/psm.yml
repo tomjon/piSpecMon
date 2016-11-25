@@ -50,7 +50,13 @@ convert_period: 300
 event:
     path: /var/lib/psm/events
     poll_secs: 10
-    overseer_url: http://localhost:8081/event
+    overseer_url: http://localhost:8081
+    overseer_key: rabbits
+
+# overseer settings
+overseer:
+    users_file: /var/lib/overseer/users.passwords
+    rounds: 100000
 
 # default settings - if left empty, rig model is set later using Hamlib
 default:

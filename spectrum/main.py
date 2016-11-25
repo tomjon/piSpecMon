@@ -9,7 +9,8 @@ from spectrum.config import DATA_PATH, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS, MON
                             DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, \
                             DEFAULT_SCAN_SETTINGS, VERSION_FILE, USER_TIMEOUT_SECS, PICO_PATH, \
                             EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, WORKER_CONFIG_FILE, \
-                            MONKEY_CONFIG_FILE, EVENT_PATH, EVENT_POLL_SECS, EVENT_OVERSEER_URL
+                            MONKEY_CONFIG_FILE, EVENT_PATH, EVENT_POLL_SECS, EVENT_OVERSEER_URL, \
+                            EVENT_OVERSEER_KEY, OVERSEER_USERS_FILE, OVERSEER_ROUNDS
 from spectrum.worker import Worker
 from spectrum.monkey import Monkey
 from spectrum.wav2mp3 import walk_convert
@@ -32,14 +33,14 @@ def init_application():
                            DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS,
                            DEFAULT_SCAN_SETTINGS, LOG_PATH, VERSION_FILE, USER_TIMEOUT_SECS,
                            EXPORT_DIRECTORY, PI_CONTROL_PATH, PICO_PATH, Queue(EVENT_PATH),
-                           EVENT_POLL_SECS, EVENT_OVERSEER_URL)
+                           EVENT_POLL_SECS)
     return application
 
 
 def init_overseer():
     """ Initialise the overseer application object imported from spectrum.overseer.
     """
-    overseer_app.initialise({})
+    overseer_app.initialise({}, Users(OVERSEER_USERS_FILE, OVERSEER_ROUNDS))
     return overseer_app
 
 
@@ -92,6 +93,18 @@ def users():
     print "User {0} created".format(sys.argv[1])
 
 
+def register():
+    """ Register a PSM unit with the overseer (must be run on the overseer server).
+    """
+    if len(sys.argv) != 3:
+        print "Usage: {0} <PSM name> <key>".format(sys.argv[0])
+        sys.exit(1)
+
+    user_manager = Users(OVERSEER_USERS_FILE, OVERSEER_ROUNDS)
+    user_manager.create_user(sys.argv[1], sys.argv[2], {})
+    print "{0} registered".format(sys.argv[1])
+
+
 def power():
     """ Power on or off the radio.
     """
@@ -125,7 +138,7 @@ def email():
 def event():
     """ Run the PSM Event Manager.
     """
-    manager = EventManager(psm_name(), Queue(EVENT_PATH), EVENT_POLL_SECS, EVENT_OVERSEER_URL)
+    manager = EventManager(psm_name(), Queue(EVENT_PATH), EVENT_POLL_SECS, EVENT_OVERSEER_URL, EVENT_OVERSEER_KEY)
     manager.run()
 
 

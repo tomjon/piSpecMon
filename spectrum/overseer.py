@@ -3,9 +3,10 @@
 import json
 from flask import Flask, request
 from spectrum.common import log, now
+from spectrum.users import IncorrectPasswordError
 
-
-OVERSEER_KEY = 'overseer'
+#FIXME event and heartbeat storage
+#FIXME need to use a SecuredStaticFlask because again need admin/data roles; admin can set up keys
 
 class OverseerApplication(Flask):
     """ The curious looking two-step initialisation is so that the application instance can
@@ -18,10 +19,22 @@ class OverseerApplication(Flask):
         super(OverseerApplication, self).__init__(name)
         self._init_logging()
 
-    def initialise(self, data={}):
+    def initialise(self, data, psm_users):
         """ Finish initialising the application.
         """
+        self.psm_users = psm_users
         self.data = data #FIXME this will become something that serialises itself
+        self.heartbeats = {}
+
+    def validate_psm(self):
+        psm_name = request.form['name'].strip()
+        if len(psm_name) == 0:
+            return "Bad PSM name", 400
+        try:
+            self.psm_users.check_user(psm_name, request.form['key'])
+        except IncorrectPasswordError:
+            return "Bad overseer key", 403
+        return (psm_name,)
 
     def _init_logging(self): #FIXME duplicated from webapp.py
         # add log handlers to Flask's logger for when Werkzeug isn't the underlying WSGI server
@@ -41,13 +54,11 @@ def event_endpoint():
             key  - overseer key for authorisation
             json - JSON event body
     """
-    # validate form parameters
-    name = request.form['name'].strip()
-    if len(name) == 0:
-        return "Bad PSM name", 400
-
-    if request.form['key'] != OVERSEER_KEY:
-        return "Bad overseer key", 403
+    r = application.validate_psm()
+    if len(r) > 1:
+        return r
+    else:
+        psm_name = r[0]
 
     event = json.loads(request.form['json'])
     if not isinstance(event, dict):
@@ -60,11 +71,30 @@ def event_endpoint():
         return "Event missing delivered", 400
 
     # process and store the event
-    if name not in application.data:
-        application.data[name] = []
+    if psm_name not in application.data:
+        application.data[psm_name] = []
     event['received'] = now()
-    application.data[name].append(event)
+    application.data[psm_name].append(event)
 
+    return json.dumps({})
+
+
+@application.route('/heartbeat', methods=['POST'])
+def heartbeat_endpoint():
+    """ Endpoint for PSM units to send a heartbeat.
+    
+        The PSM must supply the following form fields in the request body:
+        
+            name - the name of the PSM box, e.g. PSM17
+            key  - overseer key for authorisation
+    """
+    r = application.validate_psm()
+    if len(r) > 1:
+        return r
+    else:
+        psm_name = r[0]
+
+    application.heartbeats[psm_name] = now()
     return json.dumps({})
 
 
@@ -72,4 +102,4 @@ def event_endpoint():
 def main_endpoint():
     """ Endpoint that returns events for each known PSM.
     """
-    return json.dumps(application.data)
+    return json.dumps({'heartbeats': application.heartbeats, 'events': application.data})

@@ -111,7 +111,8 @@ setup(
             'psm-email=spectrum.main:email',
             'psm-wav2mp3=spectrum.main:wav2mp3',
             'psm-event=spectrum.main:event',
-            'psm-overseer=spectrum.main:overseer'
+            'psm-overseer=spectrum.main:overseer',
+            'psm-register=spectrum.main:register'
         ],
     },
 )
