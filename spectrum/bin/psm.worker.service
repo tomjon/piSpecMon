@@ -1,8 +1,6 @@
 [Unit]
 Description=Pi Spectrum Monitor Worker Service
-After=multi-user.target
-Wants=network-online.target
-After=network-online.target
+After=basic.target
 
 [Service]
 Type=idle
@@ -15,4 +13,4 @@ User=ses
 Group=ses
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=psm.target

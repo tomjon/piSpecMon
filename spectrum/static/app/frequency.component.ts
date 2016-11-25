@@ -105,7 +105,6 @@ export class FrequencyComponent extends Chart {
     } else {
       this.y.domain(d3.extent(agg, d => d.v));
     }
-    this.yAxis.tickFormat(d => '');
 
     this.line.x((d, i) => this.x(+this.data.freqs.range[0] + i * this.data.freqs.range[2]));
 
@@ -115,14 +114,19 @@ export class FrequencyComponent extends Chart {
         .call(this.xAxis)
         .append("text")
         .attr("transform", "translate(" + this.width + ",0)")
-        .attr("x", 40)
-        .attr("y", 6)
-        .style("text-anchor", "end")
+        .attr("text-anchor", "end")
+        .attr("y", -6)
         .text(HZ_LABELS[this.data.freqs.exp]);
 
     this.svg.append("g")
         .attr("class", "y axis")
-        .call(this.yAxis);
+        .call(this.yAxis)
+        .append("text")
+        .attr("text-anchor", "end")
+        .attr("y", 6)
+        .attr("dy", ".75em")
+        .attr("transform", "rotate(-90)")
+        .text("Indicative Level");
 
     this.svg.append("path")
         .datum(agg)

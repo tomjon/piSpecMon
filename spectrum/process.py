@@ -15,15 +15,15 @@ class Process(object):
     """ Start the process with start(), after supplying the data store, pid file,
         config file and status file names.
     """
-    def __init__(self, data_store, run_path):
+    def __init__(self, data_store, run_path, config_file):
         self.data_store = data_store
         try:
             os.makedirs(run_path)
         except OSError:
             pass
         self.pid_file = os.path.join(run_path, 'pid')
-        self.config_file = os.path.join(run_path, 'config')
         self.status_file = os.path.join(run_path, 'status')
+        self.config_file = config_file
         self._exit = False
         self._stop = False
         self._tidy = True

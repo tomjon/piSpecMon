@@ -12,8 +12,8 @@ except ImportError:
 class Monkey(Process):
     """ Process implementation for decoding RDS using the Monkey board.
     """
-    def __init__(self, data_store, run_path, poll):
-        super(Monkey, self).__init__(data_store, run_path)
+    def __init__(self, data_store, run_path, config_file, poll):
+        super(Monkey, self).__init__(data_store, run_path, config_file)
         self.poll = poll
 
     # execute v=fn() until condition(v) is True, or the timeout is exceeded
@@ -77,7 +77,8 @@ class Monkey(Process):
         text_0 = None
         while time() < time_0 + rds['rds_timeout']:
             text = api.get_text()
-            text = text.encode('ascii', 'ignore') #FIXME should be able to store Unicode
+            if text is not None:
+                text = text.encode('ascii', 'ignore') #FIXME should be able to store Unicode
             self.status['strength'] = api.get_strength()
             self.status['text'] = text
             yield

@@ -1,7 +1,7 @@
 """ Unit tests for the users module.
 """
-import pytest
 import os
+import pytest
 from spectrum.users import Users, IncorrectPasswordError, UserAlreadyExistsError
 
 
@@ -26,9 +26,9 @@ def test_no_users(users):
 
     # check operations for a particular user
     assert users.get_user("foo") is None
-    assert users.set_user("foo", {}) == False
-    assert users.update_user("foo", {}) == False
-    assert users.delete_user("foo") == False
+    assert users.set_user("foo", {}) is False
+    assert users.update_user("foo", {}) is False
+    assert users.delete_user("foo") is False
 
     # check you fail to set a password
     with pytest.raises(IncorrectPasswordError):
