@@ -43,7 +43,7 @@ class WebApplication(Flask): # pylint: disable=too-many-instance-attributes
         the module API.
     """
     def __init__(self, name):
-        super(WebApplication, self).__init__(name)
+        super(WebApplication, self).__init__(name, static_folder='psm_ui', static_url_path='/static')
         self._init_logging()
         self.after_request(lambda rsp: rsp.headers.add('Accept-Ranges', 'bytes') or rsp)
         login_manager = LoginManager()

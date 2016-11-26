@@ -40,9 +40,13 @@ samples/
 data/
 settings/
 users.passwords
-spectrum/static/app/*.js
-spectrum/static/app/*.map
-spectrum/static/node_modules
-spectrum/static/typings
+spectrum/psm_ui/app/*.js
+spectrum/psm_ui/app/*.map
+spectrum/psm_ui/node_modules
+spectrum/psm_ui/typings
+spectrum/overseer_ui/app/*.js
+spectrum/overseer_ui/app/*.map
+spectrum/overseer_ui/node_modules
+spectrum/overseer_ui/typings
 .cache/
 spectrum.egg-info

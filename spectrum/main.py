@@ -16,10 +16,8 @@ from spectrum.monkey import Monkey
 from spectrum.wav2mp3 import walk_convert
 from spectrum.users import Users
 from spectrum.power import power_on, power_off
-from spectrum.server import application
 from spectrum.queue import Queue
 from spectrum.event import EventManager, EventClient
-from spectrum.overseer import application as overseer_app
 from spectrum.overseer_data import OverseerData
 from spectrum.common import log, psm_name
 
@@ -27,6 +25,7 @@ from spectrum.common import log, psm_name
 def init_application():
     """ Initiliase the web application object imported from spectrum.server.
     """
+    from spectrum.server import application
     data_store = FsDataStore(DATA_PATH)
     worker_client = Worker(data_store, WORKER_RUN_PATH, WORKER_CONFIG_FILE, RADIO_ON_SLEEP_SECS).client()
     monkey_client = Monkey(data_store, MONKEY_RUN_PATH, MONKEY_CONFIG_FILE, MONKEY_POLL).client()
@@ -41,15 +40,16 @@ def init_application():
 def init_overseer():
     """ Initialise the overseer application object imported from spectrum.overseer.
     """
+    from spectrum.overseer import application
     overseer_data = OverseerData(OVERSEER_DATA_DIR)
-    overseer_app.initialise(overseer_data, Users(OVERSEER_USERS_FILE, OVERSEER_ROUNDS))
-    return overseer_app
+    application.initialise(overseer_data, Users(OVERSEER_USERS_FILE, OVERSEER_ROUNDS))
+    return application
 
 
 def server():
     """ Run the Flask web server.
     """
-    init_application()
+    application = init_application()
     application.debug = True
     application.run(host='0.0.0.0', port=8080)
 
@@ -147,6 +147,6 @@ def event():
 def overseer():
     """ Run the Overseer web server.
     """
-    init_overseer()
-    overseer_app.debug = True
-    overseer_app.run(host='0.0.0.0', port=8081)
+    application = init_overseer()
+    application.debug = True
+    application.run(host='0.0.0.0', port=8081)

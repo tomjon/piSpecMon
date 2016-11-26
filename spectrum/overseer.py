@@ -15,7 +15,7 @@ class OverseerApplication(Flask):
         the module API.
     """
     def __init__(self, name):
-        super(OverseerApplication, self).__init__(name)
+        super(OverseerApplication, self).__init__(name, static_folder='overseer_ui', static_url_path='/static')
         self._init_logging()
 
     def initialise(self, data, psm_users):
