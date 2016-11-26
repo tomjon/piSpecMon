@@ -5,7 +5,6 @@ from flask import Flask, request
 from spectrum.common import log, now
 from spectrum.users import IncorrectPasswordError
 
-#FIXME event and heartbeat storage
 #FIXME need to use a SecuredStaticFlask because again need admin/data roles; admin can set up keys
 
 class OverseerApplication(Flask):
@@ -23,8 +22,7 @@ class OverseerApplication(Flask):
         """ Finish initialising the application.
         """
         self.psm_users = psm_users
-        self.data = data #FIXME this will become something that serialises itself
-        self.heartbeats = {}
+        self.data = data
 
     def validate_psm(self):
         psm_name = request.form['name'].strip()
@@ -71,10 +69,8 @@ def event_endpoint():
         return "Event missing delivered", 400
 
     # process and store the event
-    if psm_name not in application.data:
-        application.data[psm_name] = []
     event['received'] = now()
-    application.data[psm_name].append(event)
+    application.data.write_event(psm_name, event)
 
     return json.dumps({})
 
@@ -94,7 +90,7 @@ def heartbeat_endpoint():
     else:
         psm_name = r[0]
 
-    application.heartbeats[psm_name] = now()
+    application.data.write_heartbeat(psm_name, now())
     return json.dumps({})
 
 
@@ -102,4 +98,8 @@ def heartbeat_endpoint():
 def main_endpoint():
     """ Endpoint that returns events for each known PSM.
     """
-    return json.dumps({'heartbeats': application.heartbeats, 'events': application.data})
+    data = {}
+    for psm_name, heartbeat in application.data.iter_psm():
+        data[psm_name] = {'heartbeat': heartbeat}
+        data[psm_name]['events'] = list(application.data.iter_events(psm_name))
+    return json.dumps(data)

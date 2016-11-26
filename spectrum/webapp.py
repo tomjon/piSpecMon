@@ -8,7 +8,7 @@ from time import time
 from flask import Flask, current_app, redirect, request, Response, send_file
 from flask_login import LoginManager, login_required, current_user, logout_user
 from spectrum.monitor import get_capabilities
-from spectrum.event import EventManager
+from spectrum.event import EVENT_INIT
 from spectrum.common import log, psm_name
 
 
@@ -26,6 +26,11 @@ class User(object):
         """ Get the user id (we use the user name).
         """
         return self.name
+
+    def get_event(self):
+        """ Event data for the user.
+        """
+        return {'name': self.name, 'role': self.data['role'], 'ip': request.environ['REMOTE_ADDR']}
 
 
 class WebApplication(Flask): # pylint: disable=too-many-instance-attributes
@@ -48,7 +53,7 @@ class WebApplication(Flask): # pylint: disable=too-many-instance-attributes
     def initialise(self, data_store, users, worker_client, monkey_client, default_rig_settings,
                    default_audio_settings, default_rds_settings, default_scan_settings, log_path,
                    version_file, user_timeout_secs, export_directory, pi_control_path, pico_path,
-                   event_queue, event_poll_secs):
+                   event_client):
         """ Finish initialising the application.
         """
         # pylint: disable=attribute-defined-outside-init
@@ -73,13 +78,15 @@ class WebApplication(Flask): # pylint: disable=too-many-instance-attributes
         self.export_directory = export_directory
         self.pi_control_path = pi_control_path
         self.pico_path = pico_path
+        self.event_client = event_client
+        self._init_ident()
 
+    def _init_ident(self):
         self.ident = {'name': psm_name()}
         with open(os.path.join(self.root_path, self.version_file)) as f:
-            self.ident['version'] = f.read()
+            self.ident['version'] = f.read().strip()
         self.ident['description'] = self.description.values
-
-        self.event_manager = EventManager(self.ident['name'], event_queue, event_poll_secs)
+        self.event_client.write(EVENT_INIT, self.ident)
 
     def _init_logging(self):
         # add log handlers to Flask's logger for when Werkzeug isn't the underlying WSGI server

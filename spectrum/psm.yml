@@ -55,6 +55,7 @@ event:
 
 # overseer settings
 overseer:
+    data_dir: /var/lib/overseer/data
     users_file: /var/lib/overseer/users.passwords
     rounds: 100000
 

@@ -13,6 +13,7 @@ from spectrum.datastore import StoreError
 from spectrum.common import log, now, parse_config, scan
 from spectrum.users import IncorrectPasswordError, UsersError
 from spectrum.webapp import WebApplication
+from spectrum.event import EVENT_IDENT, EVENT_LOGIN, EVENT_LOGOUT, EVENT_START, EVENT_STOP
 
 
 application = WebApplication(__name__) # pylint: disable=invalid-name
@@ -46,7 +47,7 @@ def ident_endpoint():
         return json.dumps(application.ident)
     else:
         application.set_ident(request.get_json())
-        application.event_manager.write_event('ident', application.ident)
+        application.event_client.write(EVENT_IDENT, application.ident)
         return json.dumps({})
 
 
@@ -103,6 +104,7 @@ def monitor():
         application.worker.start(config.id)
         if config.values['scan']['rds']:
             application.monkey.start(config.id)
+        application.event_client.write(EVENT_START, config.values)
 
         return json.dumps({})
     if request.method == 'DELETE':
@@ -112,6 +114,7 @@ def monitor():
             return "Neither Worker nor Monkey are running", 400
         application.worker.stop()
         application.monkey.stop()
+        application.event_client.write(EVENT_STOP, {})
         return json.dumps({})
     if request.method == 'GET':
         # monitor status
@@ -302,6 +305,7 @@ def login_endpoint():
             login_user(user)
             application.request_times[user.name] = time()
             application.logged_in_users.append(user.name)
+            application.event_client.write(EVENT_LOGIN, user.get_event())
         except IncorrectPasswordError:
             pass
     return redirect('/')
@@ -314,6 +318,7 @@ def logout_endpoint():
     name = getattr(current_user, 'name', None)
     if name is not None and name in application.logged_in_users:
         application.logged_in_users.remove(name)
+        application.event_client.write(EVENT_LOGOUT, current_user.get_event())
     logout_user()
     return redirect('/')
 

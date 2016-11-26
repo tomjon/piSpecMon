@@ -3,7 +3,6 @@
 """
 import sys
 import yaml
-import Hamlib
 
 CONFIG_FILE = '/etc/psm.yml'
 
@@ -36,6 +35,9 @@ _parse_args()
 # pylint: disable=undefined-variable
 if not DEFAULT_RIG_SETTINGS.get('model', None):
     try:
+        import Hamlib
         DEFAULT_RIG_SETTINGS['model'] = Hamlib.RIG_MODEL_PSMTEST
+    except ImportError:
+        pass
     except AttributeError:
         DEFAULT_RIG_SETTINGS['model'] = Hamlib.RIG_MODEL_AR8200
