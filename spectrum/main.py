@@ -10,7 +10,8 @@ from spectrum.config import DATA_PATH, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS, MON
                             DEFAULT_SCAN_SETTINGS, VERSION_FILE, USER_TIMEOUT_SECS, PICO_PATH, \
                             EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, WORKER_CONFIG_FILE, \
                             MONKEY_CONFIG_FILE, EVENT_PATH, EVENT_POLL_SECS, EVENT_OVERSEER_URL, \
-                            EVENT_OVERSEER_KEY, OVERSEER_USERS_FILE, OVERSEER_ROUNDS, OVERSEER_DATA_DIR
+                            EVENT_OVERSEER_KEY, OVERSEER_USERS_FILE, OVERSEER_ROUNDS, \
+                            OVERSEER_PSM_FILE, OVERSEER_DATA_DIR
 from spectrum.worker import Worker
 from spectrum.monkey import Monkey
 from spectrum.wav2mp3 import walk_convert
@@ -42,7 +43,9 @@ def init_overseer():
     """
     from spectrum.overseer import application
     overseer_data = OverseerData(OVERSEER_DATA_DIR)
-    application.initialise(overseer_data, Users(OVERSEER_USERS_FILE, OVERSEER_ROUNDS))
+    overseer_users = Users(OVERSEER_USERS_FILE, OVERSEER_ROUNDS)
+    overseer_psm = Users(OVERSEER_PSM_FILE, OVERSEER_ROUNDS)
+    application.initialise(overseer_data, overseer_users, overseer_psm)
     return application
 
 
@@ -95,18 +98,6 @@ def users():
     print "User {0} created".format(sys.argv[1])
 
 
-def register():
-    """ Register a PSM unit with the overseer (must be run on the overseer server).
-    """
-    if len(sys.argv) != 3:
-        print "Usage: {0} <PSM name> <key>".format(sys.argv[0])
-        sys.exit(1)
-
-    user_manager = Users(OVERSEER_USERS_FILE, OVERSEER_ROUNDS)
-    user_manager.create_user(sys.argv[1], sys.argv[2], {})
-    print "{0} registered".format(sys.argv[1])
-
-
 def power():
     """ Power on or off the radio.
     """
@@ -149,4 +140,28 @@ def overseer():
     """
     application = init_overseer()
     application.debug = True
-    application.run(host='0.0.0.0', port=8081)
+    application.run(host='0.0.0.0', port=8888)
+
+
+def overseer_register():
+    """ Register a PSM unit with the overseer (must be run on the overseer server).
+    """
+    if len(sys.argv) != 3:
+        print "Usage: {0} <PSM name> <key>".format(sys.argv[0])
+        sys.exit(1)
+
+    user_manager = Users(OVERSEER_PSM_FILE, OVERSEER_ROUNDS)
+    user_manager.create_user(sys.argv[1], sys.argv[2], {})
+    print "{0} registered".format(sys.argv[1])
+
+
+def overseer_users():
+    """ Create an Overseer admin user based on command line arguments.
+    """
+    if len(sys.argv) != 3:
+        print "Usage: {0} <username> <password>".format(sys.argv[0])
+        sys.exit(1)
+
+    user_manager = Users(OVERSEER_USERS_FILE, OVERSEER_ROUNDS)
+    user_manager.create_user(sys.argv[1], sys.argv[2], {'role': 'admin'})
+    print "User {0} created".format(sys.argv[1])

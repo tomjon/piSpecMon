@@ -298,16 +298,9 @@ def login_endpoint():
     """ Log in endpoint.
     """
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        try:
-            user = application.load_user(username, password)
-            login_user(user)
-            application.request_times[user.name] = time()
-            application.logged_in_users.append(user.name)
+        user = application.login()
+        if user is not None:
             application.event_client.write(EVENT_LOGIN, user.get_event())
-        except IncorrectPasswordError:
-            pass
     return redirect('/')
 
 @application.route('/logout')
@@ -315,11 +308,9 @@ def login_endpoint():
 def logout_endpoint():
     """ Logout endpoint.
     """
-    name = getattr(current_user, 'name', None)
-    if name is not None and name in application.logged_in_users:
-        application.logged_in_users.remove(name)
+    name = application.logout()
+    if name is not None:
         application.event_client.write(EVENT_LOGOUT, current_user.get_event())
-    logout_user()
     return redirect('/')
 
 

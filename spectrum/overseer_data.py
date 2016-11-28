@@ -20,7 +20,10 @@ class OverseerData(object):
 
     def iter_psm(self):
         for psm_name in os.listdir(self.data_dir):
-            with open(os.path.join(self.data_dir, psm_name, 'heartbeat')) as f:
+            path = os.path.join(self.data_dir, psm_name, 'heartbeat')
+            if not os.path.exists(path):
+                yield psn_name, None
+            with open(path) as f:
                 yield psm_name, f.read()
 
     def write_event(self, psm_name, event):
