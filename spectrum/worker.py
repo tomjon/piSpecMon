@@ -25,7 +25,6 @@ class Worker(Process):
                 if timeout_count < attempts:
                     timeout_count += 1
                     log.error(e)
-                    log.info("Attempting to power on")
                     power_on()
                     sleep(self.radio_on_sleep_secs) # give the rig chance to power up
                 else:
@@ -52,7 +51,7 @@ class Worker(Process):
         monitor = None
         try:
             monitor = self._timeout_try(attempts, _monitor_open, config)
-            monitor.set_mode(config.values['scan']['mode'])
+            self._timeout_try(attempts, monitor.set_mode, config.values['scan']['mode'])
             sweep_n = 0
             while True:
                 log.debug("Scan: %s %s", config.values['scan'], scan_config)
