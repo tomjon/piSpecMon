@@ -2,6 +2,7 @@
 """
 import os
 from pydub import AudioSegment
+from pydub.exceptions import CouldntDecodeError
 from spectrum.common import log
 
 def convert(dir_path, wav_filename):
@@ -11,7 +12,11 @@ def convert(dir_path, wav_filename):
     wav_path = os.path.join(dir_path, wav_filename)
     mp3_path = os.path.join(dir_path, mp3_filename)
     log.debug("Converting %s -> %s", wav_path, mp3_path)
-    AudioSegment.from_file(wav_path).export(mp3_path, format='mp3')
+    try:
+        AudioSegment.from_file(wav_path).export(mp3_path, format='mp3')
+    except CouldntDecodeError as e:
+        log.warn("Could not convert %s: %s", wav_path, e)
+        return None, None
     return wav_path, mp3_path
 
 def walk_convert(root_dir):
@@ -22,6 +27,6 @@ def walk_convert(root_dir):
         for filename in filenames:
             if filename.endswith('.wav'):
                 wav_path, mp3_path = convert(dir_path, filename)
-                if os.path.exists(mp3_path):
+                if wav_path is not None and os.path.exists(mp3_path):
                     os.remove(wav_path)
     log.info("Done")
