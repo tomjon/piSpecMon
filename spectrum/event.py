@@ -6,23 +6,23 @@ import requests
 import httplib
 from spectrum.common import log, now
 
+# event types
+EVENT_INIT = 'init'
+EVENT_IDENT = 'ident'
+EVENT_LOGIN = 'login'
+EVENT_LOGOUT = 'logout'
+EVENT_START = 'start'
+EVENT_STOP = 'stop'
+
 
 class EventManager(object):
     """ PSM event manager.
     """
-    def __init__(self, psm_name, queue, poll_secs, overseer_url=None, overseer_key=None): #FIXME exposes weakness of this design - want client separate
+    def __init__(self, psm_name, queue, poll_secs, overseer_url, overseer_key):
         self.data = {'name': psm_name, 'key': overseer_key}
         self.queue = queue
         self.poll_secs = poll_secs
         self.overseer_url = overseer_url
-
-    def write_event(self, event_type, event_data):
-        """ Write an event to the queue.
-        """
-        t = now()
-        event = {'type': event_type, 'timestamp': t}
-        event['data'] = json.dumps(event_data)
-        self.queue.write(str(t), json.dumps(event))
 
     def _send_post(self, endpoint, payload=None):
         """ Send a POST to the Overseer.
@@ -39,7 +39,7 @@ class EventManager(object):
                 log.error("Could not POST to overseer - HTTP status %s", r.status_code)
             return r.status_code == httplib.OK
         except requests.exceptions.RequestException as e:
-            log.error("Could not POST to overseer: %s", e)
+            log.warn("Could not POST to overseer: %s", e)
             return None
 
     def run(self):
@@ -62,3 +62,18 @@ class EventManager(object):
                 elif r is False:
                     log.warn("Could not deliver event {0}".format(message_id))
             time.sleep(self.poll_secs)
+
+
+class EventClient(object):
+    """ PSM event client.
+    """
+    def __init__(self, queue):
+        self.queue = queue
+
+    def write(self, event_type, event_data):
+        """ Write an event to the queue.
+        """
+        t = now()
+        event = {'type': event_type, 'timestamp': t}
+        event['data'] = json.dumps(event_data)
+        self.queue.write(str(t), json.dumps(event))

@@ -1,14 +1,19 @@
 """ Define an OverseerApplication that will be used to provide endpoints.
 """
 import json
-from flask import Flask, request
+import os
+from flask import Flask, request, redirect, send_file
+from flask_login import current_user
 from spectrum.common import log, now
+from spectrum.secure import SecureStaticFlask
 from spectrum.users import IncorrectPasswordError
 
-#FIXME event and heartbeat storage
-#FIXME need to use a SecuredStaticFlask because again need admin/data roles; admin can set up keys
+class RestApiError(Exception):
+    def __init__(self, message, status_code):
+        self.message = message
+        self.status_code = status_code
 
-class OverseerApplication(Flask):
+class OverseerApplication(SecureStaticFlask):
     """ The curious looking two-step initialisation is so that the application instance can
         be created at import time for the decorators to work.
 
@@ -16,32 +21,65 @@ class OverseerApplication(Flask):
         the module API.
     """
     def __init__(self, name):
-        super(OverseerApplication, self).__init__(name)
-        self._init_logging()
+        super(OverseerApplication, self).__init__(name, 'overseer_ui')
 
-    def initialise(self, data, psm_users):
+    def initialise(self, data, users, psm_users):
         """ Finish initialising the application.
         """
+        self.data = data
+        super(OverseerApplication, self).initialise(users)
         self.psm_users = psm_users
-        self.data = data #FIXME this will become something that serialises itself
-        self.heartbeats = {}
 
     def validate_psm(self):
         psm_name = request.form['name'].strip()
         if len(psm_name) == 0:
-            return "Bad PSM name", 400
+            raise RestApiError("Bad PSM name", 400)
         try:
             self.psm_users.check_user(psm_name, request.form['key'])
         except IncorrectPasswordError:
-            return "Bad overseer key", 403
-        return (psm_name,)
-
-    def _init_logging(self): #FIXME duplicated from webapp.py
-        # add log handlers to Flask's logger for when Werkzeug isn't the underlying WSGI server
-        for handler in log.handlers:
-            self.logger.addHandler(handler)
+            raise RestApiError("Bad overseer key", 403)
+        return psm_name
 
 application = OverseerApplication(__name__) # pylint: disable=invalid-name
+
+@application.errorhandler(RestApiError)
+def handle_rest_api_error(error):
+    return error.message, error.status_code
+
+
+@application.route('/', methods=['GET', 'POST'])
+def main_endpoint():
+    """ Redirect / to index or login page.
+    """
+    if current_user is not None and not current_user.is_anonymous and current_user.is_authenticated:
+        return redirect("/static/index.html")
+    else:
+        return redirect("/static/login.html")
+
+
+@application.route('/favicon.ico')
+def favicon_endpoint():
+    """ Serve a favicon.
+    """
+    path = os.path.join(application.root_path, 'psm_ui', 'favicon.ico') # FIXME shared code and shared resource...
+    return send_file(path, mimetype='image/vnd.microsoft.icon')
+
+
+@application.route('/login', methods=['GET', 'POST'])
+def login_endpoint():
+    """ Log in endpoint.
+    """
+    if request.method == 'POST':
+        user = application.login()
+    return redirect('/')
+
+@application.route('/logout')
+@application.role_required(['admin', 'freq', 'data'])
+def logout_endpoint():
+    """ Logout endpoint.
+    """
+    application.logout()
+    return redirect('/')
 
 
 @application.route('/event', methods=['POST'])
@@ -54,12 +92,7 @@ def event_endpoint():
             key  - overseer key for authorisation
             json - JSON event body
     """
-    r = application.validate_psm()
-    if len(r) > 1:
-        return r
-    else:
-        psm_name = r[0]
-
+    psm_name = application.validate_psm()
     event = json.loads(request.form['json'])
     if not isinstance(event, dict):
         return "Bad event", 400
@@ -71,10 +104,8 @@ def event_endpoint():
         return "Event missing delivered", 400
 
     # process and store the event
-    if psm_name not in application.data:
-        application.data[psm_name] = []
     event['received'] = now()
-    application.data[psm_name].append(event)
+    application.data.write_event(psm_name, event)
 
     return json.dumps({})
 
@@ -88,18 +119,19 @@ def heartbeat_endpoint():
             name - the name of the PSM box, e.g. PSM17
             key  - overseer key for authorisation
     """
-    r = application.validate_psm()
-    if len(r) > 1:
-        return r
-    else:
-        psm_name = r[0]
-
-    application.heartbeats[psm_name] = now()
+    psm_name = application.validate_psm()
+    application.data.write_heartbeat(psm_name, now())
     return json.dumps({})
 
 
-@application.route('/')
-def main_endpoint():
+@application.route('/data')
+@application.role_required(['admin'])
+def data_endpoint():
     """ Endpoint that returns events for each known PSM.
     """
-    return json.dumps({'heartbeats': application.heartbeats, 'events': application.data})
+    data = []
+    for psm_name, heartbeat in application.data.iter_psm():
+        psm_data = {'name': psm_name, 'heartbeat': heartbeat}
+        psm_data['events'] = list(application.data.iter_events(psm_name))
+        data.append(psm_data)
+    return json.dumps(data)

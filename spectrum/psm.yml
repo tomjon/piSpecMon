@@ -55,7 +55,9 @@ event:
 
 # overseer settings
 overseer:
+    data_dir: /var/lib/overseer/data
     users_file: /var/lib/overseer/users.passwords
+    psm_file: /var/lib/overseer/psm.keys
     rounds: 100000
 
 # default settings - if left empty, rig model is set later using Hamlib
