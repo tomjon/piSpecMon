@@ -40,7 +40,11 @@ export class SampleTableComponent {
   @Input() config: any;
 
   @Input('data') set _data(data: Data) {
-    if (! data) return;
+    if (! data) {
+      this.freqs = [];
+      this.samples = {};
+      return;
+    }
     this.freqs = [];
     this.samples = data.samples;
     for (let freq_n in this.samples) {
@@ -50,5 +54,5 @@ export class SampleTableComponent {
 
   isHidden() {
     return this.freqs.length == 0;
-  } 
+  }
 }

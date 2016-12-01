@@ -1,6 +1,6 @@
 [Unit]
 Description=picofssd script
-After=multi-user.target
+After=basic.target
 
 [Service]
 Type=idle
@@ -13,4 +13,4 @@ User=ses
 Group=ses
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=psm.target

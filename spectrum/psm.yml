@@ -8,10 +8,12 @@ log:
 
 # Worker (spectrum scanner)
 worker:
+    config_file: /var/lib/psm/worker-config_id
     run_path: /var/run/psm-worker
 
 # Monkey (RDS decoder)
 monkey:
+    config_file: /var/lib/psm/monkey-config_id
     run_path: /var/run/psm-monkey
     poll: 1.0
 
@@ -38,8 +40,23 @@ data_path: /var/lib/psm
 # location of the pi_control binary
 pi_control_path: /usr/bin/pi_control
 
+# location of the pico_status script
+pico_path: /usr/local/bin/pico_status.py
+
 # how often (in s) the wav2mp3 converter should run
 convert_period: 300
+
+# event manager settings
+event:
+    path: /var/lib/psm/events
+    poll_secs: 10
+    overseer_url: 
+    overseer_key: 
+
+# overseer settings
+overseer:
+    users_file: /var/lib/overseer/users.passwords
+    rounds: 100000
 
 # default settings - if left empty, rig model is set later using Hamlib
 default:

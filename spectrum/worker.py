@@ -11,8 +11,8 @@ from spectrum.power import power_on
 class Worker(Process):
     """ Process implementation for spectrum scanning using the rig.
     """
-    def __init__(self, data_store, run_path, radio_on_sleep_secs):
-        super(Worker, self).__init__(data_store, run_path)
+    def __init__(self, data_store, run_path, config_file, radio_on_sleep_secs):
+        super(Worker, self).__init__(data_store, run_path, config_file)
         self.radio_on_sleep_secs = radio_on_sleep_secs
 
     # try fn() handling timeout errors until the number of attempts is exceeded

@@ -225,6 +225,12 @@ export class DataService {
                     .catch(this.errorHandler("get UI settings"));
   }
 
+  getPicoStatus(): Observable<any> {
+    return this.http.get(`${this.baseUrl}pico`)
+                    .map(res => res.json())
+                    .catch(this.errorHandler("get PICO status"));
+  }
+
   private errorHandler(source: any) {
     let errors = this.errorService;
     return function (error: any, caught: Observable<any>): Observable<any> {

@@ -1,0 +1,6 @@
+[Unit]
+Description=piSpecMon
+After=basic.target
+
+[Install]
+WantedBy=basic.target

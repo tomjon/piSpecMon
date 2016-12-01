@@ -1,6 +1,6 @@
 [Unit]
 Description=3G modem driver
-After=multi-user.target
+After=network.target
 
 [Service]
 Type=idle
@@ -14,4 +14,4 @@ User=ses
 Group=ses
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=psm.target

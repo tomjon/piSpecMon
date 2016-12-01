@@ -5,6 +5,7 @@ import { DetailsComponent } from './details.component';
 import { LogsComponent } from './logs.component';
 import { StatsComponent } from './stats.component';
 import { PiComponent } from './pi.component';
+import { PicoComponent } from './pico.component';
 import { RigComponent } from './rig.component';
 import { AudioComponent } from './audio.component';
 import { RdsComponent } from './rds.component';
@@ -37,7 +38,7 @@ let modelSort = function (a, b) {
 @Component({
   selector: 'psm-app',
   templateUrl: 'templates/app.html',
-  directives: [ LoginComponent, ErrorComponent, IdentComponent, DetailsComponent, PiComponent, LogsComponent, StatsComponent, RigComponent, AudioComponent, RdsComponent, TableComponent, ScanComponent, ChartsComponent ],
+  directives: [ LoginComponent, ErrorComponent, IdentComponent, DetailsComponent, PiComponent, PicoComponent, LogsComponent, StatsComponent, RigComponent, AudioComponent, RdsComponent, TableComponent, ScanComponent, ChartsComponent ],
   providers: [ DataService, ErrorService, MessageService, UiSettingsService, HTTP_PROVIDERS, FreqPipe ],
   pipes: [ DatePipe ]
 })
