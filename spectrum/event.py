@@ -39,7 +39,7 @@ class EventManager(object):
                 log.error("Could not POST to overseer - HTTP status %s", r.status_code)
             return r.status_code == httplib.OK
         except requests.exceptions.RequestException as e:
-            log.error("Could not POST to overseer: %s", e)
+            log.warn("Could not POST to overseer: %s", e)
             return None
 
     def run(self):

@@ -131,6 +131,12 @@ def email():
 def event():
     """ Run the PSM Event Manager.
     """
+    if EVENT_OVERSEER_URL.strip() == '':
+        print "Not running: overseer URL missing"
+        return
+    if EVENT_OVERSEER_KEY.strip() == '':
+        print "Not running: overseer key missing"
+        return
     manager = EventManager(psm_name(), Queue(EVENT_PATH), EVENT_POLL_SECS, EVENT_OVERSEER_URL, EVENT_OVERSEER_KEY)
     manager.run()
 
