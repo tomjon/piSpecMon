@@ -26,7 +26,7 @@ import { WidgetComponent } from './widget.component';
                    Number of lines to tail is a required parameter, and must be an integer
                  </div>
                  <div class="form-group">
-                   <button class="btn btn-default" (click)="onClick('psm-wsgi')">Server</button>
+                   <button class="btn btn-default" (click)="onClick('mod_wsgi')">Server</button>
                    <button class="btn btn-default" (click)="onClick('psm-worker')">Spectrum scan</button>
                    <button class="btn btn-default" (click)="onClick('psm-monkey')">RDS scan</button>
                  </div>
