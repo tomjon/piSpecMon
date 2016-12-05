@@ -168,7 +168,7 @@ class SecureStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
         """
         try:
             name = getattr(current_user, 'name', None)
-            if name is not None and name in application.logged_in_users:
+            if name is not None and name in self.logged_in_users:
                 self.logged_in_users.remove(name)
                 return current_user
             return None
