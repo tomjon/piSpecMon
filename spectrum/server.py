@@ -308,9 +308,8 @@ def login_endpoint():
 def logout_endpoint():
     """ Logout endpoint.
     """
-    name = application.logout()
-    if name is not None:
-        application.event_client.write(EVENT_LOGOUT, current_user.get_event())
+    application.event_client.write(EVENT_LOGOUT, current_user.get_event())
+    application.logout()
     return redirect('/')
 
 
