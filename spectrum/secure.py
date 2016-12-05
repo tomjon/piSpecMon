@@ -1,7 +1,9 @@
 """ Define a sub-class of the Flask application that secures static files.
 """
 import os
+import re
 import functools
+import mimetypes
 from time import time
 from flask import Flask, current_app, redirect, request, Response, send_file
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
