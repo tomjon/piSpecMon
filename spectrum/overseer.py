@@ -2,14 +2,17 @@
 """
 import json
 import os
-from flask import Flask, request, redirect, send_file
+from flask import request, redirect, send_file
 from flask_login import current_user
-from spectrum.common import log, now
+from spectrum.common import now
 from spectrum.secure import SecureStaticFlask
 from spectrum.users import IncorrectPasswordError
 
 class RestApiError(Exception):
+    """ Exception raised by the REST API (client error).
+    """
     def __init__(self, message, status_code):
+        super(RestApiError, self).__init__()
         self.message = message
         self.status_code = status_code
 
@@ -23,14 +26,16 @@ class OverseerApplication(SecureStaticFlask):
     def __init__(self, name):
         super(OverseerApplication, self).__init__(name, 'overseer_ui')
 
-    def initialise(self, data, users, psm_users):
+    def initialise(self, data, users, user_timeout_secs, psm_users): # pylint: disable=attribute-defined-outside-init, arguments-differ
         """ Finish initialising the application.
         """
         self.data = data
-        super(OverseerApplication, self).initialise(users)
+        super(OverseerApplication, self).initialise(users, user_timeout_secs)
         self.psm_users = psm_users
 
     def validate_psm(self):
+        """ Validate the PSM credentials.
+        """
         psm_name = request.form['name'].strip()
         if len(psm_name) == 0:
             raise RestApiError("Bad PSM name", 400)
@@ -44,6 +49,8 @@ application = OverseerApplication(__name__) # pylint: disable=invalid-name
 
 @application.errorhandler(RestApiError)
 def handle_rest_api_error(error):
+    """ Assign error handler for RestApiError.
+    """
     return error.message, error.status_code
 
 
@@ -61,7 +68,8 @@ def main_endpoint():
 def favicon_endpoint():
     """ Serve a favicon.
     """
-    path = os.path.join(application.root_path, 'psm_ui', 'favicon.ico') # FIXME shared code and shared resource...
+    # FIXME shared code and shared resource...
+    path = os.path.join(application.root_path, 'psm_ui', 'favicon.ico')
     return send_file(path, mimetype='image/vnd.microsoft.icon')
 
 
@@ -70,7 +78,7 @@ def login_endpoint():
     """ Log in endpoint.
     """
     if request.method == 'POST':
-        user = application.login()
+        application.login()
     return redirect('/')
 
 @application.route('/logout')
@@ -85,9 +93,9 @@ def logout_endpoint():
 @application.route('/event', methods=['POST'])
 def event_endpoint():
     """ Endpoint for PSM units to notify events.
-    
+
         The PSM must supply the following form fields in the request body:
-        
+
             name - the name of the PSM box, e.g. PSM17
             key  - overseer key for authorisation
             json - JSON event body
@@ -113,9 +121,9 @@ def event_endpoint():
 @application.route('/heartbeat', methods=['POST'])
 def heartbeat_endpoint():
     """ Endpoint for PSM units to send a heartbeat.
-    
+
         The PSM must supply the following form fields in the request body:
-        
+
             name - the name of the PSM box, e.g. PSM17
             key  - overseer key for authorisation
     """

@@ -2,8 +2,8 @@
 """
 import time
 import json
-import requests
 import httplib
+import requests
 from spectrum.common import log, now
 
 # event types
@@ -44,7 +44,7 @@ class EventManager(object):
 
     def run(self):
         """ Poll the queue directory for events, indefinitely, and POST them to the overseer.
-        
+
             Also, send a heartbeat every time we poll. FIXME: might want to separate these?)
         """
         while True:
@@ -58,9 +58,9 @@ class EventManager(object):
                 if r is not None:
                     self.queue.consume(message_id)
                 if r is True:
-                    log.info("Delivered event {0}".format(message_id))
+                    log.info("Delivered event %s", message_id)
                 elif r is False:
-                    log.warn("Could not deliver event {0}".format(message_id))
+                    log.warn("Could not deliver event %s", message_id)
             time.sleep(self.poll_secs)
 
 
@@ -73,7 +73,7 @@ class EventClient(object):
     def write(self, event_type, event_data):
         """ Write an event to the queue.
         """
-        t = now()
-        event = {'type': event_type, 'timestamp': t}
+        timestamp = now()
+        event = {'type': event_type, 'timestamp': timestamp}
         event['data'] = json.dumps(event_data)
-        self.queue.write(str(t), json.dumps(event))
+        self.queue.write(str(timestamp), json.dumps(event))

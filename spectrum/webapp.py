@@ -1,11 +1,6 @@
 """ Define a WebApplication that will be used by server.py to provide endpoints.
 """
 import os
-import re
-import mimetypes
-from time import time
-from flask import Flask, current_app, redirect, request, Response, send_file
-from flask_login import LoginManager, login_required, current_user, logout_user
 from spectrum.monitor import get_capabilities
 from spectrum.event import EVENT_INIT
 from spectrum.common import log, psm_name
@@ -22,17 +17,17 @@ class WebApplication(SecureStaticFlask): # pylint: disable=too-many-instance-att
     def __init__(self, name):
         super(WebApplication, self).__init__(name, 'psm_ui')
 
-    def initialise(self, data_store, users, worker_client, monkey_client, default_rig_settings,
+    def initialise(self, data_store, users, worker_client, monkey_client, default_rig_settings, # pylint: disable=arguments-differ
                    default_audio_settings, default_rds_settings, default_scan_settings, log_path,
                    version_file, user_timeout_secs, export_directory, pi_control_path, pico_path,
                    event_client):
-        """ Finish initialising the application. FIXME: can this now be brought into __init__?
+        """ Finish initialising the application.
         """
         # pylint: disable=attribute-defined-outside-init
         self.caps = get_capabilities()
         log.info("%d rig models", len(self.caps['models']))
         self.data_store = data_store
-        super(WebApplication, self).initialise(users)
+        super(WebApplication, self).initialise(users, user_timeout_secs)
         self.rig = self.data_store.settings('rig').read(default_rig_settings)
         self.audio = self.data_store.settings('audio').read(default_audio_settings)
         self.rds = self.data_store.settings('rds').read(default_rds_settings)
@@ -42,7 +37,6 @@ class WebApplication(SecureStaticFlask): # pylint: disable=too-many-instance-att
         self.monkey = monkey_client
         self.log_path = log_path
         self.version_file = version_file
-        self.user_timeout_secs = user_timeout_secs
         self.export_directory = export_directory
         self.pi_control_path = pi_control_path
         self.pico_path = pico_path
@@ -50,6 +44,7 @@ class WebApplication(SecureStaticFlask): # pylint: disable=too-many-instance-att
         self._init_ident()
 
     def _init_ident(self):
+        # pylint: disable=attribute-defined-outside-init
         self.ident = {'name': psm_name()}
         with open(os.path.join(self.root_path, self.version_file)) as f:
             self.ident['version'] = f.read().strip()

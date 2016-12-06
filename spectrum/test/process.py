@@ -55,7 +55,8 @@ def test(tmpdir):
     counter = multiprocessing.Value('i', 0)
     config_id = multiprocessing.Array('c', 'some random value')
     config_file = os.path.join(str(tmpdir), 'config')
-    multiprocessing.Process(target=process_fn, args=(tmpdir, config_file, counter, config_id)).start()
+    args = (tmpdir, config_file, counter, config_id)
+    multiprocessing.Process(target=process_fn, args=args).start()
     time.sleep(1)
 
     CONFIG_ID = 'my id'
