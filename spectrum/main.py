@@ -28,8 +28,10 @@ def init_application():
     """
     from spectrum.server import application
     data_store = FsDataStore(DATA_PATH)
-    worker_client = Worker(data_store, WORKER_RUN_PATH, WORKER_CONFIG_FILE, RADIO_ON_SLEEP_SECS).client()
-    monkey_client = Monkey(data_store, MONKEY_RUN_PATH, MONKEY_CONFIG_FILE, MONKEY_POLL).client()
+    w_args = (data_store, WORKER_RUN_PATH, WORKER_CONFIG_FILE, RADIO_ON_SLEEP_SECS)
+    worker_client = Worker(*w_args).client()
+    m_args = (data_store, MONKEY_RUN_PATH, MONKEY_CONFIG_FILE, MONKEY_POLL)
+    monkey_client = Monkey(*m_args).client()
     event_client = EventClient(Queue(EVENT_PATH))
     application.initialise(data_store, Users(USERS_FILE, ROUNDS), worker_client, monkey_client,
                            DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS,
@@ -42,10 +44,10 @@ def init_overseer():
     """ Initialise the overseer application object imported from spectrum.overseer.
     """
     from spectrum.overseer import application
-    overseer_data = OverseerData(OVERSEER_DATA_DIR)
-    overseer_users = Users(OVERSEER_USERS_FILE, OVERSEER_ROUNDS)
-    overseer_psm = Users(OVERSEER_PSM_FILE, OVERSEER_ROUNDS)
-    application.initialise(overseer_data, overseer_users, overseer_psm)
+    data = OverseerData(OVERSEER_DATA_DIR)
+    ovr_users = Users(OVERSEER_USERS_FILE, OVERSEER_ROUNDS)
+    psm_users = Users(OVERSEER_PSM_FILE, OVERSEER_ROUNDS)
+    application.initialise(data, ovr_users, USER_TIMEOUT_SECS, psm_users)
     return application
 
 
@@ -60,7 +62,8 @@ def server():
 def worker():
     """ Run the worker process, for collecting spectrum data.
     """
-    worker_process = Worker(FsDataStore(DATA_PATH), WORKER_RUN_PATH, WORKER_CONFIG_FILE, RADIO_ON_SLEEP_SECS)
+    w_args = (FsDataStore(DATA_PATH), WORKER_RUN_PATH, WORKER_CONFIG_FILE, RADIO_ON_SLEEP_SECS)
+    worker_process = Worker(*w_args)
     worker_process.init()
     with open(log.path, 'a') as f:
         Hamlib.rig_set_debug_file(f)
@@ -71,7 +74,8 @@ def worker():
 def monkey():
     """ Run the monkey process, for collecting RDS data.
     """
-    monkey_process = Monkey(FsDataStore(DATA_PATH), MONKEY_RUN_PATH, MONKEY_CONFIG_FILE, MONKEY_POLL)
+    m_args = (FsDataStore(DATA_PATH), MONKEY_RUN_PATH, MONKEY_CONFIG_FILE, MONKEY_POLL)
+    monkey_process = Monkey(*m_args)
     monkey_process.init()
     monkey_process.start()
 
@@ -137,7 +141,8 @@ def event():
     if EVENT_OVERSEER_KEY.strip() == '':
         print "Not running: overseer key missing"
         return
-    manager = EventManager(psm_name(), Queue(EVENT_PATH), EVENT_POLL_SECS, EVENT_OVERSEER_URL, EVENT_OVERSEER_KEY)
+    args = (Queue(EVENT_PATH), EVENT_POLL_SECS, EVENT_OVERSEER_URL, EVENT_OVERSEER_KEY)
+    manager = EventManager(psm_name(), *args)
     manager.run()
 
 

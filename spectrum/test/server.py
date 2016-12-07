@@ -1,13 +1,11 @@
 """ Unit tests for the server module.
 """
-import multiprocessing
 import time
 import httplib
 import json
 import os
 import pytest
 from spectrum.datastore import ConfigBase, SettingsBase
-from spectrum.common import log
 from spectrum.users import IncorrectPasswordError, InvalidUsername
 import spectrum.server as server
 
@@ -58,7 +56,7 @@ class MockDataStore(object):
 class MockUsers(object):
     """ Mock Users implementation that only knows one user.
     """
-    def check_user(self, username, password):
+    def check_user(self, username, password): # pylint: disable=no-self-use
         """ Only knows about the LOGIN user and returns USER_DATA.
         """
         if username == LOGIN['username']:
@@ -67,17 +65,17 @@ class MockUsers(object):
             raise IncorrectPasswordError()
         raise InvalidUsername()
 
-    def get_user(self, username):
+    def get_user(self, username): # pylint: disable=no-self-use
         """ Only knows about the LOGIN user and returns USER_DATA.
         """
         return USER_DATA if username == LOGIN['username'] else None
 
-class MockWorkerClient(object):
+class MockWorkerClient(object): # pylint: disable=too-few-public-methods
     """ Minimal mock WorkerClient.
     """
     pass
 
-class MockMonkeyClient(object):
+class MockMonkeyClient(object): # pylint: disable=too-few-public-methods
     """ Minimal mock MonkeyClient.
     """
     pass
@@ -85,7 +83,10 @@ class MockMonkeyClient(object):
 class MockQueue(object):
     """ In-memory queue implementation.
     """
-    pass
+    def write(self, message_id, message_text):
+        """ Dummy write method.
+        """
+        pass
 
 
 @pytest.fixture()
@@ -104,9 +105,8 @@ def api(tmpdir):
 
     server.application.initialise(MockDataStore(), MockUsers(), MockWorkerClient(),
                                   MockMonkeyClient(), {}, {}, {}, {}, log_path,
-                                  version_file, USER_TIMEOUT_SECS,
-                                  export_directory, PI_CONTROL_PATH, '',
-                                  MockQueue(), 1)
+                                  version_file, USER_TIMEOUT_SECS, export_directory,
+                                  PI_CONTROL_PATH, '', MockQueue())
     return server.application.test_client()
 
 

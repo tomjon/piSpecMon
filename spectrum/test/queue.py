@@ -3,6 +3,8 @@
 import spectrum.queue
 
 def test(tmpdir):
+    """ Rudimentary queue test - messages in/out.
+    """
     MESSAGES = (('id1', 'first message'),
                 ('id2', 'second message'),
                 ('id3', 'third'))

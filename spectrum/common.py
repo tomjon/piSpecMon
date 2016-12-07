@@ -37,7 +37,6 @@ def get_logger():
     logger.info("Obtained logger")
     return logger
 
-#FIXME replace with per-process invocation?
 log = get_logger() # pylint: disable=invalid-name
 
 

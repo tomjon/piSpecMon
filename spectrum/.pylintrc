@@ -177,7 +177,7 @@ logging-modules=logging
 [BASIC]
 
 # Good variable names which should always be accepted, separated by a comma
-good-names=c,f,e,i,j,k,n,v,w,x,y,z,fn,ok,_,_f
+good-names=c,f,e,i,j,k,n,r,v,w,x,y,z,fn,ok,_,_f
 
 # Bad variable names which should always be refused, separated by a comma
 bad-names=foo,bar,baz,toto,tutu,tata

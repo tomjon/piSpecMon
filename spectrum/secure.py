@@ -29,7 +29,11 @@ class User(object):
     def get_event(self):
         """ Event data for the user.
         """
-        return {'name': self.name, 'role': self.data['role'], 'ip': request.environ['REMOTE_ADDR']}
+        event = {'name': self.name, 'role': self.data['role']}
+        remote = request.environ.get('REMOTE_ADDR', None)
+        if remote is not None:
+            event['ip'] = remote
+        return event
 
 
 class SecureStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
@@ -39,12 +43,18 @@ class SecureStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
         be created at import time for the decorators to work.
     """
     def __init__(self, name, static_folder):
-        super(SecureStaticFlask, self).__init__(name, static_folder=static_folder, static_url_path='/static')
+        args = {'static_folder': static_folder, 'static_url_path': '/static'}
+        super(SecureStaticFlask, self).__init__(name, **args)
         self._init_logging()
         self.after_request(lambda rsp: rsp.headers.add('Accept-Ranges', 'bytes') or rsp)
 
-    def initialise(self, users):
+    def initialise(self, users, user_timeout_secs):
+        """ Initialise the application - need a second initialiser so that we can instantiate
+            the application at the module level for use in endpoint decorators.
+        """
+        # pylint: disable=attribute-defined-outside-init
         self.users = users
+        self.user_timeout_secs = user_timeout_secs
         login_manager = LoginManager()
         login_manager.init_app(self)
         login_manager.user_loader(self.load_user)

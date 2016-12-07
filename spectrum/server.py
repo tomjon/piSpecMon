@@ -3,11 +3,10 @@
 import json
 import os
 import subprocess
-from time import time
 from datetime import datetime
 from slugify import slugify
 from flask import redirect, request, Response, send_file
-from flask_login import login_user, current_user, logout_user
+from flask_login import current_user
 from spectrum.tail import iter_tail
 from spectrum.datastore import StoreError
 from spectrum.common import log, now, parse_config, scan
@@ -410,7 +409,8 @@ def pico_endpoint():
     result = {}
     try:
         python = subprocess.check_output(['which', 'python']).strip()
-        result['text'] = subprocess.check_output([python, application.pico_path], stderr=subprocess.STDOUT)
+        args = [python, application.pico_path]
+        result['text'] = subprocess.check_output(args, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         result['error'] = e.output
     return json.dumps(result)

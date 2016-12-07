@@ -122,7 +122,7 @@ class Users(object):
         hash_value = hashlib.pbkdf2_hmac('sha256', password, salt, self.rounds)
         return _UserEntry(username, salt, hash_value, data)
 
-    def _validate_username(self, username):
+    def _validate_username(self, username): # pylint: disable=no-self-use
         if USERNAME_RE.match(username) is None:
             raise InvalidUsername()
 
