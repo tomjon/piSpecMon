@@ -26,7 +26,7 @@ class Process(object):
         self.config_file = config_file
         self._exit = False
         self._stop = False
-        self._tidy = True
+        self._tidy = False
         self.config_id = None
         self.status = {}
 
@@ -130,8 +130,8 @@ class Process(object):
         with open(self.pid_file, 'w') as f:
             f.write(str(os.getpid()))
 
-        self._set_signal('SIGTERM', exit=True, tidy=False)
-        self._set_signal('SIGINT', exit=True)
+        self._set_signal('SIGTERM', exit=True)
+        self._set_signal('SIGINT', exit=True, tidy=True)
         self._set_signal('SIGHUP', exit=True)
         self._set_signal('SIGUSR1')
 
