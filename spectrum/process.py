@@ -58,7 +58,7 @@ class Process(object):
         os.rename(tmp, self.status_file)
 
     # define signal handler for given signal in order to exit cleanly
-    def _set_signal(self, signame, stop=True, exit=False, tidy=True): # pylint: disable=redefined-builtin
+    def _set_signal(self, signame, stop=True, exit=False, tidy=False): # pylint: disable=redefined-builtin
         def _callback(*_):
             self._stop = stop
             self._exit = exit
@@ -131,9 +131,9 @@ class Process(object):
             f.write(str(os.getpid()))
 
         self._set_signal('SIGTERM', exit=True)
-        self._set_signal('SIGINT', exit=True, tidy=True)
+        self._set_signal('SIGINT', exit=True)
         self._set_signal('SIGHUP', exit=True)
-        self._set_signal('SIGUSR1')
+        self._set_signal('SIGUSR1', tidy=True)
 
     def client(self):
         """ Return a client for the process.
