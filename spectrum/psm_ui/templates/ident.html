@@ -12,7 +12,7 @@
       Description is a required parameter
     </div>
     <div class="form-group">
-      <label for="version">Software version</label>
+      <label for="version">Version</label>
       <input disabled="true" type="text" class="form-control" [(ngModel)]="ident.version" name="version">
     </div>
     <button *ngIf="user.roleIn(['admin', 'freq'])" (click)="onReset()" class="btn btn-default" [disabled]="loading || form.form.pristine">Reset</button>
