@@ -10,8 +10,5 @@ RestartSec=1
 WorkingDirectory=~
 KillSignal=SIGINT
 
-User=ses
-Group=ses
-
 [Install]
 WantedBy=psm.target
