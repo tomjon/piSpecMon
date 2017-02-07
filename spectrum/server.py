@@ -342,9 +342,9 @@ def export_endpoint(config_id):
             yield str(datetime.fromtimestamp(timestamp / 1000))
             yield ','
             yield str(freq(freq_n, **scan_config))
-            yield ','
-            yield name
             yield ',"'
+            yield name.replace('"', r'\"')
+            yield '","'
             yield text.replace('"', r'\"')
             yield '"\n'
 
