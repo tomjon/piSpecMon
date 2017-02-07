@@ -344,9 +344,9 @@ def export_endpoint(config_id):
             yield str(freq(freq_n, **scan_config))
             yield ','
             yield name
-            yield ','
-            yield text
-            yield '\n'
+            yield ',"'
+            yield text.replace('"', r'\"')
+            yield '"\n'
 
     try:
         config = application.data_store.config(config_id).read()
