@@ -28,6 +28,9 @@ export class TableComponent {
   // id of the running config set, if any
   config_id: string;
 
+  // rds checkbox for export/download
+  rds: boolean = false;
+
   @ViewChild(WidgetComponent) widgetComponent;
 
   constructor(private dataService: DataService, private messageService: MessageService) { }
@@ -116,12 +119,13 @@ export class TableComponent {
   }
 
   onExport() {
-    this.widgetComponent.busy(this.dataService.exportData(this.selected))
+    this.widgetComponent.busy(this.dataService.exportData(this.selected, this.rds))
                         .subscribe(path => this.messageService.show('CSV written to ' + path));
   }
 
   onDownload() {
-    window.open('/export/' + this.selected, '_blank');
+    let args = this.rds ? '?rds=true' : '';
+    window.open('/export/' + this.selected + args, '_blank');
   }
 
   mode(value): string {

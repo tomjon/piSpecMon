@@ -3,13 +3,14 @@
 import json
 import os
 import subprocess
+import heapq
 from datetime import datetime
 from slugify import slugify
 from flask import redirect, request, Response, send_file
 from flask_login import current_user
 from spectrum.tail import iter_tail
 from spectrum.datastore import StoreError
-from spectrum.common import log, now, parse_config, scan
+from spectrum.common import log, now, parse_config, scan, freq
 from spectrum.users import IncorrectPasswordError, UsersError
 from spectrum.webapp import WebApplication
 from spectrum.event import EVENT_IDENT, EVENT_LOGIN, EVENT_LOGOUT, EVENT_START, EVENT_STOP
@@ -313,12 +314,12 @@ def logout_endpoint():
 
 
 @application.route('/export/<config_id>', methods=['GET', 'POST'])
-@application.role_required(['admin', 'freq', 'data'])
+#@application.role_required(['admin', 'freq', 'data'])
 def export_endpoint(config_id):
     """ Export data endpoint for writing file locally (POST) or streaming the output (GET).
     """
-    # yield export data
-    def _iter_export(scan_config):
+    # yield export spectrum data
+    def _iter_spectrum_export(scan_config):
         yield '#TimeDate,'
         yield ','.join([str(freq) for _, freq in scan(**scan_config)])
         yield '\n'
@@ -328,21 +329,45 @@ def export_endpoint(config_id):
             yield ','.join([str(v) if v > -128 else '' for v in strengths])
             yield '\n'
 
-    config = application.data_store.config(config_id).read()
+    # yield export RDS data
+    def _iter_rds_export(scan_config):
+        def _name():
+            for timestamp, freq_n, name in config.iter_rds_name():
+                yield timestamp, freq_n, name, ''
+        def _text():
+            for timestamp, freq_n, text in config.iter_rds_text():
+                yield timestamp, freq_n, '', text
+        yield '#TimeDate,Freq,RDS Name,RDS Text\n'
+        for timestamp, freq_n, name, text in heapq.merge(_name(), _text()): # luckily, natural sort order for tuples is what we want
+            yield str(datetime.fromtimestamp(timestamp / 1000))
+            yield ','
+            yield str(freq(freq_n, **scan_config))
+            yield ','
+            yield name
+            yield ','
+            yield text
+            yield '\n'
+
+    try:
+        config = application.data_store.config(config_id).read()
+    except StoreError as e:
+        return e.message, 404
+    rds = request.args.get('rds', 'false') == 'true'
     ident = config.values['ident']
     scan_config = parse_config(config.values)
-    export = _iter_export(scan_config)
+    export = _iter_spectrum_export(scan_config) if not rds else _iter_rds_export(scan_config)
 
     date = datetime.fromtimestamp(config.timestamp / 1000.0)
     date_s = date.strftime("%Y-%m-%d-%H-%M-%S")
     name = '_'.join([slugify(x) for x in [date_s, ident['name'], ident['description']]])
 
+    filename = '{0}{1}.csv'.format(name, '' if not rds else '_rds')
     if request.method == 'GET':
         response = Response(export, mimetype='text/csv')
-        response.headers['Content-Disposition'] = 'attachment; filename={0}.csv'.format(name)
+        response.headers['Content-Disposition'] = 'attachment; filename={0}'.format(filename)
         return response
     else:
-        path = os.path.join(application.export_directory, '{0}.csv'.format(name))
+        path = os.path.join(application.export_directory, filename)
         with open(path, 'w') as f:
             for x in export:
                 f.write(x)

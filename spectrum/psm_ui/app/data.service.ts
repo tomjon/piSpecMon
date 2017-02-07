@@ -199,8 +199,9 @@ export class DataService {
                     .catch(this.errorHandler("stop monitor"));
   }
 
-  exportData(config_id): Observable<string> {
-    return this.http.post(this.baseUrl + 'export/' + config_id, null, null)
+  exportData(config_id, rds: boolean=false): Observable<string> {
+    let args = rds ? '?rds=true' : '';
+    return this.http.post(this.baseUrl + 'export/' + config_id + args, null, null)
                     .map(res => res.json().path)
                     .catch(this.errorHandler("export spectrum data"));
   }

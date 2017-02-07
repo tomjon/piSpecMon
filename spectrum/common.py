@@ -71,6 +71,13 @@ def scan(freqs=None, range=None, **_): # pylint: disable=redefined-builtin
         idx += 1
 
 
+def freq(freq_n, **args): # pylint: disable=redefined-builtin
+    """ Return the frequency for the given freq_n.  Use of this is fairly inefficient
+        because the whole range of frequencies is generated each time.
+    """
+    return next(itertools.islice(scan(**args), freq_n, None))[1]
+
+
 def _convert(dic):
     """ Auto-convert empty strings into None, number strings into numbers, and boolean
         strings into booleans. Recurse into dictionaries.

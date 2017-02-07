@@ -42,6 +42,8 @@
   </table>
   <button type="button" (click)="onExport()" class="btn btn-default btn-selected" [disabled]="loading || ! selected">Export</button>
   <button type="button" (click)="onDownload()" class="btn btn-default btn-selected" [disabled]="loading || ! selected">Download</button>
+  <input type="checkbox" name="rds" [disabled]="loading || ! selected" [(ngModel)]="rds">
+  <label for="rds">RDS</label>
   <div *ngIf="user.roleIn(['admin'])" class="btn-right">
     <button type="button" (click)="onCheckAll()" class="btn btn-default" [disabled]="loading || standby || checkedIds().length == maxChecked">All</button>
     <button type="button" (click)="onCheckNone()" class="btn btn-default" [disabled]="loading || standby || checkedIds().length == 0">None</button>
