@@ -8,7 +8,7 @@ STRENGTH_DELAY = 2
 NAME_DELAY = 4
 TEXT_DELAY = 6
 
-STRENGTH = 40
+STRENGTH = 80
 
 VALUES = {
     91.4: {'name': "Radio 3", 'text': ["Beethoven - Moonlight Sonata", "Holst - Jupiter"]},

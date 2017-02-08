@@ -61,7 +61,7 @@ class Monkey(Process):
             return
 
         time_0 = time()
-        for name, ok in self._poll(api.get_name, lambda n: n is not None, rds['rds_timeout']):
+        for name, ok in self._poll(api.get_name, lambda n: n is not None, rds['name_timeout']):
             self.status['strength'] = api.get_strength()
             self.status['name'] = name
             yield
@@ -75,7 +75,7 @@ class Monkey(Process):
             return
 
         text_0 = None
-        while time() < time_0 + rds['rds_timeout']:
+        while time() < time_0 + rds['text_timeout']:
             text = api.get_text()
             if text is not None:
                 text = text.encode('ascii', 'ignore') #FIXME should be able to store Unicode

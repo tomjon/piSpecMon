@@ -85,9 +85,10 @@ default:
         threshold: -20
 
     rds_settings:
-        strength_threshold: 40
-        strength_timeout: 20
-        rds_timeout: 300
+        strength_threshold: 60
+        strength_timeout: 4
+        name_timeout: 10
+        text_timeout: 300
 
     scan_settings:
         freqs: {range: [87.5, 108.0, 0.1], exp: 6, freqs: [{f: '', exp: 6}]}
