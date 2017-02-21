@@ -86,6 +86,7 @@ class Users(object):
     """
     def __init__(self, users_file, rounds):
         self.users_file = users_file
+        self.dir = os.path.dirname(users_file)
         self.rounds = rounds
 
         # create users file if it does not exist, but just blank
@@ -176,7 +177,7 @@ class Users(object):
     def _rewrite_users(self, username, user_fn=None):
         username = unicode(username)
         try:
-            with tempfile.NamedTemporaryFile(delete=False) as f:
+            with tempfile.NamedTemporaryFile(dir=self.dir, delete=False) as f:
                 error = None
                 ok = False
                 for user in self._iter_users():
