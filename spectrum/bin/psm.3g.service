@@ -4,11 +4,10 @@ After=network.target
 
 [Service]
 Type=idle
-ExecStart=/home/ses/umtskeeper/umtskeeper --sakisoperators "USBINTERFACE='0' OTHER='USBMODEM' USBMODEM='12d1:1003' APN='3internet' APN_USER='0' APN_PASS='0'" --sakisswitches "--sudo --console" --devicename 'Huawei' --log --silent --monthstart 8 --nat 'no' --httpserver
+ExecStart=/home/ses/piSpecMon/spectrum/bin/sakis3g.sh connect
+KillMode=process
 Restart=always
-RestartSec=1
-WorkingDirectory=~
-KillSignal=SIGINT
+RestartSec=60
 
 [Install]
 WantedBy=psm.target
