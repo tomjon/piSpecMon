@@ -5,6 +5,7 @@ import { LevelComponent } from './level.component';
 import { WaterfallComponent } from './waterfall.component';
 import { SampleTableComponent } from './sample-table.component';
 import { RdsTableComponent } from './rds-table.component';
+import { TemperatureComponent } from './temperature.component';
 import { DataService } from './data.service';
 import { Config } from './config';
 import { Data } from './data';
@@ -12,7 +13,7 @@ import { Data } from './data';
 @Component({
   selector: 'psm-charts',
   templateUrl: 'templates/charts.html',
-  directives: [ FrequencyComponent, LevelComponent, WaterfallComponent, SampleTableComponent, RdsTableComponent ]
+  directives: [ FrequencyComponent, LevelComponent, WaterfallComponent, SampleTableComponent, RdsTableComponent, TemperatureComponent ]
 })
 export class ChartsComponent {
   config: Config;

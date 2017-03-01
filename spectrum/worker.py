@@ -6,6 +6,19 @@ from spectrum.process import Process
 from spectrum.common import log, parse_config, now, scan
 from spectrum.monitor import Monitor, TimeoutError, Recorder
 from spectrum.power import power_on
+from spectrum.config import PICO_PATH
+
+try:
+    import smbus
+    i2c = smbus.SMBus(1)
+except:
+    i2c = None
+
+def read_temp():
+    if not os.path.exists(PICO_PATH) or i2c is None:
+        return None
+    data = i2c.read_byte_data(0x69, 0x0C)
+    return format(data, "02x")
 
 
 class Worker(Process):
@@ -95,6 +108,10 @@ class Worker(Process):
                 yield
 
                 config.write_spectrum(time_0, strengths)
+
+                temp = read_temp()
+                if temp is not None:
+                    config.write_temperature(time_0, temp)
 
                 if audio_t is not None and now() - audio_t > period * 1000:
                     audio_t = now()

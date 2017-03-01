@@ -178,6 +178,7 @@ def data_endpoint(config_id):
             'name': list(config.iter_rds_name(*interval)),
             'text': list(config.iter_rds_text(*interval))
         }
+        data['temperature'] = list(config.iter_temperature(*interval))
         return json.dumps(data)
     except StoreError as e:
         return e.message, 500

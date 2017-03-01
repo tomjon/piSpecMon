@@ -134,6 +134,10 @@ class Config(ConfigBase):
     SPECTRUM_TIMES = os.path.join(SPECTRUM, TIMESTAMPS)
     SPECTRUM_DATA = os.path.join(SPECTRUM, DATA)
 
+    TEMPERATURE = 'temperature'
+    TEMPERATURE_TIMES = os.path.join(TEMPERATURE, TIMESTAMPS)
+    TEMPERATURE_DATA = os.path.join(TEMPERATURE, DATA)
+
     AUDIO = 'audio'
     AUDIO_TIMES = os.path.join(AUDIO, TIMESTAMPS)
     AUDIO_DATA = os.path.join(AUDIO, DATA)
@@ -208,7 +212,7 @@ class Config(ConfigBase):
             _T_STRUCT.fwrite(f, timestamp)
             if self.n_freq is not None:
                 _N_STRUCT.fwrite(f, self.n_freq)
-        for name in (self.SPECTRUM, self.AUDIO, self.RDS, self.RDS_NAME, self.RDS_TEXT, self.ERROR):
+        for name in (self.SPECTRUM, self.AUDIO, self.RDS, self.RDS_NAME, self.RDS_TEXT, self.TEMPERATURE, self.ERROR):
             os.mkdir(os.path.join(path, name))
         with open(os.path.join(path, self.SPECTRUM_TIMES), 'a') as f:
             pass
@@ -367,6 +371,21 @@ class Config(ConfigBase):
         if self.values is None:
             raise StoreError("Uninitialised config (call read or write)")
         self._write_freq_data(self.RDS_TEXT_TIMES, self.RDS_TEXT_DATA, timestamp, freq_n, text)
+
+    def iter_temperature(self, start=None, end=None):
+        """ Yield (timestamp, temperature).
+        """
+        if self.values is None:
+            raise StoreError("Uninitialised config (call read or write)")
+        for timestamp, _, temperature in self._iter_freq_data(self.TEMPERATURE_TIMES, self.TEMPERATURE_DATA, start, end):
+            yield timestamp, temperature
+
+    def write_temperature(self, timestamp, temperature):
+        """ Write temperature at the given timestamp.
+        """
+        if self.values is None:
+            raise StoreError("Uninitialised config (call read or write)")
+        self._write_freq_data(self.TEMPERATURE_TIMES, self.TEMPERATURE_DATA, timestamp, 0, temperature)
 
     def iter_error(self):
         """ Yield (timestamp, error) for all errors.

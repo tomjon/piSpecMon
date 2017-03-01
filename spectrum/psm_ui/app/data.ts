@@ -13,6 +13,7 @@ export class Data {
   audio: any;
   rdsNames: any;
   rdsText: any;
+  temperature: any;
 
   constructor(config: Config, data: any) {
     this.freqs = config.values.freqs;
@@ -21,6 +22,7 @@ export class Data {
     this.mapAudio(data.audio, config.id);
     this.mapRdsNames(data.rds.name);
     this.mapRdsText(data.rds.text);
+    this.temperature = data.temperature;
   }
 
   private fillArray(v?: any, size?: number) {
