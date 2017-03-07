@@ -95,6 +95,7 @@ def monitor():
         values['audio'] = application.audio.values
         values['rds'] = application.rds.values
         values['ident'] = application.ident
+        values['user'] = current_user.name
 
         try:
             config = application.data_store.config().write(now(), values)
@@ -315,7 +316,7 @@ def logout_endpoint():
 
 
 @application.route('/export/<config_id>', methods=['GET', 'POST'])
-#@application.role_required(['admin', 'freq', 'data'])
+@application.role_required(['admin', 'freq', 'data'])
 def export_endpoint(config_id):
     """ Export data endpoint for writing file locally (POST) or streaming the output (GET).
     """
