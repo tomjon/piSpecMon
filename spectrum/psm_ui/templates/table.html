@@ -14,7 +14,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let config of configs" (click)="onSelect(config.id, $event)" [ngClass]="{ 'row-selected': selected == config.id }">
+      <tr *ngFor="let config of configs" (click)="onSelect(config.id, $event)" [ngClass]="{ 'row-selected': selected == config.id }" [title]="config.values.scan.description || '[no description]'">
         <td>{{config.values.user}}</td>
         <td>{{config.timestamp | date}}</td>
         <td>{{config.latest | date}}</td>

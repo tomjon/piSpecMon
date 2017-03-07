@@ -77,6 +77,10 @@
         </select>
       </div>
     </div>
+    <div class="form-group">
+      <label for="description">Description</label>
+      <input type="text" class="form-control" [disabled]="loading || worker.config_id" [(ngModel)]="config.scan.description" name="description"/>
+    </div>
     <button (click)="onReset()" class="btn btn-default" [disabled]="loading || running || form.form.pristine">Reset</button>
     <button (click)="onStart()" class="btn btn-default" [disabled]="loading || running || ! validScan">Start</button>
     <button (click)="onStop()" class="btn btn-default" [disabled]="loading || ! running">Stop</button>
