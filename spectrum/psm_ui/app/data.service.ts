@@ -165,11 +165,11 @@ export class DataService {
                     .catch(this.errorHandler(`pi command: ${command}`));
   }
 
-  getConfig(config_id?: string): Observable<Config> {
+  getConfig(config_id?: string): Observable<Config[]> {
     let url = `${this.baseUrl}config`;
     if (config_id) url = `${url}/${config_id}`;
     return this.http.get(url)
-                    .map(res => res.json().data.map(c => new Config(c.id, c.values, c.timestamp, c.first, c.latest, c.count, c.errors)))
+                    .map(res => res.json().data.map(c => Object.assign(new Config(), c)))
                     .catch(this.errorHandler("get config set"));
   }
 

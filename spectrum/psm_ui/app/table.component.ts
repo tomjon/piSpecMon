@@ -45,7 +45,11 @@ export class TableComponent {
     if (! config) {
       // if we are seeing a new config, add it to the table
       this.widgetComponent.busy(this.dataService.getConfig(this.config_id))
-                          .subscribe(config => this.configs.push(config[0]));
+                          .subscribe(configs => {
+                            if (! this.configs.find(set => set.id == configs[0].id)) {
+                              this.configs.push(configs[0]);
+                            }
+                          });
     } else {
       // otherwise, update the one we have
       if (status.worker.sweep) {
