@@ -7,6 +7,7 @@ import os
 import tempfile
 import json
 import re
+from fcntl import lockf, LOCK_EX, LOCK_UN
 
 USERNAME_RE = re.compile(r'^[A-Za-z0-9._-]+$')
 
@@ -86,6 +87,7 @@ class Users(object):
     """
     def __init__(self, users_file, rounds):
         self.users_file = users_file
+        self.lock_file = "{0}.lock".format(users_file)
         self.dir = os.path.dirname(users_file)
         self.rounds = rounds
 
@@ -175,6 +177,14 @@ class Users(object):
         return None
 
     def _rewrite_users(self, username, user_fn=None):
+        with open(self.lock_file, 'a') as f:
+            lockf(f, LOCK_EX)
+            try:
+                return self.__rewrite_users(username, user_fn)
+            finally:
+                lockf(f, LOCK_UN)
+
+    def __rewrite_users(self, username, user_fn):
         username = unicode(username)
         try:
             with tempfile.NamedTemporaryFile(dir=self.dir, delete=False) as f:
