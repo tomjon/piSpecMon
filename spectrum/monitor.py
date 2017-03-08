@@ -159,11 +159,15 @@ class Monitor(object):
         """
         if self.set_check == 0:
             self._check(self.rig.set_freq, Hamlib.RIG_VFO_CURR, freq)
+            return True
         else:
-            for _ in xrange(self.set_check):
+            checks = 0
+            while checks < self.set_check:
                 self._check(self.rig.set_freq, Hamlib.RIG_VFO_CURR, freq)
                 if freq == self._check(self.rig.get_freq, Hamlib.RIG_VFO_CURR):
                     return True
+                sleep(self.interval * 2 ** checks / 1000.0)
+                checks += 1
             return False
 
     def get_strength(self, freq=None):
