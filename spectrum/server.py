@@ -24,7 +24,7 @@ def main_endpoint():
     """ Redirect / to index or login page.
     """
     if current_user is not None and not current_user.is_anonymous and current_user.is_authenticated:
-        return redirect("/static/index.html")
+        return redirect("/static/index.html" if not application.is_local(current_user) else "/static/index-local.html")
     else:
         return redirect("/static/login.html")
 
