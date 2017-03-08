@@ -24,7 +24,8 @@ def get_capabilities():
     caps = {'models': [], 'modes': [], 'rates': [], 'parities': []}
 
     is_int = lambda n: isinstance(n, int)
-    for model in [n for x, n in inspect.getmembers(Hamlib, is_int) if x.startswith('RIG_MODEL_')]:
+    #FIXME WinRadio RIG_MODEL_G313 is causing problems on Linux machines - ignore for now
+    for model in [n for x, n in inspect.getmembers(Hamlib, is_int) if x.startswith('RIG_MODEL_') and x != 'RIG_MODEL_G313']:
         rig = Hamlib.Rig(model)
         if rig.this is None:
             continue
