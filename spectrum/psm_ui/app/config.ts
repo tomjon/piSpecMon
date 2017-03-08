@@ -1,3 +1,5 @@
+import { Data } from './data';
+
 export class Config {
   public id: string;
   public values: any;
@@ -6,4 +8,6 @@ export class Config {
   public latest: number;
   public count: number;
   public errors: any[];
+
+  public data: Data;
 }

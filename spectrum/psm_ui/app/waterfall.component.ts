@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, Input } from '@angular/core';
 import { Chart } from './chart';
 import { WidgetComponent } from './widget.component';
 import { FreqPipe } from './freq.pipe';
@@ -59,6 +59,13 @@ export class WaterfallComponent extends Chart {
   @ViewChild('canvas') canvas;
   @ViewChild('overlay') overlay;
 
+  //FIXME this is a repeat from other charts... can it go on Chart in chart.ts?
+  timestamp: number;
+  @Input('timestamp') set _timestamp(timestamp: number) {
+    this.timestamp = timestamp;
+    this.plot();
+  }
+
   constructor(private freq: FreqPipe) {
     super(1); //FIXME this puts the waterfall chart in a later frame than the others - can maybe be removed if drawing the waterfall is quicker
   }
@@ -108,7 +115,7 @@ export class WaterfallComponent extends Chart {
     var f1 = +this.data.freqs.range[1];
     let df = +this.data.freqs.range[2];
     this.x.domain([f0 - df/2, f1 + df/2]);
-    this.y.domain(d3.extent(data, d => d.fields.timestamp));
+    this.y.domain(d3.extent(data, d => d.timestamp));
     timeTicks(this.yAxis, this.y.domain(), WATERFALL_CHART_OPTIONS.y_ticks);
 
     this.g.append("g")
@@ -133,13 +140,13 @@ export class WaterfallComponent extends Chart {
 
     this.svg.selectAll('g.y.axis g text').each(insertLineBreaks);
 
-    this.rw = this.width / data[0].fields.level.length;
+    this.rw = this.width / data[0].level.length;
     this.rh = this.height / data.length;
 
     for (let y_idx in data) {
       let row = data[y_idx];
-      for (let x_idx in row.fields.level) {
-        let level = row.fields.level[x_idx];
+      for (let x_idx in row.level) {
+        let level = row.level[x_idx];
         this.rect(this.context, +x_idx, +y_idx, this.heat(level));
         if (this.data.audio[`${y_idx}_${x_idx}`] != undefined) {
           this.rect(this.overctx, +x_idx, +y_idx, 'green');
@@ -159,7 +166,7 @@ export class WaterfallComponent extends Chart {
     // find frequency of click...
     let f = this.x.invert(z.x - this.margin.left);
     let i = Math.round((f - this.data.freqs.range[0]) / this.data.freqs.range[2]);
-    if (i < 0 || i >= this.data.spectrum.levels[0].fields.level.length) {
+    if (i < 0 || i >= this.data.spectrum.levels[0].level.length) {
       // out of bounds - hide info text
       this.infoText = "";
       return;
@@ -172,10 +179,10 @@ export class WaterfallComponent extends Chart {
       this.infoText = "";
       return;
     }
-    let t = this.data.spectrum.levels[j].fields.timestamp;
+    let t = this.data.spectrum.levels[j].timestamp;
 
     // formulate info text
-    let v = this.data.spectrum.levels[j].fields.level[i];
+    let v = this.data.spectrum.levels[j].level[i];
     this.infoText = `${v}dB at ${this.freq.transform(i, this.data)} at ${dt_format(new Date(t))}`;
 
     // if it's an audio sample, play it (and we are showing samples)

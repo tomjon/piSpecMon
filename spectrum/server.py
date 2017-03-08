@@ -169,17 +169,14 @@ def data_endpoint(config_id):
         x = request.args.get(name)
         return None if x is None else int(x)
 
-    interval = (_int_arg('start'), _int_arg('end'))
     try:
         config = application.data_store.config(config_id).read()
         data = {}
-        data['spectrum'] = list(config.iter_spectrum(*interval))
-        data['audio'] = list(config.iter_audio(*interval))
-        data['rds'] = {
-            'name': list(config.iter_rds_name(*interval)),
-            'text': list(config.iter_rds_text(*interval))
-        }
-        data['temperature'] = list(config.iter_temperature(*interval))
+        data['spectrum'] = list(config.iter_spectrum(start=_int_arg('spectrum')))
+        data['audio'] = list(config.iter_audio(start=_int_arg('audio')))
+        data['rds_name'] = list(config.iter_rds_name(start=_int_arg('rds_name')))
+        data['rds_text'] = list(config.iter_rds_text(start=_int_arg('rds_text')))
+        data['temperature'] = list(config.iter_temperature(start=_int_arg('temperature')))
         return json.dumps(data)
     except StoreError as e:
         return e.message, 500

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Headers, Http, RequestOptions, Response } from '@angular/http';
+import { Headers, Http, RequestOptions, Response, URLSearchParams } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import { User } from './user';
 import { Config } from './config';
@@ -206,8 +206,12 @@ export class DataService {
                     .catch(this.errorHandler("export spectrum data"));
   }
 
-  getData(config_id): Observable<any> {
-    return this.http.get(`${this.baseUrl}data/${config_id}`)
+  getData(config_id, starts): Observable<any> {
+    let params: URLSearchParams = new URLSearchParams();
+    for (let key in starts) {
+      params.set(key, starts[key]);
+    }
+    return this.http.get(`${this.baseUrl}data/${config_id}`, {search: params})
                     .map(res => res.json())
                     .catch(this.errorHandler("get data"));
   }

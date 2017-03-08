@@ -32,18 +32,25 @@ import { Data } from './data';
              </psm-widget>`
 })
 export class RdsTableComponent {
-  data: Data;
   stations: any;
   idx: number; // the selected station index
 
-  @Input('data') set _data(data: Data) {
-    this.data = data;
+  @Input('data') data: Data;
+
+  private plot() {
     this.stations = [];
-    if (data && data.rdsNames) {
-      for (let idx in data.rdsNames) {
-        this.stations.push({ 'idx': idx, 'name': data.rdsNames[idx] });
+    if (this.data && this.data.rdsNames) {
+      for (let idx in this.data.rdsNames) {
+        this.stations.push({ 'idx': idx, 'name': this.data.rdsNames[idx] });
       }
     }
+  }
+
+  //FIXME this is a repeat from other charts... can it go on Chart in chart.ts?
+  timestamp: number;
+  @Input('timestamp') set _timestamp(timestamp: number) {
+    this.timestamp = timestamp;
+    this.plot();
   }
 
   isHidden() {

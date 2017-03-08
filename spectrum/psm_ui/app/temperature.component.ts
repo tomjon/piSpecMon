@@ -42,6 +42,13 @@ export class TemperatureComponent extends Chart {
   @ViewChild('chart') chart;
   @ViewChild('text') text;
 
+  //FIXME this is a repeat from other charts... can it go on Chart in chart.ts?
+  timestamp: number;
+  @Input('timestamp') set _timestamp(timestamp: number) {
+    this.timestamp = timestamp;
+    this.plot();
+  }
+
   ngOnInit() {
     this.margin = TEMPERATURE_CHART_OPTIONS.margin;
     this.width = TEMPERATURE_CHART_OPTIONS.width - this.margin.left - this.margin.right,

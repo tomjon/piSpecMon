@@ -62,6 +62,13 @@ export class LevelComponent extends Chart {
   @ViewChild('text') text;
   @ViewChild('selectN') selectN;
 
+  //FIXME this is a repeat from other charts... can it go on Chart in chart.ts?
+  timestamp: number;
+  @Input('timestamp') set _timestamp(timestamp: number) {
+    this.timestamp = timestamp;
+    this.plot();
+  }
+
   constructor(private freq: FreqPipe) {
     super();
   }

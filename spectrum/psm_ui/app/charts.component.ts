@@ -17,32 +17,29 @@ import { Data } from './data';
 })
 export class ChartsComponent {
   config: Config;
-  data: Data;
+  timestamp: number;
   loading: boolean = false;
 
   @Input() set status(status: any) {
-    if (status && this.config && status.config_id == this.config.id && status.sweep && this.data && status.sweep.sweep_n > this.data.count) {
-      this.getData();
+    if (status && this.config && status.config_id == this.config.id && status.sweep && this.config.data && status.sweep.sweep_n > this.config.data.count) {
+      this.dataService.getData(this.config.id, this.config.data.timestamps)
+                      .subscribe(data => this.timestamp = this.config.data.update(data));
     }
   }
 
   @Input('config') set _config(config: Config) {
     this.config = config;
-    if (config) {
-      this.getData();
-    } else {
-      this.data = undefined;
-    }
+    if (config.data == undefined) this.getData();
   }
 
   constructor(private dataService: DataService) { }
 
   private getData() {
-    delete this.data;
     this.loading = true;
-    this.dataService.getData(this.config.id)
+    this.dataService.getData(this.config.id, {})
                     .subscribe(data => {
-                      this.data = new Data(this.config, data);
+                      this.config.data = new Data(this.config);
+                      this.timestamp = this.config.data.update(data);
                       this.loading = false;
                     });
   }

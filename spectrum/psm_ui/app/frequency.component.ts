@@ -37,7 +37,6 @@ declare var $;
 })
 export class FrequencyComponent extends Chart {
   sweep: string = 'latest';
-  timestamp: number;
 
   svg: any;
   line: any;
@@ -58,6 +57,13 @@ export class FrequencyComponent extends Chart {
 
   @ViewChild('chart') chart;
   @ViewChild('text') text;
+
+  //FIXME this is a repeat from other charts... can it go on Chart in chart.ts?
+  timestamp: number;
+  @Input('timestamp') set _timestamp(timestamp: number) {
+    this.timestamp = timestamp;
+    this.plot();
+  }
 
   constructor(private freq: FreqPipe) {
     super();
@@ -95,7 +101,6 @@ export class FrequencyComponent extends Chart {
 
     if (this.isHidden()) return;
 
-    this.timestamp = this.data.spectrum.levels[this.data.spectrum.levels.length - 1].fields.timestamp;
     let agg = this.data.spectrum.agg[this.sweep];
 
     this.x.domain([this.data.freqs.range[0], this.data.freqs.range[1]]);

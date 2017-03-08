@@ -39,17 +39,26 @@ export class SampleTableComponent {
 
   @Input() config: any;
 
-  @Input('data') set _data(data: Data) {
-    if (! data) {
+  @Input('data') data: any;
+
+  private plot() {
+    if (! this.data) {
       this.freqs = [];
       this.samples = {};
       return;
     }
     this.freqs = [];
-    this.samples = data.samples;
+    this.samples = this.data.samples;
     for (let freq_n in this.samples) {
       this.freqs.push(+freq_n);
     }
+  }
+
+  //FIXME this is a repeat from other charts... can it go on Chart in chart.ts?
+  timestamp: number;
+  @Input('timestamp') set _timestamp(timestamp: number) {
+    this.timestamp = timestamp;
+    this.plot();
   }
 
   isHidden() {

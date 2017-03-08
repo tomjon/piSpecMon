@@ -247,7 +247,7 @@ class Config(ConfigBase):
                 if timestamp is None or (end is not None and timestamp > end):
                     return
                 if not seek:
-                    if start is not None and timestamp < start:
+                    if start is not None and timestamp <= start:
                         continue
                     f_d.seek(_struct.size * (f_t.tell() / _T_STRUCT.size - 1))
                     seek = True

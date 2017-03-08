@@ -19,6 +19,13 @@ export class RdsComponent {
     this.onReset();
   }
 
+  //FIXME this is a repeat from other charts... can it go on Chart in chart.ts?
+  timestamp: number;
+  @Input('timestamp') set _timestamp(timestamp: number) {
+    this.timestamp = timestamp;
+    this.onReset();
+  }
+
   onReset() {
     this.widgetComponent.busy(this.dataService.getRds())
                         .subscribe(rds => this.rds = rds);

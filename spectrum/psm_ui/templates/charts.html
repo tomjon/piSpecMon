@@ -1,7 +1,7 @@
 <p *ngIf="loading">Loading...</p>
-<psm-frequency [data]="data"></psm-frequency>
-<psm-level [data]="data"></psm-level>
-<psm-temperature [data]="data"></psm-temperature>
-<psm-waterfall [data]="data"></psm-waterfall>
-<psm-sample-table [data]="data" [config]="config.values"></psm-sample-table>
-<psm-rds-table [data]="data"></psm-rds-table>
+<psm-frequency [data]="config.data" [timestamp]="timestamp"></psm-frequency>
+<psm-level [data]="config.data" [timestamp]="timestamp"></psm-level>
+<psm-temperature [data]="config.data" [timestamp]="timestamp"></psm-temperature>
+<psm-waterfall [data]="config.data" [timestamp]="timestamp"></psm-waterfall>
+<psm-sample-table [data]="config.data" [config]="config.values" [timestamp]="timestamp"></psm-sample-table>
+<psm-rds-table [data]="config.data" [timestamp]="timestamp"></psm-rds-table>

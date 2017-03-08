@@ -5,24 +5,44 @@ import { MAX_N, CHART_HEIGHT } from './constants';
  * Spectrum, audio and RDS data along with the associated frequencies.
  */
 export class Data {
-
+  config_id: string;
   freqs: any;
   count: number;
   spectrum: any;
-  samples: any;
-  audio: any;
-  rdsNames: any;
-  rdsText: any;
-  temperature: any;
 
-  constructor(config: Config, data: any) {
+  samples: any = {};
+  audio: any = {length: 0};
+  rdsNames: any = {};
+  rdsText: any = {};
+  temperature: any = [];
+  timestamps: any = {};
+
+  constructor(config: Config) {
+    this.config_id = config.id;
     this.freqs = config.values.freqs;
-    this.count = data.spectrum.length;
+    this.count = 0;
+    this.spectrum = {
+      levels: [],
+      agg: { latest: [], min: [], max: [], avg: [] },
+      freq_idxs: { 'min': this.fillArray(), 'max': this.fillArray(), 'avg': this.fillArray() }
+    };
+  }
+
+  update(data: any): number {
+    this.count += data.spectrum.length;
     this.mapSpectrum(data.spectrum);
-    this.mapAudio(data.audio, config.id);
-    this.mapRdsNames(data.rds.name);
-    this.mapRdsText(data.rds.text);
-    this.temperature = data.temperature;
+    this.mapAudio(data.audio);
+    this.mapRdsNames(data.rds_name);
+    this.mapRdsText(data.rds_text);
+    this.temperature.concat(data.temperature);
+
+    for (let key of ['spectrum', 'audio', 'rds_name', 'rds_text', 'temperature']) {
+      if (data[key].length > 0) {
+        this.timestamps[key] = data[key][data[key].length - 1][0];
+      }
+    }
+
+    return +this.timestamps['spectrum'];
   }
 
   private fillArray(v?: any, size?: number) {
@@ -34,36 +54,33 @@ export class Data {
     return a;
   }
 
-  mapAudio(audio: any[], config_id: string) {
+  mapAudio(audio: any[]) {
     // want this.samples to be a lookup from freq_n to a list of { timestamp: .., path: .. }
-    this.samples = {};
     // want this.audio to be a lookup like this.audio[{sweep_n}_{freq_n}] = ..
-    this.audio = { length: audio.length };
+    this.audio.length = audio.length;
     let sweep_n = -1;
     let sweep_t = null;
     for (let a of audio) {
       let audio_t = a[0];
       let freq_n = a[1];
-      let path = `/audio/${config_id}/${freq_n}/${audio_t}`;
+      let path = `/audio/${this.config_id}/${freq_n}/${audio_t}`;
       if (! this.samples[freq_n]) this.samples[freq_n] = [];
       this.samples[freq_n].push({ timestamp: audio_t, path: path });
       while (sweep_t == null || (sweep_t != 0 && audio_t > sweep_t)) {
         let sweep = this.spectrum.levels[++sweep_n];
-        sweep_t = sweep ? sweep.fields.timestamp : 0;
+        sweep_t = sweep ? sweep.timestamp : 0;
       }
       this.audio[`${sweep_n - 1}_${freq_n}`] = path;
     }
   }
 
   mapRdsNames(data: any[]) {
-    this.rdsNames = { };
     for (let rds of data) {
       this.rdsNames[rds[1]] = rds[2]; //FIXME ignores timestamp, effectively takes last known RDS name per frequency
     }
   }
 
   mapRdsText(data: any[]) {
-    this.rdsText = { };
     for (let rds of data) {
       let freq_n = rds[1];
       if (this.rdsText[freq_n] == undefined) this.rdsText[freq_n] = [];
@@ -72,115 +89,134 @@ export class Data {
   }
 
   mapSpectrum(data) {
-    var interval = data.length / CHART_HEIGHT;
+    if (data.length == 0) return;
 
-    this.spectrum = {
-      levels: [],
-      agg: { latest: [], min: [], max: [], avg: [] },
-      freq_idxs: { 'min': this.fillArray(), 'max': this.fillArray(), 'avg': this.fillArray() }
-    };
+    // data[sweep_n] = [timestamp, [strength_0, strength_1, strength_2, .., strength_N]]
+    for (let freq_idx in data[data.length - 1][1]) {
+      // take into account failed readings (level -128)
+      let strength = data[data.length - 1][1][freq_idx];
+      this.spectrum.agg['latest'][freq_idx] = { idx: freq_idx, v: strength != -128 ? strength : null };
+    }
 
-    if (data.length > 0) {
-      // data[sweep_n] = [timestamp, [strength_0, strength_1, strength_2, .., strength_N]]
-      for (let freq_idx in data[data.length - 1][1]) {
-        // take into account failed readings (level -128)
-        let strength = data[data.length - 1][1][freq_idx];
-        this.spectrum.agg['latest'][freq_idx] = { idx: freq_idx, v: strength != -128 ? strength : null };
+    let offset: number = this.spectrum.levels.length;
+
+    // set up avg initial totals (turn old avg values into old totals)
+    for (let freq_idx in data[0][1]) {
+      if (this.spectrum.agg['avg'][freq_idx] == null) {
+        this.spectrum.agg['avg'][freq_idx] = { idx: freq_idx, v: 0 };
+      } else {
+        this.spectrum.agg['avg'][freq_idx].v *= offset;
       }
-      let level_idx = 0, count = null;//FIXME I think level_idx is/should be freq_n?? or is it sweep_n??
+    }
 
-      for (let sweep_idx in data) {
-        let length = data[sweep_idx][1].length;
+    for (let sweep_idx in data) {
+      this.spectrum.levels[+sweep_idx + offset] = {
+        level: this.fillArray(0, length),
+        timestamp: data[sweep_idx][0],
+        sweep_n: +sweep_idx + offset
+      };
 
-        if (! this.spectrum.levels[level_idx]) {
-          this.spectrum.levels[level_idx] = {
-            fields: {
-              level: this.fillArray(0, length),
-              timestamp: data[sweep_idx][0],
-              sweep_n: +sweep_idx
-            }
-          };
-          count = this.fillArray(0, data[sweep_idx][1].length);
+      for (let freq_idx in data[sweep_idx][1]) {
+        let strength = data[sweep_idx][1][freq_idx];
+        if (strength == -128) {
+          // failed reading, remove from data
+          data[sweep_idx][1][freq_idx] = null;
+          continue;
         }
+        if (this.spectrum.agg['min'][freq_idx] == null || strength < this.spectrum.agg['min'][freq_idx].v) {
+          this.spectrum.agg['min'][freq_idx] = { idx: freq_idx, v: strength };
+        }
+        if (this.spectrum.agg['max'][freq_idx] == null || strength > this.spectrum.agg['max'][freq_idx].v) {
+          this.spectrum.agg['max'][freq_idx] = { idx: freq_idx, v: strength };
+        }
+        this.spectrum.agg['avg'][freq_idx].v += strength;
+        this.spectrum.levels[+sweep_idx + offset].level[freq_idx] = strength;
+      }
+    }
 
-        for (let freq_idx in data[sweep_idx][1]) {
-          let strength = data[sweep_idx][1][freq_idx];
-          if (strength == -128) {
-            // failed reading, remove from data
-            data[sweep_idx][1][freq_idx] = null;
+    // resolve totals back into averages
+    for (let freq_idx in this.spectrum.agg['avg']) {
+      let freq = this.spectrum.agg['avg'][freq_idx];
+      freq.v = Math.round(freq.v / this.spectrum.levels.length);
+    }
+
+    /* find top N by avg, min and max */
+    for (let x in this.spectrum.freq_idxs) {
+      // see if it beats any, if so swap and keep looking down the list... drop off end and gets kicked out
+      for (let _idx in this.spectrum.agg[x]) {
+        let idx = +_idx;
+
+        let v = this.spectrum.agg[x][idx].v;
+
+        // peak detection - only do this when scanning a range
+        if (this.freqs.range && idx > 0 && idx + 1 < this.spectrum.agg[x].length) {
+          if (this.spectrum.agg[x][idx - 1].v >= v || v < this.spectrum.agg[x][idx + 1].v) {
             continue;
           }
-          if (this.spectrum.agg['min'][freq_idx] == null || strength < this.spectrum.agg['min'][freq_idx].v) {
-            this.spectrum.agg['min'][freq_idx] = { idx: freq_idx, v: strength };
-          }
-          if (this.spectrum.agg['max'][freq_idx] == null || strength > this.spectrum.agg['max'][freq_idx].v) {
-            this.spectrum.agg['max'][freq_idx] = { idx: freq_idx, v: strength };
-          }
-          if (this.spectrum.agg['avg'][freq_idx] == null) {
-            this.spectrum.agg['avg'][freq_idx] = { idx: freq_idx, v: 0 };
-          }
-          this.spectrum.agg['avg'][freq_idx].v += strength / data.length;
-
-          this.spectrum.levels[level_idx].fields.level[freq_idx] += strength;
-          ++count[freq_idx];
         }
 
-        if (+sweep_idx >= (level_idx + 1) * interval - 1 || +sweep_idx == length - 1) {
-          for (let freq_idx in data[sweep_idx][1]) {
-            let level = this.spectrum.levels[level_idx].fields.level;
-            if (count[freq_idx] > 0) {
-              level[freq_idx] = Math.round(level[freq_idx] / count[freq_idx]);
-            } else {
-              level[freq_idx] = -128; // no reading
-            }
+        // try slotting in our value
+        for (let n: number = 0; n < MAX_N; ++n) {
+          let slot_idx = this.spectrum.freq_idxs[x][n];
+          // if we find an empty slot, just use it and quit
+          if (slot_idx == null) {
+            this.spectrum.freq_idxs[x][n] = idx;
+            break;
           }
-
-          ++level_idx;
-          count = null;
-        }
-      }
-
-      for (let freq_idx in this.spectrum.agg['avg']) {
-        let freq = this.spectrum.agg['avg'][freq_idx];
-        freq.v = Math.round(freq.v);
-      }
-
-      /* find top N by avg, min and max */
-      for (let x in this.spectrum.freq_idxs) {
-        // see if it beats any, if so swap and keep looking down the list... drop off end and gets kicked out
-        for (let _idx in this.spectrum.agg[x]) {
-          let idx = +_idx;
-
-          let v = this.spectrum.agg[x][idx].v;
-
-          // peak detection - only do this when scanning a range
-          if (this.freqs.range && idx > 0 && idx + 1 < this.spectrum.agg[x].length) {
-            if (this.spectrum.agg[x][idx - 1].v >= v || v < this.spectrum.agg[x][idx + 1].v) {
-              continue;
-            }
-          }
-
-          let i: number = idx; //FIXME needed??
-          // try slotting in our value
-          for (let n: number = 0; n < MAX_N; ++n) {
-            let slot_idx = this.spectrum.freq_idxs[x][n];
-            // if we find an empty slot, just use it and quit
-            if (slot_idx == null) {
-              this.spectrum.freq_idxs[x][n] = i;
-              break;
-            }
-            let slot_v = this.spectrum.agg[x][slot_idx].v;
-            // otherwise, compare with each slot, swapping if we beat it
-            if ((x == 'min' && v < slot_v) || (x != 'min' && v > slot_v)) {
-              let tmp = i;
-              i = slot_idx;
-              this.spectrum.freq_idxs[x][n] = tmp;
-              v = slot_v;
-            }
+          let slot_v = this.spectrum.agg[x][slot_idx].v;
+          // otherwise, compare with each slot, swapping if we beat it
+          if ((x == 'min' && v < slot_v) || (x != 'min' && v > slot_v)) {
+            let tmp = idx;
+            idx = slot_idx;
+            this.spectrum.freq_idxs[x][n] = tmp;
+            v = slot_v;
           }
         }
       }
     }
   }
 
+  // reduce existing data down to a fixed number (count) of sweeps (for waterfall display)
+  reduceSpectrum(sweeps: number): any[] {
+    let interval = this.spectrum.levels.length / CHART_HEIGHT;
+    let levels: any[] = [];
+
+    let level_idx = 0, count = null;
+
+    for (let sweep_idx in this.spectrum.levels) {
+      if (! levels[level_idx]) {
+        levels[level_idx] = {
+          level: this.fillArray(0, length),
+          timestamp: this.spectrum.levels[sweep_idx].timestamp,
+          sweep_n: +sweep_idx
+        };
+        count = this.fillArray(0, this.spectrum.levels[sweep_idx].level.length);
+      }
+
+      for (let freq_idx in this.spectrum.levels[sweep_idx].level) {
+        let level: number = this.spectrum.levels[sweep_idx].level[freq_idx];
+        if (level == undefined) {
+          continue;
+        }
+        levels[level_idx].level[freq_idx] += level;
+        ++count[freq_idx];
+      }
+
+      if (+sweep_idx >= (level_idx + 1) * interval - 1 || +sweep_idx == length - 1) {
+        for (let freq_idx in levels[sweep_idx].level) {
+          let level = levels[level_idx].level;
+          if (count[freq_idx] > 0) {
+            level[freq_idx] = Math.round(level[freq_idx] / count[freq_idx]);
+          } else {
+            level[freq_idx] = -128; // no reading
+          }
+        }
+
+        ++level_idx;
+        count = null;
+      }
+    }
+
+    return levels;
+  }
 }
