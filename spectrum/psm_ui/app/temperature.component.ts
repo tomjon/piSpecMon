@@ -7,7 +7,7 @@ import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
 @Component({
   selector: 'psm-temperature',
   directives: [ WidgetComponent ],
-  inputs: [ 'data', 'show' ],
+  inputs: [ 'data', 'temperature' ],
   template: `<psm-widget [hidden]="isHidden()" title="Temperature / Time" class="chart" (show)="onShow($event)">
                <svg #chart (click)="onClick($event)"
                  viewBox="0 0 ${TEMPERATURE_CHART_OPTIONS.width} ${TEMPERATURE_CHART_OPTIONS.height}"
@@ -41,13 +41,6 @@ export class TemperatureComponent extends Chart {
 
   @ViewChild('chart') chart;
   @ViewChild('text') text;
-
-  //FIXME this is a repeat from other charts... can it go on Chart in chart.ts?
-  timestamp: number;
-  @Input('timestamp') set _timestamp(timestamp: number) {
-    this.timestamp = timestamp;
-    this.plot();
-  }
 
   ngOnInit() {
     this.margin = TEMPERATURE_CHART_OPTIONS.margin;

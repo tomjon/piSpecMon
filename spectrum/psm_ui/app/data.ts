@@ -178,33 +178,34 @@ export class Data {
 
   // reduce existing data down to a fixed number (count) of sweeps (for waterfall display)
   reduceSpectrum(sweeps: number): any[] {
-    let interval = this.spectrum.levels.length / CHART_HEIGHT;
+    let interval = this.spectrum.levels.length / sweeps;
     let levels: any[] = [];
 
     let level_idx = 0, count = null;
 
     for (let sweep_idx in this.spectrum.levels) {
       if (! levels[level_idx]) {
+        let length = this.spectrum.levels[sweep_idx].level.length;
         levels[level_idx] = {
           level: this.fillArray(0, length),
           timestamp: this.spectrum.levels[sweep_idx].timestamp,
           sweep_n: +sweep_idx
         };
-        count = this.fillArray(0, this.spectrum.levels[sweep_idx].level.length);
+        count = this.fillArray(0, length);
       }
 
-      for (let freq_idx in this.spectrum.levels[sweep_idx].level) {
-        let level: number = this.spectrum.levels[sweep_idx].level[freq_idx];
-        if (level == undefined) {
+      let level = this.spectrum.levels[sweep_idx].level;
+      for (let freq_idx in level) {
+        if (level[freq_idx] == undefined) {
           continue;
         }
-        levels[level_idx].level[freq_idx] += level;
+        levels[level_idx].level[freq_idx] += level[freq_idx];
         ++count[freq_idx];
       }
 
       if (+sweep_idx >= (level_idx + 1) * interval - 1 || +sweep_idx == length - 1) {
-        for (let freq_idx in levels[sweep_idx].level) {
-          let level = levels[level_idx].level;
+        let level = levels[level_idx].level;
+        for (let freq_idx in level) {
           if (count[freq_idx] > 0) {
             level[freq_idx] = Math.round(level[freq_idx] / count[freq_idx]);
           } else {

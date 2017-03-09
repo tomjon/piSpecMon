@@ -3,9 +3,11 @@ import { WidgetComponent } from './widget.component';
 import { FreqPipe } from './freq.pipe';
 import { DatePipe } from './date.pipe';
 import { Data } from './data';
+import { Chart } from './chart';
 
 @Component({
   selector: 'psm-sample-table',
+  inputs: [ 'data', 'timestamp '],
   directives: [ WidgetComponent ],
   pipes: [ DatePipe, FreqPipe ],
   template: `<psm-widget [hidden]="isHidden()" title="Audio Samples" class="chart">
@@ -32,16 +34,14 @@ import { Data } from './data';
                </div>
              </psm-widget>`
 })
-export class SampleTableComponent {
+export class SampleTableComponent extends Chart {
   freqs: number[] = [];
   samples: any = {};
   freq_n: number;
 
   @Input() config: any;
 
-  @Input('data') data: any;
-
-  private plot() {
+  plot() {
     if (! this.data) {
       this.freqs = [];
       this.samples = {};
@@ -52,13 +52,6 @@ export class SampleTableComponent {
     for (let freq_n in this.samples) {
       this.freqs.push(+freq_n);
     }
-  }
-
-  //FIXME this is a repeat from other charts... can it go on Chart in chart.ts?
-  timestamp: number;
-  @Input('timestamp') set _timestamp(timestamp: number) {
-    this.timestamp = timestamp;
-    this.plot();
   }
 
   isHidden() {

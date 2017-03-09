@@ -11,7 +11,7 @@ declare var $;
 @Component({
   selector: 'psm-frequency',
   directives: [ WidgetComponent ],
-  inputs: [ 'data', 'show' ],
+  inputs: [ 'data', 'timestamp' ],
   pipes: [ DatePipe ],
   template: `<psm-widget [hidden]="isHidden()" title="Level / Frequency" class="chart" (show)="onShow($event)">
                <form class="form-inline" role="form">
@@ -58,16 +58,7 @@ export class FrequencyComponent extends Chart {
   @ViewChild('chart') chart;
   @ViewChild('text') text;
 
-  //FIXME this is a repeat from other charts... can it go on Chart in chart.ts?
-  timestamp: number;
-  @Input('timestamp') set _timestamp(timestamp: number) {
-    this.timestamp = timestamp;
-    this.plot();
-  }
-
-  constructor(private freq: FreqPipe) {
-    super();
-  }
+  constructor(private freq: FreqPipe) { super() }
 
   ngOnInit() {
     this.margin = FREQUENCY_CHART_OPTIONS.margin;

@@ -11,7 +11,7 @@ declare var $;
 @Component({
   selector: 'psm-waterfall',
   directives: [ WidgetComponent ],
-  inputs: [ 'data', 'show' ],
+  inputs: [ 'data', 'timestamp' ],
   template: `<psm-widget [hidden]="isHidden()" title="Waterfall" class="chart" (show)="onShow($event)">
                <form class="form-inline controls" role="form">
                  <div *ngIf="showSamples" class="form-group">
@@ -22,6 +22,8 @@ declare var $;
                  <span class="infoText">{{infoText}}</span>
                  <label for="samples">Overlay audio samples</label>
                  <input type="checkbox" name="samples" [disabled]="! data || data.audio.length == 0" [(ngModel)]="showSamples">
+                 <label for="follow">Follow</label>
+                 <input type="checkbox" name="follow" [(ngModel)]="follow" (ngModelChange)="plot()">
                </form>
                <div class="waterfall">
                  <svg #chart (click)="onClick($event)"
@@ -32,7 +34,9 @@ declare var $;
                  <canvas #canvas width="${WATERFALL_CHART_OPTIONS.width}" height="${WATERFALL_CHART_OPTIONS.height}"></canvas>
                  <canvas #overlay [hidden]="! showSamples" width="${WATERFALL_CHART_OPTIONS.width}" height="${WATERFALL_CHART_OPTIONS.height}"></canvas>
                </div>
-             </psm-widget>`
+             </psm-widget>`,
+  styles: ["label { margin-left: 20px }",
+           "input { cursor: pointer }"]
 })
 export class WaterfallComponent extends Chart {
   svg: any;
@@ -52,6 +56,7 @@ export class WaterfallComponent extends Chart {
 
   infoText: string = "";
   showSamples: boolean = false;
+  follow: boolean = false;
 
   @ViewChild('chart') chart;
   @ViewChild('text') text;
@@ -59,27 +64,12 @@ export class WaterfallComponent extends Chart {
   @ViewChild('canvas') canvas;
   @ViewChild('overlay') overlay;
 
-  //FIXME this is a repeat from other charts... can it go on Chart in chart.ts?
-  timestamp: number;
-  @Input('timestamp') set _timestamp(timestamp: number) {
-    this.timestamp = timestamp;
-    this.plot();
-  }
-
-  constructor(private freq: FreqPipe) {
-    super(1); //FIXME this puts the waterfall chart in a later frame than the others - can maybe be removed if drawing the waterfall is quicker
-  }
+  constructor(private freq: FreqPipe) { super() }
 
   ngOnInit() {
     this.margin = WATERFALL_CHART_OPTIONS.margin;
     this.width = WATERFALL_CHART_OPTIONS.width - this.margin.left - this.margin.right,
     this.height = WATERFALL_CHART_OPTIONS.height - this.margin.top - this.margin.bottom;
-
-    this.x = d3.scale.linear().range([0, this.width]);
-    this.y = d3.time.scale().range([0, this.height]);
-
-    this.xAxis = d3.svg.axis().scale(this.x).orient("bottom");
-    this.yAxis = d3.svg.axis().scale(this.y).orient("left");
 
     this.heat = d3.scale.linear().domain(WATERFALL_CHART_OPTIONS.heat).range(["blue", "yellow", "red"]).clamp(true);
 
@@ -104,18 +94,29 @@ export class WaterfallComponent extends Chart {
     if (! this.svg) return;
 
     this.g.selectAll("g *").remove();
+    this.context.fillStyle = 'black';
+    this.context.fillRect(this.margin.left, 1 + this.margin.top, 1 + this.width, this.height);
     this.overctx.clearRect(0, 0, this.overctx.canvas.width, this.overctx.canvas.height);
     this.infoText = "";
 
     if (this.isHidden()) return;
 
-    let data = this.data.spectrum.levels;
+    let data = this.follow ? this.data.spectrum.levels : this.data.reduceSpectrum(WATERFALL_CHART_OPTIONS.height);
+    let length = this.follow ? Math.min(data.length, WATERFALL_CHART_OPTIONS.height) : data.length;
+    let first = this.follow ? data.length - length : 0;
+    let height = Math.min(this.height, data.length);
+
+    this.x = d3.scale.linear().range([0, this.width]);
+    this.y = d3.time.scale().range([this.height - height, this.height]);
+
+    this.xAxis = d3.svg.axis().scale(this.x).orient("bottom");
+    this.yAxis = d3.svg.axis().scale(this.y).orient("left");
 
     var f0 = +this.data.freqs.range[0];
     var f1 = +this.data.freqs.range[1];
     let df = +this.data.freqs.range[2];
     this.x.domain([f0 - df/2, f1 + df/2]);
-    this.y.domain(d3.extent(data, d => d.timestamp));
+    this.y.domain([data[first].timestamp, data[data.length - 1].timestamp]);
     timeTicks(this.yAxis, this.y.domain(), WATERFALL_CHART_OPTIONS.y_ticks);
 
     this.g.append("g")
@@ -141,15 +142,15 @@ export class WaterfallComponent extends Chart {
     this.svg.selectAll('g.y.axis g text').each(insertLineBreaks);
 
     this.rw = this.width / data[0].level.length;
-    this.rh = this.height / data.length;
-
-    for (let y_idx in data) {
-      let row = data[y_idx];
+    this.rh = height / length;
+    for (let y_idx = 0; y_idx < length; ++y_idx) {
+      let row = data[first + y_idx];
       for (let x_idx in row.level) {
         let level = row.level[x_idx];
-        this.rect(this.context, +x_idx, +y_idx, this.heat(level));
-        if (this.data.audio[`${y_idx}_${x_idx}`] != undefined) {
-          this.rect(this.overctx, +x_idx, +y_idx, 'green');
+        let x = +x_idx, y = this.height - height + +y_idx;
+        this.rect(this.context, x, y, this.heat(level));
+        if (this.data.audio[`${row.sweep_n}_${x_idx}`] != undefined) { //FIXME this can 'miss' samples that were on the in-between sweeps
+          this.rect(this.overctx, x, y, 'green');
         }
       }
     }

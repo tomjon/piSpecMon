@@ -2,9 +2,11 @@ import { Component, Input } from '@angular/core';
 import { WidgetComponent } from './widget.component';
 import { DatePipe } from './date.pipe';
 import { Data } from './data';
+import { Chart } from './chart';
 
 @Component({
   selector: 'psm-rds-table',
+  inputs: [ 'data', 'timestamp' ],
   directives: [ WidgetComponent ],
   pipes: [ DatePipe ],
   template: `<psm-widget [hidden]="isHidden()" title="RDS Text" class="chart">
@@ -31,26 +33,17 @@ import { Data } from './data';
                </div>
              </psm-widget>`
 })
-export class RdsTableComponent {
+export class RdsTableComponent extends Chart {
   stations: any;
   idx: number; // the selected station index
 
-  @Input('data') data: Data;
-
-  private plot() {
+  plot() {
     this.stations = [];
     if (this.data && this.data.rdsNames) {
       for (let idx in this.data.rdsNames) {
         this.stations.push({ 'idx': idx, 'name': this.data.rdsNames[idx] });
       }
     }
-  }
-
-  //FIXME this is a repeat from other charts... can it go on Chart in chart.ts?
-  timestamp: number;
-  @Input('timestamp') set _timestamp(timestamp: number) {
-    this.timestamp = timestamp;
-    this.plot();
   }
 
   isHidden() {

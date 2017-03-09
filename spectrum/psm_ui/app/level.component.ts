@@ -8,7 +8,7 @@ import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
 @Component({
   selector: 'psm-level',
   directives: [ WidgetComponent ],
-  inputs: [ 'data', 'show' ],
+  inputs: [ 'data', 'timestamp' ],
   template: `<psm-widget [hidden]="isHidden()" title="Level / Time" class="chart" (show)="onShow($event)">
                <form class="form-inline" role="form">
                  <div class="form-group">
@@ -62,16 +62,7 @@ export class LevelComponent extends Chart {
   @ViewChild('text') text;
   @ViewChild('selectN') selectN;
 
-  //FIXME this is a repeat from other charts... can it go on Chart in chart.ts?
-  timestamp: number;
-  @Input('timestamp') set _timestamp(timestamp: number) {
-    this.timestamp = timestamp;
-    this.plot();
-  }
-
-  constructor(private freq: FreqPipe) {
-    super();
-  }
+  constructor(private freq: FreqPipe) { super() }
 
   ngOnInit() {
     this.margin = LEVEL_CHART_OPTIONS.margin;
@@ -121,7 +112,7 @@ export class LevelComponent extends Chart {
     }
     freq_idxs = freq_idxs[this.top].slice(0, this.N);
 
-    this.x.domain(d3.extent(data, d => d.fields.timestamp));
+    this.x.domain(d3.extent(data, d => d.timestamp));
     if (LEVEL_CHART_OPTIONS.y_axis) {
       this.y.domain([LEVEL_CHART_OPTIONS.y_axis[0], LEVEL_CHART_OPTIONS.y_axis[1]]);
       this.yAxis.tickValues(d3.range(LEVEL_CHART_OPTIONS.y_axis[0], LEVEL_CHART_OPTIONS.y_axis[1] + LEVEL_CHART_OPTIONS.y_axis[2], LEVEL_CHART_OPTIONS.y_axis[2]));
@@ -164,9 +155,9 @@ export class LevelComponent extends Chart {
         .attr("class", "line")
         .attr("d", idx => {
           let line = d3.svg.line()
-                       .x(d => this.x(d.fields.timestamp))
-                       .y(d => this.y(d.fields.level[idx]))
-                       .defined(d => d.fields.level[idx] != null);
+                       .x(d => this.x(d.timestamp))
+                       .y(d => this.y(d.level[idx]))
+                       .defined(d => d.level[idx] != null);
           return line(data);
         })
         .attr("id", idx => `level_line_${idx}`)
@@ -228,7 +219,7 @@ export class LevelComponent extends Chart {
       delete this.tick;
       return;
     }
-    this.tick = this.nearestTick(t, this.data.spectrum.levels.map(d => +d.fields.timestamp)); // find nearest timestamp in the levels array
+    this.tick = this.nearestTick(t, this.data.spectrum.levels.map(d => +d.timestamp)); // find nearest timestamp in the levels array
     this.showText();
   }
 
@@ -238,7 +229,7 @@ export class LevelComponent extends Chart {
     this.showX = this.x(this.tick.value) + this.margin.left;
     this.adjustX = this.showX > this.width / 2 ? -300 : 0;
     let f = +this.data.freqs.range[0] + this.freq_idx * this.data.freqs.range[2];
-    let v = this.data.spectrum.levels[this.tick.index].fields.level[this.freq_idx];
+    let v = this.data.spectrum.levels[this.tick.index].level[this.freq_idx];
     this.showY = this.y(v) + this.margin.top;
     this.infoText = `${v}dB at ${f}${HZ_LABELS[this.data.freqs.exp]}`;
     if (this.data.rdsNames[this.freq_idx]) this.infoText += ` (${this.data.rdsNames[this.freq_idx]})`;
