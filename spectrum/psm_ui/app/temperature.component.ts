@@ -7,7 +7,7 @@ import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
 @Component({
   selector: 'psm-temperature',
   directives: [ WidgetComponent ],
-  inputs: [ 'data', 'temperature' ],
+  inputs: [ 'data', 'timestamp' ],
   template: `<psm-widget [hidden]="isHidden()" title="Temperature / Time" class="chart" (show)="onShow($event)">
                <svg #chart (click)="onClick($event)"
                  viewBox="0 0 ${TEMPERATURE_CHART_OPTIONS.width} ${TEMPERATURE_CHART_OPTIONS.height}"
@@ -62,7 +62,7 @@ export class TemperatureComponent extends Chart {
   }
 
   isHidden() {
-    return this.data == undefined || this.data.temperature == undefined || this.data.temperature.length < 2;
+    return this.data.temperature.length < 2;
   }
 
   plot() {

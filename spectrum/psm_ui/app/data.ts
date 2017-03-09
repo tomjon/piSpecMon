@@ -34,7 +34,7 @@ export class Data {
     this.mapAudio(data.audio);
     this.mapRdsNames(data.rds_name);
     this.mapRdsText(data.rds_text);
-    this.temperature.concat(data.temperature);
+    this.temperature = this.temperature.concat(data.temperature);
 
     for (let key of ['spectrum', 'audio', 'rds_name', 'rds_text', 'temperature']) {
       if (data[key].length > 0) {
