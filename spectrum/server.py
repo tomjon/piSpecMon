@@ -172,11 +172,12 @@ def data_endpoint(config_id):
     try:
         config = application.data_store.config(config_id).read()
         data = {}
-        data['spectrum'] = list(config.iter_spectrum(start=_int_arg('spectrum')))
-        data['audio'] = list(config.iter_audio(start=_int_arg('audio')))
-        data['rds_name'] = list(config.iter_rds_name(start=_int_arg('rds_name')))
-        data['rds_text'] = list(config.iter_rds_text(start=_int_arg('rds_text')))
-        data['temperature'] = list(config.iter_temperature(start=_int_arg('temperature')))
+        end = _int_arg('end')
+        data['spectrum'] = list(config.iter_spectrum(start=_int_arg('spectrum'), end=end))
+        data['audio'] = list(config.iter_audio(start=_int_arg('audio'), end=end))
+        data['rds_name'] = list(config.iter_rds_name(start=_int_arg('rds_name'), end=end))
+        data['rds_text'] = list(config.iter_rds_text(start=_int_arg('rds_text'), end=end))
+        data['temperature'] = list(config.iter_temperature(start=_int_arg('temperature'), end=end))
         return json.dumps(data)
     except StoreError as e:
         return e.message, 500

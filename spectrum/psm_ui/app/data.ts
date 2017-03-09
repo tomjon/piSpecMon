@@ -60,11 +60,15 @@ export class Data {
     this.audio.length = audio.length;
     let sweep_n = -1;
     let sweep_t = null;
+    if (! this.samples.length) this.samples.length = 0;
     for (let a of audio) {
       let audio_t = a[0];
       let freq_n = a[1];
       let path = `/audio/${this.config_id}/${freq_n}/${audio_t}`;
-      if (! this.samples[freq_n]) this.samples[freq_n] = [];
+      if (! this.samples[freq_n]) {
+        this.samples[freq_n] = [];
+        ++this.samples.length;
+      }
       this.samples[freq_n].push({ timestamp: audio_t, path: path });
       while (sweep_t == null || (sweep_t != 0 && audio_t > sweep_t)) {
         let sweep = this.spectrum.levels[++sweep_n];

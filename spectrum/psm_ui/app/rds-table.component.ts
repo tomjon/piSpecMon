@@ -9,7 +9,7 @@ import { Chart } from './chart';
   inputs: [ 'data', 'timestamp' ],
   directives: [ WidgetComponent ],
   pipes: [ DatePipe ],
-  template: `<psm-widget [hidden]="isHidden()" title="RDS Text" class="chart">
+  template: `<psm-widget [hidden]="isHidden()" title="RDS Text" class="chart" (show)="onShow($event)">
                <form class="form-inline" role="form">
                  <div class="form-group">
                    <label for="station">Station</label>
@@ -18,7 +18,7 @@ import { Chart } from './chart';
                    </select>
                  </div>
                </form>
-               <table *ngIf="data && data.rdsText[idx]">
+               <table *ngIf="data.rdsText[idx]">
                  <tr>
                    <th>Timestamp</th>
                    <th>Text</th>
@@ -28,8 +28,8 @@ import { Chart } from './chart';
                    <td>{{entry.text}}
                  </tr>
                </table>
-               <div *ngIf="data && ! data.rdsText[idx]">
-                 No RDS text decoded
+               <div *ngIf="! data.rdsText[idx]">
+                 No RDS text decoded for the selected station
                </div>
              </psm-widget>`
 })

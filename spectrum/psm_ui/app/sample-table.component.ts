@@ -7,10 +7,10 @@ import { Chart } from './chart';
 
 @Component({
   selector: 'psm-sample-table',
-  inputs: [ 'data', 'timestamp '],
+  inputs: [ 'data', 'timestamp' ],
   directives: [ WidgetComponent ],
   pipes: [ DatePipe, FreqPipe ],
-  template: `<psm-widget [hidden]="isHidden()" title="Audio Samples" class="chart">
+  template: `<psm-widget [hidden]="isHidden()" title="Audio Samples" class="chart" (show)="onShow($event)">
                <form class="form-inline" role="form">
                  <div class="form-group">
                    <label for="idx">Frequency</label>
@@ -19,42 +19,35 @@ import { Chart } from './chart';
                    </select>
                  </div>
                </form>
-               <table *ngIf="samples[freq_n] && samples[freq_n].length > 0">
+               <table *ngIf="data.samples[freq_n] && data.samples[freq_n].length > 0">
                  <tr>
                    <th>Timestamp</th>
                    <th>Sample</th>
                  </tr>
-                 <tr *ngFor="let sample of samples[freq_n].slice().reverse()">
+                 <tr *ngFor="let sample of data.samples[freq_n].slice().reverse()">
                    <td>{{sample.timestamp | date}}</td>
                    <td><audio controls src="{{sample.path}}" preload="none"></audio></td>
                  </tr>
                </table>
-               <div *ngIf="samples[freq_n] && samples[freq_n].length == 0">
-                 No audio samples recorded
+               <div *ngIf="! data.samples[freq_n] || data.samples[freq_n].length == 0">
+                 No audio samples recorded at selected frequency
                </div>
              </psm-widget>`
 })
 export class SampleTableComponent extends Chart {
   freqs: number[] = [];
-  samples: any = {};
   freq_n: number;
 
   @Input() config: any;
 
   plot() {
-    if (! this.data) {
-      this.freqs = [];
-      this.samples = {};
-      return;
-    }
     this.freqs = [];
-    this.samples = this.data.samples;
-    for (let freq_n in this.samples) {
+    for (let freq_n in this.data.samples) {
       this.freqs.push(+freq_n);
     }
   }
 
   isHidden() {
-    return this.freqs.length == 0;
+    return this.data.samples.length == 0;
   }
 }

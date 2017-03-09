@@ -206,10 +206,13 @@ export class DataService {
                     .catch(this.errorHandler("export spectrum data"));
   }
 
-  getData(config_id, starts): Observable<any> {
+  getData(config_id, starts, end=undefined): Observable<any> {
     let params: URLSearchParams = new URLSearchParams();
     for (let key in starts) {
       params.set(key, starts[key]);
+    }
+    if (end != undefined) {
+      params.set('end', end);
     }
     return this.http.get(`${this.baseUrl}data/${config_id}`, {search: params})
                     .map(res => res.json())

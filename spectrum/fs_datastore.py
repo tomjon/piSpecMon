@@ -273,7 +273,7 @@ class Config(ConfigBase):
                 offset = _N_STRUCT.fread(f_t)
                 if timestamp is None or (end is not None and timestamp > end):
                     break
-                if start is not None and timestamp < start:
+                if start is not None and timestamp <= start:
                     continue
                 if offset0 is None:
                     f_d.seek(offset)

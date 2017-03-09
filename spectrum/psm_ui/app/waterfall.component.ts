@@ -56,7 +56,7 @@ export class WaterfallComponent extends Chart {
 
   infoText: string = "";
   showSamples: boolean = false;
-  follow: boolean = false;
+  follow: boolean = true;
 
   @ViewChild('chart') chart;
   @ViewChild('text') text;

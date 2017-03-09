@@ -18,7 +18,7 @@ import { Data } from './data';
 export class ChartsComponent {
   config: Config;
   timestamp: number;
-  loading: boolean = false;
+  loading: number = 0;
 
   @Input() set status(status: any) {
     if (status && this.config && status.config_id == this.config.id && status.sweep && this.config.data && status.sweep.sweep_n > this.config.data.count) {
@@ -29,18 +29,33 @@ export class ChartsComponent {
 
   @Input('config') set _config(config: Config) {
     this.config = config;
-    if (config.data == undefined) this.getData();
+    if (config.data == undefined) {
+      this.config.data = new Data(this.config);
+      this.getData();
+    }
   }
 
   constructor(private dataService: DataService) { }
 
-  private getData() {
-    this.loading = true;
-    this.dataService.getData(this.config.id, {})
+  private getData(starts=undefined) {
+    if (starts == undefined) {
+      this.loading = 0;
+      starts = {};
+    } else if (this.loading == 10) {
+      return;
+    }
+    let block = (this.config.latest - this.config.first) / 10;
+    let end = Math.round(this.config.first + (this.loading + 1) * block);
+    if (this.config.count < 100) {
+      // just grab everything if there are fewer than 100 sweeps
+      this.loading = 9;
+      end = undefined;
+    }
+    this.dataService.getData(this.config.id, starts, end)
                     .subscribe(data => {
-                      this.config.data = new Data(this.config);
                       this.timestamp = this.config.data.update(data);
-                      this.loading = false;
+                      ++this.loading;
+                      this.getData(this.config.data.timestamps);
                     });
   }
 }
