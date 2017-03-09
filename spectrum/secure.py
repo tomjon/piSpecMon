@@ -60,6 +60,7 @@ class SecureStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
         login_manager.user_loader(self.load_user)
         self.secret_key = os.urandom(24)
         self.logged_in_users = []
+        self.local_users = []
         self.request_times = {}
         self.before_request(self.check_user_timeout)
 
@@ -161,16 +162,26 @@ class SecureStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
             return "User session timed out", 403
         return None
 
+    def is_local(self, user):
+        """ Return whether a user is using local libraries.
+        """
+        return user.name in self.local_users
+
     def login(self):
         """ Log in a user.
         """
         username = request.form['username']
         password = request.form['password']
+        local = request.form.get('local', 'off') == 'on'
         try:
             user = self.load_user(username, password)
             login_user(user)
             self.request_times[user.name] = time()
             self.logged_in_users.append(user.name)
+            if local:
+                self.local_users.append(user.name)
+            elif user.name in self.local_users:
+                self.local_users.remove(user.name)
             return user
         except IncorrectPasswordError:
             return None

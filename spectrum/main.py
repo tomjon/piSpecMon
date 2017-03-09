@@ -56,7 +56,7 @@ def server():
     """
     application = init_application()
     application.debug = True
-    application.run(host='0.0.0.0', port=8080)
+    application.run('0.0.0.0', port=8080)
 
 
 def worker():

@@ -35,7 +35,7 @@ class Worker(Process):
             try:
                 return fn(*args)
             except TimeoutError as e:
-                if timeout_count < attempts:
+                if attempts == '*' or timeout_count < attempts:
                     timeout_count += 1
                     log.error(e)
                     power_on()
