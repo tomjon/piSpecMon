@@ -15,7 +15,7 @@ class WebApplication(SecureStaticFlask): # pylint: disable=too-many-instance-att
         the module API.
     """
     def __init__(self, name):
-        super(WebApplication, self).__init__(name, 'psm_ui')
+        super(WebApplication, self).__init__(name, 'ui')
 
     def initialise(self, data_store, users, worker_client, monkey_client, default_rig_settings, # pylint: disable=arguments-differ
                    default_audio_settings, default_rds_settings, default_scan_settings, log_path,

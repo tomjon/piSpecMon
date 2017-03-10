@@ -7,11 +7,9 @@ cd "${0%/*}"
 hash npm 2>/dev/null || ({
   curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
   sudo apt-get install nodejs
-  (cd spectrum/psm_ui && npm install)
-  (cd spectrum/overseer_ui && npm install)
+  (cd spectrum/ui && npm install)
 })
-(cd spectrum/psm_ui && npm run tsc)
-(cd spectrum/overseer_ui && npm run tsc)
+(cd spectrum/ui && npm run tsc)
 
 # build Python egg (includes javascript built above)
 sudo -H pip install -e .

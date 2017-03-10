@@ -33,7 +33,7 @@ def main_endpoint():
 def favicon_endpoint():
     """ Serve a favicon.
     """
-    path = os.path.join(application.root_path, 'psm_ui', 'favicon.ico')
+    path = os.path.join(application.root_path, 'ui', 'favicon.ico')
     return send_file(path, mimetype='image/vnd.microsoft.icon')
 
 

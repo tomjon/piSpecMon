@@ -19,7 +19,6 @@ from spectrum.users import Users
 from spectrum.power import power_on, power_off
 from spectrum.queue import Queue
 from spectrum.event import EventManager, EventClient
-from spectrum.overseer_data import OverseerData
 from spectrum.common import log, psm_name
 
 
@@ -37,17 +36,6 @@ def init_application():
                            DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS,
                            DEFAULT_SCAN_SETTINGS, LOG_PATH, VERSION_FILE, USER_TIMEOUT_SECS,
                            EXPORT_DIRECTORY, PI_CONTROL_PATH, PICO_PATH, event_client)
-    return application
-
-
-def init_overseer():
-    """ Initialise the overseer application object imported from spectrum.overseer.
-    """
-    from spectrum.overseer import application
-    data = OverseerData(OVERSEER_DATA_DIR)
-    ovr_users = Users(OVERSEER_USERS_FILE, OVERSEER_ROUNDS)
-    psm_users = Users(OVERSEER_PSM_FILE, OVERSEER_ROUNDS)
-    application.initialise(data, ovr_users, USER_TIMEOUT_SECS, psm_users)
     return application
 
 
@@ -144,35 +132,3 @@ def event():
     args = (Queue(EVENT_PATH), EVENT_POLL_SECS, EVENT_OVERSEER_URL, EVENT_OVERSEER_KEY)
     manager = EventManager(psm_name(), *args)
     manager.run()
-
-
-def overseer():
-    """ Run the Overseer web server.
-    """
-    application = init_overseer()
-    application.debug = True
-    application.run(host='0.0.0.0', port=8888)
-
-
-def overseer_register():
-    """ Register a PSM unit with the overseer (must be run on the overseer server).
-    """
-    if len(sys.argv) != 3:
-        print "Usage: {0} <PSM name> <key>".format(sys.argv[0])
-        sys.exit(1)
-
-    user_manager = Users(OVERSEER_PSM_FILE, OVERSEER_ROUNDS)
-    user_manager.create_user(sys.argv[1], sys.argv[2], {})
-    print "{0} registered".format(sys.argv[1])
-
-
-def overseer_users():
-    """ Create an Overseer admin user based on command line arguments.
-    """
-    if len(sys.argv) != 3:
-        print "Usage: {0} <username> <password>".format(sys.argv[0])
-        sys.exit(1)
-
-    user_manager = Users(OVERSEER_USERS_FILE, OVERSEER_ROUNDS)
-    user_manager.create_user(sys.argv[1], sys.argv[2], {'role': 'admin'})
-    print "User {0} created".format(sys.argv[1])
