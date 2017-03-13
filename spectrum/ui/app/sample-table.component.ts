@@ -35,7 +35,7 @@ import { Chart } from './chart';
              </psm-widget>`
 })
 export class SampleTableComponent extends Chart {
-  freqs: number[] = [];
+  freqs: number[];
   freq_n: number;
 
   @Input() config: any;
@@ -48,6 +48,6 @@ export class SampleTableComponent extends Chart {
   }
 
   isHidden() {
-    return this.data.samples.length == 0;
+    return this.freqs == undefined || this.data.samples.length == 0;
   }
 }

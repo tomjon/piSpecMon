@@ -253,6 +253,23 @@ class Config(ConfigBase):
                     seek = True
                 yield timestamp, _struct.fread(f_d)
 
+    def _iter_timestamps(self, times_file, start, end):
+        seek = False
+        path = os.path.join(self._data_store.data_path, self.id)
+        t_path = os.path.join(path, times_file)
+        if not os.path.exists(t_path):
+            return
+        with open(t_path, 'r') as f_t:
+            while True:
+                timestamp = _T_STRUCT.fread(f_t)
+                if timestamp is None or (end is not None and timestamp > end):
+                    return
+                if not seek:
+                    if start is not None and timestamp <= start:
+                        continue
+                    seek = True
+                yield timestamp
+
     def _write_data(self, times_file, data_file, timestamp, _struct, data):
         path = os.path.join(self._data_store.data_path, self.id)
         with open(os.path.join(path, times_file), 'a') as f:

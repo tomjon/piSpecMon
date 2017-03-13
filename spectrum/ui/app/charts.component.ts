@@ -41,7 +41,7 @@ export class ChartsComponent {
     if (starts == undefined) {
       this.loading = 0;
       starts = {};
-    } else if (this.loading == 10) {
+    } else if (this.loading >= 10) {
       return;
     }
     let block = (this.config.latest - this.config.first) / 10;
@@ -49,7 +49,10 @@ export class ChartsComponent {
     if (this.config.count < 100) {
       // just grab everything if there are fewer than 100 sweeps
       this.loading = 9;
+    }
+    if (this.loading >= 9) {
       end = undefined;
+      this.loading = 10;
     }
     this.dataService.getData(this.config.id, starts, end)
                     .subscribe(data => {

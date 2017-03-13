@@ -23,12 +23,12 @@ export class Data {
     this.count = 0;
     this.spectrum = {
       levels: [],
-      agg: { latest: [], min: [], max: [], avg: [] },
-      freq_idxs: { 'min': this.fillArray(), 'max': this.fillArray(), 'avg': this.fillArray() }
+      agg: { latest: [], min: [], max: [], avg: [] }
     };
   }
 
   update(data: any): number {
+    console.log(data);
     this.count += data.spectrum.length;
     this.mapSpectrum(data.spectrum);
     this.mapAudio(data.audio);
@@ -37,8 +37,8 @@ export class Data {
     this.temperature = this.temperature.concat(data.temperature);
 
     for (let key of ['spectrum', 'audio', 'rds_name', 'rds_text', 'temperature']) {
-      if (data[key].length > 0) {
-        this.timestamps[key] = data[key][data[key].length - 1][0];
+      for (let t_data of data[key]) {
+        this.timestamps[key] = Math.max(this.timestamps[key] || 0, t_data[0]);
       }
     }
 
@@ -145,11 +145,12 @@ export class Data {
     }
 
     /* find top N by avg, min and max */
+    this.spectrum.freq_idxs = {'min': this.fillArray(), 'max': this.fillArray(), 'avg': this.fillArray()};
+
     for (let x in this.spectrum.freq_idxs) {
       // see if it beats any, if so swap and keep looking down the list... drop off end and gets kicked out
       for (let _idx in this.spectrum.agg[x]) {
         let idx = +_idx;
-
         let v = this.spectrum.agg[x][idx].v;
 
         // peak detection - only do this when scanning a range
