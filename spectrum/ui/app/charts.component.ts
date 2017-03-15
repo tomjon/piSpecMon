@@ -18,7 +18,7 @@ import { Data } from './data';
 export class ChartsComponent {
   config: Config;
   timestamp: number;
-  loading: number = 0;
+  loading: number;
 
   @Input() set status(status: any) {
     if (status && this.config && status.config_id == this.config.id && status.sweep && this.config.data && status.sweep.sweep_n > this.config.data.count) {
@@ -42,6 +42,7 @@ export class ChartsComponent {
       this.loading = 0;
       starts = {};
     } else if (this.loading >= 10) {
+      this.loading = undefined;
       return;
     }
     let block = (this.config.latest - this.config.first) / 10;
