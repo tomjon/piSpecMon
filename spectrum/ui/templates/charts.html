@@ -1,4 +1,4 @@
-<p *ngIf="loading < 10">Loading... ({{loading}}0%)</p>
+<p *ngIf="loading > 0 && loading < 10">Loading... ({{loading}}0%)</p>
 <psm-frequency [data]="config.data" [timestamp]="timestamp"></psm-frequency>
 <psm-level [data]="config.data" [timestamp]="timestamp"></psm-level>
 <psm-temperature [data]="config.data" [timestamp]="timestamp"></psm-temperature>
