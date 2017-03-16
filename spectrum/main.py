@@ -10,8 +10,7 @@ from spectrum.config import DATA_PATH, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS, MON
                             DEFAULT_SCAN_SETTINGS, VERSION_FILE, USER_TIMEOUT_SECS, PICO_PATH, \
                             EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, WORKER_CONFIG_FILE, \
                             MONKEY_CONFIG_FILE, EVENT_PATH, EVENT_POLL_SECS, EVENT_OVERSEER_URL, \
-                            EVENT_OVERSEER_KEY, OVERSEER_USERS_FILE, OVERSEER_ROUNDS, \
-                            OVERSEER_PSM_FILE, OVERSEER_DATA_DIR
+                            EVENT_OVERSEER_KEY
 from spectrum.worker import Worker
 from spectrum.monkey import Monkey
 from spectrum.wav2mp3 import walk_convert

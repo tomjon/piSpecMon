@@ -62,7 +62,7 @@ default:
         stop_bits: 1
         parity: 0
         attenuation: False
-        radio_on: *
+        radio_on: '*'
         set_check: 2
         retries: 2
         interval: 1000
