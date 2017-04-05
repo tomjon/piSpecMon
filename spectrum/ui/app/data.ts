@@ -28,7 +28,6 @@ export class Data {
   }
 
   update(data: any): number {
-    console.log(data);
     this.count += data.spectrum.length;
     this.mapSpectrum(data.spectrum);
     this.mapAudio(data.audio);
