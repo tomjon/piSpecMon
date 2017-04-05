@@ -28,7 +28,6 @@ export class Data {
   }
 
   update(data: any): number {
-    console.log(data);
     this.count += data.spectrum.length;
     this.mapSpectrum(data.spectrum);
     this.mapAudio(data.audio);
@@ -102,23 +101,22 @@ export class Data {
       this.spectrum.agg['latest'][freq_idx] = { idx: freq_idx, v: strength != -128 ? strength : null };
     }
 
-    let offset: number = this.spectrum.levels.length;
-
     // set up avg initial totals (turn old avg values into old totals)
     for (let freq_idx in data[0][1]) {
       if (this.spectrum.agg['avg'][freq_idx] == null) {
         this.spectrum.agg['avg'][freq_idx] = { idx: freq_idx, v: 0 };
       } else {
-        this.spectrum.agg['avg'][freq_idx].v *= offset;
+        this.spectrum.agg['avg'][freq_idx].v *= this.spectrum.levels.length;
       }
     }
 
     for (let sweep_idx in data) {
-      this.spectrum.levels[+sweep_idx + offset] = {
+      let levels = {
         level: this.fillArray(0, length),
         timestamp: data[sweep_idx][0],
-        sweep_n: +sweep_idx + offset
+        sweep_n: this.spectrum.levels.length
       };
+      this.spectrum.levels.push(levels);
 
       for (let freq_idx in data[sweep_idx][1]) {
         let strength = data[sweep_idx][1][freq_idx];
@@ -134,7 +132,7 @@ export class Data {
           this.spectrum.agg['max'][freq_idx] = { idx: freq_idx, v: strength };
         }
         this.spectrum.agg['avg'][freq_idx].v += strength;
-        this.spectrum.levels[+sweep_idx + offset].level[freq_idx] = strength;
+        levels.level[freq_idx] = strength;
       }
     }
 

@@ -21,7 +21,7 @@ export class ChartsComponent {
   loading: number;
 
   @Input() set status(status: any) {
-    if (status && this.config && status.config_id == this.config.id && status.sweep && this.config.data && status.sweep.sweep_n > this.config.data.count) {
+    if (status && this.config && status.config_id == this.config.id && status.sweep && this.config.data && status.sweep.sweep_n > this.config.data.count && this.loading == undefined) {
       this.dataService.getData(this.config.id, this.config.data.timestamps)
                       .subscribe(data => this.timestamp = this.config.data.update(data));
     }

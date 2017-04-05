@@ -1,1 +1,1 @@
-/home/ses/umtskeeper/umtskeeper --sakisoperators "OTHER='USBMODEM' USBMODEM='12d1:1003' APN='3internet' APN_USER='0' APN_PASS='0'" --sakisswitches "--sudo --console" --devicename 'Huawei' --log --silent --monthstart 8 --nat 'no' --httpserver &>> /home/ses/umtskeeper/error.log
+/usr/local/bin/sakis3g OTHER='USBMODEM' USBMODEM='12d1:1003' APN='3internet'
