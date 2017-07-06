@@ -9,7 +9,17 @@ import sys
 import traceback
 from spectrum.common import log, now
 from spectrum.datastore import StoreError
+from spectrum.config import PID_KILL_PATH
 
+def kill(pid, signum):
+    cmd = "{0} {1} {2}".format(PID_KILL_PATH, signum, pid)
+    r = os.system(cmd) >> 8
+    if r == 255:
+        raise ProcessError("Bad command: {0}".format(cmd))
+    if r != 0:
+        e = OSError(cmd)
+        e.errno = r
+        raise e
 
 class Process(object):
     """ Start the process with start(), after supplying the data store, pid file,
@@ -39,7 +49,7 @@ class Process(object):
             with open(self.pid_file) as f:
                 pid = f.read().strip()
             pid = int(pid)
-            os.kill(pid, 0)
+            kill(pid, 0)
             return pid
         except IOError:
             raise ProcessError("Can not open PID file: {0}".format(self.pid_file))
@@ -51,7 +61,7 @@ class Process(object):
     # write status to the status file
     def _write_status(self):
         self.status['config_id'] = self.config_id
-        log.debug("Writing status %s", json.dumps(self.status))
+        #log.debug("Writing status %s", json.dumps(self.status))
         tmp = self.status_file + '_tmp'
         with open(tmp, 'w') as f:
             f.write(json.dumps(self.status))
@@ -72,10 +82,17 @@ class Process(object):
         with open(self.config_file) as f:
             return f.read().strip()
 
+    def open(self):
+        pass
+
+    def close(self):
+        pass
+
     def start(self):
         """ Start the process, writing status yielded by iterator.
         """
         log.info("STARTING")
+        self.open()
         try:
             while True:
                 self.config_id = self._read_config()
@@ -95,8 +112,8 @@ class Process(object):
                                 self._write_status()
                                 if self._stop:
                                     break
-                        except Exception as e: # pylint: disable=broad-except
-                            log.error(e)
+                        except BaseException as e: # pylint: disable=broad-except
+                            log.exception(e)
                             traceback.print_exc()
                             config.write_error(now(), e)
                 if os.path.isfile(self.status_file):
@@ -111,6 +128,7 @@ class Process(object):
             os.remove(self.pid_file)
             if os.path.isfile(self.status_file):
                 os.remove(self.status_file)
+            self.close()
 
     def stop(self):
         """ Stop the process.
@@ -189,19 +207,42 @@ class Client(object):
         if self.read_pid() is not None:
             with open(self.process.config_file, 'w') as f:
                 f.write(config_id)
-            os.kill(self.pid, signal.SIGUSR1)
+            kill(self.pid, signal.SIGUSR1)
 
     def stop(self):
         """ Tell the process to stop processing.
         """
         if self.read_pid() is not None:
-            os.kill(self.pid, signal.SIGUSR1)
+            kill(self.pid, signal.SIGUSR1)
 
     def exit(self, tidy=True):
         """ Tell the process to exit.
         """
         if self.read_pid() is not None:
-            os.kill(self.pid, signal.SIGINT if tidy else signal.SIGTERM)
+            kill(self.pid, signal.SIGINT if tidy else signal.SIGTERM)
+
+class NoClient(object):
+    """ Client class used to for a non-existant process.
+    """
+    def status(self):
+        """ Read and return the process status.
+        """
+        return {'error': 'No process'}
+
+    def start(self, config_id):
+        """ Tell the process to start processing the specified config id.
+        """
+        pass
+
+    def stop(self):
+        """ Tell the process to stop processing.
+        """
+        pass
+
+    def exit(self, tidy=True):
+        """ Tell the process to exit.
+        """
+        pass
 
 
 class ProcessError(Exception):

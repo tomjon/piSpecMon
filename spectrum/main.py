@@ -2,7 +2,20 @@
 """
 import time
 import sys
-import Hamlib
+try: # ordinary PSM
+    import Hamlib
+    from spectrum.worker import Worker
+    from spectrum.power import power_on, power_off
+    from spectrum.monkey import Monkey
+    from spectrum.wav2mp3 import walk_convert
+except ImportError: # SDR-Play version of PSM might have no Hamlib
+    from spectrum.sdr_worker import SdrWorker
+    from spectrum.config import SDR_WORKER_RUN_PATH, SDR_WORKER_CONFIG_FILE
+    Worker = None
+    Hamlib = None
+    Monkey = None
+    
+from spectrum.process import NoClient
 from spectrum.fs_datastore import FsDataStore
 from spectrum.config import DATA_PATH, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS, MONKEY_RUN_PATH, \
                             MONKEY_POLL, CONVERT_PERIOD, USERS_FILE, ROUNDS, SSMTP_CONF, \
@@ -11,11 +24,7 @@ from spectrum.config import DATA_PATH, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS, MON
                             EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, WORKER_CONFIG_FILE, \
                             MONKEY_CONFIG_FILE, EVENT_PATH, EVENT_POLL_SECS, EVENT_OVERSEER_URL, \
                             EVENT_OVERSEER_KEY
-from spectrum.worker import Worker
-from spectrum.monkey import Monkey
-from spectrum.wav2mp3 import walk_convert
 from spectrum.users import Users
-from spectrum.power import power_on, power_off
 from spectrum.queue import Queue
 from spectrum.event import EventManager, EventClient
 from spectrum.common import log, psm_name
@@ -26,10 +35,10 @@ def init_application():
     """
     from spectrum.server import application
     data_store = FsDataStore(DATA_PATH)
-    w_args = (data_store, WORKER_RUN_PATH, WORKER_CONFIG_FILE, RADIO_ON_SLEEP_SECS)
-    worker_client = Worker(*w_args).client()
+    worker_client = Worker(data_store, WORKER_RUN_PATH, WORKER_CONFIG_FILE, RADIO_ON_SLEEP_SECS).client() if Worker is not None \
+                    else SdrWorker(data_store, SDR_WORKER_RUN_PATH, SDR_WORKER_CONFIG_FILE).client()
     m_args = (data_store, MONKEY_RUN_PATH, MONKEY_CONFIG_FILE, MONKEY_POLL)
-    monkey_client = Monkey(*m_args).client()
+    monkey_client = Monkey(*m_args).client() if Monkey is not None else NoClient()
     event_client = EventClient(Queue(EVENT_PATH))
     application.initialise(data_store, Users(USERS_FILE, ROUNDS), worker_client, monkey_client,
                            DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS,
@@ -49,6 +58,9 @@ def server():
 def worker():
     """ Run the worker process, for collecting spectrum data.
     """
+    if Hamlib is None:
+        print "Hamlib is not installed - can not run Worker"
+        sys.exit(1)
     w_args = (FsDataStore(DATA_PATH), WORKER_RUN_PATH, WORKER_CONFIG_FILE, RADIO_ON_SLEEP_SECS)
     worker_process = Worker(*w_args)
     worker_process.init()
@@ -57,10 +69,19 @@ def worker():
         Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
         worker_process.start()
 
+def sdr_worker():
+    """ Run the RDS Play worker process, for collecting spectrum data.
+    """
+    worker_process = SdrWorker(FsDataStore(DATA_PATH), SDR_WORKER_RUN_PATH, SDR_WORKER_CONFIG_FILE)
+    worker_process.init()
+    worker_process.start()
 
 def monkey():
     """ Run the monkey process, for collecting RDS data.
     """
+    if Hamlib is None:
+        print "Hamlib is not installed - can not run Monkey"
+        sys.exit(1)
     m_args = (FsDataStore(DATA_PATH), MONKEY_RUN_PATH, MONKEY_CONFIG_FILE, MONKEY_POLL)
     monkey_process = Monkey(*m_args)
     monkey_process.init()
@@ -70,6 +91,9 @@ def monkey():
 def wav2mp3():
     """ Run the wav to mp3 conversion process.
     """
+    if Hamlib is None:
+        print "Hamlib, and therefore avconv, is not installed - can not convert"
+        sys.exit(1)
     fsds = FsDataStore(DATA_PATH)
     while True:
         walk_convert(fsds.samples_path)
@@ -92,6 +116,9 @@ def users():
 def power():
     """ Power on or off the radio.
     """
+    if Hamlib is None:
+        print "Hamlib is not installed - can not power on/off"
+        sys.exit(1)
     if len(sys.argv) != 2 or sys.argv[1] not in ('on', 'off'):
         print "Usage: {0} [on|off]".format(sys.argv[0])
         sys.exit(1)

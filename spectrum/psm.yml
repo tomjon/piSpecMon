@@ -40,6 +40,9 @@ data_path: /var/lib/psm
 # location of the pi_control binary
 pi_control_path: /usr/bin/pi_control
 
+# location of the pid_kill binary
+pid_kill_path: /usr/bin/pid_kill
+
 # location of the pico_status script
 pico_path: /usr/local/bin/pico_status.py
 

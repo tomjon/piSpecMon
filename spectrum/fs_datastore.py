@@ -448,3 +448,17 @@ class Settings(SettingsBase):
         with open(self.path, 'w') as f:
             f.write(json.dumps(self.values))
         return self
+
+if __name__ == '__main__':
+    import sys
+    from spectrum.config import DATA_PATH
+
+    if len(sys.argv) < 2:
+        print >>sys.stderr, "Usage: python {0} config_id".format(*sys.argv)
+        sys.exit(1)
+
+    fs = FsDataStore(DATA_PATH)
+    config = fs.config(sys.argv[1]).read()
+    for t0, levels in config.iter_spectrum():
+        print t0, len(levels)
+

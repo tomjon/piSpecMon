@@ -91,6 +91,14 @@ gcc -o spectrum/bin/pi_control spectrum/pi_control.c && (
   sudo chmod a+s $PI_CONTROL_PATH
 )
 
+
+# build the pi_control binary
+PID_KILL_PATH=`vbl PID_KILL_PATH`
+gcc -o spectrum/bin/pid_kill spectrum/pid_kill.c && (
+  sudo cp spectrum/bin/pid_kill $PID_KILL_PATH
+  sudo setcap cap_kill+ep /usr/bin/pid_kill
+)
+
 # remind about post install steps
 echo
 echo "Now run psm-email to set the pispecmon email account password"

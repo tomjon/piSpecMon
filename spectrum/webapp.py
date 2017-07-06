@@ -1,7 +1,12 @@
 """ Define a WebApplication that will be used by server.py to provide endpoints.
 """
 import os
-from spectrum.monitor import get_capabilities
+try:
+    from spectrum.monitor import get_capabilities
+except ImportError:
+    # no Hamlib, so assume we are an SDR Play PSM
+    def get_capabilities():
+        return {'models': [{'model': 'SDR Play'}], 'modes': [], 'rates': [], 'parities': []}
 from spectrum.event import EVENT_INIT
 from spectrum.common import log, psm_name
 from spectrum.secure import SecureStaticFlask
