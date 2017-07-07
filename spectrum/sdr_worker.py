@@ -6,20 +6,6 @@ from spectrum.process import Process
 from spectrum.common import log, parse_config, now
 from sdr_play import SdrPlay, Callback_Continue, Callback_Reinit, Callback_Exit
 
-class SdrThread(threading.Thread):
-    def __init__(self, sdr, callback):
-        super(SdrThread, self).__init__()
-        self.sdr = sdr
-        self.callback = callback
-
-    def run(self):
-        try:
-            if self.sdr.open(self.callback) == 0:
-                self.sdr.main()
-            self.sdr.close()
-        except BaseException as e:
-            log.exception(e)
-
 class SdrWorker(Process):
     """ Process implementation for spectrum scanning using the SDR Play device.
     """
@@ -34,16 +20,19 @@ class SdrWorker(Process):
 
             if reinit: # True at start and when a requested frequency change has occurred
                 first_n = int((self.freq_0 - self.range[0]) / self.range[2])
-                z = self.freq_0
                 self.freq_0 = self.sdr.freq_0() # min frequency collected at this rfMHz (tuner frequency)
 
                 if self.count > 0:
                     # update sweep levels from average collected levels
+                    i0 = None
+                    i1 = None
                     for i in xrange(len(self.levels)):
                         if i < 0.1 * len(self.levels) or i > 0.9 * len(self.levels):
                             continue # discard levels at ends of FFT
                         if first_n + i < 0 or first_n + i >= len(self.sweep):
                             continue # discard levels outside the required range
+                        if i0 is None: i0 = first_n + i
+                        i1 = first_n + i
                         if self.sweep[first_n + i] is None:
                             self.sweep[first_n + i] = self.levels[i] / self.count #FIXME don't overwrite levels we already may have - should average?
                     self.levels = None
@@ -66,7 +55,7 @@ class SdrWorker(Process):
                 self.status['details'] = {'freq_0': self.freq_0, 'first_n': first_n, 'len': len(self.sweep)}
 
             # update levels (if reinit, levels are for the new tuner frequency)
-            levels = [max(0, min(100, 20.0 * (l - 8.0))) for l in levels] #FIXME re-scale levels
+            levels = [max(-127, min(128, 10.0 * (l - 8.0))) for l in levels] #FIXME re-scale levels
             if self.levels is None:
                 self.levels = [0.0] * len(levels)
             self.levels = [l0 + l1 for l0, l1 in zip(self.levels, levels)] # elementwise addition
@@ -94,7 +83,7 @@ class SdrWorker(Process):
         yield
 
         debug = 'debug' in sys.argv
-        self.sdr = SdrPlay(rfMHz=self.range[0], cwMHz=self.range[2], antenna=0, verbose=debug, **config.values)
+        self.sdr = SdrPlay(rfMHz=self.range[0], cwMHz=self.range[2], antenna=1, verbose=debug, **config.values)
         self.sdr.sdr_config.rfMHz += 0.4 * self.sdr.sdr_config.fsMHz
         self.stop = False
         self.sweep_n = config.count
@@ -104,8 +93,8 @@ class SdrWorker(Process):
         self.count = 0
         self.sweep = [None] * (int((self.range[1] - self.range[0]) / self.range[2]) + 1)
 
-        #sdr_thread = threading.Thread(target=lambda: self.sdr.main(self.callback)) 
-        sdr_thread = SdrThread(self.sdr, self.callback)       
+        sdr_thread = threading.Thread(target=self.sdr.main)
+        self.sdr.open(self.callback)
         sdr_thread.start()
 
         try:
@@ -118,13 +107,9 @@ class SdrWorker(Process):
                 yield
                 self.cv.release()
         finally:
-            try:
-                self.cv.release()
-                log.debug("Stop scan")
-                self.stop = True
-                sdr_thread.join()
-            except BaseException as e:
-                log.exception(e)
-            log.debug("Main thread completed")
+            self.cv.release()
+            self.stop = True
+            sdr_thread.join()
+            self.sdr.close()
 
 

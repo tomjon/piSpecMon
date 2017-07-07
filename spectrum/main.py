@@ -158,3 +158,4 @@ def event():
     args = (Queue(EVENT_PATH), EVENT_POLL_SECS, EVENT_OVERSEER_URL, EVENT_OVERSEER_KEY)
     manager = EventManager(psm_name(), *args)
     manager.run()
+
