@@ -45,9 +45,7 @@ let modelSort = function (a, b) {
 export class AppComponent {
   user: User;
   models: any[] = [ ];
-  modes: any[] = [ ];
-  rates: any[] = [ ];
-  parities: any[] = [ ];
+  caps: any = { };
 
   config: Config;
   values: any;
@@ -63,11 +61,9 @@ export class AppComponent {
     this.dataService.getCurrentUser()
                     .subscribe(user => { this.user = user; this.checkSuperior() });
     this.dataService.getCaps()
-                    .subscribe(data => {
-                      this.models = data.models.sort(modelSort);
-                      this.modes = data.modes;
-                      this.rates = data.rates;
-                      this.parities = data.parities;
+                    .subscribe(caps => {
+                      this.caps = caps;
+                      this.caps.models = this.caps.models.sort(modelSort);
                     });
     setInterval(this.monitor.bind(this), TICK_INTERVAL);
   }

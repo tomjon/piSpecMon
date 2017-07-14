@@ -14,7 +14,7 @@ import { UnitsPipe } from './units.pipe';
   templateUrl: 'templates/table.html'
 })
 export class TableComponent {
-  @Input() modes: any[] = [ ];
+  @Input() caps: any;
   @Input() user: User;
   @Output('select') select = new EventEmitter<Config>();
 
@@ -133,12 +133,23 @@ export class TableComponent {
   }
 
   mode(value): string {
-    for (let m of this.modes) {
+    for (let m of this.caps.modes || []) {
       if (m.mode == value) {
         return m.name;
       }
     }
     return null;
+  }
+
+  antenna(value): string {
+    if (value == 0) {
+      return "Ant A";
+    } else if (value == 1) {
+      return "Ant B";
+    } else if (value == 2) {
+      return "High Z";
+    }
+    return "";
   }
 
   get loading() {

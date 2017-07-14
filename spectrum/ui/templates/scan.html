@@ -1,9 +1,17 @@
 <psm-widget title="Scanner">
   <form *ngIf="defaults" role="form" #form="ngForm" novalidate>
-    <div class="form-group">
+    <!--div class="form-group">
       <label for="model">Mode</label>
       <select class="form-control" [disabled]="loading || worker.config_id" [(ngModel)]="config.scan.mode" name="model">
-        <option *ngFor="let mode of modes" value="{{mode.mode}}">{{mode.name}}</option>
+        <option *ngFor="let mode of caps.modes" value="{{mode.mode}}">{{mode.name}}</option>
+      </select>
+    </div-->
+    <div class="form-group">
+      <label for="antenna">Antenna</label>
+      <select class="form-control" [disabled]="loading || worker.config_id" [(ngModel)]="config.scan.antenna" name="antenna">
+        <option value="0">Ant A</option>
+        <option value="1">Ant B</option>
+        <option value="2">High Z</option>
       </select>
     </div>
     <div class="form-group">
@@ -93,10 +101,12 @@
       <span *ngIf="worker.sweep.previous">{{worker.sweep.previous.strength}}dB at {{worker.sweep.previous.freq_n | freq:input}}</span>
       <span *ngIf="worker.sweep.current">Reading strength at {{worker.sweep.current.freq_n | freq:input}}...</span>
       <span *ngIf="worker.sweep.record">Recording audio sample at {{worker.sweep.record.freq_n | freq:input}}...</span>
+      <span *ngIf="worker.sweep.freq_0">Scan range {{worker.sweep.freq_0}}MHz - {{worker.sweep.freq_1}}MHz</span>
+      <span *ngIf="worker.sweep.max">Maximum level {{worker.sweep.max}}...</span>
     </div>
     <span *ngIf="worker.error">{{worker.error}}</span>
   </div>
-  <div *ngIf="monkey.timestamp || monkey.error" [ngClass]="{ status: true, error: monkey.error != undefined }">
+  <!--div *ngIf="monkey.timestamp || monkey.error" [ngClass]="{ status: true, error: monkey.error != undefined }">
     <h2 *ngIf="monkey.timestamp">RDS status at {{monkey.timestamp | date}}</h2>
     <span *ngIf="monkey.started">Scan started {{monkey.started | date}}</span>
     <span *ngIf="monkey.freq_n != undefined">Receiving on {{monkey.freq_n | freq:input}}</span>
@@ -107,5 +117,5 @@
   </div>
   <div *ngIf="user.roleIn(['data']) && ! running" class="message">
     Not running
-  </div>
+  </div-->
 </psm-widget>

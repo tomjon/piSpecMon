@@ -18,8 +18,12 @@ class SdrWorker(Process):
             self.cv.acquire()
             action = Callback_Continue
 
+            self.status['debug'] = {}
+
             if reinit: # True at start and when a requested frequency change has occurred
                 first_n = int((self.freq_0 - self.range[0]) / self.range[2])
+                self.status['sweep'] = {'freq_0': self.freq_0, 'freq_1': self.freq_0 + self.sdr.sdr_config.fsMHz, 'timestamp': self.time_0}
+                self.status['debug']['first_n'] = first_n
                 self.freq_0 = self.sdr.freq_0() # min frequency collected at this rfMHz (tuner frequency)
 
                 if self.count > 0:
@@ -51,17 +55,16 @@ class SdrWorker(Process):
                     self.sweep = [None] * (int((self.range[1] - self.range[0]) / self.range[2]) + 1)
                     self.sdr.sdr_config.rfMHz = self.range[0] + 0.4 * self.sdr.sdr_config.fsMHz
 
-                self.status['sweep'] = {'timestamp': self.time_0, 'sweep_n': self.sweep_n}
-                self.status['details'] = {'freq_0': self.freq_0, 'first_n': first_n, 'len': len(self.sweep)}
-
-            # update levels (if reinit, levels are for the new tuner frequency)
-            levels = [max(-127, min(128, 10.0 * (l - 8.0))) for l in levels] #FIXME re-scale levels
+            # update levels
+            levels = [max(-127, min(128, int(10.0 * (l - 8.0)))) for l in levels] # re-scale levels
             if self.levels is None:
                 self.levels = [0.0] * len(levels)
             self.levels = [l0 + l1 for l0, l1 in zip(self.levels, levels)] # elementwise addition
             self.count += 1
 
-            self.status['debug'] = {'rfMHz_next': self.sdr.sdr_config.rfMHz, 'max': max(levels), 'len': len(levels)}
+            self.status['sweep']['max'] = max(levels)
+            self.status['sweep']['sweep_n'] = self.sweep_n
+            self.status['debug'].update({'rfMHz_next': self.sdr.sdr_config.rfMHz, 'len': len(levels), 'sweep_n': self.sweep_n, 'None': self.sweep.count(None), 'len': len(self.sweep)})
 
             self.cv.notify()
 
@@ -83,7 +86,7 @@ class SdrWorker(Process):
         yield
 
         debug = 'debug' in sys.argv
-        self.sdr = SdrPlay(rfMHz=self.range[0], cwMHz=self.range[2], antenna=1, verbose=debug, **config.values)
+        self.sdr = SdrPlay(rfMHz=self.range[0], cwMHz=self.range[2], antenna=config.values['scan']['antenna'], verbose=debug, **config.values)
         self.sdr.sdr_config.rfMHz += 0.4 * self.sdr.sdr_config.fsMHz
         self.stop = False
         self.sweep_n = config.count

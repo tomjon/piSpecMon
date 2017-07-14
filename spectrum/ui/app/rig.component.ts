@@ -8,9 +8,7 @@ import { WidgetComponent } from './widget.component';
   directives: [ WidgetComponent ]
 })
 export class RigComponent {
-  @Input() models;
-  @Input() rates;
-  @Input() parities;
+  @Input() caps;
   rig: any = { };
 
   @ViewChild(WidgetComponent) widgetComponent;

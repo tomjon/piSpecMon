@@ -44,7 +44,7 @@ export class ScanComponent {
   @ViewChild(WidgetComponent) widgetComponent;
   @ViewChild('form') form;
 
-  @Input() modes: any[] = [ ];
+  @Input() caps: any;
   @Input() user: User;
 
   @Input('status') set _status(status: any) {
