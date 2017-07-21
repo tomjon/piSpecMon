@@ -9,8 +9,8 @@
         <!--th>Mode</th-->
         <th>Antenna</th>
         <th>Frequencies</th>
-        <th class="feature">RDS</th>
-        <th class="feature">Audio</th>
+        <!--th class="feature">RDS</th>
+        <th class="feature">Audio</th-->
         <th class="indicator">&nbsp;</th>
       </tr>
     </thead>
@@ -33,8 +33,8 @@
             </span>
           </span>
         </td>
-        <td class="feature">{{config.values.scan.rds ? '✔' : '✘' }}</td>
-        <td class="feature">{{config.values.scan.audio ? '✔' : '✘'}}</td>
+        <!--td class="feature">{{config.values.scan.rds ? '✔' : '✘' }}</td>
+        <td class="feature">{{config.values.scan.audio ? '✔' : '✘'}}</td-->
         <td class="indicator">
           <div *ngIf="user.roleIn(['admin']) || running(config)">
             <input *ngIf="! running(config)" type="checkbox" [disabled]="standby" [(ngModel)]="checked[config.id]">
@@ -46,8 +46,8 @@
   </table>
   <button type="button" (click)="onExport()" class="btn btn-default btn-selected" [disabled]="loading || ! selected">Export</button>
   <button type="button" (click)="onDownload()" class="btn btn-default btn-selected" [disabled]="loading || ! selected">Download</button>
-  <input type="checkbox" name="rds" [disabled]="loading || ! selected" [(ngModel)]="rds">
-  <label for="rds">RDS</label>
+  <!--input type="checkbox" name="rds" [disabled]="loading || ! selected" [(ngModel)]="rds">
+  <label for="rds">RDS</label-->
   <div *ngIf="user.roleIn(['admin'])" class="btn-right">
     <button type="button" (click)="onCheckAll()" class="btn btn-default" [disabled]="loading || standby || checkedIds().length == maxChecked">All</button>
     <button type="button" (click)="onCheckNone()" class="btn btn-default" [disabled]="loading || standby || checkedIds().length == 0">None</button>
