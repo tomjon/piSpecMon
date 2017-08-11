@@ -4,6 +4,7 @@ import sys
 import os
 import itertools
 import time
+from ses_common.logger import get_logger
 from ses_common.config import LOG_PATH, LOG_SIZE, LOG_LEVEL
 
 
