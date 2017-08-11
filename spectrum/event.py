@@ -5,7 +5,7 @@ import json
 import httplib
 import requests
 from spectrum.common import log, now
-from ses_rdevice import rdevice, upload
+from ses_rdevice import rdevice
 
 # event types
 EVENT_INIT = 'init'
