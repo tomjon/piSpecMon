@@ -5,6 +5,7 @@ version_file: /version
 log:
     path: /var/log/psm
     size: 1048576
+    level: INFO
 
 # Worker (spectrum scanner)
 worker:
