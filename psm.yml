@@ -47,12 +47,16 @@ pico_path: /usr/local/bin/pico_status.py
 # how often (in s) the wav2mp3 converter should run
 convert_period: 300
 
-# event manager settings
-event:
-    path: /var/lib/psm/events
-    poll_secs: 10
-    overseer_url: 
-    overseer_key: 
+# rdevice settings
+rdevice:
+    action_period: 5
+    overseer_url: http://overseer.jsquared.co.uk:8080
+    rdid: !!python/object/apply:socket.gethostname []
+    log_filename: rdevice.log
+    log_level: DEBUG
+
+# where to store events
+event_path: /var/lib/psm/events
 
 # default settings - if left empty, rig model is set later using Hamlib
 default:
