@@ -18,7 +18,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version=subprocess.check_output(['git', 'describe', '--tags']),
+    version=str(subprocess.check_output(['git', 'describe', '--tags'])),
 
     description='piSpecMon python package',
     long_description=long_description,
@@ -74,7 +74,7 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['pyyaml', 'requests', 'pydub', 'flask', 'flask-login', 'python-slugify'],
+    install_requires=['pyyaml', 'requests', 'pydub', 'flask', 'flask-login', 'python-slugify', 'ses-common'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
@@ -110,10 +110,7 @@ setup(
             'psm-power=spectrum.main:power',
             'psm-email=spectrum.main:email',
             'psm-wav2mp3=spectrum.main:wav2mp3',
-            'psm-event=spectrum.main:event',
-            'overseer-server=spectrum.main:overseer',
-            'overseer-register=spectrum.main:overseer_register',
-            'overseer-users=spectrum.main:overseer_users'
+            'psm-rdevice=spectrum.main:rdevice'
         ],
     },
 )

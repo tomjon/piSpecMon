@@ -4,6 +4,7 @@ After=basic.target
 
 [Service]
 Type=idle
+Environment=SES_CONFIG_PATH=/etc/psm.yml
 ExecStart=/usr/bin/python -u /usr/local/bin/psm-wav2mp3
 Restart=always
 RestartSec=1

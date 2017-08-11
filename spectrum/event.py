@@ -16,7 +16,7 @@ EVENT_STOP = 'stop'
 
 
 class EventManager(object):
-    """ PSM event manager.
+    """ PSM event manager - this is an RDevice implementation.
     """
     def __init__(self, psm_name, queue, poll_secs, overseer_url, overseer_key):
         self.data = {'name': psm_name, 'key': overseer_key}

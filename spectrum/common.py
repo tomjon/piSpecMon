@@ -6,7 +6,7 @@ import sys
 import os
 import itertools
 import time
-from spectrum.config import LOG_PATH, LOG_SIZE
+from ses_common.config import LOG_PATH, LOG_SIZE
 
 
 def get_logger():

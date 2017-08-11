@@ -1,12 +1,12 @@
 """ Define Worker process, for scanning the spectrum using the rig.
 """
 import os
+from ses_common.config import PICO_PATH
 from time import sleep
 from spectrum.process import Process
 from spectrum.common import log, parse_config, now, scan
 from spectrum.monitor import Monitor, TimeoutError, Recorder
 from spectrum.power import power_on
-from spectrum.config import PICO_PATH
 
 try:
     import smbus

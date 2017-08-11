@@ -3,14 +3,14 @@
 import time
 import sys
 import Hamlib
+from ses_common.config import DATA_PATH, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS, MONKEY_RUN_PATH, \
+                              MONKEY_POLL, CONVERT_PERIOD, USERS_FILE, ROUNDS, SSMTP_CONF, \
+                              DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, \
+                              DEFAULT_SCAN_SETTINGS, VERSION_FILE, USER_TIMEOUT_SECS, PICO_PATH, \
+                              EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, WORKER_CONFIG_FILE, \
+                              MONKEY_CONFIG_FILE, EVENT_PATH, EVENT_POLL_SECS, EVENT_OVERSEER_URL, \
+                              EVENT_OVERSEER_KEY
 from spectrum.fs_datastore import FsDataStore
-from spectrum.config import DATA_PATH, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS, MONKEY_RUN_PATH, \
-                            MONKEY_POLL, CONVERT_PERIOD, USERS_FILE, ROUNDS, SSMTP_CONF, \
-                            DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, \
-                            DEFAULT_SCAN_SETTINGS, VERSION_FILE, USER_TIMEOUT_SECS, PICO_PATH, \
-                            EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, WORKER_CONFIG_FILE, \
-                            MONKEY_CONFIG_FILE, EVENT_PATH, EVENT_POLL_SECS, EVENT_OVERSEER_URL, \
-                            EVENT_OVERSEER_KEY
 from spectrum.worker import Worker
 from spectrum.monkey import Monkey
 from spectrum.wav2mp3 import walk_convert
@@ -19,6 +19,7 @@ from spectrum.power import power_on, power_off
 from spectrum.queue import Queue
 from spectrum.event import EventManager, EventClient
 from spectrum.common import log, psm_name
+from ses_rdevice import rdevice as rd
 
 
 def init_application():
@@ -131,3 +132,12 @@ def event():
     args = (Queue(EVENT_PATH), EVENT_POLL_SECS, EVENT_OVERSEER_URL, EVENT_OVERSEER_KEY)
     manager = EventManager(psm_name(), *args)
     manager.run()
+
+
+def rdevice():
+    """ Run the RDevice service.
+    """
+    def window(timestamp, json):
+        pass #FIXME just get a ping working for now
+
+    rd.main(rd.sleep_timer(), upload=window)
