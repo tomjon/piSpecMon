@@ -9,8 +9,11 @@ try: # ordinary PSM
     from spectrum.monkey import Monkey
     from spectrum.wav2mp3 import walk_convert
 except ImportError: # SDR-Play version of PSM might have no Hamlib
-    from spectrum.sdr_worker import SdrWorker
-    from spectrum.config import SDR_WORKER_RUN_PATH, SDR_WORKER_CONFIG_FILE
+    try:
+        from spectrum.sdr_worker import SdrWorker
+    except ImportError:
+        from spectrum.ams_worker import AmsWorker
+        SdrWorker = None
     Worker = None
     Hamlib = None
     Monkey = None
@@ -35,8 +38,12 @@ def init_application():
     """
     from spectrum.server import application
     data_store = FsDataStore(DATA_PATH)
-    worker_client = Worker(data_store, WORKER_RUN_PATH, WORKER_CONFIG_FILE, RADIO_ON_SLEEP_SECS).client() if Worker is not None \
-                    else SdrWorker(data_store, SDR_WORKER_RUN_PATH, SDR_WORKER_CONFIG_FILE).client()
+    if Worker is not None:
+        worker_client = Worker(data_store, WORKER_RUN_PATH, WORKER_CONFIG_FILE, RADIO_ON_SLEEP_SECS).client()
+    elif SdrWorker is not None:
+        worker_client = SdrWorker(data_store, WORKER_RUN_PATH, WORKER_CONFIG_FILE).client()
+    else:
+        worker_client = AmsWorker(data_store, WORKER_RUN_PATH, WORKER_CONFIG_FILE).client()
     m_args = (data_store, MONKEY_RUN_PATH, MONKEY_CONFIG_FILE, MONKEY_POLL)
     monkey_client = Monkey(*m_args).client() if Monkey is not None else NoClient()
     event_client = EventClient(Queue(EVENT_PATH))
@@ -72,7 +79,14 @@ def worker():
 def sdr_worker():
     """ Run the RDS Play worker process, for collecting spectrum data.
     """
-    worker_process = SdrWorker(FsDataStore(DATA_PATH), SDR_WORKER_RUN_PATH, SDR_WORKER_CONFIG_FILE)
+    worker_process = SdrWorker(FsDataStore(DATA_PATH), WORKER_RUN_PATH, WORKER_CONFIG_FILE)
+    worker_process.init()
+    worker_process.start()
+
+def ams_worker():
+    """ Run the AMS sensor worker process, for collecting spectrum data.
+    """
+    worker_process = AmsWorker(FsDataStore(DATA_PATH), WORKER_RUN_PATH, WORKER_CONFIG_FILE)
     worker_process.init()
     worker_process.start()
 

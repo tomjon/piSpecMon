@@ -12,6 +12,7 @@ hash npm 2>/dev/null || ({
 (cd spectrum/ui && npm run tsc)
 
 # build Python egg (includes javascript built above)
+sudo apt-get install -y python-pip
 sudo -H pip install -e .
 
 # copy default config to /etc/psm.yml
