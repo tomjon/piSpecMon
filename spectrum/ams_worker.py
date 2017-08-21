@@ -37,7 +37,7 @@ class AmsWorker(Process):
                 for i in xrange(len(amps)):
                     f = minF + i * df
                     max_amp = max(max_amp, amps[i])
-                    if f > bf: #-120 to -90
+                    if f > bf: # map [-120 to -95] to [0, 100]
                         c_amps.append((max_amp + 120.0) * 4.0)
                         bf += frange[2]
                         max_amp = None
@@ -46,7 +46,7 @@ class AmsWorker(Process):
                 self.status['sweep'] = {'timestamp': time_0, 'frange': frange, 'len': len(c_amps)}
                 self.status['sweep']['sweep_n'] = config.count + sweep_idx
                 freq_n = max(xrange(len(c_amps)), key=c_amps.__getitem__)
-                self.status['sweep']['peaks'] = {'freq_n': freq_n, 'strength': c_amps[freq_n]}
+                self.status['sweep']['peaks'] = [{'freq_n': freq_n, 'strength': c_amps[freq_n]}]
                 config.write_spectrum(time_0, c_amps)
                 yield
 
