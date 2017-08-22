@@ -1,4 +1,4 @@
-<div *ngIf="user" class="container-fluid">
+<div *ngIf="constants && user" class="container-fluid">
   <div class="row">
     <div class="col-lg-12">
       <h1 class="header"><img src="ofcom.gif" alt="Ofcom"> <span class="name" *ngIf="ident">{{ident.name}}</span> <span class="description" *ngIf="ident">({{ident.description}})</span></h1>
@@ -17,12 +17,12 @@
       <psm-details [user]="user"></psm-details>
       <psm-logs *ngIf="user.roleIn(['admin'])"></psm-logs>
       <psm-pi *ngIf="user.roleIn(['admin'])"></psm-pi>
-      <!--psm-pico *ngIf="user.roleIn(['admin'])"></psm-pico-->
+      <psm-pico *ngIf="user.roleIn(['admin']) && constants.widgets.pico"></psm-pico>
       <psm-stats *ngIf="user.roleIn(['admin'])"></psm-stats>
-      <!--psm-rig *ngIf="user.roleIn(['admin'])" [caps]="caps"></psm-rig>
-      <psm-audio *ngIf="user.roleIn(['admin', 'freq'])"></psm-audio>
-      <psm-rds *ngIf="user.roleIn(['admin', 'freq'])"></psm-rds-->
-      <psm-scan [user]="user" [caps]="caps" [config]="values" [status]="status"></psm-scan>
+      <psm-rig *ngIf="user.roleIn(['admin']) && constants.widgets.rig" [caps]="caps"></psm-rig>
+      <psm-audio *ngIf="user.roleIn(['admin', 'freq']) && constants.widgets.audio"></psm-audio>
+      <psm-rds *ngIf="user.roleIn(['admin', 'freq']) && constants.widgets.rds"></psm-rds>
+      <psm-scan [user]="user" [caps]="caps.scan" [config]="values" [status]="status"></psm-scan>
     </div>
   </div>
 </div>

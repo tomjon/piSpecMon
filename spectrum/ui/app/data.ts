@@ -1,10 +1,11 @@
 import { Config } from './config';
-import { MAX_N, CHART_HEIGHT } from './constants';
 
 /**
  * Spectrum, audio and RDS data along with the associated frequencies.
  */
 export class Data {
+  max_n: number;
+
   config_id: string;
   freqs: any;
   count: number;
@@ -17,7 +18,8 @@ export class Data {
   temperature: any = [];
   timestamps: any = {};
 
-  constructor(config: Config) {
+  constructor(config: Config, max_n: number) {
+    this.max_n = max_n;
     this.config_id = config.id;
     this.freqs = config.values.freqs;
     this.count = 0;
@@ -45,7 +47,7 @@ export class Data {
   }
 
   private fillArray(v?: any, size?: number) {
-    if (size == null) size = MAX_N;
+    if (size == null) size = this.max_n;
     let a = [];
     for (let n = 0; n < size; ++n) {
       a.push(v);
@@ -159,7 +161,7 @@ export class Data {
         }
 
         // try slotting in our value
-        for (let n: number = 0; n < MAX_N; ++n) {
+        for (let n: number = 0; n < this.max_n; ++n) {
           let slot_idx = this.spectrum.freq_idxs[x][n];
           // if we find an empty slot, just use it and quit
           if (slot_idx == null) {

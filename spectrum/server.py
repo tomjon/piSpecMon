@@ -14,6 +14,7 @@ from spectrum.common import log, now, parse_config, scan, freq
 from spectrum.users import IncorrectPasswordError, UsersError
 from spectrum.webapp import WebApplication
 from spectrum.event import EVENT_IDENT, EVENT_LOGIN, EVENT_LOGOUT, EVENT_START, EVENT_STOP
+from spectrum.config import UI_CONFIG
 
 
 application = WebApplication(__name__) # pylint: disable=invalid-name
@@ -103,7 +104,7 @@ def monitor():
             return e.message, 500
 
         application.worker.start(config.id)
-        if config.values['scan']['rds']:
+        if config.values['scan'].get('rds', False):
             application.monkey.start(config.id)
         application.event_client.write(EVENT_START, config.values)
 
@@ -439,3 +440,11 @@ def pico_endpoint():
     except subprocess.CalledProcessError as e:
         result['error'] = e.output
     return json.dumps(result)
+
+
+@application.route('/constants')
+def constants_endpoint():
+    """ Direct read only access to the psm.yml configuration file.
+    """
+    return json.dumps(UI_CONFIG)
+

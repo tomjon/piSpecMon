@@ -9,7 +9,18 @@ import { ErrorService } from './error.service';
 export class DataService {
   private baseUrl = '/';
 
+  public constants: any;
+
   constructor(private http: Http, private errorService: ErrorService) { }
+
+  getConstants(): Observable<any> {
+    return this.http.get(`${this.baseUrl}constants`)
+                    .map(res => {
+                      this.constants = res.json();
+                      return this.constants;
+                    })
+                    .catch(this.errorHandler("get UI cpnstants"));
+  }
 
   getIdent(): Observable<any> {
     return this.http.get(`${this.baseUrl}ident`)

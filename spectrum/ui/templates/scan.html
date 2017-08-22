@@ -1,17 +1,9 @@
 <psm-widget title="Scanner">
   <form *ngIf="defaults" role="form" #form="ngForm" novalidate>
-    <!--div class="form-group">
-      <label for="model">Mode</label>
-      <select class="form-control" [disabled]="loading || worker.config_id" [(ngModel)]="config.scan.mode" name="model">
-        <option *ngFor="let mode of caps.modes" value="{{mode.mode}}">{{mode.name}}</option>
-      </select>
-    </div-->
-    <div class="form-group">
-      <label for="antenna">Antenna</label>
-      <select class="form-control" [disabled]="loading || worker.config_id" [(ngModel)]="config.scan.antenna" name="antenna">
-        <option value="0">Ant A</option>
-        <option value="1">Ant B</option>
-        <option value="2">High Z</option>
+    <div *ngFor="let key of capsKeys" class="form-group scan-cap">
+      <label [attr.for]="key">{{key}}</label>
+      <select class="form-control" [disabled]="loading || worker.config_id" [(ngModel)]="config.scan[key]" name="{{key}}">
+        <option *ngFor="let o of caps[key]" [value]="o.value">{{o.label}}</option>
       </select>
     </div>
     <div class="form-group">

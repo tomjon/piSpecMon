@@ -30,7 +30,7 @@ export class ChartsComponent {
   @Input('config') set _config(config: Config) {
     this.config = config;
     if (config.data == undefined) {
-      this.config.data = new Data(this.config);
+      this.config.data = new Data(this.config, this.dataService.constants.max_n);
       this.getData();
     }
   }

@@ -1,11 +1,14 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { Data } from './data';
-import { HZ_LABELS } from './constants';
+import { DataService } from './data.service';
 
 @Pipe({ name: 'freq' })
 export class FreqPipe implements PipeTransform {
+  constructor(private dataService: DataService) {}
+
   // used in templates like: freq_n | freq:config.freqs
   transform(freq_n: number, data: Data): string {
+    let hz = this.dataService.constants.hz_labels;
     let r: string = null;
     if (! data) {
       r = '[no data specified]';
@@ -15,11 +18,11 @@ export class FreqPipe implements PipeTransform {
       let s = range[2].toString();
       let i = s.indexOf('.');
       let n = i > -1 ? s.length - i - 1 : 0;
-      r = `${f.toFixed(n)}${HZ_LABELS[data.freqs.exp]}`;
+      r = `${f.toFixed(n)}${hz[data.freqs.exp]}`;
       if (data.rdsNames && data.rdsNames[freq_n]) r += ` (${data.rdsNames[freq_n]})`;
     } else if (data.freqs.freqs) {
       let freq = data.freqs.freqs[freq_n];
-      r = `${freq.f}${HZ_LABELS[freq.exp]}`;
+      r = `${freq.f}${hz[freq.exp]}`;
       if (data.rdsNames && data.rdsNames[freq_n]) r += ` (${data.rdsNames[freq_n]})`;
     } else {
       r = '[no frequency config found]';

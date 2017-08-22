@@ -1,9 +1,9 @@
 import { Component, ViewChild, Input } from '@angular/core';
+import { DataService } from './data.service';
 import { Chart } from './chart';
 import { WidgetComponent } from './widget.component';
 import { FreqPipe } from './freq.pipe';
 import { Data } from './data';
-import { WATERFALL_CHART_OPTIONS, HZ_LABELS } from './constants';
 import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
 
 declare var $;
@@ -26,13 +26,11 @@ declare var $;
                  <input type="checkbox" name="follow" [(ngModel)]="follow" (ngModelChange)="plot()">
                </form>
                <div class="waterfall">
-                 <svg #chart (click)="onClick($event)"
-                   viewBox="0 0 ${WATERFALL_CHART_OPTIONS.width} ${WATERFALL_CHART_OPTIONS.height}"
-                   preserveAspectRatio="xMidYMid meet">
+                 <svg #chart (click)="onClick($event)" [attr.viewBox]="viewBox" preserveAspectRatio="xMidYMid meet">
                    <svg:g />
                  </svg>
-                 <canvas #canvas width="${WATERFALL_CHART_OPTIONS.width}" height="${WATERFALL_CHART_OPTIONS.height}"></canvas>
-                 <canvas #overlay [hidden]="! showSamples" width="${WATERFALL_CHART_OPTIONS.width}" height="${WATERFALL_CHART_OPTIONS.height}"></canvas>
+                 <canvas #canvas width="{{options.width}}" height="{{options.height}}"></canvas>
+                 <canvas #overlay [hidden]="! showSamples" width="{{options.width}}" height="{{options.height}}"></canvas>
                </div>
              </psm-widget>`,
   styles: ["label { margin-left: 20px }",
@@ -64,14 +62,16 @@ export class WaterfallComponent extends Chart {
   @ViewChild('canvas') canvas;
   @ViewChild('overlay') overlay;
 
-  constructor(private freq: FreqPipe) { super() }
+  constructor(dataService: DataService, private freq: FreqPipe) { super(dataService, 'waterfall') }
 
   ngOnInit() {
-    this.margin = WATERFALL_CHART_OPTIONS.margin;
-    this.width = WATERFALL_CHART_OPTIONS.width - this.margin.left - this.margin.right,
-    this.height = WATERFALL_CHART_OPTIONS.height - this.margin.top - this.margin.bottom;
+    this.init();
 
-    this.heat = d3.scale.linear().domain(WATERFALL_CHART_OPTIONS.heat).range(["blue", "yellow", "red"]).clamp(true);
+    this.margin = this.options.margin;
+    this.width = this.options.width - this.margin.left - this.margin.right,
+    this.height = this.options.height - this.margin.top - this.margin.bottom;
+
+    this.heat = d3.scale.linear().domain(this.options.heat).range(["blue", "yellow", "red"]).clamp(true);
 
     this.svg = d3.select(this.chart.nativeElement);
     this.g = this.svg.insert("g", ":first-child")
@@ -101,8 +101,8 @@ export class WaterfallComponent extends Chart {
 
     if (this.isHidden()) return;
 
-    let data = this.follow ? this.data.spectrum.levels : this.data.reduceSpectrum(WATERFALL_CHART_OPTIONS.height);
-    let length = this.follow ? Math.min(data.length, WATERFALL_CHART_OPTIONS.height) : data.length;
+    let data = this.follow ? this.data.spectrum.levels : this.data.reduceSpectrum(this.options.height);
+    let length = this.follow ? Math.min(data.length, this.options.height) : data.length;
     let first = this.follow ? data.length - length : 0;
     let height = Math.min(this.height, data.length);
 
@@ -117,7 +117,7 @@ export class WaterfallComponent extends Chart {
     let df = +this.data.freqs.range[2];
     this.x.domain([f0 - df/2, f1 + df/2]);
     this.y.domain([data[first].timestamp, data[data.length - 1].timestamp]);
-    timeTicks(this.yAxis, this.y.domain(), WATERFALL_CHART_OPTIONS.y_ticks);
+    timeTicks(this.yAxis, this.y.domain(), this.options.y_ticks);
 
     this.g.append("g")
         .attr("class", "x axis")
@@ -128,7 +128,7 @@ export class WaterfallComponent extends Chart {
         .attr("x", 40)
         .attr("y", 6)
         .style("text-anchor", "end")
-        .text(HZ_LABELS[this.data.freqs.exp]);
+        .text(this.hz[this.data.freqs.exp]);
 
     this.g.append("g")
         .attr("class", "y axis")

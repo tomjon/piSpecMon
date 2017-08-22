@@ -24,6 +24,8 @@ def kill(pid, signum):
 class Process(object):
     """ Start the process with start(), after supplying the data store, pid file,
         config file and status file names.
+
+        Sub-classes may need to override get_capabilities().
     """
     def __init__(self, data_store, run_path, config_file):
         self.data_store = data_store
@@ -33,12 +35,23 @@ class Process(object):
             pass
         self.pid_file = os.path.join(run_path, 'pid')
         self.status_file = os.path.join(run_path, 'status')
+        self.caps_file = os.path.join(run_path, 'caps')
         self.config_file = config_file
         self._exit = False
         self._stop = False
         self._tidy = False
         self.config_id = None
         self.status = {}
+
+    def get_capabilities(self):
+        return {}
+
+    def write_caps(self):
+        log.debug("Writing caps file: %s", self.caps_file)
+        tmp = self.caps_file + '_tmp'
+        with open(tmp, 'w') as f:
+            f.write(json.dumps(self.get_capabilities()))
+        os.rename(tmp, self.caps_file)
 
     def read_pid(self):
         """ Read and verify the PID file.
@@ -92,6 +105,7 @@ class Process(object):
         """ Start the process, writing status yielded by iterator.
         """
         log.info("STARTING")
+        self.write_caps()
         self.open()
         try:
             while True:
@@ -184,6 +198,14 @@ class Client(object):
         if self.pid is None and self.error is None:
             self.error = "No {0} process".format(self.process.__class__.__name__.lower())
         return self.pid
+
+    def get_capabilities(self):
+        """ Read the caps file to report capabilities.
+        """
+        if not os.path.isfile(self.process.caps_file):
+            return None
+        with open(self.process.caps_file) as f:
+            return json.loads(f.read())
 
     def status(self):
         """ Read and return the process status.

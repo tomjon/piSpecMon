@@ -13,6 +13,10 @@ class SdrWorker(Process):
         super(SdrWorker, self).__init__(data_store, run_path, config_file)
         self.cv = threading.Condition()
 
+    def get_capabilities(self):
+        return {'models': [{'model': 'SDR Play'}], 'scan': {  #FIXME can we remove 'models' as it isn't used (only for Rig)
+                'antenna': [{'value': 0, 'label': 'Ant A'}, {'value': 1, 'label': 'Ant B'}, {'value': 2, 'label': 'High Z'}]}}
+
     def callback(self, reinit, gains, levels):
         try:
             self.cv.acquire()

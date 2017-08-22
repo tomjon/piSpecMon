@@ -4,7 +4,7 @@ import os
 from time import sleep
 from spectrum.process import Process
 from spectrum.common import log, parse_config, now, scan
-from spectrum.monitor import Monitor, TimeoutError, Recorder
+from spectrum.monitor import Monitor, TimeoutError, Recorder, get_capabilities
 from spectrum.power import power_on
 from spectrum.config import PICO_PATH
 
@@ -42,6 +42,9 @@ class Worker(Process):
                     sleep(self.radio_on_sleep_secs) # give the rig chance to power up
                 else:
                     raise e
+
+    def get_capabilities(self):
+        return get_capabilities()
 
     def iterator(self, config):
         """ Scan the spectrum, storing data through the config object, and yield status.

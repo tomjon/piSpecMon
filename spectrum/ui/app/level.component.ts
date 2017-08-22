@@ -1,8 +1,8 @@
 import { Component, Input, ViewChild } from '@angular/core';
+import { DataService } from './data.service';
 import { WidgetComponent } from './widget.component';
 import { Chart } from './chart';
 import { FreqPipe } from './freq.pipe';
-import { LEVEL_CHART_OPTIONS, HZ_LABELS, MAX_N } from './constants';
 import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
 
 @Component({
@@ -24,9 +24,7 @@ import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
                    </select>
                  </div>
                </form>
-               <svg #chart (click)="onClick($event)"
-                 viewBox="0 0 ${LEVEL_CHART_OPTIONS.width} ${LEVEL_CHART_OPTIONS.height}"
-                 preserveAspectRatio="xMidYMid meet">
+               <svg #chart (click)="onClick($event)" [attr.viewBox]="viewBox" preserveAspectRatio="xMidYMid meet">
                  <svg:line class="horizontal" *ngIf="showInfo" [attr.x1]="margin.left" [attr.x2]="width + margin.left" [attr.y1]="showY" [attr.y2]="showY" />
                  <svg:line class="vertical" *ngIf="showInfo" [attr.x1]="showX" [attr.x2]="showX" [attr.y1]="height + margin.top" [attr.y2]="showY" />
                  <svg:rect class="info" *ngIf="showInfo" [attr.x]="showX + 10 + adjustX" [attr.y]="showY - 30" [attr.width]="textWidth + 20" height=21 rx=5 ry=5 />
@@ -62,12 +60,14 @@ export class LevelComponent extends Chart {
   @ViewChild('text') text;
   @ViewChild('selectN') selectN;
 
-  constructor(private freq: FreqPipe) { super() }
+  constructor(dataService: DataService, private freq: FreqPipe) { super(dataService, 'level') }
 
   ngOnInit() {
-    this.margin = LEVEL_CHART_OPTIONS.margin;
-    this.width = LEVEL_CHART_OPTIONS.width - this.margin.left - this.margin.right,
-    this.height = LEVEL_CHART_OPTIONS.height - this.margin.top - this.margin.bottom;
+    this.init();
+
+    this.margin = this.options.margin;
+    this.width = this.options.width - this.margin.left - this.margin.right,
+    this.height = this.options.height - this.margin.top - this.margin.bottom;
 
     this.x = d3.time.scale().range([0, this.width]);
     this.y = d3.scale.linear().range([this.height, 0]);
@@ -83,7 +83,7 @@ export class LevelComponent extends Chart {
 
     d3.select(this.selectN.nativeElement)
       .selectAll("option")
-      .data(d3.range(1, MAX_N + 1))
+      .data(d3.range(1, this.max_n + 1))
       .enter().append("option")
       .text(d => d);
   }
@@ -113,16 +113,16 @@ export class LevelComponent extends Chart {
     freq_idxs = freq_idxs[this.top].slice(0, this.N);
 
     this.x.domain(d3.extent(data, d => d.timestamp));
-    if (LEVEL_CHART_OPTIONS.y_axis) {
-      this.y.domain([LEVEL_CHART_OPTIONS.y_axis[0], LEVEL_CHART_OPTIONS.y_axis[1]]);
-      this.yAxis.tickValues(d3.range(LEVEL_CHART_OPTIONS.y_axis[0], LEVEL_CHART_OPTIONS.y_axis[1] + LEVEL_CHART_OPTIONS.y_axis[2], LEVEL_CHART_OPTIONS.y_axis[2]));
+    if (this.options.y_axis) {
+      this.y.domain([this.options.y_axis[0], this.options.y_axis[1]]);
+      this.yAxis.tickValues(d3.range(this.options.y_axis[0], this.options.y_axis[1] + this.options.y_axis[2], this.options.y_axis[2]));
     } else {
       this.y.domain([
         d3.min(data, function (d) { return d3.min(d.timestamp.buckets, function (v) { return v.level.value }) }),
         d3.max(data, function (d) { return d3.max(d.timestamp.buckets, function (v) { return v.level.value }) })
       ]);
     }
-    timeTicks(this.xAxis, this.x.domain(), LEVEL_CHART_OPTIONS.x_ticks);
+    timeTicks(this.xAxis, this.x.domain(), this.options.x_ticks);
 
     this.svg.append("g")
         .attr("class", "x axis")
@@ -231,7 +231,7 @@ export class LevelComponent extends Chart {
     let f = +this.data.freqs.range[0] + this.freq_idx * this.data.freqs.range[2];
     let v = this.data.spectrum.levels[this.tick.index].level[this.freq_idx];
     this.showY = this.y(v) + this.margin.top;
-    this.infoText = `${v}dB at ${f}${HZ_LABELS[this.data.freqs.exp]}`;
+    this.infoText = `${v}dB at ${f}${this.hz[this.data.freqs.exp]}`;
     if (this.data.rdsNames[this.freq_idx]) this.infoText += ` (${this.data.rdsNames[this.freq_idx]})`;
     this.infoText += ` at ${dt_format(new Date(this.tick.value))}`;
     setTimeout(() => this.textWidth = this.text.nativeElement.getComputedTextLength());

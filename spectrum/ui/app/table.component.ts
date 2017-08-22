@@ -11,7 +11,8 @@ import { UnitsPipe } from './units.pipe';
   selector: 'psm-table',
   directives: [ WidgetComponent ],
   pipes: [ DatePipe, UnitsPipe ],
-  templateUrl: 'templates/table.html'
+  templateUrl: 'templates/table.html',
+  styles: ['.scan-cap { text-transform: capitalize }']
 })
 export class TableComponent {
   @Input() caps: any;
@@ -30,6 +31,9 @@ export class TableComponent {
 
   // rds checkbox for export/download
   rds: boolean = false;
+
+  // columns we want shown from scan config
+  columns: string[] = [];
 
   @ViewChild(WidgetComponent) widgetComponent;
 
@@ -64,6 +68,7 @@ export class TableComponent {
   ngOnInit() {
     this.widgetComponent.busy(this.dataService.getConfig())
                         .subscribe(configs => this.configs = configs);
+    this.columns = this.dataService.constants.table_columns;
   }
 
   onSelect(config_id, e) {
@@ -132,24 +137,11 @@ export class TableComponent {
     window.open('/export/' + this.selected + args, '_blank');
   }
 
-  mode(value): string {
-    for (let m of this.caps.modes || []) {
-      if (m.mode == value) {
-        return m.name;
-      }
+  label(column, value): string {
+    for (let m of this.caps.scan[column] || []) {
+      if (m.value == value) return m.label;
     }
     return null;
-  }
-
-  antenna(value): string {
-    if (value == 0) {
-      return "Ant A";
-    } else if (value == 1) {
-      return "Ant B";
-    } else if (value == 2) {
-      return "High Z";
-    }
-    return "";
   }
 
   get loading() {

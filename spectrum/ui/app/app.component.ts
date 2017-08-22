@@ -1,4 +1,5 @@
 import { Component, ViewChild } from '@angular/core';
+import { HTTP_PROVIDERS } from '@angular/http';
 import { LoginComponent } from './login.component';
 import { IdentComponent } from './ident.component';
 import { DetailsComponent } from './details.component';
@@ -19,8 +20,6 @@ import { MessageService } from './message.service';
 import { UiSettingsService } from './ui-settings.service';
 import { User } from './user';
 import { Config } from './config';
-import { TICK_INTERVAL } from './constants';
-import { HTTP_PROVIDERS } from '@angular/http';
 import { DatePipe } from './date.pipe';
 import { FreqPipe } from './freq.pipe';
 
@@ -43,9 +42,11 @@ let modelSort = function (a, b) {
   pipes: [ DatePipe ]
 })
 export class AppComponent {
+  constants: any;
+
   user: User;
   models: any[] = [ ];
-  caps: any = { };
+  caps: any = {'scan': {}};
 
   config: Config;
   values: any;
@@ -65,7 +66,11 @@ export class AppComponent {
                       this.caps = caps;
                       this.caps.models = this.caps.models.sort(modelSort);
                     });
-    setInterval(this.monitor.bind(this), TICK_INTERVAL);
+    this.dataService.getConstants()
+                    .subscribe(constants => {
+                      this.constants = constants;
+                      setInterval(this.monitor.bind(this), constants.tick_interval);
+                    });
   }
 
   monitor() {

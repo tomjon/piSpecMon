@@ -6,9 +6,8 @@
         <th>First timestamp</th>
         <th>Last timestamp</th>
         <th>Sweeps</th>
-        <!--th>Mode</th-->
-        <th>Antenna</th>
         <th>Frequencies</th>
+        <th *ngFor="let column of columns" class="scan-cap">{{column}}</th>
         <!--th class="feature">RDS</th>
         <th class="feature">Audio</th-->
         <th class="indicator">&nbsp;</th>
@@ -20,8 +19,6 @@
         <td>{{config.timestamp | date}}</td>
         <td>{{config.latest | date}}</td>
         <td>{{config.count}}</td>
-        <!--td>{{mode(config.values.scan.mode)}}</td-->
-        <td>{{antenna(config.values.scan.antenna)}}</td>
         <td>
           <span *ngIf="config.values.freqs.range">
             {{config.values.freqs.range[0]}} - {{config.values.freqs.range[1]}} (&Delta; {{config.values.freqs.range[2]}}) {{config.values.freqs.exp | units}}
@@ -33,6 +30,7 @@
             </span>
           </span>
         </td>
+        <td *ngFor="let column of columns">{{label(column, config.values.scan[column])}}</td>
         <!--td class="feature">{{config.values.scan.rds ? '✔' : '✘' }}</td>
         <td class="feature">{{config.values.scan.audio ? '✔' : '✘'}}</td-->
         <td class="indicator">

@@ -5,7 +5,6 @@ import { Config } from './config';
 import { User } from './user';
 import { DatePipe } from './date.pipe';
 import { FreqPipe } from './freq.pipe';
-import { HZ_LABELS } from './constants';
 
 declare var $;
 
@@ -23,7 +22,8 @@ declare var $;
   selector: 'psm-scan',
   templateUrl: 'templates/scan.html',
   directives: [ WidgetComponent ],
-  pipes: [ DatePipe, FreqPipe ]
+  pipes: [ DatePipe, FreqPipe ],
+  styles: ['.scan-cap label { text-transform: capitalize }']
 })
 export class ScanComponent {
   defaults: any;
@@ -69,8 +69,9 @@ export class ScanComponent {
   constructor(private dataService: DataService) { }
 
   ngOnInit() {
-    for (let value in HZ_LABELS) {
-      this.units.push({ value: value, label: HZ_LABELS[value] });
+    let hz = this.dataService.constants.hz_labels;
+    for (let value in hz) {
+      this.units.push({ value: value, label: hz[value] });
     }
     if (this.user.roleIn(['admin', 'freq'])) {
       this.widgetComponent.busy(this.dataService.getScan())
@@ -82,6 +83,10 @@ export class ScanComponent {
     } else {
       this.standby = false;
     }
+  }
+
+  get capsKeys(): string[] {
+    return Object.keys(this.caps);
   }
 
   onReset() {

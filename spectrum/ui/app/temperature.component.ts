@@ -1,7 +1,7 @@
 import { Component, Input, ViewChild } from '@angular/core';
+import { DataService } from './data.service';
 import { WidgetComponent } from './widget.component';
 import { Chart } from './chart';
-import { TEMPERATURE_CHART_OPTIONS } from './constants';
 import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
 
 @Component({
@@ -9,9 +9,7 @@ import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
   directives: [ WidgetComponent ],
   inputs: [ 'data', 'timestamp' ],
   template: `<psm-widget [hidden]="isHidden()" title="Temperature / Time" class="chart" (show)="onShow($event)">
-               <svg #chart (click)="onClick($event)"
-                 viewBox="0 0 ${TEMPERATURE_CHART_OPTIONS.width} ${TEMPERATURE_CHART_OPTIONS.height}"
-                 preserveAspectRatio="xMidYMid meet">
+               <svg #chart (click)="onClick($event)" [attr.viewBox]="viewBox" preserveAspectRatio="xMidYMid meet">
                  <svg:line class="horizontal" *ngIf="showInfo" [attr.x1]="margin.left" [attr.x2]="width + margin.left" [attr.y1]="showY" [attr.y2]="showY" />
                  <svg:line class="vertical" *ngIf="showInfo" [attr.x1]="showX" [attr.x2]="showX" [attr.y1]="height + margin.top" [attr.y2]="showY" />
                  <svg:rect class="info" *ngIf="showInfo" [attr.x]="showX + 10 + adjustX" [attr.y]="showY - 30" [attr.width]="textWidth + 20" height=21 rx=5 ry=5 />
@@ -42,10 +40,14 @@ export class TemperatureComponent extends Chart {
   @ViewChild('chart') chart;
   @ViewChild('text') text;
 
+  constructor(dataService: DataService) { super(dataService, 'temperature') }
+
   ngOnInit() {
-    this.margin = TEMPERATURE_CHART_OPTIONS.margin;
-    this.width = TEMPERATURE_CHART_OPTIONS.width - this.margin.left - this.margin.right,
-    this.height = TEMPERATURE_CHART_OPTIONS.height - this.margin.top - this.margin.bottom;
+    this.init();
+
+    this.margin = this.options.margin;
+    this.width = this.options.width - this.margin.left - this.margin.right,
+    this.height = this.options.height - this.margin.top - this.margin.bottom;
 
     this.x = d3.time.scale().range([0, this.width]);
     this.y = d3.scale.linear().range([this.height, 0]);
@@ -76,9 +78,9 @@ export class TemperatureComponent extends Chart {
     let data = this.data.temperature;
 
     this.x.domain(d3.extent(data, d => d[0]));
-    if (TEMPERATURE_CHART_OPTIONS.y_axis) {
-      this.y.domain([TEMPERATURE_CHART_OPTIONS.y_axis[0], TEMPERATURE_CHART_OPTIONS.y_axis[1]]);
-      this.yAxis.tickValues(d3.range(TEMPERATURE_CHART_OPTIONS.y_axis[0], TEMPERATURE_CHART_OPTIONS.y_axis[1] + TEMPERATURE_CHART_OPTIONS.y_axis[2], TEMPERATURE_CHART_OPTIONS.y_axis[2]));
+    if (this.options.y_axis) {
+      this.y.domain([this.options.y_axis[0], this.options.y_axis[1]]);
+      this.yAxis.tickValues(d3.range(this.options.y_axis[0], this.options.y_axis[1] + this.options.y_axis[2], this.options.y_axis[2]));
     } else {
       this.y.domain([
         d3.min(data, function (d) { return d3.min(d.timestamp.buckets, function (v) { return v.level.value }) }),
@@ -86,7 +88,7 @@ export class TemperatureComponent extends Chart {
       ]);
     }
 
-    timeTicks(this.xAxis, this.x.domain(), TEMPERATURE_CHART_OPTIONS.x_ticks);
+    timeTicks(this.xAxis, this.x.domain(), this.options.x_ticks);
 
     this.svg.append("g")
         .attr("class", "x axis")
