@@ -4,7 +4,7 @@ After=sound.target
 
 [Service]
 Type=oneshot
-ExecStart=/sbin/modprobe snd_pcm_oss
+ExecStart=/home/ses/piSpecMon/spectrum/bin/audio.sh
 
 [Install]
 WantedBy=psm.target
