@@ -4,7 +4,8 @@ import os
 from time import sleep
 from spectrum.process import Process
 from spectrum.common import log, parse_config, now, scan
-from spectrum.monitor import Monitor, TimeoutError, Recorder
+from spectrum.monitor import Monitor, TimeoutError
+from spectrum.audio import Recorder
 from spectrum.power import power_on
 from spectrum.config import PICO_PATH
 
@@ -137,7 +138,7 @@ class Worker(Process):
             audio = config.values['audio']
             log.info("Recording audio at %sHz and storing in %s", freq, path)
 
-            with Recorder(path, config.values['rig']['audio_device']) as recorder:
+            with Recorder(path, None, config.values['rig']['audio_device']) as recorder:
                 for strength in recorder.record(monitor, freq, audio['rate'], audio['duration']):
                     self.status['sweep']['record']['strength'] = strength
                     yield

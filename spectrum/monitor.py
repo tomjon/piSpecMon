@@ -2,18 +2,9 @@
 """
 import math
 import inspect
-import wave
 from time import sleep
 import Hamlib
-try:
-    import ossaudiodev
-except ImportError:
-    import spectrum.fake_ossaudiodev as ossaudiodev
 from spectrum.common import check_device
-
-CHANNELS = 1
-FORMAT = ossaudiodev.AFMT_S16_LE
-SAMPLE_WIDTH = 2
 
 Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_NONE)
 
@@ -190,41 +181,3 @@ class Monitor(object):
         """
         self.rig.set_powerstat(Hamlib.RIG_POWER_OFF)
 
-
-class Recorder(object): # pylint: disable=too-few-public-methods
-    """ API for recording audio from the rig.
-
-        path - audio sample path
-        device - audio device path
-    """
-    def __init__(self, path, device):
-        self.path = path
-        self.device = check_device(device)
-        self.audio = None
-        self.wav = None
-
-    def __enter__(self):
-        self.audio = ossaudiodev.open(self.device, 'r')
-        self.wav = wave.open(self.path, 'w')
-        return self
-
-    def record(self, monitor, freq, rate, duration):
-        """ Record audio.
-        """
-        if not monitor.set_frequency(freq):
-            raise Exception("could not set frequency")
-        self.audio.channels(CHANNELS)
-        self.audio.setfmt(FORMAT)
-        self.audio.speed(rate)
-        self.wav.setnchannels(CHANNELS)
-        self.wav.setsampwidth(SAMPLE_WIDTH)
-        self.wav.setframerate(rate)
-        yield #monitor.get_strength()
-        for _ in xrange(duration):
-            data = self.audio.read(rate * CHANNELS * SAMPLE_WIDTH)
-            self.wav.writeframes(data)
-            yield #monitor.get_strength()
-
-    def __exit__(self, *args):
-        self.wav.close()
-        self.audio.close()

@@ -22,15 +22,20 @@ DLL = _load_dll()
 class RdsApi(object):
     """ Ctypes wrapper for the Keystone monkey board comms DLL.
     """
-    def __init__(self, device, use_hard_mute=True):
+    def __init__(self, device, use_hard_mute=True, volume=16):
         self.device = check_device(device)
         self.use_hard_mute = use_hard_mute
         self._buffer = create_unicode_buffer(300)
+        self.volume = volume
 
     def __enter__(self):
         value = DLL.OpenRadioPort(c_char_p(self.device), self.use_hard_mute)
         if value != 1:
             raise Exception("Error opening monkey board: {0}".format(value))
+        value = DLL.SetVolume(c_int(self.volume))
+        if value != 1:
+            raise Exception("Error setting volume: {0}".format(value))
+        error = pointer(c_int(0))
         return self
 
     def __exit__(self, *args):
@@ -43,7 +48,8 @@ class RdsApi(object):
         """
         value = DLL.PlayStream(c_char_p(MODE_FM), c_long(int(freq / 1000)))
         if value != 1:
-            raise Exception("Error setting frequencya: {0}".format(value))
+            raise Exception("Error setting frequency: {0}".format(value))
+        return True
 
     def get_strength(self): # pylint: disable=no-self-use
         """ Read the signal strength.
@@ -65,3 +71,11 @@ class RdsApi(object):
         """
         value = DLL.GetProgramText(self._buffer)
         return self._buffer.value.strip() if value == 0 else None
+
+if __name__ == '__main__':
+    from audio import Recorder
+
+    with RdsApi('ttyACM0') as rds, Recorder('left.wav', 'right.wav', 'dsp1') as audio:
+        for s in audio.record(rds, 95.5 * 1e6, 44100, 10):
+            print s
+

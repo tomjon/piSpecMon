@@ -29,6 +29,7 @@
 *.hex
 
 # Project specifics
+*.wav
 pi_control
 secret.key
 example_queries/
