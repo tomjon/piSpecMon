@@ -1,10 +1,14 @@
 [Unit]
-Description=Create /dev/dsp* for audio devices
+Description=Audio server publishing left/right channels to a ZMQ socket
 After=sound.target
 
 [Service]
-Type=oneshot
-ExecStart=/home/ses/piSpecMon/spectrum/bin/audio.sh
+Type=idle
+ExecStart=/usr/bin/python -u /usr/local/bin/psm-audio
+Restart=always
+RestartSec=1
+User=root
+Group=root
 
 [Install]
 WantedBy=psm.target

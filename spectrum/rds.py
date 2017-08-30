@@ -35,7 +35,6 @@ class RdsApi(object):
         value = DLL.SetVolume(c_int(self.volume))
         if value != 1:
             raise Exception("Error setting volume: {0}".format(value))
-        error = pointer(c_int(0))
         return self
 
     def __exit__(self, *args):
@@ -73,9 +72,16 @@ class RdsApi(object):
         return self._buffer.value.strip() if value == 0 else None
 
 if __name__ == '__main__':
-    from audio import Recorder
+    from audio import AudioClient, CHANNEL_LEFT, CHANNEL_RIGHT
+    import time
 
-    with RdsApi('ttyACM0') as rds, Recorder('left.wav', 'right.wav', 'dsp1') as audio:
-        for s in audio.record(rds, 95.5 * 1e6, 44100, 10):
-            print s
+    with RdsApi('ttyACM0') as rds, AudioClient(CHANNEL_LEFT, 'mono.wav') as left:
+        rds.set_frequency(95.5 * 1e6)
+        time.sleep(2)
+        for n, _ in enumerate(left):
+            print rds.get_strength(), rds.get_name(), rds.get_text()
+            if n == 10:
+                print "STOP"
+                break
+
 

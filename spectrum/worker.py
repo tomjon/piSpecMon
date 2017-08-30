@@ -5,7 +5,7 @@ from time import sleep
 from spectrum.process import Process
 from spectrum.common import log, parse_config, now, scan
 from spectrum.monitor import Monitor, TimeoutError
-from spectrum.audio import Recorder
+from spectrum.audio import AudioClient
 from spectrum.power import power_on
 from spectrum.config import PICO_PATH
 
@@ -135,10 +135,14 @@ class Worker(Process):
             if not os.path.exists(os.path.dirname(path)):
                 os.makedirs(os.path.dirname(path))
 
-            audio = config.values['audio']
             log.info("Recording audio at %sHz and storing in %s", freq, path)
 
-            with Recorder(path, None, config.values['rig']['audio_device']) as recorder:
-                for strength in recorder.record(monitor, freq, audio['rate'], audio['duration']):
-                    self.status['sweep']['record']['strength'] = strength
+            if not monitor.set_frequency(freq):
+                raise Exception("Could not change frequency: {0}".format(freq))
+
+            with AudioClient(config.values['audio']['channel'], path) as audio:
+                for count, _ in enumerate(audio):
+                    self.status['sweep']['record']['strength'] = monitor.get_strength()
                     yield
+                    if count >= config.values['audio']['duration']: break
+

@@ -11,6 +11,7 @@ from spectrum.config import DATA_PATH, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS, MON
                             EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, WORKER_CONFIG_FILE, \
                             MONKEY_CONFIG_FILE, EVENT_PATH, EVENT_POLL_SECS, EVENT_OVERSEER_URL, \
                             EVENT_OVERSEER_KEY
+from spectrum.audio import AudioServer
 from spectrum.worker import Worker
 from spectrum.monkey import Monkey
 from spectrum.wav2mp3 import walk_convert
@@ -44,6 +45,13 @@ def server():
     application = init_application()
     application.debug = True
     application.run('0.0.0.0', port=8080)
+
+
+def audio():
+    """ Run the audio server (publishes left/right channels to a ZMQ socket).
+    """
+    with AudioServer() as server:
+        server.run()
 
 
 def worker():

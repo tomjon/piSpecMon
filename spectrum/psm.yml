@@ -34,6 +34,11 @@ radio_on:
     switch: 21 # BCM numbering
     sleep_secs: 1.0
 
+# audio settings (for AudioServer and AudioClient)
+audio:
+    oss_device: dsp1
+    zmq_port: 8234
+
 # data directory (FsDataStore)
 data_path: /var/lib/psm
 
