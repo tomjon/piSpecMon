@@ -64,6 +64,7 @@ def caps():
 @application.route('/rig', methods=['GET', 'PUT'])
 @application.route('/audio', methods=['GET', 'PUT'])
 @application.route('/rds', methods=['GET', 'PUT'])
+@application.route('/keysight', methods=['GET', 'PUT'])
 @application.route('/scan', methods=['GET', 'PUT'])
 @application.role_required(['admin', 'freq'])
 def settings():
@@ -447,4 +448,3 @@ def constants_endpoint():
     """ Direct read only access to the psm.yml configuration file.
     """
     return json.dumps(UI_CONFIG)
-
