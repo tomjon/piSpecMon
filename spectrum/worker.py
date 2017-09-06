@@ -7,7 +7,7 @@ from spectrum.common import log, parse_config, now, scan
 from spectrum.monitor import Monitor, TimeoutError
 from spectrum.audio import AudioClient
 from spectrum.power import power_on
-from spectrum.config import PICO_PATH
+from spectrum.config import PICO_PATH, RIG_DEVICE
 
 try:
     import smbus
@@ -50,15 +50,15 @@ class Worker(Process):
         scan_config = parse_config(config.values)
         audio_t = 0 if config.values['scan']['audio'] else None
         attempts = config.values['rig']['radio_on']
-        threshold = config.values['audio']['threshold']
-        period = config.values['audio']['period']
+        threshold = config.values['scan']['audio']['threshold']
+        period = config.values['scan']['audio']['period']
 
         self.status.clear()
         yield
 
         # open the rig for monitoring
         def _monitor_open(config):
-            monitor = Monitor(**config.values['rig'])
+            monitor = Monitor(rig_device=RIG_DEVICE, **config.values['rig'])
             monitor.open()
             return monitor
 
@@ -140,9 +140,8 @@ class Worker(Process):
             if not monitor.set_frequency(freq):
                 raise Exception("Could not change frequency: {0}".format(freq))
 
-            with AudioClient(config.values['audio']['channel'], path) as audio:
+            with AudioClient(config.values['audio']['receiver_channel'], path) as audio:
                 for count, _ in enumerate(audio):
                     self.status['sweep']['record']['strength'] = monitor.get_strength()
                     yield
-                    if count >= config.values['audio']['duration']: break
-
+                    if count >= config.values['scan']['audio']['duration']: break

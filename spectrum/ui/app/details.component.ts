@@ -1,7 +1,9 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { WidgetComponent } from './widget.component';
+import { WidgetBase } from './widget.base';
 import { User } from './user';
 import { DataService } from './data.service';
+import { StateService } from './state.service';
 import { MessageService } from './message.service';
 
 declare var $;
@@ -11,7 +13,7 @@ declare var $;
   directives: [ WidgetComponent ],
   templateUrl: 'templates/details.html'
 })
-export class DetailsComponent {
+export class DetailsComponent extends WidgetBase {
   logged_in: User;
 
   roles: any = User.ROLES;
@@ -32,10 +34,16 @@ export class DetailsComponent {
 
   @ViewChild(WidgetComponent) widgetComponent;
   @ViewChild('form') form;
+
   @ViewChild('passwordForm') resetForm;
   @ViewChild('newForm') newUserForm;
 
-  constructor(private dataService: DataService, private messageService: MessageService) { }
+  constructor(dataService: DataService, stateService: StateService, private messageService: MessageService) { super(dataService, stateService) }
+
+  ngOnInit() {
+    this.setViewChildren(undefined, this.widgetComponent);
+    this.onReset();
+  }
 
   private setCurrent(user: User) {
     this.logged_in = user;

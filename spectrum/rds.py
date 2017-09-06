@@ -72,15 +72,16 @@ class RdsApi(object):
         return self._buffer.value.strip() if value == 0 else None
 
 if __name__ == '__main__':
-    from audio import AudioClient, CHANNEL_LEFT, CHANNEL_RIGHT
+    from audio import AudioClient
     import time
+    import sys
 
-    with RdsApi('ttyACM0') as rds, AudioClient(CHANNEL_LEFT, 'mono.wav') as left:
+    with RdsApi('ttyACM0') as rds, AudioClient(sys.argv[1], sys.argv[2]) as ac:
         rds.set_frequency(95.5 * 1e6)
         time.sleep(2)
-        for n, _ in enumerate(left):
+        for n, _ in enumerate(ac):
             print rds.get_strength(), rds.get_name(), rds.get_text()
-            if n == 10:
+            if n == 9:
                 print "STOP"
                 break
 

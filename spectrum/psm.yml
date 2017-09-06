@@ -39,6 +39,9 @@ audio:
     oss_device: dsp1
     zmq_port: 8234
 
+rig_device: ttyUSB0
+rds_device: ttyACM0
+
 # data directory (FsDataStore)
 data_path: /var/lib/psm
 
@@ -55,8 +58,8 @@ convert_period: 300
 event:
     path: /var/lib/psm/events
     poll_secs: 10
-    overseer_url: 
-    overseer_key: 
+    overseer_url:
+    overseer_key:
 
 # default settings - if left empty, rig model is set later using Hamlib
 default:
@@ -72,23 +75,43 @@ default:
         retries: 2
         interval: 1000
         write_delay: 50
-        rig_device: ttyUSB0
-        audio_device: dsp1
-        rds_device: ttyACM0
 
     audio_settings:
         rate: 44100
-        period: 600
-        duration: 10
-        threshold: -20
+        receiver_channel: L
+        rds_channel: R
 
     rds_settings:
-        strength_threshold: 60
-        strength_timeout: 4
-        name_timeout: 10
-        text_timeout: 300
+        freqs:
+          - enabled: true
+            range: [87.5, 108.0, 0.1]
+            exp: 6
+          - enabled: false
+            freq:
+            exp: 6
+        scan:
+            enabled: true
+            strength_threshold: 60
+            strength_timeout: 2
+            name_timeout: 4
+            text_timeout: 6
+        audio:
+            enabled: false
+        duration: 10
 
     scan_settings:
-        freqs: {range: [87.5, 108.0, 0.1], exp: 6, freqs: [{f: '', exp: 6}]}
-        monitor: {radio_on: 1}
-        scan: {mode: 64, rds: true, audio: false}
+        mode: 64
+        freqs:
+          - enabled: true
+            range: [87.5, 108.0, 0.1]
+            exp: 6
+          - enabled: false
+            freq:
+            exp: 6
+        monitor:
+            radio_on: 1
+        audio:
+            enabled: false
+            duration: 10
+            threshold: -20
+            period: 600

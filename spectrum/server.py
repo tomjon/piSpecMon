@@ -37,20 +37,6 @@ def favicon_endpoint():
     return send_file(path, mimetype='image/vnd.microsoft.icon')
 
 
-# id: name, version and description
-@application.route('/ident', methods=['GET', 'PUT'])
-@application.role_required(['admin', 'freq', 'data'])
-def ident_endpoint():
-    """ Serve or set the ident.
-    """
-    if request.method == 'GET':
-        return json.dumps(application.ident)
-    else:
-        application.set_ident(request.get_json())
-        application.event_client.write(EVENT_IDENT, application.ident)
-        return json.dumps({})
-
-
 # rig capabilities API
 @application.route('/caps')
 @application.role_required(['admin', 'freq', 'data'])
@@ -60,40 +46,51 @@ def caps():
     return json.dumps(application.caps)
 
 
-@application.route('/rig', methods=['GET', 'PUT'])
-@application.route('/audio', methods=['GET', 'PUT'])
-@application.route('/rds', methods=['GET', 'PUT'])
-@application.route('/scan', methods=['GET', 'PUT'])
+@application.route('/settings')
+@application.route('/settings/<key>', methods=['PUT'])
 @application.role_required(['admin', 'freq'])
-def settings():
+def settings(key=None):
     """ Settings API: endpoints for serving and putting settings.
     """
-    rule = request.url_rule.rule[1:]
     if request.method == 'GET':
-        return json.dumps(getattr(application, rule).values)
-    elif request.method == 'PUT':
-        getattr(application, rule).write(request.get_json())
+        # return all settings
+        values = {'ident': application.ident}
+        for key in ['rig', 'audio', 'rds', 'scan']: #FIXME improve by storing rig, audio, .. in a dict on the app
+            values[key] = getattr(application, key).values
+        return json.dumps(values)
+    else:
+        # set a particular value set
+        if key == 'ident':
+            application.set_ident(request.get_json()) #FIXME treat ident same as other keys by storing ident differently?
+            application.event_client.write(EVENT_IDENT, application.ident)
+        elif key in ['rig', 'audio', 'rds', 'scan']:#FIXME as above
+            getattr(application, key).write(request.get_json())
+        else:
+            return "Key not found", 404
         return json.dumps({})
 
-
-@application.route('/monitor', methods=['GET', 'PUT', 'DELETE'])
+@application.route('/process', methods=['GET', 'PUT', 'DELETE'])
 @application.role_required(['admin', 'freq', 'data'])
-def monitor():
-    """ Monitor API.
+def process():
+    """ Process API.
 
-        GET /monitor - return process status
-        PUT /monitor - start process with supplied config as request body
-        DELETE /monitor - stop process
+        GET /process - return process status for all (running) processes
+        PUT /process - start processes with supplied config values as request body
+        DELETE /process - stop processes
     """
-    if request.method == 'PUT':
+    if request.method == 'GET':
+        return json.dumps({'worker': application.worker.status(),
+                           'monkey': application.monkey.status()})
+    elif request.method == 'PUT':
         if 'config_id' in application.worker.status():
             return "Worker already running", 400
         if 'config_id' in application.monkey.status():
             return "Monkey already running", 400
-        values = json.loads(request.get_data())
+        values = {'rds': json.loads(request.get_data())}
         values['rig'] = application.rig.values
         values['audio'] = application.audio.values
-        values['rds'] = application.rds.values
+        #values['rds'] = application.rds.values
+        values['scan'] = application.scan.values
         values['ident'] = application.ident
         values['user'] = current_user.name
 
@@ -102,13 +99,15 @@ def monitor():
         except StoreError as e:
             return e.message, 500
 
-        application.worker.start(config.id)
-        if config.values['scan']['rds']:
+        #FIXME this is all now highly dubious :(
+        if 'scan' in config.values:
+            application.worker.start(config.id)
+        if 'rds' in config.values:
             application.monkey.start(config.id)
         application.event_client.write(EVENT_START, config.values)
 
         return json.dumps({})
-    if request.method == 'DELETE':
+    elif request.method == 'DELETE':
         # stop process
         if 'timestamp' not in application.worker.status() and \
            'timestamp' not in application.monkey.status():
@@ -117,10 +116,6 @@ def monitor():
         application.monkey.stop()
         application.event_client.write(EVENT_STOP, {})
         return json.dumps({})
-    if request.method == 'GET':
-        # monitor status
-        return json.dumps({'worker': application.worker.status(),
-                           'monkey': application.monkey.status()})
 
 
 @application.route('/config')

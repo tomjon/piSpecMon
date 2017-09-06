@@ -83,4 +83,4 @@ class AudioClient(object):
             msg = self.socket.recv()[2:] # ignore topic and space following
             self.wav.writeframes(msg)
             yield
-
+        

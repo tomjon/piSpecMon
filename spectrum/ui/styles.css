@@ -9,6 +9,15 @@
   color: red;
 }
 
+.glyphicon {
+  cursor: pointer;
+  margin-left: 4px;
+}
+.disabled {
+  color: grey;
+  cursor: default;
+}
+
 /* charts */
 .chart svg {
 	width: 100%;
@@ -84,6 +93,10 @@ rect.audio {
   width: auto;
   background: lightgoldenrodyellow;
   margin: 5px;
+  position: relative;
+}
+.container.current {
+  background: lightblue;
 }
 .container h1 {
   font-size: 20px;
@@ -94,8 +107,10 @@ rect.audio {
   float: left;
   margin-right: 4px;
 }
-.container .busy {
-  float: right;
+.container .icons {
+  position: absolute;
+  right: 16px;
+  top: 12px;
 }
 .container-notitle {
   padding-top: 10px;

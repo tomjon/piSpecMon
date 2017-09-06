@@ -17,6 +17,7 @@ import { DataService } from './data.service';
 import { ErrorService } from './error.service';
 import { MessageService } from './message.service';
 import { UiSettingsService } from './ui-settings.service';
+import { StateService } from './state.service';
 import { User } from './user';
 import { Config } from './config';
 import { TICK_INTERVAL } from './constants';
@@ -39,29 +40,31 @@ let modelSort = function (a, b) {
   selector: 'psm-app',
   templateUrl: 'templates/app.html',
   directives: [ LoginComponent, ErrorComponent, IdentComponent, DetailsComponent, PiComponent, PicoComponent, LogsComponent, StatsComponent, RigComponent, AudioComponent, RdsComponent, TableComponent, ScanComponent, ChartsComponent ],
-  providers: [ DataService, ErrorService, MessageService, UiSettingsService, HTTP_PROVIDERS, FreqPipe ],
+  providers: [ DataService, StateService, ErrorService, MessageService, UiSettingsService, HTTP_PROVIDERS, FreqPipe ],
   pipes: [ DatePipe ]
 })
 export class AppComponent {
-  user: User;
+  user: User; //FIXME get rid - use stateService.user
   models: any[] = [ ];
   modes: any[] = [ ];
   rates: any[] = [ ];
   parities: any[] = [ ];
 
-  config: Config;
   values: any;
   status: any = { worker: { }, monkey: { } };
 
-  ident: any;
-
-  constructor(private dataService: DataService, private messageService: MessageService) { }
+  constructor(private dataService: DataService, private stateService: StateService, private messageService: MessageService) { }
 
   @ViewChild('table') table;
 
   ngOnInit() {
     this.dataService.getCurrentUser()
-                    .subscribe(user => { this.user = user; this.checkSuperior() });
+                    .subscribe(user => {
+                      this.stateService.user = user;
+                      this.user = user; this.checkSuperior();
+                    });
+    this.dataService.getSettings()
+                    .subscribe(values => this.stateService.values = values);
     this.dataService.getCaps()
                     .subscribe(data => {
                       this.models = data.models.sort(modelSort);
@@ -69,20 +72,16 @@ export class AppComponent {
                       this.rates = data.rates;
                       this.parities = data.parities;
                     });
+
     setInterval(this.monitor.bind(this), TICK_INTERVAL);
   }
 
   monitor() {
-    this.dataService.getMonitor()
+    this.dataService.getStatus()
                     .subscribe(
                       status => this.setStatus(status),
                       error => window.location.assign('/')
                     );
-  }
-
-  setConfig(config: Config) {
-    this.config = config;
-    if (config != undefined && ! this.running) this.values = config.values;
   }
 
   private get running(): boolean {
@@ -109,18 +108,14 @@ export class AppComponent {
     }
   }
 
-  setIdent(ident: any) {
-    this.ident = ident;
-  }
-
   private checkSuperior() {
-    if (this.user._superior) {
-      let s = this.user._superior;
+    if (this.stateService.user._superior) {
+      let s = this.stateService.user._superior;
       this.messageService.show(`Downgraded to Data Viewer. ${s.real} is logged in as ${s._roleLabel} - contact them at ${s.email} or on ${s.tel}`);
     }
   }
 
-  get errors(): any[] {
+  /*get errors(): any[] {
     return this.config ? this.config.errors : [];
-  }
+  }*/
 }

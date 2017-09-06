@@ -62,15 +62,6 @@ def now():
     return int(time.time() * 1000)
 
 
-def scan(freqs=None, range=None, **_): # pylint: disable=redefined-builtin
-    """ Iterate frequency indices and frequency values in the specified list and range.
-    """
-    idx = 0
-    for freq in itertools.chain(freqs or [], xrange(*range) if range is not None else []):
-        yield idx, freq
-        idx += 1
-
-
 def freq(freq_n, **args): # pylint: disable=redefined-builtin
     """ Return the frequency for the given freq_n.  Use of this is fairly inefficient
         because the whole range of frequencies is generated each time.
@@ -109,26 +100,31 @@ def _convert(dic):
             pass
 
 
-def parse_config(config):
+#FIXME prefer to do the interpretation of freq specs, to produce a generator, in one step
+def parse_config(config, module='scan'):
     """ Convert the given config using _convert, and return parsed scan settings.
+        The return value may be fed into scan().
     """
     _convert(config)
-    scan_cfg = {}
-    if 'freqs' in config:
-        for x in config['freqs']:
-            # x is either 'range' or 'freqs'
-            if x == 'range':
-                exp = int(config['freqs']['exp'])
-                scan_cfg[x] = [int(10 ** exp * float(f)) for f in config['freqs'][x]]
-                scan_cfg[x][1] += scan_cfg[x][2] / 2 # ensure to include the end of the range
-            elif x == 'freqs':
-                scan_cfg[x] = [int(10 ** int(f['exp']) * float(f['f'])) for f in config['freqs'][x]]
-            else:
-                raise ValueError("Bad key in config.freqs")
-            break
-        else:
-            raise ValueError("No frequencies in config.freqs")
+    scan_cfg = []
+    if module in config and 'freqs' in config[module]:
+        for x in config[module]['freqs']:
+            # x is either a range or a single frequency
+            if 'range' in x and x.get('enabled', False):
+                scan_cfg.append([int(10 ** x['exp'] * float(f)) for f in x['range']])
+                scan_cfg[-1][1] += scan_cfg[-1][2] / 2 # ensure to include the end of the range
+            elif 'freq' in x and x.get('enabled', False):
+                scan_cfg.append(int(10 ** int(x['exp']) * float(x['freq'])))
     return scan_cfg
+
+#FIXME prefer to do the interpretation of freq specs, to produce a generator, in one step
+def scan(scan_config): # pylint: disable=redefined-builtin
+    """ Iterate frequency indices and frequency values in the specified scan config.
+    """
+    idx = 0
+    for freq in itertools.chain(*[xrange(*x) if isinstance(x, list) else [x] for x in scan_config]):
+        yield idx, freq
+        idx += 1
 
 
 def fs_size(path):

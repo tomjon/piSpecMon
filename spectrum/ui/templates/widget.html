@@ -1,10 +1,14 @@
-<div class="container" [ngClass]="{ 'container-notitle': title == undefined }">
+<div class="container" [ngClass]="{current: current, 'container-notitle': title == undefined}">
   <h1 *ngIf="title" (click)="toggle()">
     {{title}}
     <span *ngIf="show" class="toggle glyphicon glyphicon-collapse-down"></span>
     <span *ngIf="! show" class="toggle glyphicon glyphicon-collapse-up"></span>
     <span *ngIf="loading" class="busy glyphicon glyphicon-transfer"></span>
   </h1>
-  <span *ngIf="! title && loading" class="busy glyphicon glyphicon-transfer"></span>
+  <div *ngIf="showIcons && show" class="icons">
+    <span *ngIf="! title && loading" class="busy glyphicon glyphicon-transfer"></span>
+    <span (click)="onReset()" class="glyphicon glyphicon-arrow-left" [ngClass]="{disabled: ! canReset}"></span>
+    <span (click)="onSubmit()" class="glyphicon glyphicon-save" [ngClass]="{disabled: ! canSubmit}"></span>
+  </div>
   <ng-content *ngIf="show"></ng-content>
 </div>

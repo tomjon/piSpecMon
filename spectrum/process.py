@@ -96,7 +96,7 @@ class Process(object):
                                 if self._stop:
                                     break
                         except Exception as e: # pylint: disable=broad-except
-                            log.error(e)
+                            log.exception(e)
                             traceback.print_exc()
                             config.write_error(now(), e)
                 if os.path.isfile(self.status_file):

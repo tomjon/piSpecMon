@@ -1,29 +1,41 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { Data } from './data';
 import { HZ_LABELS } from './constants';
 
 @Pipe({ name: 'freq' })
 export class FreqPipe implements PipeTransform {
-  // used in templates like: freq_n | freq:config.freqs
-  transform(freq_n: number, data: Data): string {
+  // used in templates like: freq_n | freq:values
+  transform(freq_n: number, values: any): string {
     let r: string = null;
-    if (! data) {
-      r = '[no data specified]';
-    } else if (data.freqs.range) {
-      let range = data.freqs.range;
-      let f = +range[0] + freq_n * +range[2];
-      let s = range[2].toString();
-      let i = s.indexOf('.');
-      let n = i > -1 ? s.length - i - 1 : 0;
-      r = `${f.toFixed(n)}${HZ_LABELS[data.freqs.exp]}`;
-      if (data.rdsNames && data.rdsNames[freq_n]) r += ` (${data.rdsNames[freq_n]})`;
-    } else if (data.freqs.freqs) {
-      let freq = data.freqs.freqs[freq_n];
-      r = `${freq.f}${HZ_LABELS[freq.exp]}`;
-      if (data.rdsNames && data.rdsNames[freq_n]) r += ` (${data.rdsNames[freq_n]})`;
-    } else {
-      r = '[no frequency config found]';
+    if (values == undefined) {
+      return '[no values specified]';
     }
-    return r;
+    if (values.freqs == undefined) {
+      return '[no frequency values]';
+    }
+    let n = freq_n;
+    for (let f_spec of values.freqs) {
+      if (! f_spec.enabled) continue;
+      let r = f_spec.range;
+      let size = r != undefined ? Math.ceil((+r[1] - +r[0] + +r[2] / 2) / +r[2]) : 1;
+      if (n < size) {
+        let p = this._format(r, n, f_spec);
+        if (values.rdsNames && values.rdsNames[freq_n]) p += ` (${values.rdsNames[freq_n]})`;
+        return p;
+      }
+      n -= size;
+    }
+    return `[bad freq_n: ${freq_n}]`;
+  }
+
+  _format(r, n, f_spec): string {
+    if (r != undefined) {
+      let f = +r[0] + n * +r[2];
+      let s = r[2].toString();
+      let i = s.indexOf('.');
+      let j = i > -1 ? s.length - i - 1 : 0;
+      return `${f.toFixed(j)}${HZ_LABELS[f_spec.exp]}`;
+    } else {
+      return `${+f_spec.freq}${HZ_LABELS[f_spec.exp]}`;
+    }
   }
 }

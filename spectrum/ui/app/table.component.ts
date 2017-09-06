@@ -2,6 +2,7 @@ import { Component, Input, Output, ViewChild, EventEmitter } from '@angular/core
 import { WidgetComponent } from './widget.component';
 import { MessageService } from './message.service';
 import { DataService } from './data.service';
+import { StateService } from './state.service';
 import { User } from './user';
 import { Config } from './config';
 import { DatePipe } from './date.pipe';
@@ -33,7 +34,7 @@ export class TableComponent {
 
   @ViewChild(WidgetComponent) widgetComponent;
 
-  constructor(private dataService: DataService, private messageService: MessageService) { }
+  constructor(private dataService: DataService, private stateService: StateService, private messageService: MessageService) { }
 
   @Input('status') set _status(status) {
     if (status == undefined) return;
@@ -69,7 +70,9 @@ export class TableComponent {
   onSelect(config_id, e) {
     if (e.target.tagName != 'INPUT') {
       this.selected = this.selected == config_id ? undefined : config_id;
-      this.select.emit(this.getConfig(this.selected));
+      let config = this.getConfig(this.selected);
+      this.select.emit(config); //FIXME this can go?
+      this.stateService.currentConfig = config;
     }
   }
 

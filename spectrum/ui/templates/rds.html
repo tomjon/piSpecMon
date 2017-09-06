@@ -1,13 +1,27 @@
 <psm-widget title="RDS">
-  <form role="form" #form="ngForm">
+  <form role="form" #form="ngForm" novalidate>
     <div class="form-group">
-      <div class="psm-input-group col-lg-6">
-        <label for="strength_threshold">Strength threshold</label>
-        <input [disabled]="loading" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="rds.strength_threshold" name="strength_threshold" #strength_threshold="ngModel">
+      <label for="scan_mode">Scan Mode</label>
+      <input [disabled]="disabled || monkey.config_id" type="checkbox" (ngModelChange)="staticEnabled = scanEnabled" [(ngModel)]="scanEnabled" class="toggle" name="scan_mode">
+      <div>
+        <div class="psm-input-group col-lg-6">
+          <label for="strength_threshold">Strength threshold</label>
+          <input [disabled]="disabled || ! scanEnabled || monkey.config_id" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="values.scan.strength_threshold" name="strength_threshold" #strength_threshold="ngModel">
+        </div>
+        <div class="psm-input-group col-lg-6">
+          <label for="strength_timeout">Strength timeout (s)</label>
+          <input [disabled]="disabled || ! scanEnabled || monkey.config_id" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="values.scan.strength_timeout" name="strength_timeout" #strength_timeout="ngModel">
+        </div>
       </div>
-      <div class="psm-input-group col-lg-6">
-        <label for="strength_timeout">Strength timeout (s)</label>
-        <input [disabled]="loading" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="rds.strength_timeout" name="strength_timeout" #strength_timeout="ngModel">
+      <div>
+        <div class="psm-input-group col-lg-6">
+          <label for="name_timeout">Name timeout (s)</label>
+          <input [disabled]="disabled || ! scanEnabled || monkey.config_id" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="values.scan.name_timeout" name="name_timeout" #name_timeout="ngModel">
+        </div>
+        <div class="psm-input-group col-lg-6">
+          <label for="text_timeout">Text timeout (s)</label>
+          <input [disabled]="disabled || ! scanEnabled || monkey.config_id" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="values.scan.text_timeout" name="text_timeout" #text_timeout="ngModel">
+        </div>
       </div>
     </div>
     <div [hidden]="strength_threshold.valid || strength_threshold.pristine" class="alert alert-danger">
@@ -16,23 +30,52 @@
     <div [hidden]="strength_timeout.valid || strength_timeout.pristine" class="alert alert-danger">
       Strength timeout is a required integer parameter
     </div>
-    <div class="form-group">
-      <div class="psm-input-group col-lg-6">
-        <label for="name_timeout">Name timeout (s)</label>
-        <input [disabled]="loading" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="rds.name_timeout" name="name_timeout" #name_timeout="ngModel">
-      </div>
-      <div class="psm-input-group col-lg-6">
-        <label for="text_timeout">Text timeout (s)</label>
-        <input [disabled]="loading" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="rds.text_timeout" name="text_timeout" #text_timeout="ngModel">
-      </div>
-    </div>
     <div [hidden]="name_timeout.valid || name_timeout.pristine" class="alert alert-danger">
       Name timeout is a required parameter
     </div>
     <div [hidden]="text_timeout.valid || text_timeout.pristine" class="alert alert-danger">
       Text timeout is a required parameter
     </div>
-    <button (click)="onReset()" class="btn btn-default" [disabled]="loading || form.form.pristine">Reset</button>
-    <button (click)="onSubmit()" class="btn btn-default" [disabled]="loading || ! form.form.valid || form.form.pristine">Submit</button>
+    <div class="form-group">
+      <label for="static_mode">Static Mode</label>
+      <input [disabled]="disabled || monkey.config_id" type="checkbox" (ngModelChange)="scanEnabled = staticEnabled" [(ngModel)]="staticEnabled" class="toggle" name="static_mode">
+      <div>
+        <label for="frequency">Frequency (MHz)</label>
+        <input [disabled]="disabled || ! staticEnabled || monkey.config_id" type="number" required class="form-control" [(ngModel)]="values.freqs[1].freq" name="frequency" #frequency="ngModel">
+      </div>
+    </div>
+    <div [hidden]="frequency.valid || frequency.pristine" class="alert alert-danger">
+      Frequency is a required parameter
+    </div>
+    <div class="form-group">
+      <div class="psm-input-group col-lg-6">
+        <label for="duration">Dwell (s)</label>
+        <input [disabled]="disabled || monkey.config_id" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="values.duration" name="duration" #duration="ngModel">
+      </div>
+      <div class="psm-input-group col-lg-6">
+        <label for="audio">Collect audio</label>
+        <select [disabled]="disabled || monkey.config_id" class="form-control" [(ngModel)]="values.audio.enabled" name="audio">
+          <option [ngValue]="true">On</option>
+          <option [ngValue]="false">Off</option>
+        </select>
+      </div>
+    </div>
+    <div [hidden]="duration.valid || duration.pristine" class="alert alert-danger">
+      Sample duration is a required integer parameter
+    </div>
+    <button (click)="onStart()" class="btn btn-default" [disabled]="disabled || running">Start</button>
+    <button (click)="onStop()" class="btn btn-default" [disabled]="disabled || ! running">Stop</button>
   </form>
+  <div *ngIf="monkey.timestamp || monkey.error" [ngClass]="{ status: true, error: monkey.error != undefined }">
+    <h2 *ngIf="monkey.timestamp">RDS status at {{monkey.timestamp | date}}</h2>
+    <span *ngIf="monkey.started">Scan started {{monkey.started | date}}</span>
+    <span *ngIf="monkey.freq_n != undefined">Receiving on {{monkey.freq_n | freq:values}}</span>
+    <span *ngIf="monkey.strength != undefined">Strength: {{monkey.strength}}</span>
+    <span *ngIf="monkey.name">Station name: {{monkey.name}}</span>
+    <span *ngIf="monkey.text"><i>{{monkey.text}}</i></span>
+    <span *ngIf="monkey.error">{{monkey.error}}</span>
+  </div>
+  <div *ngIf="user.roleIn(['data']) && ! running" class="message">
+    Not running
+  </div>
 </psm-widget>

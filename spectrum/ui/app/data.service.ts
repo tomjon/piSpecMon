@@ -11,76 +11,27 @@ export class DataService {
 
   constructor(private http: Http, private errorService: ErrorService) { }
 
-  getIdent(): Observable<any> {
-    return this.http.get(`${this.baseUrl}ident`)
+  //FIXME a generic, which should replace getIdent, getRig, etc
+  getSettings(): Observable<any> {
+    return this.http.get(`${this.baseUrl}settings`)
                     .map(res => res.json())
-                    .catch(this.errorHandler("get ident (version, title and description)"));
+                    .catch(this.errorHandler("get settings"));
   }
 
-  setIdent(ident: any): Observable<void> {
-    let body = JSON.stringify(ident);
-    let headers = new Headers({ 'Content-Type': 'application/json' });
-    let options = new RequestOptions({ headers: headers });
-    return this.http.put(`${this.baseUrl}ident`, body, options)
+  //FIXME a generic, which should replace setIdent, setRig, etc
+  setSettings(key: string, values: any): Observable<void> {
+    let body = JSON.stringify(values);
+    let headers = new Headers({'Content-Type': 'application/json'});
+    let options = new RequestOptions({headers: headers});
+    return this.http.put(`${this.baseUrl}settings/${key}`, body, options)
                     .map(res => res.json())
-                    .catch(this.errorHandler("set ident"));
+                    .catch(this.errorHandler("set settings: " + key));
   }
 
   getCaps(): Observable<any> {
     return this.http.get(this.baseUrl + 'caps')
                     .map(res => res.json())
                     .catch(this.errorHandler("get rig models"));
-  }
-
-  getScan(): Observable<any> {
-    return this.http.get(this.baseUrl + 'scan')
-                    .map(res => res.json())
-                    .catch(this.errorHandler("get default scan configuration"));
-  }
-
-  getRig(): Observable<any> {
-    return this.http.get(this.baseUrl + 'rig')
-                    .map(res => res.json())
-                    .catch(this.errorHandler("get rig configuration"));
-  }
-
-  setRig(rig: any): Observable<void> {
-    let body = JSON.stringify(rig);
-    let headers = new Headers({ 'Content-Type': 'application/json' });
-    let options = new RequestOptions({ headers: headers });
-    return this.http.put(this.baseUrl + 'rig', body, options)
-                    .map(res => res.json())
-                    .catch(this.errorHandler("set rig configuration"));
-  }
-
-  getAudio(): Observable<any> {
-    return this.http.get(this.baseUrl + 'audio')
-                    .map(res => res.json())
-                    .catch(this.errorHandler("get audio configuration"));
-  }
-
-  setAudio(audio: any): Observable<void> {
-    let body = JSON.stringify(audio);
-    let headers = new Headers({ 'Content-Type': 'application/json' });
-    let options = new RequestOptions({ headers: headers });
-    return this.http.put(this.baseUrl + 'audio', body, options)
-                    .map(res => res.json())
-                    .catch(this.errorHandler("set audio configuration"));
-  }
-
-  getRds(): Observable<any> {
-    return this.http.get(this.baseUrl + 'rds')
-                    .map(res => res.json())
-                    .catch(this.errorHandler("get RDS configuration"));
-  }
-
-  setRds(audio: any): Observable<void> {
-    let body = JSON.stringify(audio);
-    let headers = new Headers({ 'Content-Type': 'application/json' });
-    let options = new RequestOptions({ headers: headers });
-    return this.http.put(this.baseUrl + 'rds', body, options)
-                    .map(res => res.json())
-                    .catch(this.errorHandler("set RDS configuration"));
   }
 
   getStats(): Observable<any> {
@@ -178,25 +129,25 @@ export class DataService {
                     .catch(this.errorHandler("delete config"));
   }
 
-  getMonitor(): Observable<any> {
-    return this.http.get(this.baseUrl + 'monitor')
+  getStatus(): Observable<any> {
+    return this.http.get(`${this.baseUrl}process`)
                     .map(res => res.json())
-                    .catch(this.errorHandler("get monitor status"));
+                    .catch(this.errorHandler(`get process status`));
   }
 
-  startMonitor(config: any): Observable<void> {
-    let body = JSON.stringify(config);
+  start(values: any): Observable<void> {
+    let body = JSON.stringify(values);
     let headers = new Headers({ 'Content-Type': 'application/json' });
     let options = new RequestOptions({ headers: headers });
-    return this.http.put(this.baseUrl + 'monitor', body, options)
+    return this.http.put(`${this.baseUrl}process`, body, options)
                     .map(res => res.json())
-                    .catch(this.errorHandler("start monitor"));
+                    .catch(this.errorHandler(`start process`));
   }
 
-  stopMonitor(): Observable<void> {
-    return this.http.delete(this.baseUrl + 'monitor')
+  stop(): Observable<void> {
+    return this.http.delete(`${this.baseUrl}process`)
                     .map(res => res.json())
-                    .catch(this.errorHandler("stop monitor"));
+                    .catch(this.errorHandler(`stop process`));
   }
 
   exportData(config_id, rds: boolean=false): Observable<string> {

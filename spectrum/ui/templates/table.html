@@ -8,7 +8,6 @@
         <th>Sweeps</th>
         <th>Mode</th>
         <th>Frequencies</th>
-        <th class="feature">RDS</th>
         <th class="feature">Audio</th>
         <th class="indicator">&nbsp;</th>
       </tr>
@@ -21,18 +20,17 @@
         <td>{{config.count}}</td>
         <td>{{mode(config.values.scan.mode)}}</td>
         <td>
-          <span *ngIf="config.values.freqs.range">
-            {{config.values.freqs.range[0]}} - {{config.values.freqs.range[1]}} (&Delta; {{config.values.freqs.range[2]}}) {{config.values.freqs.exp | units}}
+          <span *ngIf="config.values.scan.freqs[0].enabled">
+            {{config.values.scan.freqs[0].range[0]}} - {{config.values.scan.freqs[0].range[1]}} (&Delta; {{config.values.scan.freqs[0].range[2]}}) {{config.values.scan.freqs[0].exp | units}}
           </span>
-          <span *ngIf="config.values.freqs.freqs">
-            <span *ngFor="let freq of config.values.freqs.freqs; let n = index">
-              <span *ngIf="n < 2">{{freq.f}}{{freq.exp | units}}&nbsp;</span>
-              <span *ngIf="n == 2">&hellip;</span>
+          <span *ngIf="config.values.scan.freqs[1].enabled">
+            <span *ngFor="let freq of config.values.scan.freqs; let n = index">
+              <span *ngIf="n > 0 && n < 3">{{freq.freq}}{{freq.exp | units}}&nbsp;</span>
+              <span *ngIf="n == 3">&hellip;</span>
             </span>
           </span>
         </td>
-        <td class="feature">{{config.values.scan.rds ? '✔' : '✘' }}</td>
-        <td class="feature">{{config.values.scan.audio ? '✔' : '✘'}}</td>
+        <td class="feature">{{config.values.scan.audio.enabled ? '✔' : '✘'}}</td>
         <td class="indicator">
           <div *ngIf="user.roleIn(['admin']) || running(config)">
             <input *ngIf="! running(config)" type="checkbox" [disabled]="standby" [(ngModel)]="checked[config.id]">

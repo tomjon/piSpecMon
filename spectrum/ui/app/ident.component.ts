@@ -1,5 +1,7 @@
-import { Component, Input, Output, ViewChild, EventEmitter } from '@angular/core';
+import { Component, Input, ViewChild } from '@angular/core';
 import { DataService } from './data.service';
+import { StateService } from './state.service';
+import { WidgetBase } from './widget.base';
 import { WidgetComponent } from './widget.component';
 
 @Component({
@@ -7,39 +9,13 @@ import { WidgetComponent } from './widget.component';
   templateUrl: 'templates/ident.html',
   directives: [ WidgetComponent ]
 })
-export class IdentComponent {
-  ident: any = {};
-
-  @Input() user;
-  @Output('ident') idEmitter: EventEmitter<any> = new EventEmitter();
-
+export class IdentComponent extends WidgetBase {
+  //FIXME can this go on a Widget parent class? probably only after moving to Angular 4...
   @ViewChild(WidgetComponent) widgetComponent;
-  @ViewChild('form') form;
 
-  constructor(private dataService: DataService) { }
+  constructor(dataService: DataService, stateService: StateService) { super(dataService, stateService) }
 
   ngOnInit() {
-    this.onReset();
-  }
-
-  private emit(ident?: any) {
-    if (ident) this.ident = ident;
-    this.idEmitter.emit({ name: this.ident.name, description: this.ident.description });
-  }
-
-  onReset() {
-    this.widgetComponent.busy(this.dataService.getIdent())
-                        .subscribe(id => this.emit(id));
-    if (this.form) this.widgetComponent.pristine(this.form);
-  }
-
-  onSubmit() {
-    this.widgetComponent.busy(this.dataService.setIdent(this.ident))
-                        .subscribe(() => this.emit());
-    this.widgetComponent.pristine(this.form);
-  }
-
-  get loading() {
-    return this.widgetComponent.loading;
+    this.setViewChildren('ident', this.widgetComponent);
   }
 }

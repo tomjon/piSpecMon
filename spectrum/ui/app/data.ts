@@ -19,7 +19,7 @@ export class Data {
 
   constructor(config: Config) {
     this.config_id = config.id;
-    this.freqs = config.values.freqs;
+    this.freqs = config.values.scan.freqs;
     this.count = 0;
     this.spectrum = {
       levels: [],
