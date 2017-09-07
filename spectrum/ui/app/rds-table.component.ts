@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { StateService } from './state.service';
 import { WidgetComponent } from './widget.component';
 import { DatePipe } from './date.pipe';
 import { Data } from './data';
@@ -9,7 +10,7 @@ import { Chart } from './chart';
   inputs: [ 'data', 'timestamp' ],
   directives: [ WidgetComponent ],
   pipes: [ DatePipe ],
-  template: `<psm-widget [hidden]="isHidden()" title="RDS Text" class="chart" (show)="onShow($event)">
+  template: `<psm-widget [hidden]="isHidden" title="RDS Text" class="chart" (show)="onShow($event)">
                <form class="form-inline" role="form">
                  <div class="form-group">
                    <label for="station">Station</label>
@@ -18,7 +19,7 @@ import { Chart } from './chart';
                    </select>
                  </div>
                </form>
-               <table *ngIf="data.rdsText[idx]">
+               <table *ngIf="data != undefined && data.rdsText[idx]">
                  <tr>
                    <th>Timestamp</th>
                    <th>Text</th>
@@ -28,7 +29,7 @@ import { Chart } from './chart';
                    <td>{{entry.text}}
                  </tr>
                </table>
-               <div *ngIf="! data.rdsText[idx]">
+               <div *ngIf="data != undefined && ! data.rdsText[idx]">
                  No RDS text decoded for the selected station
                </div>
              </psm-widget>`
@@ -36,6 +37,8 @@ import { Chart } from './chart';
 export class RdsTableComponent extends Chart {
   stations: any;
   idx: number; // the selected station index
+
+  constructor(stateService: StateService) { super(stateService) }
 
   plot() {
     this.stations = [];
@@ -46,7 +49,7 @@ export class RdsTableComponent extends Chart {
     }
   }
 
-  isHidden() {
-    return this.stations == undefined || this.stations.length == 0;
+  get isHidden(): boolean {
+    return this.data == undefined || this.data.rdsNames == undefined || this.data.rdsNames.length == 0;
   }
 }

@@ -140,8 +140,9 @@ class Worker(Process):
             if not monitor.set_frequency(freq):
                 raise Exception("Could not change frequency: {0}".format(freq))
 
-            with AudioClient(config.values['audio']['receiver_channel'], path) as audio:
+            with AudioClient(config.values['audio']['receiver_channel']) as audio:
                 for count, _ in enumerate(audio):
                     self.status['sweep']['record']['strength'] = monitor.get_strength()
                     yield
                     if count >= config.values['scan']['audio']['duration']: break
+                audio.write(path)

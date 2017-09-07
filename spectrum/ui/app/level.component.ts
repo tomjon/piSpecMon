@@ -1,4 +1,5 @@
 import { Component, Input, ViewChild } from '@angular/core';
+import { StateService } from './state.service';
 import { WidgetComponent } from './widget.component';
 import { Chart } from './chart';
 import { FreqPipe } from './freq.pipe';
@@ -9,7 +10,7 @@ import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
   selector: 'psm-level',
   directives: [ WidgetComponent ],
   inputs: [ 'data', 'timestamp' ],
-  template: `<psm-widget [hidden]="isHidden()" title="Level / Time" class="chart" (show)="onShow($event)">
+  template: `<psm-widget [hidden]="isHidden" title="Level / Time" class="chart" (show)="onShow($event)">
                <form class="form-inline" role="form">
                  <div class="form-group">
                    <label for="top">Top</label>
@@ -62,7 +63,7 @@ export class LevelComponent extends Chart {
   @ViewChild('text') text;
   @ViewChild('selectN') selectN;
 
-  constructor(private freq: FreqPipe) { super() }
+  constructor(private freq: FreqPipe, stateService: StateService) { super(stateService) }
 
   ngOnInit() {
     this.margin = LEVEL_CHART_OPTIONS.margin;
@@ -88,7 +89,7 @@ export class LevelComponent extends Chart {
       .text(d => d);
   }
 
-  isHidden() {
+  get isHidden(): boolean {
     return this.data == undefined || this.data.spectrum.levels == undefined || this.data.spectrum.levels.length < 2;
   }
 
@@ -98,7 +99,7 @@ export class LevelComponent extends Chart {
     this.svg.selectAll("g").remove();
     this.showInfo = false;
 
-    if (this.isHidden()) return;
+    if (this.isHidden) return;
 
     let data = this.data.spectrum.levels;
     let agg = this.data.spectrum.agg[this.top];
@@ -228,10 +229,10 @@ export class LevelComponent extends Chart {
     // decide where to show the info text and lines
     this.showX = this.x(this.tick.value) + this.margin.left;
     this.adjustX = this.showX > this.width / 2 ? -300 : 0;
-    let f = +this.data.freqs.range[0] + this.freq_idx * this.data.freqs.range[2];
+    let f = +this.data.freqs[0].range[0] + this.freq_idx * this.data.freqs[0].range[2];
     let v = this.data.spectrum.levels[this.tick.index].level[this.freq_idx];
     this.showY = this.y(v) + this.margin.top;
-    this.infoText = `${v}dB at ${f}${HZ_LABELS[this.data.freqs.exp]}`;
+    this.infoText = `${v}dB at ${f}${HZ_LABELS[this.data.freqs[0].exp]}`;
     if (this.data.rdsNames[this.freq_idx]) this.infoText += ` (${this.data.rdsNames[this.freq_idx]})`;
     this.infoText += ` at ${dt_format(new Date(this.tick.value))}`;
     setTimeout(() => this.textWidth = this.text.nativeElement.getComputedTextLength());

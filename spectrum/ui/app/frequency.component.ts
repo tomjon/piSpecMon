@@ -1,4 +1,5 @@
 import { Component, Input, ViewChild } from '@angular/core';
+import { StateService } from './state.service';
 import { WidgetComponent } from './widget.component';
 import { DatePipe } from './date.pipe';
 import { FreqPipe } from './freq.pipe';
@@ -58,7 +59,7 @@ export class FrequencyComponent extends Chart {
   @ViewChild('chart') chart;
   @ViewChild('text') text;
 
-  constructor(private freq: FreqPipe) { super() }
+  constructor(private freq: FreqPipe, stateService: StateService) { super(stateService) }
 
   ngOnInit() {
     this.margin = FREQUENCY_CHART_OPTIONS.margin;
@@ -81,7 +82,7 @@ export class FrequencyComponent extends Chart {
   }
 
   isHidden() {
-    return this.data == undefined || this.data.spectrum.agg == undefined || this.data.freqs.freqs || this.data.spectrum.agg[this.sweep].length == 0;
+    return this.data == undefined || this.data.spectrum.agg == undefined || ! this.data.freqs[0].enabled || this.data.spectrum.agg[this.sweep].length == 0;
   }
 
   plot() {
@@ -94,7 +95,7 @@ export class FrequencyComponent extends Chart {
 
     let agg = this.data.spectrum.agg[this.sweep];
 
-    this.x.domain([this.data.freqs.range[0], this.data.freqs.range[1]]);
+    this.x.domain([this.data.freqs[0].range[0], this.data.freqs[0].range[1]]);
     if (FREQUENCY_CHART_OPTIONS.y_axis) {
       this.y.domain([FREQUENCY_CHART_OPTIONS.y_axis[0], FREQUENCY_CHART_OPTIONS.y_axis[1]]);
       this.yAxis.tickValues(d3.range(FREQUENCY_CHART_OPTIONS.y_axis[0], FREQUENCY_CHART_OPTIONS.y_axis[1] + FREQUENCY_CHART_OPTIONS.y_axis[2], FREQUENCY_CHART_OPTIONS.y_axis[2]));
@@ -102,7 +103,7 @@ export class FrequencyComponent extends Chart {
       this.y.domain(d3.extent(agg, d => d.v));
     }
 
-    this.line.x((d, i) => this.x(+this.data.freqs.range[0] + i * this.data.freqs.range[2]));
+    this.line.x((d, i) => this.x(+this.data.freqs[0].range[0] + i * this.data.freqs[0].range[2]));
 
     this.svg.append("g")
         .attr("class", "x axis")
@@ -112,7 +113,7 @@ export class FrequencyComponent extends Chart {
         .attr("transform", "translate(" + this.width + ",0)")
         .attr("text-anchor", "end")
         .attr("y", -6)
-        .text(HZ_LABELS[this.data.freqs.exp]);
+        .text(HZ_LABELS[this.data.freqs[0].exp]);
 
     this.svg.append("g")
         .attr("class", "y axis")
@@ -145,7 +146,7 @@ export class FrequencyComponent extends Chart {
 
     // find frequency of click...
     let f = this.x.invert(z.x - this.margin.left);
-    let i = Math.round((f - this.data.freqs.range[0]) / this.data.freqs.range[2]);
+    let i = Math.round((f - this.data.freqs[0].range[0]) / this.data.freqs[0].range[2]);
     if (i < 0 || i >= this.data.spectrum.agg[this.sweep].length) {
       // out of bounds - hide info text
       this.showInfo = false;

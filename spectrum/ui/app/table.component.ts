@@ -53,10 +53,11 @@ export class TableComponent {
                           });
     } else {
       // otherwise, update the one we have
-      if (status.worker.sweep) {
-        config.count = status.worker.sweep.sweep_n;
-        if (status.worker.sweep.timestamp) {
-          config.latest = status.worker.sweep.timestamp;
+      let sweep = status.worker.sweep || status.monkey.sweep;
+      if (sweep) {
+        config.count = sweep.sweep_n;
+        if (sweep.timestamp) {
+          config.latest = sweep.timestamp;
         }
       }
     }
@@ -133,15 +134,6 @@ export class TableComponent {
   onDownload() {
     let args = this.rds ? '?rds=true' : '';
     window.open('/export/' + this.selected + args, '_blank');
-  }
-
-  mode(value): string {
-    for (let m of this.modes) {
-      if (m.mode == value) {
-        return m.name;
-      }
-    }
-    return null;
   }
 
   get loading() {

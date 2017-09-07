@@ -1,4 +1,5 @@
 import { Component, Input, ViewChild } from '@angular/core';
+import { StateService } from './state.service';
 import { WidgetComponent } from './widget.component';
 import { Chart } from './chart';
 import { TEMPERATURE_CHART_OPTIONS } from './constants';
@@ -42,6 +43,8 @@ export class TemperatureComponent extends Chart {
   @ViewChild('chart') chart;
   @ViewChild('text') text;
 
+  constructor(stateService: StateService) { super(stateService) }
+
   ngOnInit() {
     this.margin = TEMPERATURE_CHART_OPTIONS.margin;
     this.width = TEMPERATURE_CHART_OPTIONS.width - this.margin.left - this.margin.right,
@@ -62,7 +65,7 @@ export class TemperatureComponent extends Chart {
   }
 
   isHidden() {
-    return this.data.temperature.length < 2;
+    return this.data == undefined || this.data.temperature.length < 2;
   }
 
   plot() {

@@ -1,11 +1,13 @@
 import { Config } from './config';
 import { MAX_N, CHART_HEIGHT } from './constants';
+import { DataService } from './data.service';
+import { StateService } from './state.service';
 
 /**
  * Spectrum, audio and RDS data along with the associated frequencies.
  */
 export class Data {
-  config_id: string;
+  config: Config;
   freqs: any;
   count: number;
   spectrum: any;
@@ -17,17 +19,52 @@ export class Data {
   temperature: any = [];
   timestamps: any = {};
 
-  constructor(config: Config) {
-    this.config_id = config.id;
+  timestamp: number;
+  loading: number;
+
+  constructor(private stateService: StateService, private dataService: DataService, config: Config) {
+    this.config = config;
     this.freqs = config.values.scan.freqs;
     this.count = 0;
     this.spectrum = {
       levels: [],
       agg: { latest: [], min: [], max: [], avg: [] }
     };
+    this.loadData();
   }
 
-  update(data: any): number {
+  get config_id(): string {
+    return this.config.id;
+  }
+
+  private loadData(starts=undefined) {
+    if (starts == undefined) {
+      this.loading = 0;
+      starts = {};
+    } else if (this.loading >= 10) {
+      this.loading = undefined;
+      return;
+    }
+    let block = (this.config.latest - this.config.first) / 10;
+    let end = Math.round(this.config.first + (this.loading + 1) * block);
+    if (this.config.count < 100) {
+      // just grab everything if there are fewer than 100 sweeps
+      this.loading = 9;
+    }
+    if (this.loading >= 9) {
+      end = undefined;
+      this.loading = 10;
+    }
+    this.dataService.getData(this.config_id, starts, end)
+                    .subscribe(data => {
+                      this.update(data);
+                      ++this.loading;
+                      this.loadData(this.timestamps);
+                      this.stateService.resetCharts();
+                    });
+  }
+
+  update(data: any): void {
     this.count += data.spectrum.length;
     this.mapSpectrum(data.spectrum);
     this.mapAudio(data.audio);
@@ -41,7 +78,7 @@ export class Data {
       }
     }
 
-    return +this.timestamps['spectrum'];
+    this.timestamp = +this.timestamps['spectrum'];
   }
 
   private fillArray(v?: any, size?: number) {

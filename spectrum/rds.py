@@ -76,7 +76,7 @@ if __name__ == '__main__':
     import time
     import sys
 
-    with RdsApi('ttyACM0') as rds, AudioClient(sys.argv[1], sys.argv[2]) as ac:
+    with RdsApi('ttyACM0') as rds, AudioClient(sys.argv[1]) as ac:
         rds.set_frequency(95.5 * 1e6)
         time.sleep(2)
         for n, _ in enumerate(ac):
@@ -84,5 +84,4 @@ if __name__ == '__main__':
             if n == 9:
                 print "STOP"
                 break
-
-
+        ac.write(sys.argv[2])

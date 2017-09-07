@@ -1,4 +1,5 @@
 import { Component, ViewChild, Input } from '@angular/core';
+import { StateService } from './state.service';
 import { Chart } from './chart';
 import { WidgetComponent } from './widget.component';
 import { FreqPipe } from './freq.pipe';
@@ -12,7 +13,7 @@ declare var $;
   selector: 'psm-waterfall',
   directives: [ WidgetComponent ],
   inputs: [ 'data', 'timestamp' ],
-  template: `<psm-widget [hidden]="isHidden()" title="Waterfall" class="chart" (show)="onShow($event)">
+  template: `<psm-widget [hidden]="isHidden" title="Waterfall" class="chart" (show)="onShow($event)">
                <form class="form-inline controls" role="form">
                  <div *ngIf="showSamples" class="form-group">
                    <audio #audio controls preload='none'></audio>
@@ -64,7 +65,7 @@ export class WaterfallComponent extends Chart {
   @ViewChild('canvas') canvas;
   @ViewChild('overlay') overlay;
 
-  constructor(private freq: FreqPipe) { super() }
+  constructor(private freq: FreqPipe, stateService: StateService) { super(stateService) }
 
   ngOnInit() {
     this.margin = WATERFALL_CHART_OPTIONS.margin;
@@ -81,8 +82,8 @@ export class WaterfallComponent extends Chart {
     this.overctx = this.overlay.nativeElement.getContext("2d");
   }
 
-  isHidden() {
-    return this.data == undefined || this.data.spectrum.levels == undefined || this.data.freqs.freqs || this.data.spectrum.levels.length < 1;
+  get isHidden(): boolean {
+    return this.data == undefined || this.data.spectrum.levels == undefined || ! this.data.freqs[0].enabled || this.data.spectrum.levels.length < 1;
   }
 
   private rect(context: any, i: number, j: number, fill: string) {
@@ -99,7 +100,7 @@ export class WaterfallComponent extends Chart {
     this.overctx.clearRect(0, 0, this.overctx.canvas.width, this.overctx.canvas.height);
     this.infoText = "";
 
-    if (this.isHidden()) return;
+    if (this.isHidden) return;
 
     let data = this.follow ? this.data.spectrum.levels : this.data.reduceSpectrum(WATERFALL_CHART_OPTIONS.height);
     let length = this.follow ? Math.min(data.length, WATERFALL_CHART_OPTIONS.height) : data.length;
@@ -112,9 +113,9 @@ export class WaterfallComponent extends Chart {
     this.xAxis = d3.svg.axis().scale(this.x).orient("bottom");
     this.yAxis = d3.svg.axis().scale(this.y).orient("left");
 
-    var f0 = +this.data.freqs.range[0];
-    var f1 = +this.data.freqs.range[1];
-    let df = +this.data.freqs.range[2];
+    var f0 = +this.data.freqs[0].range[0];
+    var f1 = +this.data.freqs[0].range[1];
+    let df = +this.data.freqs[0].range[2];
     this.x.domain([f0 - df/2, f1 + df/2]);
     this.y.domain([data[first].timestamp, data[data.length - 1].timestamp]);
     timeTicks(this.yAxis, this.y.domain(), WATERFALL_CHART_OPTIONS.y_ticks);
@@ -128,7 +129,7 @@ export class WaterfallComponent extends Chart {
         .attr("x", 40)
         .attr("y", 6)
         .style("text-anchor", "end")
-        .text(HZ_LABELS[this.data.freqs.exp]);
+        .text(HZ_LABELS[this.data.freqs[0].exp]);
 
     this.g.append("g")
         .attr("class", "y axis")
@@ -166,7 +167,7 @@ export class WaterfallComponent extends Chart {
 
     // find frequency of click...
     let f = this.x.invert(z.x - this.margin.left);
-    let i = Math.round((f - this.data.freqs.range[0]) / this.data.freqs.range[2]);
+    let i = Math.round((f - this.data.freqs[0].range[0]) / this.data.freqs[0].range[2]);
     if (i < 0 || i >= this.data.spectrum.levels[0].level.length) {
       // out of bounds - hide info text
       this.infoText = "";
