@@ -3,11 +3,12 @@ import { DataService } from './data.service';
 import { StateService } from './state.service';
 import { WidgetBase } from './widget.base';
 import { WidgetComponent } from './widget.component';
+import { InputDirective } from './input.directive';
 
 @Component({
   selector: 'psm-audio',
   templateUrl: 'templates/audio.html',
-  directives: [ WidgetComponent ]
+  directives: [ WidgetComponent, InputDirective ]
 })
 export class AudioComponent extends WidgetBase {
   //FIXME can this go on a Widget parent class? probably only after moving to Angular 4...

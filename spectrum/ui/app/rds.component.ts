@@ -7,13 +7,14 @@ import { Config } from './config';
 import { DatePipe } from './date.pipe';
 import { FreqPipe } from './freq.pipe';
 import { HZ_LABELS } from './constants';
+import { InputDirective } from './input.directive';
 
 declare var $;
 
 @Component({
   selector: 'psm-rds',
   templateUrl: 'templates/rds.html',
-  directives: [ WidgetComponent ],
+  directives: [ WidgetComponent, InputDirective ],
   pipes: [ DatePipe, FreqPipe ]
 })
 export class RdsComponent extends WidgetBase {

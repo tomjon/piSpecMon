@@ -18,6 +18,10 @@
   cursor: default;
 }
 
+.current {
+  color: cornflowerblue;
+}
+
 /* charts */
 .chart svg {
 	width: 100%;
@@ -94,9 +98,6 @@ rect.audio {
   background: lightgoldenrodyellow;
   margin: 5px;
   position: relative;
-}
-.container.current {
-  background: lightblue;
 }
 .container h1 {
   font-size: 20px;

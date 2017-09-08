@@ -2,7 +2,7 @@
   <form role="form" #form="ngForm">
     <div class="form-group">
       <label for="rate">Rate (samples /s)</label>
-      <select class="form-control" [disabled]="disabled" [(ngModel)]="values.rate" name="rate">
+      <select psmInput class="form-control" [(ngModel)]="values.rate" name="rate">
         <option value="8000">8000</option>
         <option value="11025">11025</option>
         <option value="22050">22050</option>

@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs/Subject';
 import { DataService } from './data.service';
 import { Config } from './config';
 import { Data } from './data';
@@ -10,8 +11,8 @@ export class StateService {
   // the currently selected config, if any
   private config: Config;
 
-  // registered charts FIXME this feels like a horrible mechanism :(
-  private charts: Chart[] = [];
+  // and an observable for changes to current config
+  public configChange: Subject<Config> = new Subject<Config>();
 
   // these will get set at app initialisation (nothing shows before these are set)
   public user: User;
@@ -29,11 +30,15 @@ export class StateService {
     if (config && config.data == undefined) {
       this.config.data = new Data(this, this.dataService, this.config);
     }
+    this.configChange.next(config);
   }
 
   get ready(): boolean {
     return this.user != undefined && this.values != undefined;
   }
+
+  // registered charts FIXME this feels like a horrible mechanism :( use a Subject instead?
+  private charts: Chart[] = [];
 
   public registerChart(chart: Chart) {
     this.charts.push(chart);

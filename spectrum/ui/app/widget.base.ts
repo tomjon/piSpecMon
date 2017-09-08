@@ -43,6 +43,10 @@ export abstract class WidgetBase {
     return this._widgetComponent.loading || this.stateService.currentConfig != undefined || ! this.stateService.user.roleIn(['admin', 'freq']);
   }
 
+  get current(): boolean {
+    return this.stateService.currentConfig != undefined;
+  }
+
   get user(): User {
     return this.stateService.user;
   }

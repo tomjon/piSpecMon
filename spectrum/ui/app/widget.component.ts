@@ -1,4 +1,5 @@
 import { Component, Input, Output, EventEmitter, ContentChild } from '@angular/core';
+import { Subject } from 'rxjs/Subject';
 import { NgForm } from '@angular/forms';
 import { Observable } from 'rxjs/Observable';
 import { StateService } from './state.service';
@@ -25,6 +26,8 @@ export class WidgetComponent {
   @Input() title: string;
   @Output('show') showEmitter = new EventEmitter<boolean>();
 
+  loadingChange: Subject<boolean> = new Subject<boolean>();
+
   constructor(private stateService: StateService, private uiSettings: UiSettingsService) {}
 
   ngOnInit() {
@@ -50,10 +53,6 @@ export class WidgetComponent {
     return this._loading > 0;
   }
 
-  get current(): boolean {
-    return this.widgetBase && ! this.widgetBase.static && this.stateService.currentConfig != undefined;
-  }
-
   get showIcons(): boolean {
     return this.title && this.form && this.stateService.user.roleIn(['admin', 'freq']); //FIXME clearly should be based on what privs the widget requires...
   }
@@ -77,12 +76,15 @@ export class WidgetComponent {
     if (this.form) this.pristine(this.form);
   }
 
-  //FIXME will this mechanism interact badly with stateService callback that sets everything disabled? Maybe only allow this on 'static' widgets
   busy(obs: Observable<any>): Observable<any> {
     ++this._loading;
+    this.loadingChange.next(this.loading);
     return Observable.create(observer => {
       obs.subscribe(observer);
-      return () => --this._loading;
+      return () => {
+        --this._loading;
+        this.loadingChange.next(this.loading);
+      };
     });
   }
 
