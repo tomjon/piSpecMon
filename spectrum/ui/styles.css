@@ -190,6 +190,12 @@ psm-sample-table table, psm-sample-table div, psm-rds-table table, psm-rds-table
   clear: both;
   margin-bottom: 10px;
 }
+psm-sample-table table, psm-rds-table table {
+  display: block;
+  max-height: 600px;
+  overflow-y: scroll;
+  margin-top: 50px;
+}
 psm-sample-table th, psm-sample-table td, psm-rds-table th, psm-rds-table td {
   padding: 5px
 }

@@ -9,24 +9,7 @@
     <div class="col-lg-9">
       <psm-table #table [modes]="modes" [user]="user" [status]="status"></psm-table>
       <!--div class="error" *ngFor="let error of errors">{{error[0] | date}} {{error[1]}}</div FIXME -->
-      <div>
-        <h2>Processes</h2>
-        <div *ngIf="monkey && (monkey.timestamp || monkey.error)" [ngClass]="{ status: true, error: monkey.error != undefined }">
-          <h2 *ngIf="monkey.timestamp">RDS status at {{monkey.timestamp | date}}</h2>
-          <span *ngIf="monkey.started">Scan started {{monkey.started | date}}</span>
-          <span *ngIf="monkey.sweep">Sweep {{monkey.sweep.sweep_n + 1}} started at {{monkey.sweep.timestamp | date}}</span>
-          <span *ngIf="monkey.freq_n != undefined">Receiving on {{monkey.freq_n | freq:values}}</span>
-          <span *ngIf="monkey.strength != undefined">Strength: {{monkey.strength}}</span>
-          <span *ngIf="monkey.name">Station name: {{monkey.name}}</span>
-          <span *ngIf="monkey.text"><i>{{monkey.text}}</i></span>
-          <span *ngIf="monkey.error">{{monkey.error}}</span>
-        </div>
-        <div *ngIf="! running" class="message">
-          Not running
-        </div>
-        <button (click)="onStart()" class="btn btn-default" [disabled]="! showStart">Start</button>
-        <button (click)="onStop()" class="btn btn-default" [disabled]="! showStop">Stop</button>
-      </div>
+      <psm-process [status]="status" [values]="values"></psm-process>
       <psm-charts [hidden]="config == undefined"></psm-charts>
     </div>
     <div class="col-lg-3">

@@ -45,19 +45,6 @@ export class ScanComponent extends WidgetBase {
     this.standby = false; //FIXME should be set when settings loaded
   }
 
-  onStart() {
-    this.widgetComponent.onSubmit();
-    this.standby = true;
-    this.widgetComponent.busy(this.dataService.start(this.values))
-                        .subscribe();
-  }
-
-  onStop() {
-    this.standby = true;
-    this.widgetComponent.busy(this.dataService.stop())
-                        .subscribe();
-  }
-
   //FIXME override
   get loading() {
     return this.widgetComponent.loading || this.standby;

@@ -24,7 +24,7 @@ export class Data {
 
   constructor(private stateService: StateService, private dataService: DataService, config: Config) {
     this.config = config;
-    this.freqs = config.values.scan.freqs;
+    this.freqs = config.values.rds.freqs; //FIXME oh dear
     this.count = 0;
     this.spectrum = {
       levels: [],

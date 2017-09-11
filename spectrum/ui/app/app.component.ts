@@ -26,6 +26,7 @@ import { HTTP_PROVIDERS } from '@angular/http';
 import { DatePipe } from './date.pipe';
 import { FreqPipe } from './freq.pipe';
 import { InputDirective } from './input.directive';
+import { ProcessComponent } from './process.component';
 
 // Add the RxJS Observable operators we need in this app
 import './rxjs-operators';
@@ -41,7 +42,7 @@ let modelSort = function (a, b) {
 @Component({
   selector: 'psm-app',
   templateUrl: 'templates/app.html',
-  directives: [ InputDirective, LoginComponent, ErrorComponent, IdentComponent, DetailsComponent, PiComponent, PicoComponent, LogsComponent, StatsComponent, RigComponent, AudioComponent, RdsComponent, TableComponent, ScanComponent, ChartsComponent ],
+  directives: [ InputDirective, LoginComponent, ErrorComponent, ProcessComponent, IdentComponent, DetailsComponent, PiComponent, PicoComponent, LogsComponent, StatsComponent, RigComponent, AudioComponent, RdsComponent, TableComponent, ScanComponent, ChartsComponent ],
   providers: [ DataService, StateService, ErrorService, MessageService, UiSettingsService, HTTP_PROVIDERS, FreqPipe ],
   pipes: [ DatePipe, FreqPipe ]
 })
@@ -52,8 +53,9 @@ export class AppComponent {
   rates: any[] = [];
   parities: any[] = [];
 
-  values: any;
   status: any = {worker: {}, monkey: {}};
+
+  values: any; //FIXME config values pulled out of the table component matching the latest status update
 
   constructor(private dataService: DataService, private stateService: StateService, private messageService: MessageService) { }
 
@@ -89,13 +91,6 @@ export class AppComponent {
                     );
   }
 
-  private get running(): boolean {
-    if (! this.status) return false;
-    if (this.status.worker && this.status.worker.config_id) return true;
-    if (this.status.monkey && this.status.monkey.config_id) return true;
-    return false;
-  }
-
   setStatus(status: any) {
     this.status = status;
     if (status != undefined) {
@@ -123,10 +118,6 @@ export class AppComponent {
     }
   }
 
-  get monkey(): any {
-    return this.status.monkey;
-  }
-
   private checkSuperior() {
     if (this.stateService.user._superior) {
       let s = this.stateService.user._superior;
@@ -141,27 +132,4 @@ export class AppComponent {
   /* FIXME get errors(): any[] {
     return this.config ? this.config.errors : [];
   }*/
-
-  get showStart(): boolean {
-    for (let widget of this.stateService.widgets) {
-      if (! widget.isPristine) return false;
-    }
-    return ! this.running;
-  }
-
-  get showStop(): boolean {
-    return this.running;
-  }
-
-  onStart() {
-//    this.standby = true;
-    this.dataService.start(this.values)
-                    .subscribe();
-  }
-
-  onStop() {
-//    this.standby = true;
-    this.dataService.stop()
-                    .subscribe();
-  }
 }
