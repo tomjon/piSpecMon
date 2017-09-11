@@ -62,6 +62,7 @@ export class WidgetComponent {
   }
 
   onReset(): void {
+    if (! this.canReset) return;
     this.widgetBase.reset();
     if (this.form) this.pristine(this.form);
   }
@@ -71,6 +72,7 @@ export class WidgetComponent {
   }
 
   onSubmit(): void {
+    if (! this.canSubmit) return;
     this.busy(this.widgetBase.setSettings())
         .subscribe(() => this.widgetBase.assignValues());
     if (this.form) this.pristine(this.form);

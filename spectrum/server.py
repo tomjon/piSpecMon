@@ -75,7 +75,7 @@ def process():
     """ Process API.
 
         GET /process - return process status for all (running) processes
-        PUT /process - start processes with supplied config values as request body
+        PUT /process - start processes
         DELETE /process - stop processes
     """
     if request.method == 'GET':
@@ -86,10 +86,10 @@ def process():
             return "Worker already running", 400
         if 'config_id' in application.monkey.status():
             return "Monkey already running", 400
-        values = {'rds': json.loads(request.get_data())}
+        values = {}
         values['rig'] = application.rig.values
         values['audio'] = application.audio.values
-        #values['rds'] = application.rds.values
+        values['rds'] = application.rds.values
         values['scan'] = application.scan.values
         values['ident'] = application.ident
         values['user'] = current_user.name
@@ -99,11 +99,7 @@ def process():
         except StoreError as e:
             return e.message, 500
 
-        #FIXME this is all now highly dubious :(
-        if 'scan' in config.values:
-            application.worker.start(config.id)
-        if 'rds' in config.values:
-            application.monkey.start(config.id)
+        application.monkey.start(config.id)
         application.event_client.write(EVENT_START, config.values)
 
         return json.dumps({})

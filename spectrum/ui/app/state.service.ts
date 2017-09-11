@@ -5,6 +5,7 @@ import { Config } from './config';
 import { Data } from './data';
 import { User } from './user';
 import { Chart } from './chart';
+import { WidgetBase } from './widget.base';
 
 @Injectable()
 export class StateService {
@@ -18,7 +19,14 @@ export class StateService {
   public user: User;
   public values: any; // the current server settings (back to which we can reset, or replace on submit)
 
+  //FIXME mechanism for AppComponent to get list of all widgets... hopefully something better in angular 4
+  public widgets: WidgetBase[] = [];
+
   constructor(private dataService: DataService) {}
+
+  registerWidget(widget: WidgetBase) {
+    this.widgets.push(widget);
+  }
 
   //FIXME could change this to 'config'
   public get currentConfig(): Config {

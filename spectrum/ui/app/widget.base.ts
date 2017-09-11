@@ -4,6 +4,8 @@ import { StateService } from './state.service';
 import { WidgetComponent } from './widget.component';
 import { User } from './user';
 
+declare var $;
+
 //FIXME interactions between instances of this class and WidgetComponent suggest they should be the same...
 //FIXME (i.e. has-a was in retrospect the wrong object model, should have been is-a)
 export abstract class WidgetBase {
@@ -19,7 +21,8 @@ export abstract class WidgetBase {
     this._key = key;
     this._widgetComponent = widgetComponent;
     widgetComponent.widgetBase = this; //FIXME yuck!
-    this._values = Object.assign({}, this.stateService.values[key]);
+    this._values = $.extend(true, {}, this.stateService.values[key]);
+    this.stateService.registerWidget(this); //FIXME yuck - see elsewhere
   }
 
   // values either refers to the current selected config values, or the user entered values
@@ -30,13 +33,16 @@ export abstract class WidgetBase {
     return this._values;
   }
 
+  get isPristine(): boolean {
+    return JSON.stringify(this.values) == JSON.stringify(this.stateService.values[this._key]);
+  }
+
   get canReset(): boolean {
-    return this.stateService.currentConfig == undefined && JSON.stringify(this._values) != JSON.stringify(this.stateService.values[this._key]);
+    return this.stateService.currentConfig == undefined && ! this.isPristine;
   }
 
   get canSubmit(): boolean {
-    let values = this.stateService.currentConfig != undefined ? this.stateService.currentConfig.values[this._key] : this._values;
-    return JSON.stringify(values) != JSON.stringify(this.stateService.values[this._key]);
+    return ! this.isPristine;
   }
 
   get disabled(): boolean {

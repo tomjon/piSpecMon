@@ -25,6 +25,7 @@ export class InputDirective implements OnDestroy {
 
   private isCurrent: boolean = false;
   private isLoading: boolean = false;
+  private isDisabled: boolean = false;
 
   constructor(private stateService: StateService,
               private widgetComponent: WidgetComponent,
@@ -47,6 +48,11 @@ export class InputDirective implements OnDestroy {
     this.setDisabledProperty();
   }
 
+  @Input() set disabled(value: boolean) {
+    this.isDisabled = value;
+    this.setDisabledProperty();
+  }
+
   private set config(config: Config) {
     this.isCurrent = config != undefined;
     this.renderer.setElementClass(this.el.nativeElement, CURRENT_CLASS, this.isCurrent);
@@ -60,7 +66,7 @@ export class InputDirective implements OnDestroy {
 
   private setDisabledProperty(): void {
     let disabled = this.isLoading || this.isCurrent || ! this.stateService.user.roleIn(this.requiredRoles);
-    this.renderer.setElementProperty(this.el.nativeElement, 'disabled', disabled);
+    this.renderer.setElementProperty(this.el.nativeElement, 'disabled', this.isDisabled || disabled);
   }
 
 }

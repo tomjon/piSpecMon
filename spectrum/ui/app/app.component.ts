@@ -1,4 +1,5 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, ViewChildren, QueryList } from '@angular/core';
+import { WidgetComponent } from './widget.component';
 import { LoginComponent } from './login.component';
 import { IdentComponent } from './ident.component';
 import { DetailsComponent } from './details.component';
@@ -42,21 +43,24 @@ let modelSort = function (a, b) {
   templateUrl: 'templates/app.html',
   directives: [ InputDirective, LoginComponent, ErrorComponent, IdentComponent, DetailsComponent, PiComponent, PicoComponent, LogsComponent, StatsComponent, RigComponent, AudioComponent, RdsComponent, TableComponent, ScanComponent, ChartsComponent ],
   providers: [ DataService, StateService, ErrorService, MessageService, UiSettingsService, HTTP_PROVIDERS, FreqPipe ],
-  pipes: [ DatePipe ]
+  pipes: [ DatePipe, FreqPipe ]
 })
 export class AppComponent {
   user: User; //FIXME get rid - use stateService.user
-  models: any[] = [ ];
-  modes: any[] = [ ];
-  rates: any[] = [ ];
-  parities: any[] = [ ];
+  models: any[] = [];
+  modes: any[] = [];
+  rates: any[] = [];
+  parities: any[] = [];
 
   values: any;
-  status: any = { worker: { }, monkey: { } };
+  status: any = {worker: {}, monkey: {}};
 
   constructor(private dataService: DataService, private stateService: StateService, private messageService: MessageService) { }
 
   @ViewChild('table') table;
+
+  //FIXME this might work in Angular 4 (currently we don't like 'descendants')
+  //@ViewChildren(WidgetComponent, {descendants: true}) widgets: QueryList<WidgetComponent>;
 
   ngOnInit() {
     this.dataService.getCurrentUser()
@@ -119,6 +123,10 @@ export class AppComponent {
     }
   }
 
+  get monkey(): any {
+    return this.status.monkey;
+  }
+
   private checkSuperior() {
     if (this.stateService.user._superior) {
       let s = this.stateService.user._superior;
@@ -133,4 +141,27 @@ export class AppComponent {
   /* FIXME get errors(): any[] {
     return this.config ? this.config.errors : [];
   }*/
+
+  get showStart(): boolean {
+    for (let widget of this.stateService.widgets) {
+      if (! widget.isPristine) return false;
+    }
+    return ! this.running;
+  }
+
+  get showStop(): boolean {
+    return this.running;
+  }
+
+  onStart() {
+//    this.standby = true;
+    this.dataService.start(this.values)
+                    .subscribe();
+  }
+
+  onStop() {
+//    this.standby = true;
+    this.dataService.stop()
+                    .subscribe();
+  }
 }
