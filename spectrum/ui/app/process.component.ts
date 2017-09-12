@@ -3,11 +3,12 @@ import { DataService } from './data.service';
 import { WidgetComponent } from './widget.component';
 import { StateService } from './state.service';
 import { FreqPipe } from './freq.pipe';
+import { DatePipe } from './date.pipe';
 
 @Component({
   selector: 'psm-process',
   directives: [ WidgetComponent ],
-  pipes: [ FreqPipe ],
+  pipes: [ FreqPipe, DatePipe ],
   template: `<psm-widget title="Processes">
                <form role="form">
                  <div *ngIf="monkey && (monkey.timestamp || monkey.error)" [ngClass]="{ status: true, error: monkey.error != undefined }">
