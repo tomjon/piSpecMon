@@ -62,11 +62,11 @@ def now():
     return int(time.time() * 1000)
 
 
-def freq(freq_n, **args): # pylint: disable=redefined-builtin
+def freq(freq_n, scan_config): # pylint: disable=redefined-builtin
     """ Return the frequency for the given freq_n.  Use of this is fairly inefficient
         because the whole range of frequencies is generated each time.
     """
-    return next(itertools.islice(scan(**args), freq_n, None))[1]
+    return next(itertools.islice(scan(scan_config), freq_n, None))[1]
 
 
 def _convert(dic):

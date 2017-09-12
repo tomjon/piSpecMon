@@ -312,7 +312,7 @@ def export_endpoint(config_id):
     # yield export spectrum data
     def _iter_spectrum_export(scan_config):
         yield '#TimeDate,'
-        yield ','.join([str(freq) for _, freq in scan(**scan_config)])
+        yield ','.join([str(freq) for _, freq in scan(scan_config)])
         yield '\n'
         for timestamp, strengths in config.iter_spectrum():
             yield str(datetime.fromtimestamp(timestamp / 1000))
@@ -332,7 +332,7 @@ def export_endpoint(config_id):
         for timestamp, freq_n, name, text in heapq.merge(_name(), _text()): # luckily, natural sort order for tuples is what we want
             yield str(datetime.fromtimestamp(timestamp / 1000))
             yield ','
-            yield str(freq(freq_n, **scan_config))
+            yield str(freq(freq_n, scan_config))
             yield ',"'
             yield name.replace('"', r'\"')
             yield '","'
@@ -345,7 +345,7 @@ def export_endpoint(config_id):
         return e.message, 404
     rds = request.args.get('rds', 'false') == 'true'
     ident = config.values['ident']
-    scan_config = parse_config(config.values)
+    scan_config = parse_config(config.values, 'rds') #FIXME hm, which?!
     export = _iter_spectrum_export(scan_config) if not rds else _iter_rds_export(scan_config)
 
     date = datetime.fromtimestamp(config.timestamp / 1000.0)
