@@ -3,6 +3,7 @@ import { DataService } from './data.service';
 import { StateService } from './state.service';
 import { WidgetComponent } from './widget.component';
 import { User } from './user';
+import { equals } from './object-equals';
 
 declare var $;
 
@@ -34,7 +35,7 @@ export abstract class WidgetBase {
   }
 
   get isPristine(): boolean {
-    return JSON.stringify(this.values) == JSON.stringify(this.stateService.values[this._key]);
+    return equals(this.values, this.stateService.values[this._key]);
   }
 
   get canReset(): boolean {
