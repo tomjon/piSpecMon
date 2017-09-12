@@ -4,7 +4,7 @@ After=sound.target
 
 [Service]
 Type=idle
-ExecStart=/usr/bin/python -u /usr/local/bin/psm-audio
+ExecStart=/var/lib/psm/bin/audio.sh
 Restart=always
 RestartSec=1
 User=root

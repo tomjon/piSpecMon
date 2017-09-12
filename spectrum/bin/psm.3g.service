@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=idle
-ExecStart=/home/ses/piSpecMon/spectrum/bin/sakis3g.sh connect
+ExecStart=/var/lib/psm/bin/sakis3g.sh connect
 KillMode=process
 Restart=always
 RestartSec=60
