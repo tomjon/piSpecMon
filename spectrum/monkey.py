@@ -26,11 +26,10 @@ from spectrum.process import Process
 from spectrum.config import RDS_DEVICE
 from spectrum.audio import AudioClient
 import os
-#try:
-#    from spectrum.rds import RdsApi
-#except ImportError:
-#    from spectrum.fake_rds import RdsApi
-from spectrum.fake_rds import RdsApi
+try:
+    from spectrum.rds import RdsApi
+except ImportError:
+    from spectrum.fake_rds import RdsApi
 
 class Monkey(Process):
     """ Process implementation for decoding RDS using the Monkey board.
