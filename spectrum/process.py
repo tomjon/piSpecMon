@@ -9,11 +9,23 @@ import sys
 import traceback
 from spectrum.common import log, now
 from spectrum.datastore import StoreError
+from spectrum.config import PID_KILL_PATH
 
+def kill(pid, signum):
+    cmd = "{0} {1} {2}".format(PID_KILL_PATH, signum, pid)
+    r = os.system(cmd) >> 8
+    if r == 255:
+        raise ProcessError("Bad command: {0}".format(cmd))
+    if r != 0:
+        e = OSError(cmd)
+        e.errno = r
+        raise e
 
 class Process(object):
     """ Start the process with start(), after supplying the data store, pid file,
         config file and status file names.
+
+        Sub-classes may need to override get_capabilities().
     """
     def __init__(self, data_store, run_path, config_file):
         self.data_store = data_store
@@ -23,12 +35,23 @@ class Process(object):
             pass
         self.pid_file = os.path.join(run_path, 'pid')
         self.status_file = os.path.join(run_path, 'status')
+        self.caps_file = os.path.join(run_path, 'caps')
         self.config_file = config_file
         self._exit = False
         self._stop = False
         self._tidy = False
         self.config_id = None
         self.status = {}
+
+    def get_capabilities(self):
+        return {}
+
+    def write_caps(self):
+        log.debug("Writing caps file: %s", self.caps_file)
+        tmp = self.caps_file + '_tmp'
+        with open(tmp, 'w') as f:
+            f.write(json.dumps(self.get_capabilities()))
+        os.rename(tmp, self.caps_file)
 
     def read_pid(self):
         """ Read and verify the PID file.
@@ -39,7 +62,7 @@ class Process(object):
             with open(self.pid_file) as f:
                 pid = f.read().strip()
             pid = int(pid)
-            os.kill(pid, 0)
+            kill(pid, 0)
             return pid
         except IOError:
             raise ProcessError("Can not open PID file: {0}".format(self.pid_file))
@@ -72,10 +95,18 @@ class Process(object):
         with open(self.config_file) as f:
             return f.read().strip()
 
+    def open(self):
+        pass
+
+    def close(self):
+        pass
+
     def start(self):
         """ Start the process, writing status yielded by iterator.
         """
         log.info("STARTING")
+        self.write_caps()
+        self.open()
         try:
             while True:
                 self.config_id = self._read_config()
@@ -95,7 +126,7 @@ class Process(object):
                                 self._write_status()
                                 if self._stop:
                                     break
-                        except Exception as e: # pylint: disable=broad-except
+                        except BaseException as e: # pylint: disable=broad-except
                             log.exception(e)
                             traceback.print_exc()
                             config.write_error(now(), e)
@@ -111,6 +142,7 @@ class Process(object):
             os.remove(self.pid_file)
             if os.path.isfile(self.status_file):
                 os.remove(self.status_file)
+            self.close()
 
     def stop(self):
         """ Stop the process.
@@ -167,6 +199,14 @@ class Client(object):
             self.error = "No {0} process".format(self.process.__class__.__name__.lower())
         return self.pid
 
+    def get_capabilities(self):
+        """ Read the caps file to report capabilities.
+        """
+        if not os.path.isfile(self.process.caps_file):
+            return None
+        with open(self.process.caps_file) as f:
+            return json.loads(f.read())
+
     def status(self):
         """ Read and return the process status.
         """
@@ -189,19 +229,42 @@ class Client(object):
         if self.read_pid() is not None:
             with open(self.process.config_file, 'w') as f:
                 f.write(config_id)
-            os.kill(self.pid, signal.SIGUSR1)
+            kill(self.pid, signal.SIGUSR1)
 
     def stop(self):
         """ Tell the process to stop processing.
         """
         if self.read_pid() is not None:
-            os.kill(self.pid, signal.SIGUSR1)
+            kill(self.pid, signal.SIGUSR1)
 
     def exit(self, tidy=True):
         """ Tell the process to exit.
         """
         if self.read_pid() is not None:
-            os.kill(self.pid, signal.SIGINT if tidy else signal.SIGTERM)
+            kill(self.pid, signal.SIGINT if tidy else signal.SIGTERM)
+
+class NoClient(object):
+    """ Client class used to for a non-existant process.
+    """
+    def status(self):
+        """ Read and return the process status.
+        """
+        return {'error': 'No process'}
+
+    def start(self, config_id):
+        """ Tell the process to start processing the specified config id.
+        """
+        pass
+
+    def stop(self):
+        """ Tell the process to stop processing.
+        """
+        pass
+
+    def exit(self, tidy=True):
+        """ Tell the process to exit.
+        """
+        pass
 
 
 class ProcessError(Exception):

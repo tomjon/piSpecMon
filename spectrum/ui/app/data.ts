@@ -1,5 +1,4 @@
 import { Config } from './config';
-import { MAX_N, CHART_HEIGHT } from './constants';
 import { DataService } from './data.service';
 import { StateService } from './state.service';
 
@@ -8,6 +7,8 @@ import { StateService } from './state.service';
  */
 export class Data {
   config: Config;
+
+  max_n: number;
   freqs: any;
   count: number;
   spectrum: any;
@@ -24,6 +25,7 @@ export class Data {
 
   constructor(private stateService: StateService, private dataService: DataService, config: Config) {
     this.config = config;
+    this.max_n = dataService.constants.max_n; //FIXME why is this on data? Why not just collect from dataService whereever this is used?
     this.freqs = config.values.rds.freqs; //FIXME oh dear
     this.count = 0;
     this.spectrum = {
@@ -82,7 +84,7 @@ export class Data {
   }
 
   private fillArray(v?: any, size?: number) {
-    if (size == null) size = MAX_N;
+    if (size == null) size = this.max_n;
     let a = [];
     for (let n = 0; n < size; ++n) {
       a.push(v);
@@ -196,7 +198,7 @@ export class Data {
         }
 
         // try slotting in our value
-        for (let n: number = 0; n < MAX_N; ++n) {
+        for (let n: number = 0; n < this.max_n; ++n) {
           let slot_idx = this.spectrum.freq_idxs[x][n];
           // if we find an empty slot, just use it and quit
           if (slot_idx == null) {

@@ -9,6 +9,7 @@
         <th>Mode</th>
         <th>Dwell (s)</th>
         <th class="feature">Audio</th>
+        <th *ngFor="let column of columns" class="scan-cap">{{column}}</th>
         <th class="indicator">&nbsp;</th>
       </tr>
     </thead>
@@ -24,6 +25,7 @@
         </td>
         <td>{{config.values.rds.duration}}</td>
         <td class="feature">{{config.values.rds.audio.enabled ? '✔' : '✘'}}</td>
+        <td *ngFor="let column of columns">{{label(column, config.values.scan[column])}}</td>
         <td class="indicator">
           <div *ngIf="user.roleIn(['admin']) || running(config)">
             <input *ngIf="! running(config)" type="checkbox" [disabled]="standby" [(ngModel)]="checked[config.id]">

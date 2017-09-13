@@ -1,10 +1,10 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { StateService } from './state.service';
+import { DataService } from './data.service';
 import { WidgetComponent } from './widget.component';
 import { DatePipe } from './date.pipe';
 import { FreqPipe } from './freq.pipe';
 import { Chart } from './chart';
-import { FREQUENCY_CHART_OPTIONS, HZ_LABELS } from './constants';
 import { _d3 as d3 } from './d3_import';
 
 declare var $;
@@ -26,9 +26,7 @@ declare var $;
                    </select>
                  </div>
                </form>
-               <svg #chart (click)="onClick($event)"
-                 viewBox="0 0 ${FREQUENCY_CHART_OPTIONS.width} ${FREQUENCY_CHART_OPTIONS.height}"
-                 preserveAspectRatio="xMidYMid meet">
+               <svg #chart (click)="onClick($event)" [attr.viewBox]="viewBox" preserveAspectRatio="xMidYMid meet">
                  <svg:line class="horizontal" *ngIf="showInfo" [attr.x1]="margin.left" [attr.x2]="width + margin.left" [attr.y1]="showY" [attr.y2]="showY" />
                  <svg:line class="vertical" *ngIf="showInfo" [attr.x1]="showX" [attr.x2]="showX" [attr.y1]="height + margin.top" [attr.y2]="showY" />
                  <svg:rect class="info" *ngIf="showInfo" [attr.x]="showX + 10 + adjustX" [attr.y]="showY - 30" [attr.width]="textWidth + 20" height=21 rx=5 ry=5 />
@@ -59,12 +57,16 @@ export class FrequencyComponent extends Chart {
   @ViewChild('chart') chart;
   @ViewChild('text') text;
 
-  constructor(private freq: FreqPipe, stateService: StateService) { super(stateService) }
+  constructor(stateService: StateService, dataService: DataService, private freq: FreqPipe) {
+    super(stateService, dataService, 'frequency');
+  }
 
   ngOnInit() {
-    this.margin = FREQUENCY_CHART_OPTIONS.margin;
-    this.width = FREQUENCY_CHART_OPTIONS.width - this.margin.left - this.margin.right,
-    this.height = FREQUENCY_CHART_OPTIONS.height - this.margin.top - this.margin.bottom;
+    this.init();
+
+    this.margin = this.options.margin;
+    this.width = this.options.width - this.margin.left - this.margin.right,
+    this.height = this.options.height - this.margin.top - this.margin.bottom;
 
     this.x = d3.scale.linear().range([0, this.width]);
     this.y = d3.scale.linear().range([this.height, 0]);
@@ -96,9 +98,9 @@ export class FrequencyComponent extends Chart {
     let agg = this.data.spectrum.agg[this.sweep];
 
     this.x.domain([this.data.freqs[0].range[0], this.data.freqs[0].range[1]]);
-    if (FREQUENCY_CHART_OPTIONS.y_axis) {
-      this.y.domain([FREQUENCY_CHART_OPTIONS.y_axis[0], FREQUENCY_CHART_OPTIONS.y_axis[1]]);
-      this.yAxis.tickValues(d3.range(FREQUENCY_CHART_OPTIONS.y_axis[0], FREQUENCY_CHART_OPTIONS.y_axis[1] + FREQUENCY_CHART_OPTIONS.y_axis[2], FREQUENCY_CHART_OPTIONS.y_axis[2]));
+    if (this.options.y_axis) {
+      this.y.domain([this.options.y_axis[0], this.options.y_axis[1]]);
+      this.yAxis.tickValues(d3.range(this.options.y_axis[0], this.options.y_axis[1] + this.options.y_axis[2], this.options.y_axis[2]));
     } else {
       this.y.domain(d3.extent(agg, d => d.v));
     }
@@ -113,7 +115,7 @@ export class FrequencyComponent extends Chart {
         .attr("transform", "translate(" + this.width + ",0)")
         .attr("text-anchor", "end")
         .attr("y", -6)
-        .text(HZ_LABELS[this.data.freqs[0].exp]);
+        .text(this.hz[this.data.freqs[0].exp]);
 
     this.svg.append("g")
         .attr("class", "y axis")

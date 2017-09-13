@@ -1,10 +1,13 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { HZ_LABELS } from './constants';
+import { DataService } from './data.service';
 
 @Pipe({ name: 'freq' })
 export class FreqPipe implements PipeTransform {
+  constructor(private dataService: DataService) {}
+
   // used in templates like: freq_n | freq:values
   transform(freq_n: number, values: any): string {
+    let hz = this.dataService.constants.hz_labels;
     let r: string = null;
     if (values == undefined) {
       return '[no values specified]';
@@ -33,9 +36,9 @@ export class FreqPipe implements PipeTransform {
       let s = r[2].toString();
       let i = s.indexOf('.');
       let j = i > -1 ? s.length - i - 1 : 0;
-      return `${f.toFixed(j)}${HZ_LABELS[f_spec.exp]}`;
+      return `${f.toFixed(j)}${hz[f_spec.exp]}`;
     } else {
-      return `${+f_spec.freq}${HZ_LABELS[f_spec.exp]}`;
+      return `${+f_spec.freq}${hz[f_spec.exp]}`;
     }
   }
 }

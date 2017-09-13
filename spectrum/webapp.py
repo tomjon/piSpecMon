@@ -1,11 +1,9 @@
 """ Define a WebApplication that will be used by server.py to provide endpoints.
 """
 import os
-from spectrum.monitor import get_capabilities
 from spectrum.event import EVENT_INIT
 from spectrum.common import log, psm_name
 from spectrum.secure import SecureStaticFlask
-
 
 class WebApplication(SecureStaticFlask): # pylint: disable=too-many-instance-attributes
     """ The curious looking two-step initialisation is so that the application instance can
@@ -24,7 +22,7 @@ class WebApplication(SecureStaticFlask): # pylint: disable=too-many-instance-att
         """ Finish initialising the application.
         """
         # pylint: disable=attribute-defined-outside-init
-        self.caps = get_capabilities()
+        self.caps = worker_client.get_capabilities() #FIXME need to separate out worker capabilities from other caps (if there are any others!) and it shuld be a dynamic array to include all workers; don't get caps at app init, but dynamically also (i.e. each time /caps is called)
         log.info("%d rig models", len(self.caps['models']))
         self.data_store = data_store
         super(WebApplication, self).initialise(users, user_timeout_secs)

@@ -12,6 +12,7 @@ hash npm 2>/dev/null || ({
 (cd spectrum/ui && npm run tsc)
 
 # build Python egg (includes javascript built above)
+sudo apt-get install -y python-pip
 sudo -H pip install -e .
 
 # copy default config to /etc/psm.yml
@@ -90,6 +91,14 @@ gcc -o spectrum/bin/pi_control spectrum/pi_control.c && (
   sudo cp spectrum/bin/pi_control $PI_CONTROL_PATH
   sudo chown root: $PI_CONTROL_PATH
   sudo chmod a+s $PI_CONTROL_PATH
+)
+
+
+# build the pi_control binary
+PID_KILL_PATH=`vbl PID_KILL_PATH`
+gcc -o spectrum/bin/pid_kill spectrum/pid_kill.c && (
+  sudo cp spectrum/bin/pid_kill $PID_KILL_PATH
+  sudo setcap cap_kill+ep /usr/bin/pid_kill
 )
 
 # remind about post install steps

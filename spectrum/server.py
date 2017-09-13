@@ -14,6 +14,7 @@ from spectrum.common import log, now, parse_config, scan, freq
 from spectrum.users import IncorrectPasswordError, UsersError
 from spectrum.webapp import WebApplication
 from spectrum.event import EVENT_IDENT, EVENT_LOGIN, EVENT_LOGOUT, EVENT_START, EVENT_STOP
+from spectrum.config import UI_CONFIG
 
 
 application = WebApplication(__name__) # pylint: disable=invalid-name
@@ -55,7 +56,7 @@ def settings(key=None):
     if request.method == 'GET':
         # return all settings
         values = {'ident': application.ident}
-        for key in ['rig', 'audio', 'rds', 'scan']: #FIXME improve by storing rig, audio, .. in a dict on the app
+        for key in ['rig', 'audio', 'rds', 'keysight', 'scan']: #FIXME improve by storing rig, audio, .. in a dict on the app
             values[key] = getattr(application, key).values
         return json.dumps(values)
     else:
@@ -63,7 +64,7 @@ def settings(key=None):
         if key == 'ident':
             application.set_ident(request.get_json()) #FIXME treat ident same as other keys by storing ident differently?
             application.event_client.write(EVENT_IDENT, application.ident)
-        elif key in ['rig', 'audio', 'rds', 'scan']:#FIXME as above
+        elif key in ['rig', 'audio', 'rds', 'keysight', 'scan']:#FIXME as above; also, application.keysight does not exist (the worker uses psm.yml settings)
             getattr(application, key).write(request.get_json())
         else:
             return "Key not found", 404
@@ -99,6 +100,7 @@ def process():
         except StoreError as e:
             return e.message, 500
 
+        application.worker.start(config.id) #FIXME UI needs to choose which
         application.monkey.start(config.id)
         application.event_client.write(EVENT_START, config.values)
 
@@ -430,3 +432,10 @@ def pico_endpoint():
     except subprocess.CalledProcessError as e:
         result['error'] = e.output
     return json.dumps(result)
+
+
+@application.route('/constants')
+def constants_endpoint():
+    """ Direct read only access to the UI constants section of the config file.
+    """
+    return json.dumps(UI_CONFIG)

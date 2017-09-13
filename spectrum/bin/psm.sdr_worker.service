@@ -1,0 +1,16 @@
+[Unit]
+Description=Pi Spectrum Monitor SDR Play Worker Service
+After=basic.target
+
+[Service]
+Type=idle
+ExecStart=/usr/local/bin/psm-sdr-worker
+Restart=always
+RestartSec=1
+WorkingDirectory=~
+RuntimeDirectory=psm-sdr-worker
+User=root
+Group=root
+
+[Install]
+WantedBy=psm.target

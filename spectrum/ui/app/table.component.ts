@@ -12,10 +12,11 @@ import { UnitsPipe } from './units.pipe';
   selector: 'psm-table',
   directives: [ WidgetComponent ],
   pipes: [ DatePipe, UnitsPipe ],
-  templateUrl: 'templates/table.html'
+  templateUrl: 'templates/table.html',
+  styles: ['.scan-cap { text-transform: capitalize }']
 })
 export class TableComponent {
-  @Input() modes: any[] = [ ];
+  @Input() caps: any;
   @Input() user: User;
   @Output('select') select = new EventEmitter<Config>();
 
@@ -31,6 +32,9 @@ export class TableComponent {
 
   // rds checkbox for export/download
   rds: boolean = false;
+
+  // columns we want shown from scan config
+  columns: string[] = [];
 
   @ViewChild(WidgetComponent) widgetComponent;
 
@@ -66,6 +70,7 @@ export class TableComponent {
   ngOnInit() {
     this.widgetComponent.busy(this.dataService.getConfig())
                         .subscribe(configs => this.configs = configs);
+    this.columns = this.dataService.constants.table_columns;
   }
 
   onSelect(config_id, e) {
@@ -134,6 +139,13 @@ export class TableComponent {
   onDownload() {
     let args = this.rds ? '?rds=true' : '';
     window.open('/export/' + this.selected + args, '_blank');
+  }
+
+  label(column, value): string {
+    for (let m of this.caps.scan[column] || []) {
+      if (m.value == value) return m.label;
+    }
+    return null;
   }
 
   get loading() {

@@ -9,16 +9,25 @@ import { ErrorService } from './error.service';
 export class DataService {
   private baseUrl = '/';
 
+  public constants: any;
+
   constructor(private http: Http, private errorService: ErrorService) { }
 
-  //FIXME a generic, which should replace getIdent, getRig, etc
+  getConstants(): Observable<any> {
+    return this.http.get(`${this.baseUrl}constants`)
+                    .map(res => {
+                      this.constants = res.json();
+                      return this.constants;
+                    })
+                    .catch(this.errorHandler("get UI cpnstants"));
+  }
+
   getSettings(): Observable<any> {
     return this.http.get(`${this.baseUrl}settings`)
                     .map(res => res.json())
                     .catch(this.errorHandler("get settings"));
   }
 
-  //FIXME a generic, which should replace setIdent, setRig, etc
   setSettings(key: string, values: any): Observable<void> {
     let body = JSON.stringify(values);
     let headers = new Headers({'Content-Type': 'application/json'});

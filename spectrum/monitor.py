@@ -12,7 +12,7 @@ Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_NONE)
 def get_capabilities():
     """ Return a dictionary of rig capabilities.
     """
-    caps = {'models': [], 'modes': [], 'rates': [], 'parities': []}
+    caps = {'models': [], 'rates': [], 'parities': [], 'scan': {'modes': []}}
 
     is_int = lambda n: isinstance(n, int)
     #FIXME WinRadio RIG_MODEL_G313 is causing problems on Linux machines - ignore for now
@@ -31,7 +31,7 @@ def get_capabilities():
 
     for n in xrange(int(math.log(Hamlib.RIG_MODE_TESTS_MAX - 1, 2))):
         mode = 2 ** n
-        caps['modes'].append({'mode': mode, 'name': Hamlib.rig_strrmode(mode)})
+        caps['scan']['mode'].append({'value': mode, 'label': Hamlib.rig_strrmode(mode)})
 
     caps['rates'] = [{'rate': 2400, 'label': '2400'},
                      {'rate': 4800, 'label': '4800'},

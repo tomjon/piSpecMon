@@ -10,9 +10,7 @@ import { WidgetComponent } from './widget.component';
   directives: [ WidgetComponent ]
 })
 export class RigComponent extends WidgetBase {
-  @Input() models; //FIXME can we not merge these three inputs into one Caps input?
-  @Input() rates;
-  @Input() parities;
+  @Input() caps; //FIXME this should probably be on state service?
 
   //FIXME can this go on a Widget parent class? probably only after moving to Angular 4...
   @ViewChild(WidgetComponent) widgetComponent;

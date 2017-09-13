@@ -7,7 +7,6 @@ import { Config } from './config';
 import { User } from './user';
 import { DatePipe } from './date.pipe';
 import { FreqPipe } from './freq.pipe';
-import { HZ_LABELS } from './constants';
 
 declare var $;
 
@@ -15,39 +14,28 @@ declare var $;
   selector: 'psm-scan',
   templateUrl: 'templates/scan.html',
   directives: [ WidgetComponent ],
-  pipes: [ DatePipe, FreqPipe ]
+  pipes: [ DatePipe, FreqPipe ],
+  styles: ['.scan-cap label { text-transform: capitalize }']
 })
 export class ScanComponent extends WidgetBase {
-  worker: any = { };
-
   units: any[] = [ ];
-
-  // true when waiting for (real) status after startup or start/stop buttons pressed
-  standby: boolean = true;
 
   @ViewChild(WidgetComponent) widgetComponent;
 
-  @Input() modes: any[] = [ ];
-
-  @Input('status') set _status(status: any) {
-    if (status == undefined) return;
-    if (this.widgetComponent.original != undefined) this.standby = false;
-    this.worker = status.worker;
-  }
+  @Input() caps: any;
 
   constructor(dataService: DataService, stateService: StateService) { super(dataService, stateService) }
 
   ngOnInit() {
-    for (let value in HZ_LABELS) {
-      this.units.push({ value: value, label: HZ_LABELS[value] });
+    let hz = this.dataService.constants.hz_labels;
+    for (let value in hz) {
+      this.units.push({ value: value, label: hz[value] });
     }
     this.setViewChildren('scan', this.widgetComponent);
-    this.standby = false; //FIXME should be set when settings loaded
   }
 
-  //FIXME override
-  get loading() {
-    return this.widgetComponent.loading || this.standby;
+  get capsKeys(): string[] {
+    return Object.keys(this.caps);
   }
 
   numeric(v): boolean {
@@ -92,11 +80,6 @@ export class ScanComponent extends WidgetBase {
   // return whether the inputs represent a valid scan
   get validScan(): boolean {
     return (this.rangeEnabled && this.validRange) || (this.freqsEnabled && this.validFreqs);
-  }
-
-  // return whether a scan is running
-  get running(): boolean {
-    return this.worker.timestamp;
   }
 
   // insert a discrete frequency at position n

@@ -106,15 +106,14 @@ setup(
             'psm-server=spectrum.main:server',
             'psm-audio=spectrum.main:audio',
             'psm-worker=spectrum.main:worker',
+            'psm-sdr-worker=spectrum.main:sdr_worker',
+            'psm-ams-worker=spectrum.main:ams_worker',
             'psm-monkey=spectrum.main:monkey',
             'psm-users=spectrum.main:users',
             'psm-power=spectrum.main:power',
             'psm-email=spectrum.main:email',
             'psm-wav2mp3=spectrum.main:wav2mp3',
-            'psm-event=spectrum.main:event',
-            'overseer-server=spectrum.main:overseer',
-            'overseer-register=spectrum.main:overseer_register',
-            'overseer-users=spectrum.main:overseer_users'
+            'psm-event=spectrum.main:event'
         ],
     },
 )

@@ -4,7 +4,7 @@ import os
 from time import sleep
 from spectrum.process import Process
 from spectrum.common import log, parse_config, now, scan
-from spectrum.monitor import Monitor, TimeoutError
+from spectrum.monitor import Monitor, TimeoutError, Recorder, get_capabilities
 from spectrum.audio import AudioClient
 from spectrum.power import power_on
 from spectrum.config import PICO_PATH, RIG_DEVICE
@@ -44,6 +44,9 @@ class Worker(Process):
                 else:
                     raise e
 
+    def get_capabilities(self):
+        return get_capabilities()
+
     def iterator(self, config):
         """ Scan the spectrum, storing data through the config object, and yield status.
         """
@@ -79,7 +82,7 @@ class Worker(Process):
                 self.status['sweep']['sweep_n'] = config.count + sweep_n
                 yield
 
-                for idx, freq in scan(**scan_config):
+                for idx, freq in scan(scan_config):
                     log.debug("Scanning frequency %s (%s)", freq, idx)
 
                     if 'current' in self.status['sweep']:

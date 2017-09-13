@@ -1,9 +1,11 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { HZ_LABELS } from './constants';
+import { DataService } from './data.service';
 
 @Pipe({ name: 'units' })
 export class UnitsPipe implements PipeTransform {
+  constructor(private dataService: DataService) {}
+
   transform(value: number): string {
-    return HZ_LABELS[value];
+    return this.dataService.constants.hz_labels[value];
   }
 }

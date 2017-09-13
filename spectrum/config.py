@@ -19,8 +19,7 @@ def _load_settings(path):
             if isinstance(value, dict):
                 for key2, value2 in value.iteritems():
                     _setattr('_'.join((key, key2)), value2)
-            else:
-                _setattr(key, value)
+            _setattr(key, value)
 
 # load settings from any YML files specified on the command line (overriding previous)
 def _parse_args():

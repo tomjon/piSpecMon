@@ -70,15 +70,11 @@ class MockUsers(object):
         """
         return USER_DATA if username == LOGIN['username'] else None
 
-class MockWorkerClient(object): # pylint: disable=too-few-public-methods
-    """ Minimal mock WorkerClient.
+class MockClient(object): # pylint: disable=too-few-public-methods
+    """ Minimal mock WorkerClient and MonkeyClient.
     """
-    pass
-
-class MockMonkeyClient(object): # pylint: disable=too-few-public-methods
-    """ Minimal mock MonkeyClient.
-    """
-    pass
+    def get_capabilities(self):
+        return {'models': []}
 
 class MockQueue(object):
     """ In-memory queue implementation.
@@ -103,8 +99,8 @@ def api(tmpdir):
     export_directory = os.path.join(str(tmpdir), 'export')
     os.makedirs(export_directory)
 
-    server.application.initialise(MockDataStore(), MockUsers(), MockWorkerClient(),
-                                  MockMonkeyClient(), {}, {}, {}, {}, log_path,
+    server.application.initialise(MockDataStore(), MockUsers(), MockClient(),
+                                  MockClient(), {}, {}, {}, {}, log_path,
                                   version_file, USER_TIMEOUT_SECS, export_directory,
                                   PI_CONTROL_PATH, '', MockQueue())
     return server.application.test_client()

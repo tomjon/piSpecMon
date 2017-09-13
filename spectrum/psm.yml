@@ -48,6 +48,9 @@ data_path: /var/lib/psm
 # location of the pi_control binary
 pi_control_path: /usr/bin/pi_control
 
+# location of the pid_kill binary
+pid_kill_path: /usr/bin/pid_kill
+
 # location of the pico_status script
 pico_path: /usr/local/bin/pico_status.py
 
@@ -115,3 +118,46 @@ default:
             duration: 10
             threshold: -20
             period: 600
+
+# UI configuration
+ui_config:
+    widgets: ['keysight'] #FIXME this wants to be automatic...
+
+    table_columns: ['antenna', 'attenuation', 'preamp', 'window']
+
+    tick_interval: 1000
+    hz_labels: {0: 'Hz', 3: 'kHz', 6: 'MHz', 9: 'GHz'}
+    max_n: 10
+
+    frequency_chart_options:
+        y_axis: [-128, -32, 16]
+        margin: { top: 25, left: 80, right: 80, bottom: 30 }
+        width: 1200
+        height: 400
+
+    level_chart_options:
+        y_axis: [-128, -32, 16]
+        margin: { top: 30, left: 40, right: 200, bottom: 40 }
+        width: 1200
+        height: 400
+        x_ticks: 7
+
+    waterfall_chart_options:
+        heat: [-127, -80, -32]
+        margin: { top: 25, left: 80, right: 80, bottom: 30 }
+        width: 1200
+        height: 400
+        y_ticks: 7
+
+    audio_chart_options:
+        margin: { top: 20, left: 80, right: 80, bottom: 30 }
+        width: 1200
+        height: 400
+        y_ticks: 10
+
+    temperature_chart_options:
+        y_axis: [0, 50, 25]
+        margin: { top: 30, left: 40, right: 200, bottom: 40 }
+        width: 1200
+        height: 400
+        x_ticks: 7

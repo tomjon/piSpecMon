@@ -34,11 +34,9 @@ def test(tmpdir):
                                        (1300, (10, 10, 12))]
     assert list(c.iter_spectrum(1073, 1260)) == [(1080, (1, 2, 3)),
                                                  (1200, (0, 0, 0))]
-    assert list(c.iter_spectrum(1080, 1300)) == [(1080, (1, 2, 3)),
-                                                 (1200, (0, 0, 0)),
+    assert list(c.iter_spectrum(1080, 1300)) == [(1200, (0, 0, 0)),
                                                  (1300, (10, 10, 12))]
-    assert list(c.iter_spectrum(1066, 1200)) == [(1066, (10, 20, -30)),
-                                                 (1080, (1, 2, 3)),
+    assert list(c.iter_spectrum(1066, 1200)) == [(1080, (1, 2, 3)),
                                                  (1200, (0, 0, 0))]
     assert list(c.iter_spectrum(500, 1500)) == [(1066, (10, 20, -30)),
                                                 (1080, (1, 2, 3)),
@@ -65,8 +63,7 @@ def test(tmpdir):
                                                  (1280, 6, 'Wikipedia')]
     assert list(c.iter_rds_name(1050, 1085)) == [(1066, 1, 'Radio 7'),
                                                  (1080, 4, 'Bilbo')]
-    assert list(c.iter_rds_name(1090, 1300)) == [(1090, 1, 'Frodo'),
-                                                 (1280, 6, 'Wikipedia')]
+    assert list(c.iter_rds_name(1090, 1300)) == [(1280, 6, 'Wikipedia')]
 
     c = fsds.config()
     c.write(999, {})

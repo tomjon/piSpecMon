@@ -49,3 +49,4 @@ spectrum/ui/node_modules
 spectrum/ui/typings
 .cache/
 spectrum.egg-info
+spectrum/pid_kill

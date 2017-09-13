@@ -3,7 +3,7 @@
     <div class="form-group">
       <label for="model">Model</label>
       <select class="form-control" [disabled]="disabled" [(ngModel)]="values.model" name="model">
-        <option *ngFor="let model of models" value="{{model.model}}">{{model.manufacturer}} {{model.name}} v{{model.version}} ({{model.status}})</option>
+        <option *ngFor="let model of caps.models" value="{{model.model}}">{{model.manufacturer}} {{model.name}} v{{model.version}} ({{model.status}})</option>
       </select>
     </div>
     <div class="form-group">
@@ -14,7 +14,7 @@
       <div class="psm-input-group col-lg-6">
         <label for="rate">Rate</label>
         <select class="form-control" [disabled]="disabled" [(ngModel)]="values.rate" name="rate">
-          <option *ngFor="let rate of rates" value="{{rate.rate}}">{{rate.label}}</option>
+          <option *ngFor="let rate of caps.rates" value="{{rate.value}}">{{rate.label}}</option>
         </select>
       </div>
     </div>
@@ -29,7 +29,7 @@
       <div class="psm-input-group col-lg-6">
         <label for="parity">Parity</label>
         <select class="form-control" [disabled]="disabled" [(ngModel)]="values.parity" name="parity">
-          <option *ngFor="let parity of parities" value="{{parity.value}}">{{parity.label}}</option>
+          <option *ngFor="let parity of caps.parities" value="{{parity.value}}">{{parity.label}}</option>
         </select>
       </div>
     </div>

@@ -21,12 +21,11 @@ import { UiSettingsService } from './ui-settings.service';
 import { StateService } from './state.service';
 import { User } from './user';
 import { Config } from './config';
-import { TICK_INTERVAL } from './constants';
-import { HTTP_PROVIDERS } from '@angular/http';
 import { DatePipe } from './date.pipe';
 import { FreqPipe } from './freq.pipe';
 import { InputDirective } from './input.directive';
 import { ProcessComponent } from './process.component';
+import { HTTP_PROVIDERS } from '@angular/http';
 
 // Add the RxJS Observable operators we need in this app
 import './rxjs-operators';
@@ -47,11 +46,11 @@ let modelSort = function (a, b) {
   pipes: [ DatePipe, FreqPipe ]
 })
 export class AppComponent {
+  constants: any;
+
   user: User; //FIXME get rid - use stateService.user
-  models: any[] = [];
-  modes: any[] = [];
-  rates: any[] = [];
-  parities: any[] = [];
+  models: any[] = [ ];
+  caps: any = {'scan': {}};
 
   status: any = {worker: {}, monkey: {}};
 
@@ -73,11 +72,14 @@ export class AppComponent {
     this.dataService.getSettings()
                     .subscribe(values => this.stateService.values = values);
     this.dataService.getCaps()
-                    .subscribe(data => {
-                      this.models = data.models.sort(modelSort);
-                      this.modes = data.modes;
-                      this.rates = data.rates;
-                      this.parities = data.parities;
+                    .subscribe(caps => {
+                      this.caps = caps;
+                      this.caps.models = this.caps.models.sort(modelSort);
+                    });
+    this.dataService.getConstants()
+                    .subscribe(constants => {
+                      this.constants = constants;
+                      setInterval(this.monitor.bind(this), constants.tick_interval);
                     });
 
     setInterval(this.monitor.bind(this), TICK_INTERVAL);
