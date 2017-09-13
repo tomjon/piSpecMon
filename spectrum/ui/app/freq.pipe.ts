@@ -21,7 +21,7 @@ export class FreqPipe implements PipeTransform {
       let r = f_spec.range;
       let size = r != undefined ? Math.ceil((+r[1] - +r[0] + +r[2] / 2) / +r[2]) : 1;
       if (n < size) {
-        let p = this._format(r, n, f_spec);
+        let p = this._format(hz, r, n, f_spec);
         if (values.rdsNames && values.rdsNames[freq_n]) p += ` (${values.rdsNames[freq_n]})`;
         return p;
       }
@@ -30,7 +30,7 @@ export class FreqPipe implements PipeTransform {
     return `[bad freq_n: ${freq_n}]`;
   }
 
-  _format(r, n, f_spec): string {
+  _format(hz, r, n, f_spec): string {
     if (r != undefined) {
       let f = +r[0] + n * +r[2];
       let s = r[2].toString();

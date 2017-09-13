@@ -10,7 +10,7 @@ export abstract class Chart {
   protected max_n: number;
   protected hz: any;
 
-  constructor(protected stateService: StateService, private dataService: DataService, private name: string) {
+  constructor(protected stateService: StateService, private dataService?: DataService, private name?: string) {
       stateService.registerChart(this);
   }
 
@@ -22,12 +22,6 @@ export abstract class Chart {
 
   get viewBox(): string {
     return `0 0 ${this.options.width} ${this.options.height}`;
-  }
-
-  set data(data: Data) {
-    this._data = data;
-    this.plotted = false;
-    if (this.show) this._plot();
   }
 
   reset() {

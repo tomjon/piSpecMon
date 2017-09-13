@@ -5,7 +5,6 @@ import { WidgetBase } from './widget.base';
 import { WidgetComponent } from './widget.component';
 import { Config } from './config';
 import { DatePipe } from './date.pipe';
-import { HZ_LABELS } from './constants';
 import { InputDirective } from './input.directive';
 
 @Component({
@@ -15,15 +14,17 @@ import { InputDirective } from './input.directive';
   pipes: [ DatePipe ]
 })
 export class RdsComponent extends WidgetBase {
-  units: any[] = [ ];
+  units: any[] = [];
 
   @ViewChild(WidgetComponent) widgetComponent;
 
   constructor(dataService: DataService, stateService: StateService) { super(dataService, stateService) }
 
   ngOnInit() {
-    for (let value in HZ_LABELS) {
-      this.units.push({ value: value, label: HZ_LABELS[value] });
+    //FIXME repeated code from scan.component.ts
+    let hz = this.dataService.constants.hz_labels;
+    for (let value in hz) {
+      this.units.push({ value: value, label: hz[value] });
     }
     this.setViewChildren('rds', this.widgetComponent);
   }

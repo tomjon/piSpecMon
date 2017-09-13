@@ -44,6 +44,7 @@ export class RdsTableComponent extends Chart {
     this.stations = [];
     if (this.data && this.data.rdsNames) {
       for (let idx in this.data.rdsNames) {
+        if (this.idx == undefined) this.idx = +idx;
         this.stations.push({ 'idx': idx, 'name': this.data.rdsNames[idx] });
       }
     }

@@ -81,8 +81,6 @@ export class AppComponent {
                       this.constants = constants; //FIXME constants could/should now be on state service? (include in readiness)
                       setInterval(this.monitor.bind(this), constants.tick_interval);
                     });
-
-    setInterval(this.monitor.bind(this), TICK_INTERVAL);
   }
 
   monitor() {
