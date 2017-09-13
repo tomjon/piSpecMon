@@ -35,7 +35,7 @@ def init_application():
     """
     from spectrum.server import application
     data_store = FsDataStore(DATA_PATH)
-    if Worker is not None:
+    if Worker is not None: #FIXME so now we need all of these clients, and the abiltiy to use them all (and select which)
         worker_client = Worker(data_store, WORKER_RUN_PATH, WORKER_CONFIG_FILE, RADIO_ON_SLEEP_SECS).client()
     elif SdrWorker is not None:
         worker_client = SdrWorker(data_store, WORKER_RUN_PATH, WORKER_CONFIG_FILE).client()

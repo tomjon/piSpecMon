@@ -18,7 +18,7 @@ declare var $;
   styles: ['.scan-cap label { text-transform: capitalize }']
 })
 export class ScanComponent extends WidgetBase {
-  units: any[] = [ ];
+  units: any[] = [];
 
   @ViewChild(WidgetComponent) widgetComponent;
 

@@ -39,7 +39,7 @@ export class SampleTableComponent extends Chart {
   freqs: number[];
   freq_n: number;
 
-  constructor(stateService: StateService) { super(stateService) }
+  constructor(stateService: StateService) { super(stateService) } //FIXME superclass has stuff we don't want, and we don't call the super constructor properly
 
   plot() {
     this.freqs = [];

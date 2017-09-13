@@ -78,7 +78,7 @@ export class AppComponent {
                     });
     this.dataService.getConstants()
                     .subscribe(constants => {
-                      this.constants = constants;
+                      this.constants = constants; //FIXME constants could/should now be on state service? (include in readiness)
                       setInterval(this.monitor.bind(this), constants.tick_interval);
                     });
 

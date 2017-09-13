@@ -21,6 +21,17 @@ import { DatePipe } from './date.pipe';
                    <span *ngIf="monkey.text"><i>{{monkey.text}}</i></span>
                    <span *ngIf="monkey.error">{{monkey.error}}</span>
                  </div>
+                 <div *ngIf="worker && (worker.config_id || worker.error)" [ngClass]="{ status: true, error: worker.error != undefined }">
+                   <h2 *ngIf="worker.timestamp">Scan status at {{worker.timestamp | date}}</h2>
+                   <div *ngIf="worker.sweep">
+                     <span>Scan started {{worker.sweep.timestamp | date}}</span>
+                     <span *ngFor="let peak of worker.sweep.peaks">Peak {{peak.strength}}dB at {{peak.freq_n | freq:values.scan}}</span>
+                     <span *ngIf="worker.sweep.previous">{{worker.sweep.previous.strength}}dB at {{worker.sweep.previous.freq_n | freq:values.scan}}</span>
+                     <span *ngIf="worker.sweep.current">Reading strength at {{worker.sweep.current.freq_n | freq:values.scan}}...</span>
+                     <span *ngIf="worker.sweep.record">Recording audio sample at {{worker.sweep.record.freq_n | freq:values.scan}}...</span>
+                   </div>
+                   <span *ngIf="worker.error">{{worker.error}}</span>
+                 </div>
                  <div *ngIf="! running" class="message">
                    Not running
                  </div>

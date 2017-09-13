@@ -38,7 +38,7 @@ export class RdsTableComponent extends Chart {
   stations: any;
   idx: number; // the selected station index
 
-  constructor(stateService: StateService) { super(stateService) }
+  constructor(stateService: StateService) { super(stateService) } //FIXME doesn't call super correctly... superclass has stuff we don't need
 
   plot() {
     this.stations = [];
