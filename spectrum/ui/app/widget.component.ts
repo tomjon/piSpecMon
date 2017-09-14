@@ -43,6 +43,11 @@ export class WidgetComponent {
     }
   }
 
+  get enabled(): boolean {
+    let caps: any = this.stateService.caps;
+    return this.widgetBase && caps && (this.widgetBase._key == undefined || caps._key != undefined);
+  }
+
   toggle() {
     this.show = ! this.show;
     this.showEmitter.emit(this.show);

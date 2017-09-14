@@ -64,6 +64,7 @@ export class AppComponent {
   //@ViewChildren(WidgetComponent, {descendants: true}) widgets: QueryList<WidgetComponent>;
 
   ngOnInit() {
+    //FIXME this interaction between state service and data service looks... weird... and in the wrong place
     this.dataService.getCurrentUser()
                     .subscribe(user => {
                       this.stateService.user = user;
@@ -73,8 +74,8 @@ export class AppComponent {
                     .subscribe(values => this.stateService.values = values);
     this.dataService.getCaps()
                     .subscribe(caps => {
-                      this.caps = caps;
-                      this.caps.models = this.caps.models.sort(modelSort);
+                      if (caps.scan && caps.scan.models) caps.scan.models = caps.scan.models.sort(modelSort); //FIXME hmmm - do where it is needed, not here
+                      this.stateService.caps = caps;
                     });
     this.dataService.getConstants()
                     .subscribe(constants => {
@@ -91,6 +92,7 @@ export class AppComponent {
                     );
   }
 
+  //FIXME intereseted components should subscribe to a Status subject of dataservice
   setStatus(status: any) {
     this.status = status;
     if (status != undefined) {

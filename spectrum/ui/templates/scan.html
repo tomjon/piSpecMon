@@ -2,28 +2,28 @@
   <form role="form" #form="ngForm" novalidate>
     <div *ngFor="let key of capsKeys" class="form-group scan-cap">
       <label [attr.for]="key">{{key}}</label>
-      <select class="form-control" [disabled]="disabled || worker.config_id" [(ngModel)]="config.scan[key]" name="{{key}}">
+      <select class="form-control" [disabled]="disabled" [(ngModel)]="config.scan[key]" name="{{key}}">
         <option *ngFor="let o of caps[key]" [value]="o.value">{{o.label}}</option>
       </select>
     </div>
     <div *ngIf="values.freqs != undefined" class="form-group">
       <label for="start">Frequency range</label>
-      <input [disabled]="disabled || worker.config_id" type="checkbox" (ngModelChange)="freqsEnabled = rangeEnabled" [(ngModel)]="rangeEnabled" class="toggle" name="range">
+      <input [disabled]="disabled" type="checkbox" (ngModelChange)="freqsEnabled = rangeEnabled" [(ngModel)]="rangeEnabled" class="toggle" name="range">
       <div>
         <div class="psm-input-group col-lg-3">
-          <input [disabled]="disabled || worker.config_id || ! rangeEnabled" type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[0]" name="start" #start="ngModel">
+          <input [disabled]="disabled || ! rangeEnabled" type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[0]" name="start" #start="ngModel">
           <div class="help">start</div>
         </div>
         <div class="psm-input-group col-lg-3">
-          <input [disabled]="disabled || worker.config_id || ! rangeEnabled" type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[1]" name="end" #end="ngModel">
+          <input [disabled]="disabled || ! rangeEnabled" type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[1]" name="end" #end="ngModel">
           <div class="help">end</div>
         </div>
         <div class="psm-input-group col-lg-3">
-          <input [disabled]="disabled || worker.config_id || ! rangeEnabled" type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[2]" name="step" #step="ngModel">
+          <input [disabled]="disabled || ! rangeEnabled" type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[2]" name="step" #step="ngModel">
           <div class="help">step</div>
         </div>
         <div class="psm-input-group col-lg-3">
-          <select class="form-control" [disabled]="disabled || worker.config_id || ! rangeEnabled" [(ngModel)]="values.freqs[0].exp" name="units">
+          <select class="form-control" [disabled]="disabled || ! rangeEnabled" [(ngModel)]="values.freqs[0].exp" name="units">
             <option *ngFor="let u of units" value="{{u.value}}">{{u.label}}</option>
           </select>
           <div class="help">units</div>
@@ -38,15 +38,15 @@
     </div>
     <div class="form-group freqlist">
       <label>Discrete frequencies</label>
-      <input [disabled]="disabled || worker.config_id" type="checkbox" (ngModelChange)="rangeEnabled = freqsEnabled" [(ngModel)]="freqsEnabled" class="toggle" name="freqs">
+      <input [disabled]="disabled" type="checkbox" (ngModelChange)="rangeEnabled = freqsEnabled" [(ngModel)]="freqsEnabled" class="toggle" name="freqs">
       <div class="form-group" *ngFor="let freq of values.freqs; let n = index; let last = last">
         <ng-container *ngIf="freq.range == undefined">
           <div class="psm-input-group col-lg-3">
-            <input [disabled]="disabled || worker.config_id || ! freqsEnabled" type="text" required class="form-control" [(ngModel)]="freq.freq" name="value_{{n}}">
+            <input [disabled]="disabled || ! freqsEnabled" type="text" required class="form-control" [(ngModel)]="freq.freq" name="value_{{n}}">
             <div *ngIf="last" class="help">value</div>
           </div>
           <div class="psm-input-group col-lg-3">
-            <select class="form-control" [disabled]="disabled || worker.config_id || ! freqsEnabled" [(ngModel)]="freq.exp" name="units_{{n}}">
+            <select class="form-control" [disabled]="disabled || ! freqsEnabled" [(ngModel)]="freq.exp" name="units_{{n}}">
               <option *ngFor="let u of units" value="{{u.value}}">{{u.label}}</option>
             </select>
             <div *ngIf="last" class="help">units</div>
@@ -66,7 +66,7 @@
     <div class="form-group">
       <div class="psm-input-group col-lg-6">
         <label for="audio">Collect audio</label>
-        <select [disabled]="disabled || worker.config_id" class="form-control" [(ngModel)]="values.audio.enabled" name="audio">
+        <select [disabled]="disabled" class="form-control" [(ngModel)]="values.audio.enabled" name="audio">
           <option [ngValue]="true">On</option>
           <option [ngValue]="false">Off</option>
         </select>
@@ -97,7 +97,7 @@
     </div>
     <div class="form-group">
       <label for="description">Description</label>
-      <input type="text" class="form-control" [disabled]="disabled || worker.config_id" [(ngModel)]="values.description" name="description"/>
+      <input type="text" class="form-control" [disabled]="disabled" [(ngModel)]="values.description" name="description"/>
     </div>
     <button (click)="onStart()" class="btn btn-default" [disabled]="disabled || running || ! validScan">Start</button>
     <button (click)="onStop()" class="btn btn-default" [disabled]="disabled || ! running">Stop</button>

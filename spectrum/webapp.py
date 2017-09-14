@@ -15,24 +15,23 @@ class WebApplication(SecureStaticFlask): # pylint: disable=too-many-instance-att
     def __init__(self, name):
         super(WebApplication, self).__init__(name, 'ui')
 
-    def initialise(self, data_store, users, worker_client, monkey_client, default_rig_settings, # pylint: disable=arguments-differ
-                   default_audio_settings, default_rds_settings, default_scan_settings, log_path,
+    def initialise(self, data_store, users, clients, default_rig_settings, # pylint: disable=arguments-differ
+                   default_audio_settings, default_rds_settings, default_keysight_settings, default_scan_settings, log_path,
                    version_file, user_timeout_secs, export_directory, pi_control_path, pico_path,
                    event_client):
         """ Finish initialising the application.
         """
         # pylint: disable=attribute-defined-outside-init
-        self.caps = worker_client.get_capabilities() #FIXME need to separate out worker capabilities from other caps (if there are any others!) and it shuld be a dynamic array to include all workers; don't get caps at app init, but dynamically also (i.e. each time /caps is called)
-        log.info("%d rig models", len(self.caps['models']))
         self.data_store = data_store
         super(WebApplication, self).initialise(users, user_timeout_secs)
+        #FIXME these need rationalising
         self.rig = self.data_store.settings('rig').read(default_rig_settings)
         self.audio = self.data_store.settings('audio').read(default_audio_settings)
+        self.keysight = self.data_store.settings('keysight').read(default_keysight_settings)
         self.rds = self.data_store.settings('rds').read(default_rds_settings)
         self.scan = self.data_store.settings('scan').read(default_scan_settings)
         self.description = self.data_store.settings('description').read('')
-        self.worker = worker_client
-        self.monkey = monkey_client
+        self.clients = clients
         self.log_path = log_path
         self.version_file = version_file
         self.export_directory = export_directory

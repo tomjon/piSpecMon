@@ -22,6 +22,8 @@ export class StateService {
   //FIXME mechanism for AppComponent to get list of all widgets... hopefully something better in angular 4
   public widgets: WidgetBase[] = [];
 
+  public caps: {};
+
   constructor(private dataService: DataService) {}
 
   registerWidget(widget: WidgetBase) {
@@ -42,7 +44,7 @@ export class StateService {
   }
 
   get ready(): boolean {
-    return this.user != undefined && this.values != undefined;
+    return this.user != undefined && this.values != undefined && this.caps != undefined;
   }
 
   // registered charts FIXME this feels like a horrible mechanism :( use a Subject instead?

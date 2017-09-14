@@ -36,16 +36,6 @@ DATA_PATH=`vbl DATA_PATH`
 sudo mkdir -p $DATA_PATH
 sudo chown $USER: $DATA_PATH
 
-# create the worker run directory
-RUN_PATH=`vbl WORKER_RUN_PATH`
-sudo mkdir -p $RUN_PATH
-sudo chown $USER: $RUN_PATH
-
-# create the monkey run directory
-RUN_PATH=`vbl MONKEY_RUN_PATH`
-sudo mkdir -p $RUN_PATH
-sudo chown $USER: $RUN_PATH
-
 # create the event queue directory
 EVENT_PATH=`vbl EVENT_PATH`
 sudo mkdir -p $EVENT_PATH

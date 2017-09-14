@@ -11,7 +11,7 @@ declare var $;
 //FIXME (i.e. has-a was in retrospect the wrong object model, should have been is-a)
 export abstract class WidgetBase {
   private _widgetComponent: WidgetComponent;
-  protected _key: string; //FIXME make back into private and move process/status stuff into here (maybe)
+  public _key: string; //FIXME make back into private and move process/status stuff into here (maybe)
 
   private _values: any; // input values
 
@@ -32,6 +32,14 @@ export abstract class WidgetBase {
       return this.stateService.currentConfig.values[this._key];
     }
     return this._values;
+  }
+
+  get caps(): any {
+    return this.stateService.caps[this._key] || {};
+  }
+
+  get capsKeys(): string[] {
+    return Object.keys(this.caps);
   }
 
   get isPristine(): boolean {

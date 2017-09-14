@@ -4,13 +4,13 @@ import threading
 import sys
 from spectrum.process import Process
 from spectrum.common import log, parse_config, now
-from sdr_play import SdrPlay, Callback_Continue, Callback_Reinit, Callback_Exit
+from sdrplay import SdrPlay, Callback_Continue, Callback_Reinit, Callback_Exit
 
-class SdrWorker(Process):
+class Worker(Process):
     """ Process implementation for spectrum scanning using the SDR Play device.
     """
-    def __init__(self, data_store, run_path, config_file):
-        super(SdrWorker, self).__init__(data_store, run_path, config_file)
+    def __init__(self, data_store):
+        super(Worker, self).__init__(data_store, 'sdr')
         self.cv = threading.Condition()
 
     def get_capabilities(self):
@@ -118,5 +118,3 @@ class SdrWorker(Process):
             self.stop = True
             sdr_thread.join()
             self.sdr.close()
-
-

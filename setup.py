@@ -105,10 +105,10 @@ setup(
         'console_scripts': [
             'psm-server=spectrum.main:server',
             'psm-audio=spectrum.main:audio',
-            'psm-worker=spectrum.main:worker',
+            'psm-hamlib-worker=spectrum.main:hamlib_worker',
             'psm-sdr-worker=spectrum.main:sdr_worker',
             'psm-ams-worker=spectrum.main:ams_worker',
-            'psm-monkey=spectrum.main:monkey',
+            'psm-rds-worker=spectrum.main:rds_worker',
             'psm-users=spectrum.main:users',
             'psm-power=spectrum.main:power',
             'psm-email=spectrum.main:email',

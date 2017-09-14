@@ -2,26 +2,16 @@
 """
 import time
 import sys
+import importlib
 
-try: # ordinary PSM
-    import Hamlib
-    from spectrum.worker import Worker
-except ImportError: # SDR-Play version of PSM might have no Hamlib
-    Hamlib = None
-
-from spectrum.sdr_worker import SdrWorker
-from spectrum.ams_worker import AmsWorker
 from spectrum.power import power_on, power_off
-from spectrum.monkey import Monkey
 from spectrum.wav2mp3 import walk_convert
-from spectrum.process import NoClient
 from spectrum.fs_datastore import FsDataStore
-from spectrum.config import DATA_PATH, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS, MONKEY_RUN_PATH, \
-                            MONKEY_POLL, CONVERT_PERIOD, USERS_FILE, ROUNDS, SSMTP_CONF, \
+from spectrum.config import DATA_PATH, CONVERT_PERIOD, USERS_FILE, ROUNDS, SSMTP_CONF, \
                             DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, \
-                            DEFAULT_SCAN_SETTINGS, VERSION_FILE, USER_TIMEOUT_SECS, PICO_PATH, \
-                            EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, WORKER_CONFIG_FILE, \
-                            MONKEY_CONFIG_FILE, EVENT_PATH, EVENT_POLL_SECS, EVENT_OVERSEER_URL, \
+                            DEFAULT_KEYSIGHT_SETTINGS, DEFAULT_SCAN_SETTINGS, VERSION_FILE, USER_TIMEOUT_SECS, PICO_PATH, \
+                            EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, \
+                            EVENT_PATH, EVENT_POLL_SECS, EVENT_OVERSEER_URL, \
                             EVENT_OVERSEER_KEY
 from spectrum.audio import AudioServer
 from spectrum.users import Users
@@ -30,22 +20,35 @@ from spectrum.event import EventManager, EventClient
 from spectrum.common import log, psm_name
 
 
+# conditionally import workers, and define an entry point for each
+def entry_point_fn(w_class):
+    def entry_point():
+        worker_process = w_class(FsDataStore(DATA_PATH))
+        worker_process.init()
+        worker_process.start()
+    return entry_point
+
+WORKER_MODULES = ['hamlib_worker', 'sdr_worker', 'ams_worker', 'rds_worker']
+Workers = []
+for name in WORKER_MODULES:
+    try:
+        Worker = importlib.import_module('spectrum.' + name).Worker
+        Workers.append(Worker)
+        setattr(sys.modules[__name__], name, entry_point_fn(Worker))
+    except (ImportError, OSError) as e:
+        log.warn("Not importing %s module: %s", name, e.message)
+
+
 def init_application():
     """ Initiliase the web application object imported from spectrum.server.
     """
     from spectrum.server import application
     data_store = FsDataStore(DATA_PATH)
-    if Worker is not None: #FIXME so now we need all of these clients, and the abiltiy to use them all (and select which)
-        worker_client = Worker(data_store, WORKER_RUN_PATH, WORKER_CONFIG_FILE, RADIO_ON_SLEEP_SECS).client()
-    elif SdrWorker is not None:
-        worker_client = SdrWorker(data_store, WORKER_RUN_PATH, WORKER_CONFIG_FILE).client()
-    else:
-        worker_client = AmsWorker(data_store, WORKER_RUN_PATH, WORKER_CONFIG_FILE).client()
-    m_args = (data_store, MONKEY_RUN_PATH, MONKEY_CONFIG_FILE, MONKEY_POLL)
-    monkey_client = Monkey(*m_args).client() if Monkey is not None else NoClient()
+    clients = [Worker(data_store).client() for Worker in Workers]
     event_client = EventClient(Queue(EVENT_PATH))
-    application.initialise(data_store, Users(USERS_FILE, ROUNDS), worker_client, monkey_client,
-                           DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS,
+    #FIXME tidy up DEFAULT_X_SETTINGS into one value; also PI_CONTROL_PATH and PICO_PATH probably just use the contants directly (and others?)
+    application.initialise(data_store, Users(USERS_FILE, ROUNDS), clients,
+                           DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, DEFAULT_KEYSIGHT_SETTINGS,
                            DEFAULT_SCAN_SETTINGS, LOG_PATH, VERSION_FILE, USER_TIMEOUT_SECS,
                            EXPORT_DIRECTORY, PI_CONTROL_PATH, PICO_PATH, event_client)
     return application
@@ -66,52 +69,9 @@ def audio():
         server.run()
 
 
-def worker():
-    """ Run the Hamlib worker process, for collecting spectrum data.
-    """
-    if Hamlib is None:
-        print "Hamlib is not installed - can not run Worker"
-        sys.exit(1)
-    w_args = (FsDataStore(DATA_PATH), WORKER_RUN_PATH, WORKER_CONFIG_FILE, RADIO_ON_SLEEP_SECS)
-    worker_process = Worker(*w_args)
-    worker_process.init()
-    with open(log.path, 'a') as f:
-        Hamlib.rig_set_debug_file(f)
-        Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
-        worker_process.start()
-
-def sdr_worker():
-    """ Run the SDR Play worker process, for collecting spectrum data.
-    """
-    worker_process = SdrWorker(FsDataStore(DATA_PATH), WORKER_RUN_PATH, WORKER_CONFIG_FILE)
-    worker_process.init()
-    worker_process.start()
-
-def ams_worker():
-    """ Run the AMS sensor worker process, for collecting spectrum data.
-    """
-    worker_process = AmsWorker(FsDataStore(DATA_PATH), WORKER_RUN_PATH, WORKER_CONFIG_FILE)
-    worker_process.init()
-    worker_process.start()
-
-def monkey():
-    """ Run the monkey process, for collecting RDS data.
-    """
-    if Hamlib is None:
-        print "Hamlib is not installed - can not run Monkey"
-        sys.exit(1)
-    m_args = (FsDataStore(DATA_PATH), MONKEY_RUN_PATH, MONKEY_CONFIG_FILE, MONKEY_POLL)
-    monkey_process = Monkey(*m_args)
-    monkey_process.init()
-    monkey_process.start()
-
-
 def wav2mp3():
     """ Run the wav to mp3 conversion process.
     """
-    if Hamlib is None:
-        print "Hamlib, and therefore avconv, is not installed - can not convert"
-        sys.exit(1)
     fsds = FsDataStore(DATA_PATH)
     while True:
         walk_convert(fsds.samples_path)

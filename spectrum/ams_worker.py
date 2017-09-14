@@ -6,11 +6,11 @@ from spectrum.common import log, parse_config, now
 from spectrum.config import AMS_SENSOR_ADDR, AMS_SENSOR_PORT
 from pyams import Sensor
 
-class AmsWorker(Process):
+class Worker(Process):
     """ Process implementation for spectrum scanning using a Keysight sensor.
     """
-    def __init__(self, data_store, run_path, config_file):
-        super(AmsWorker, self).__init__(data_store, run_path, config_file)
+    def __init__(self, data_store):
+        super(Worker, self).__init__(data_store, 'ams')
 
     def get_capabilities(self):
         return {'models': [{'model': 'Keysight Sensor'}], 'scan': { #FIXME can we remove 'models' as it isn't used (only for Rig)
@@ -56,4 +56,3 @@ class AmsWorker(Process):
                 self.status['sweep']['peaks'] = [{'freq_n': freq_n, 'strength': c_amps[freq_n]}]
                 config.write_spectrum(time_0, c_amps)
                 yield
-

@@ -6,18 +6,12 @@ log:
     path: /var/log/psm
     size: 1048576
 
-# Worker (spectrum scanner)
-worker:
-    config_file: /var/lib/psm/worker-config_id
-    run_path: /var/run/psm-worker
+run_path: /var/run/psm-$-worker
+config_path: /var/lib/psm/$-worker-config_id
 
 # Monkey (RDS decoder)
-monkey:
-    config_file: /var/lib/psm/monkey-config_id
-    run_path: /var/run/psm-monkey
-    poll: 1.0
+monkey_poll: 1.0
 
-elasticsearch: http://localhost:9200/
 export_directory: /tmp
 
 users_file: /var/lib/psm/users.passwords
@@ -121,9 +115,7 @@ default:
 
 # UI configuration
 ui_config:
-    widgets: ['keysight'] #FIXME this wants to be automatic...
-
-    table_columns: ['antenna', 'attenuation', 'preamp', 'window']
+    table_columns: ['antenna', 'attenuation', 'preamp', 'window'] #FIXME waaaat
 
     tick_interval: 1000
     hz_labels: {0: 'Hz', 3: 'kHz', 6: 'MHz', 9: 'GHz'}

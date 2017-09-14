@@ -22,8 +22,6 @@ export class ScanComponent extends WidgetBase {
 
   @ViewChild(WidgetComponent) widgetComponent;
 
-  @Input() caps: any;
-
   constructor(dataService: DataService, stateService: StateService) { super(dataService, stateService) }
 
   ngOnInit() {
@@ -32,10 +30,6 @@ export class ScanComponent extends WidgetBase {
       this.units.push({ value: value, label: hz[value] });
     }
     this.setViewChildren('scan', this.widgetComponent);
-  }
-
-  get capsKeys(): string[] {
-    return Object.keys(this.caps);
   }
 
   numeric(v): boolean {

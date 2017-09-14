@@ -31,6 +31,7 @@ spectrum/ui/npm-debug.log
 *.hex
 
 # Project specifics
+spectrum/bin/pid_kill
 *.wav
 pi_control
 secret.key

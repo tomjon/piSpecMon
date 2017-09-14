@@ -1,4 +1,4 @@
-<div class="container" [ngClass]="{'container-notitle': title == undefined}">
+<div *ngIf="enabled" class="container" [ngClass]="{'container-notitle': title == undefined}">
   <h1 *ngIf="title" (click)="toggle()">
     {{title}}
     <span *ngIf="show" class="toggle glyphicon glyphicon-collapse-down"></span>

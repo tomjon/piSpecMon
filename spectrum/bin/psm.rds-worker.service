@@ -1,14 +1,14 @@
 [Unit]
-Description=Pi Spectrum Monitor Worker Service
+Description=Pi Spectrum Monitor Monkey Service
 After=basic.target
 
 [Service]
 Type=idle
-ExecStart=/usr/local/bin/psm-worker
+ExecStart=/usr/local/bin/psm-rds-worker
 Restart=always
 RestartSec=1
 WorkingDirectory=~
-RuntimeDirectory=psm-worker
+RuntimeDirectory=psm-monkey
 User=ses
 Group=ses
 

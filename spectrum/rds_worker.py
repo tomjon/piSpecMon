@@ -23,7 +23,7 @@ from time import sleep, time
 from spectrum.common import log, parse_config, scan, now
 from spectrum.datastore import StoreError
 from spectrum.process import Process
-from spectrum.config import RDS_DEVICE
+from spectrum.config import RDS_DEVICE, MONKEY_POLL
 from spectrum.audio import AudioClient
 import os
 try:
@@ -31,12 +31,11 @@ try:
 except ImportError:
     from spectrum.fake_rds import RdsApi
 
-class Monkey(Process):
+class Worker(Process):
     """ Process implementation for decoding RDS using the Monkey board.
     """
-    def __init__(self, data_store, run_path, config_file, poll):
-        super(Monkey, self).__init__(data_store, run_path, config_file)
-        self.poll = poll
+    def __init__(self, data_store):
+        super(Worker, self).__init__(data_store, 'rds')
 
     # execute v=fn() until condition(v) is True, or the timeout is exceeded
     def _poll(self, fn, condition, timeout):
@@ -47,7 +46,7 @@ class Monkey(Process):
             yield v, c
             if c or time() - time_0 > timeout:
                 return
-            sleep(self.poll)
+            sleep(MONKEY_POLL)
 
     def iterator(self, config):
         """ Decode RDS, store data via the config object, and yield status.
@@ -161,7 +160,7 @@ class Monkey(Process):
                     log.exception(e)
                     return
 
-            sleep(self.poll)
+            sleep(MONKEY_POLL)
 
         yield None, True
 

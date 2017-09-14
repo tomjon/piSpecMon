@@ -19,11 +19,11 @@ def get_logger():
     logger.filename = '{0}.log'.format(os.path.basename(sys.argv[0]).replace('.py', ''))
     logger.path = os.path.join(LOG_PATH, logger.filename)
     rf_handler = logging.handlers.RotatingFileHandler(logger.path, maxBytes=LOG_SIZE, backupCount=0)
-    rf_handler.setLevel(logging.DEBUG)
+    rf_handler.setLevel(logging.INFO)
 
     # create console handler with a higher log level (these end up in system journal)
     c_handler = logging.StreamHandler()
-    c_handler.setLevel(logging.DEBUG if 'debug' in sys.argv else logging.ERROR)
+    c_handler.setLevel(logging.DEBUG if 'debug' in sys.argv else logging.WARN)
 
     # create formatter and add it to the handlers
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')

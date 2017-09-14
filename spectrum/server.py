@@ -42,9 +42,10 @@ def favicon_endpoint():
 @application.route('/caps')
 @application.role_required(['admin', 'freq', 'data'])
 def caps():
-    """ Serve rig capabilities JSON.
+    """ Serve worker capabilities JSON.
     """
-    return json.dumps(application.caps)
+    caps = dict((c.prefix, c.get_capabilities()) for c in application.clients)
+    return json.dumps(caps)
 
 
 @application.route('/settings')
@@ -80,14 +81,14 @@ def process():
         DELETE /process - stop processes
     """
     if request.method == 'GET':
-        return json.dumps({'worker': application.worker.status(),
-                           'monkey': application.monkey.status()})
+        status = dict((c.prefix, c.status()) for c in application.clients)
+        return json.dumps(status)
     elif request.method == 'PUT':
-        if 'config_id' in application.worker.status():
-            return "Worker already running", 400
-        if 'config_id' in application.monkey.status():
-            return "Monkey already running", 400
+        for c in application.clients:
+            if 'config_id' in c.status():
+                return "Worker '{0}' already running".format(c.prefix), 400
         values = {}
+        #FIXME this all gets tidied up, too
         values['rig'] = application.rig.values
         values['audio'] = application.audio.values
         values['rds'] = application.rds.values
@@ -100,18 +101,17 @@ def process():
         except StoreError as e:
             return e.message, 500
 
-        application.worker.start(config.id) #FIXME UI needs to choose which
-        application.monkey.start(config.id)
+        #FIXME UI needs to choose which by using either the query string or request body
+        for c in application.clients:
+            c.start(config.id)
+
         application.event_client.write(EVENT_START, config.values)
 
         return json.dumps({})
     elif request.method == 'DELETE':
         # stop process
-        if 'timestamp' not in application.worker.status() and \
-           'timestamp' not in application.monkey.status():
-            return "Neither Worker nor Monkey are running", 400
-        application.worker.stop()
-        application.monkey.stop()
+        for c in application.clients:
+            c.stop()
         application.event_client.write(EVENT_STOP, {})
         return json.dumps({})
 
@@ -140,10 +140,9 @@ def config_endpoint(config_ids=None):
                 return "No config ids specified to delete", 400
             for config_id in config_ids.split(','):
                 # check the config id is not in use
-                if application.worker.status().get('config_id', None) == config_id:
-                    return "Cannot delete config under running spectrum sweep", 400
-                if application.monkey.status().get('config_id', None) == config_id:
-                    return "Cannot delete config under running RDS sweep", 400
+                for c in application.clients:
+                    if c.status().get('config_id', None) == config_id:
+                        return "Cannot delete config under running spectrum sweep", 400
                 # delete config and associated data
                 application.data_store.config(config_id).delete()
             return json.dumps({})

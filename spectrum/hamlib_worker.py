@@ -1,13 +1,14 @@
-""" Define Worker process, for scanning the spectrum using the rig.
+""" Define Worker process, for scanning the spectrum using the rig (Hamlib).
 """
 import os
+import Hamlib
 from time import sleep
 from spectrum.process import Process
 from spectrum.common import log, parse_config, now, scan
-from spectrum.monitor import Monitor, TimeoutError, Recorder, get_capabilities
+from spectrum.monitor import Monitor, TimeoutError, get_capabilities
 from spectrum.audio import AudioClient
 from spectrum.power import power_on
-from spectrum.config import PICO_PATH, RIG_DEVICE
+from spectrum.config import PICO_PATH, RIG_DEVICE, RADIO_ON_SLEEP_SECS
 
 try:
     import smbus
@@ -23,11 +24,10 @@ def read_temp():
 
 
 class Worker(Process):
-    """ Process implementation for spectrum scanning using the rig.
+    """ Process implementation for spectrum scanning using the Hamlib rig.
     """
-    def __init__(self, data_store, run_path, config_file, radio_on_sleep_secs):
-        super(Worker, self).__init__(data_store, run_path, config_file)
-        self.radio_on_sleep_secs = radio_on_sleep_secs
+    def __init__(self, data_store):
+        super(Worker, self).__init__(data_store, 'hamlib')
 
     # try fn() handling timeout errors until the number of attempts is exceeded
     def _timeout_try(self, attempts, fn, *args):
@@ -40,12 +40,18 @@ class Worker(Process):
                     timeout_count += 1
                     log.error(e)
                     power_on()
-                    sleep(self.radio_on_sleep_secs) # give the rig chance to power up
+                    sleep(RADIO_ON_SLEEP_SECS) # give the rig chance to power up
                 else:
                     raise e
 
     def get_capabilities(self):
         return get_capabilities()
+
+    def start(self):
+        with open(log.path, 'a') as f:
+            Hamlib.rig_set_debug_file(f)
+            Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
+        super(Worker, self).start()
 
     def iterator(self, config):
         """ Scan the spectrum, storing data through the config object, and yield status.

@@ -43,7 +43,9 @@ export class TableComponent {
   @Input('status') set _status(status) {
     if (status == undefined) return;
     this.standby = false;
-    this.config_id = status.worker.config_id || status.monkey.config_id;
+    for (let key in status) {
+      if (status[key].config_id) this.config_id = status[key].config_id;
+    }
     if (! this.config_id) return;
 
     let config: Config = this.configs.find(set => set.id == this.config_id);

@@ -9,7 +9,7 @@ import sys
 import traceback
 from spectrum.common import log, now
 from spectrum.datastore import StoreError
-from spectrum.config import PID_KILL_PATH
+from spectrum.config import PID_KILL_PATH, RUN_PATH, CONFIG_PATH
 
 def kill(pid, signum):
     cmd = "{0} {1} {2}".format(PID_KILL_PATH, signum, pid)
@@ -27,8 +27,10 @@ class Process(object):
 
         Sub-classes may need to override get_capabilities().
     """
-    def __init__(self, data_store, run_path, config_file):
+    def __init__(self, data_store, prefix):
         self.data_store = data_store
+        self.prefix = prefix
+        run_path = RUN_PATH.replace('$', prefix)
         try:
             os.makedirs(run_path)
         except OSError:
@@ -36,7 +38,7 @@ class Process(object):
         self.pid_file = os.path.join(run_path, 'pid')
         self.status_file = os.path.join(run_path, 'status')
         self.caps_file = os.path.join(run_path, 'caps')
-        self.config_file = config_file
+        self.config_file = CONFIG_PATH.replace('$', prefix)
         self._exit = False
         self._stop = False
         self._tidy = False
@@ -184,6 +186,7 @@ class Client(object):
     """
     def __init__(self, process):
         self.process = process
+        self.prefix = process.prefix
         self.pid = None
         self.error = None
 
@@ -242,29 +245,6 @@ class Client(object):
         """
         if self.read_pid() is not None:
             kill(self.pid, signal.SIGINT if tidy else signal.SIGTERM)
-
-class NoClient(object):
-    """ Client class used to for a non-existant process.
-    """
-    def status(self):
-        """ Read and return the process status.
-        """
-        return {'error': 'No process'}
-
-    def start(self, config_id):
-        """ Tell the process to start processing the specified config id.
-        """
-        pass
-
-    def stop(self):
-        """ Tell the process to stop processing.
-        """
-        pass
-
-    def exit(self, tidy=True):
-        """ Tell the process to exit.
-        """
-        pass
 
 
 class ProcessError(Exception):
