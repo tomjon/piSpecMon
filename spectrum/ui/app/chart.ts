@@ -15,9 +15,9 @@ export abstract class Chart {
   }
 
   init() {
-    this.options = this.dataService.constants[this.name + '_chart_options'];
-    this.max_n = this.dataService.constants.max_n;
-    this.hz = this.dataService.constants.hz_labels;
+    this.options = this.stateService.constants[this.name + '_chart_options'];
+    this.max_n = this.stateService.constants.max_n;
+    this.hz = this.stateService.constants.hz_labels;
   }
 
   get viewBox(): string {

@@ -18,6 +18,6 @@ export class RigComponent extends WidgetBase {
   constructor(dataService: DataService, stateService: StateService) { super(dataService, stateService) }
 
   ngOnInit() {
-    this.setViewChildren('rig', this.widgetComponent);
+    this.setViewChildren('rig', this.widgetComponent, 'hamlib');
   }
 }

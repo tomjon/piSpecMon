@@ -16,13 +16,13 @@ export class StateService {
   public configChange: Subject<Config> = new Subject<Config>();
 
   // these will get set at app initialisation (nothing shows before these are set)
+  public caps: {};
   public user: User;
   public values: any; // the current server settings (back to which we can reset, or replace on submit)
+  public constants: any;
 
   //FIXME mechanism for AppComponent to get list of all widgets... hopefully something better in angular 4
   public widgets: WidgetBase[] = [];
-
-  public caps: {};
 
   constructor(private dataService: DataService) {}
 
@@ -44,7 +44,7 @@ export class StateService {
   }
 
   get ready(): boolean {
-    return this.user != undefined && this.values != undefined && this.caps != undefined;
+    return this.user != undefined && this.values != undefined && this.caps != undefined && this.constants != undefined;
   }
 
   // registered charts FIXME this feels like a horrible mechanism :( use a Subject instead?
@@ -58,5 +58,14 @@ export class StateService {
     for (let chart of this.charts) {
       chart.reset();
     }
+  }
+
+  public getWorkers(): any[] {
+    let workers = [];
+    for (let value in this.caps) {
+      let label = this.constants.worker_labels[value] || '[unknown worker]';
+      workers.push({value: value, label: label, enabled: true});
+    }
+    return workers;
   }
 }

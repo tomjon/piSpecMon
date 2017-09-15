@@ -1,13 +1,13 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { DataService } from './data.service';
+import { StateService } from './state.service';
 
 @Pipe({ name: 'freq' })
 export class FreqPipe implements PipeTransform {
-  constructor(private dataService: DataService) {}
+  constructor(private stateService: StateService) {}
 
   // used in templates like: freq_n | freq:values
   transform(freq_n: number, values: any): string {
-    let hz = this.dataService.constants.hz_labels;
+    let hz = this.stateService.constants.hz_labels;
     let r: string = null;
     if (values == undefined) {
       return '[no values specified]';

@@ -120,11 +120,13 @@ rect.audio {
   background: initial;
 }
 
-/* specials for the scanner */
+/* status displays */
 .status {
   background: lightgreen;
   padding: 10px;
   margin-bottom: 15px;
+  display: inline-block;
+  vertical-align: top;
 }
 .status h2 {
   font-size: 16px;
@@ -136,8 +138,10 @@ rect.audio {
 .status.error {
   background: pink;
 }
+
+/* specials for the Hamlib scanner */
 .freqlist {
-  margin-bottom: 0;
+  margin-bottom: 10px;
 }
 psm-scan .message {
   padding-bottom: 10px;

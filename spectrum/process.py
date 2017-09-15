@@ -130,7 +130,6 @@ class Process(object):
                                     break
                         except BaseException as e: # pylint: disable=broad-except
                             log.exception(e)
-                            traceback.print_exc()
                             config.write_error(now(), e)
                 if os.path.isfile(self.status_file):
                     os.remove(self.status_file)

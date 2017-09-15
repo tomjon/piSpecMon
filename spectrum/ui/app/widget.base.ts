@@ -12,13 +12,15 @@ declare var $;
 export abstract class WidgetBase {
   private _widgetComponent: WidgetComponent;
   public _key: string; //FIXME make back into private and move process/status stuff into here (maybe)
+  public _reqs_caps: string; //FIXME horrible - how else to indicate the dependency? (on what exactly)
 
   private _values: any; // input values
 
   constructor(protected dataService: DataService, protected stateService: StateService) {}
 
   //FIXME this is really bad
-  protected setViewChildren(key: string, widgetComponent: WidgetComponent) {
+  protected setViewChildren(key: string, widgetComponent: WidgetComponent, reqs_caps?: string) {
+    if (reqs_caps != undefined) this._reqs_caps = reqs_caps;
     this._key = key;
     this._widgetComponent = widgetComponent;
     widgetComponent.widgetBase = this; //FIXME yuck!
@@ -35,7 +37,7 @@ export abstract class WidgetBase {
   }
 
   get caps(): any {
-    return this.stateService.caps[this._key] || {};
+    return this.stateService.caps[this._reqs_caps] || {};
   }
 
   get capsKeys(): string[] {

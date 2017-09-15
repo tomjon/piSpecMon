@@ -46,15 +46,13 @@ let modelSort = function (a, b) {
   pipes: [ DatePipe, FreqPipe ]
 })
 export class AppComponent {
-  constants: any;
-
   user: User; //FIXME get rid - use stateService.user
   models: any[] = [ ];
   caps: any = {'scan': {}};
 
-  status: any = {worker: {}, monkey: {}};
+  status: any = {};
 
-  values: any; //FIXME config values pulled out of the table component matching the latest status update
+  values: any = {}; //FIXME config values pulled out of the table component matching the latest status update
 
   constructor(private dataService: DataService, private stateService: StateService, private messageService: MessageService) { }
 
@@ -79,7 +77,7 @@ export class AppComponent {
                     });
     this.dataService.getConstants()
                     .subscribe(constants => {
-                      this.constants = constants; //FIXME constants could/should now be on state service? (include in readiness)
+                      this.stateService.constants = constants;
                       setInterval(this.monitor.bind(this), constants.tick_interval);
                     });
   }
@@ -97,11 +95,8 @@ export class AppComponent {
     this.status = status;
     if (status != undefined) {
       let config_id: string = undefined;
-      if (status.worker) {
-        config_id = status.worker.config_id;
-      }
-      if (config_id == undefined && status.monkey) {
-        config_id = status.monkey.config_id;
+      for (let key in status) {
+        config_id = status[key].config_id;
       }
       if (config_id != undefined) {
         let config: Config = this.table.getConfig(config_id);

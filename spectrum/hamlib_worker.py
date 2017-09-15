@@ -58,6 +58,7 @@ class Worker(Process):
         """
         scan_config = parse_config(config.values)
         audio_t = 0 if config.values['scan']['audio'] else None
+        audio_t = 0 if config.values['scan']['audio']['enabled'] else None
         attempts = config.values['rig']['radio_on']
         threshold = config.values['scan']['audio']['threshold']
         period = config.values['scan']['audio']['period']

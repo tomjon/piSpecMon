@@ -79,6 +79,11 @@ def process():
         GET /process - return process status for all (running) processes
         PUT /process - start processes
         DELETE /process - stop processes
+
+        For PUT /process, the request body specifies which workers to run and
+        the description for the run in JSON format:
+
+        { "workers": ["hamlib", "rds"], "description": "foo" }
     """
     if request.method == 'GET':
         status = dict((c.prefix, c.status()) for c in application.clients)
@@ -87,8 +92,13 @@ def process():
         for c in application.clients:
             if 'config_id' in c.status():
                 return "Worker '{0}' already running".format(c.prefix), 400
+
+        params = request.get_json()
         values = {}
-        #FIXME this all gets tidied up, too
+        values['description'] = params.get('description', '')
+        values['workers'] = params.get('workers', [])
+
+        #FIXME this all gets tidied up, too, perhaps into values['values']
         values['rig'] = application.rig.values
         values['audio'] = application.audio.values
         values['rds'] = application.rds.values
@@ -96,13 +106,16 @@ def process():
         values['ident'] = application.ident
         values['user'] = current_user.name
 
+        clients = [c for c in application.clients if c.prefix in values['workers']]
+        if len(clients) == 0:
+            return "No valid workers specified", 400
+
         try:
             config = application.data_store.config().write(now(), values)
         except StoreError as e:
             return e.message, 500
 
-        #FIXME UI needs to choose which by using either the query string or request body
-        for c in application.clients:
+        for c in clients:
             c.start(config.id)
 
         application.event_client.write(EVENT_START, config.values)

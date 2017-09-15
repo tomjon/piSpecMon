@@ -25,7 +25,7 @@ export class Data {
 
   constructor(private stateService: StateService, private dataService: DataService, config: Config) {
     this.config = config;
-    this.max_n = dataService.constants.max_n; //FIXME why is this on data? Why not just collect from dataService whereever this is used?
+    this.max_n = stateService.constants.max_n; //FIXME why is this on data? Why not just collect from dataService whereever this is used?
     this.freqs = config.values.rds.freqs; //FIXME oh dear
     this.count = 0;
     this.spectrum = {

@@ -44,8 +44,8 @@ export class WidgetComponent {
   }
 
   get enabled(): boolean {
-    let caps: any = this.stateService.caps;
-    return this.widgetBase && caps && (this.widgetBase._key == undefined || caps._key != undefined);
+    if (this.widgetBase == undefined || this.widgetBase._key == undefined || ! this.widgetBase._reqs_caps) return true;
+    return this.stateService.caps[this.widgetBase._reqs_caps] != undefined;
   }
 
   toggle() {

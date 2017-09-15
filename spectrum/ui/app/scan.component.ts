@@ -7,15 +7,15 @@ import { Config } from './config';
 import { User } from './user';
 import { DatePipe } from './date.pipe';
 import { FreqPipe } from './freq.pipe';
+import { InputDirective } from './input.directive';
 
 declare var $;
 
 @Component({
   selector: 'psm-scan',
   templateUrl: 'templates/scan.html',
-  directives: [ WidgetComponent ],
-  pipes: [ DatePipe, FreqPipe ],
-  styles: ['.scan-cap label { text-transform: capitalize }']
+  directives: [ WidgetComponent, InputDirective ],
+  pipes: [ DatePipe, FreqPipe ]
 })
 export class ScanComponent extends WidgetBase {
   units: any[] = [];
@@ -25,11 +25,11 @@ export class ScanComponent extends WidgetBase {
   constructor(dataService: DataService, stateService: StateService) { super(dataService, stateService) }
 
   ngOnInit() {
-    let hz = this.dataService.constants.hz_labels;
+    let hz = this.stateService.constants.hz_labels;
     for (let value in hz) {
       this.units.push({ value: value, label: hz[value] });
     }
-    this.setViewChildren('scan', this.widgetComponent);
+    this.setViewChildren('scan', this.widgetComponent, 'hamlib');
   }
 
   numeric(v): boolean {

@@ -115,11 +115,15 @@ default:
 
 # UI configuration
 ui_config:
-    table_columns: ['antenna', 'attenuation', 'preamp', 'window'] #FIXME waaaat
-
     tick_interval: 1000
     hz_labels: {0: 'Hz', 3: 'kHz', 6: 'MHz', 9: 'GHz'}
     max_n: 10
+
+    worker_labels:
+        hamlib: Hamlib Receiver
+        rds: Monkeyboard RDS
+        sdr: SDRPlay
+        ams: Keysight Sensor
 
     frequency_chart_options:
         y_axis: [-128, -32, 16]

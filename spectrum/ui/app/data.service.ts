@@ -9,16 +9,11 @@ import { ErrorService } from './error.service';
 export class DataService {
   private baseUrl = '/';
 
-  public constants: any;
-
   constructor(private http: Http, private errorService: ErrorService) { }
 
   getConstants(): Observable<any> {
     return this.http.get(`${this.baseUrl}constants`)
-                    .map(res => {
-                      this.constants = res.json();
-                      return this.constants;
-                    })
+                    .map(res => res.json())
                     .catch(this.errorHandler("get UI cpnstants"));
   }
 
@@ -144,8 +139,11 @@ export class DataService {
                     .catch(this.errorHandler(`get process status`));
   }
 
-  start(): Observable<void> {
-    return this.http.put(`${this.baseUrl}process`, null)
+  start(workers: string[], description: string): Observable<void> {
+    let body = JSON.stringify({workers: workers, description: description});
+    let headers = new Headers({ 'Content-Type': 'application/json' });
+    let options = new RequestOptions({ headers: headers });
+    return this.http.put(`${this.baseUrl}process`, body, options)
                     .map(res => res.json())
                     .catch(this.errorHandler(`start process`));
   }

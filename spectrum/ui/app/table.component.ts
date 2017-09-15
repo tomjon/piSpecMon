@@ -16,13 +16,14 @@ import { UnitsPipe } from './units.pipe';
   styles: ['.scan-cap { text-transform: capitalize }']
 })
 export class TableComponent {
-  @Input() caps: any;
   @Input() user: User;
   @Output('select') select = new EventEmitter<Config>();
 
   configs: Config[] = [ ];
   checked: any = { };
   selected: string;
+
+  workers: any[] = [];
 
   // true when waiting for (real) status after startup
   standby: boolean = true;
@@ -32,9 +33,6 @@ export class TableComponent {
 
   // rds checkbox for export/download
   rds: boolean = false;
-
-  // columns we want shown from scan config
-  columns: string[] = [];
 
   @ViewChild(WidgetComponent) widgetComponent;
 
@@ -59,20 +57,24 @@ export class TableComponent {
                           });
     } else {
       // otherwise, update the one we have
-      let sweep = status.worker.sweep || status.monkey.sweep;
-      if (sweep) {
-        config.count = sweep.sweep_n;
-        if (sweep.timestamp) {
-          config.latest = sweep.timestamp;
+      let max_count = 0;
+      let max_latest = 0;
+      for (let key in status) {
+        //FIXME there is probably a nicer way to do this max stuff
+        if (status[key].sweep) {
+          max_count = Math.max(max_count, status[key].sweep.sweep_n);
+          max_latest = Math.max(max_latest, status[key].sweep.timestamp);
         }
       }
+      config.count = max_count;
+      config.latest = max_latest;
     }
   }
 
   ngOnInit() {
     this.widgetComponent.busy(this.dataService.getConfig())
                         .subscribe(configs => this.configs = configs);
-    this.columns = this.dataService.constants.table_columns;
+    this.workers = this.stateService.getWorkers();
   }
 
   onSelect(config_id, e) {
@@ -143,15 +145,8 @@ export class TableComponent {
     window.open('/export/' + this.selected + args, '_blank');
   }
 
-  label(column, value): string {
-    for (let m of this.caps.scan[column] || []) {
-      if (m.value == value) return m.label;
-    }
-    return null;
-  }
-
-  get loading() {
-    return this.widgetComponent.loading;
+  workerEnabled(config: Config, value: string): boolean {
+    return config.values.workers.indexOf(value) != -1;
   }
 
   running(config: Config): boolean {

@@ -1,29 +1,29 @@
 <psm-widget title="Receiver Scanner">
   <form role="form" #form="ngForm" novalidate>
-    <div *ngFor="let key of capsKeys" class="form-group scan-cap">
-      <label [attr.for]="key">{{key}}</label>
-      <select class="form-control" [disabled]="disabled" [(ngModel)]="config.scan[key]" name="{{key}}">
-        <option *ngFor="let o of caps[key]" [value]="o.value">{{o.label}}</option>
+    <div class="form-group">
+      <label [attr.for]="mode">Mode</label>
+      <select psmInput class="form-control" [(ngModel)]="values.mode" name="mode">
+        <option *ngFor="let o of caps.modes" [value]="o.value">{{o.label}}</option>
       </select>
     </div>
-    <div *ngIf="values.freqs != undefined" class="form-group">
+    <div class="form-group">
       <label for="start">Frequency range</label>
-      <input [disabled]="disabled" type="checkbox" (ngModelChange)="freqsEnabled = rangeEnabled" [(ngModel)]="rangeEnabled" class="toggle" name="range">
+      <input psmInput type="checkbox" (ngModelChange)="freqsEnabled = rangeEnabled" [(ngModel)]="rangeEnabled" class="toggle" name="range">
       <div>
         <div class="psm-input-group col-lg-3">
-          <input [disabled]="disabled || ! rangeEnabled" type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[0]" name="start" #start="ngModel">
+          <input psmInput [disabled]="! rangeEnabled" type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[0]" name="start" #start="ngModel">
           <div class="help">start</div>
         </div>
         <div class="psm-input-group col-lg-3">
-          <input [disabled]="disabled || ! rangeEnabled" type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[1]" name="end" #end="ngModel">
+          <input psmInput [disabled]="! rangeEnabled" type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[1]" name="end" #end="ngModel">
           <div class="help">end</div>
         </div>
         <div class="psm-input-group col-lg-3">
-          <input [disabled]="disabled || ! rangeEnabled" type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[2]" name="step" #step="ngModel">
+          <input psmInput [disabled]="! rangeEnabled" type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[2]" name="step" #step="ngModel">
           <div class="help">step</div>
         </div>
         <div class="psm-input-group col-lg-3">
-          <select class="form-control" [disabled]="disabled || ! rangeEnabled" [(ngModel)]="values.freqs[0].exp" name="units">
+          <select psmInput class="form-control" [disabled]="! rangeEnabled" [(ngModel)]="values.freqs[0].exp" name="units">
             <option *ngFor="let u of units" value="{{u.value}}">{{u.label}}</option>
           </select>
           <div class="help">units</div>
@@ -38,15 +38,15 @@
     </div>
     <div class="form-group freqlist">
       <label>Discrete frequencies</label>
-      <input [disabled]="disabled" type="checkbox" (ngModelChange)="rangeEnabled = freqsEnabled" [(ngModel)]="freqsEnabled" class="toggle" name="freqs">
-      <div class="form-group" *ngFor="let freq of values.freqs; let n = index; let last = last">
+      <input psmInput type="checkbox" (ngModelChange)="rangeEnabled = freqsEnabled" [(ngModel)]="freqsEnabled" class="toggle" name="freqs">
+      <div *ngFor="let freq of values.freqs; let n = index; let last = last">
         <ng-container *ngIf="freq.range == undefined">
           <div class="psm-input-group col-lg-3">
-            <input [disabled]="disabled || ! freqsEnabled" type="text" required class="form-control" [(ngModel)]="freq.freq" name="value_{{n}}">
+            <input psmInput [disabled]="! freqsEnabled" type="text" required class="form-control" [(ngModel)]="freq.freq" name="value_{{n}}">
             <div *ngIf="last" class="help">value</div>
           </div>
           <div class="psm-input-group col-lg-3">
-            <select class="form-control" [disabled]="disabled || ! freqsEnabled" [(ngModel)]="freq.exp" name="units_{{n}}">
+            <select psmInput class="form-control" [disabled]="! freqsEnabled" [(ngModel)]="freq.exp" name="units_{{n}}">
               <option *ngFor="let u of units" value="{{u.value}}">{{u.label}}</option>
             </select>
             <div *ngIf="last" class="help">units</div>
@@ -66,14 +66,14 @@
     <div class="form-group">
       <div class="psm-input-group col-lg-6">
         <label for="audio">Collect audio</label>
-        <select [disabled]="disabled" class="form-control" [(ngModel)]="values.audio.enabled" name="audio">
+        <select psmInput class="form-control" [(ngModel)]="values.audio.enabled" name="audio">
           <option [ngValue]="true">On</option>
           <option [ngValue]="false">Off</option>
         </select>
       </div>
       <div class="psm-input-group col-lg-6">
         <label for="duration">Sample duration (s)</label>
-        <input [disabled]="disabled" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="values.audio.duration" name="duration" #duration="ngModel">
+        <input psmInput type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="values.audio.duration" name="duration" #duration="ngModel">
       </div>
     </div>
     <div [hidden]="duration.valid || duration.pristine" class="alert alert-danger">
@@ -82,11 +82,11 @@
     <div class="form-group">
       <div class="psm-input-group col-lg-6">
         <label for="threshold">Level threshold (dB)</label>
-        <input [disabled]="disabled" type="number" pattern="-?[0-9]+" required class="form-control" [(ngModel)]="values.audio.threshold" name="threshold" #threshold="ngModel">
+        <input psmInput type="number" pattern="-?[0-9]+" required class="form-control" [(ngModel)]="values.audio.threshold" name="threshold" #threshold="ngModel">
       </div>
       <div class="psm-input-group col-lg-6">
         <label for="period">Sample period (s)</label>
-        <input [disabled]="disabled" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="values.audio.period" name="period" #period="ngModel">
+        <input psmInput type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="values.audio.period" name="period" #period="ngModel">
       </div>
     </div>
     <div [hidden]="threshold.valid || threshold.pristine" class="alert alert-danger">
@@ -95,11 +95,5 @@
     <div [hidden]="period.valid || period.pristine" class="alert alert-danger">
       Sample period is a required integer parameter
     </div>
-    <div class="form-group">
-      <label for="description">Description</label>
-      <input type="text" class="form-control" [disabled]="disabled" [(ngModel)]="values.description" name="description"/>
-    </div>
-    <button (click)="onStart()" class="btn btn-default" [disabled]="disabled || running || ! validScan">Start</button>
-    <button (click)="onStop()" class="btn btn-default" [disabled]="disabled || ! running">Stop</button>
   </form>
 </psm-widget>

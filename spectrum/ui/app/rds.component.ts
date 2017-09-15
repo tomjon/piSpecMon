@@ -22,11 +22,11 @@ export class RdsComponent extends WidgetBase {
 
   ngOnInit() {
     //FIXME repeated code from scan.component.ts
-    let hz = this.dataService.constants.hz_labels;
+    let hz = this.stateService.constants.hz_labels;
     for (let value in hz) {
       this.units.push({ value: value, label: hz[value] });
     }
-    this.setViewChildren('rds', this.widgetComponent);
+    this.setViewChildren('rds', this.widgetComponent, 'rds');
   }
 
   get scanEnabled(): boolean {
