@@ -96,7 +96,7 @@ default:
             enabled: false
         duration: 10
 
-    scan_settings:
+    hamlib_settings:
         mode: 64
         freqs:
           - enabled: true

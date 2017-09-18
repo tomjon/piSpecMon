@@ -101,7 +101,7 @@ def _convert(dic):
 
 
 #FIXME prefer to do the interpretation of freq specs, to produce a generator, in one step
-def parse_config(config, module='scan'):
+def parse_config(config, module):
     """ Convert the given config using _convert, and return parsed scan settings.
         The return value may be fed into scan().
     """

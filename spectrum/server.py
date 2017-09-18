@@ -57,7 +57,7 @@ def settings(key=None):
     if request.method == 'GET':
         # return all settings
         values = {'ident': application.ident}
-        for key in ['rig', 'audio', 'rds', 'keysight', 'scan']: #FIXME improve by storing rig, audio, .. in a dict on the app
+        for key in ['rig', 'audio', 'rds', 'keysight', 'hamlib']: #FIXME improve by storing rig, audio, .. in a dict on the app
             values[key] = getattr(application, key).values
         return json.dumps(values)
     else:
@@ -65,7 +65,7 @@ def settings(key=None):
         if key == 'ident':
             application.set_ident(request.get_json()) #FIXME treat ident same as other keys by storing ident differently?
             application.event_client.write(EVENT_IDENT, application.ident)
-        elif key in ['rig', 'audio', 'rds', 'keysight', 'scan']:#FIXME as above; also, application.keysight does not exist (the worker uses psm.yml settings)
+        elif key in ['rig', 'audio', 'rds', 'keysight', 'hamlib']:#FIXME as above; also, application.keysight does not exist (the worker uses psm.yml settings)
             getattr(application, key).write(request.get_json())
         else:
             return "Key not found", 404
@@ -102,7 +102,7 @@ def process():
         values['rig'] = application.rig.values
         values['audio'] = application.audio.values
         values['rds'] = application.rds.values
-        values['hamlib'] = application.scan.values
+        values['hamlib'] = application.hamlib.values
         values['ident'] = application.ident
         values['user'] = current_user.name
 

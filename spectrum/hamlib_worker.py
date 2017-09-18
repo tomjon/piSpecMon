@@ -48,20 +48,21 @@ class Worker(Process):
         return get_capabilities()
 
     def start(self):
-        with open(log.path, 'a') as f:
-            Hamlib.rig_set_debug_file(f)
-            Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
+        #FIXME the following causes a malloc() error! is log.path ok?
+        #with open(log.path, 'a') as f:
+        #    Hamlib.rig_set_debug_file(f)
+        #    Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
         super(Worker, self).start()
 
     def iterator(self, config):
         """ Scan the spectrum, storing data through the config object, and yield status.
         """
-        scan_config = parse_config(config.values)
-        audio_t = 0 if config.values['scan']['audio'] else None
-        audio_t = 0 if config.values['scan']['audio']['enabled'] else None
+        scan_config = parse_config(config.values, 'hamlib')
+        values = config.values['hamlib']
+        audio_t = 0 if values['audio']['enabled'] else None
         attempts = config.values['rig']['radio_on']
-        threshold = config.values['scan']['audio']['threshold']
-        period = config.values['scan']['audio']['period']
+        threshold = values['audio']['threshold']
+        period = values['audio']['period']
 
         self.status.clear()
         yield
@@ -75,10 +76,10 @@ class Worker(Process):
         monitor = None
         try:
             monitor = self._timeout_try(attempts, _monitor_open, config)
-            self._timeout_try(attempts, monitor.set_mode, config.values['scan']['mode'])
+            self._timeout_try(attempts, monitor.set_mode, config.values['hamlib']['mode'])
             sweep_n = 0
             while True:
-                log.debug("Scan: %s %s", config.values['scan'], scan_config)
+                log.debug("Config: %s %s", values, scan_config)
 
                 time_0 = now()
                 strengths = []
@@ -154,5 +155,5 @@ class Worker(Process):
                 for count, _ in enumerate(audio):
                     self.status['sweep']['record']['strength'] = monitor.get_strength()
                     yield
-                    if count >= config.values['scan']['audio']['duration']: break
+                    if count >= config.values['hamlib']['audio']['duration']: break
                 audio.write(path)

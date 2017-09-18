@@ -29,7 +29,7 @@ export class ScanComponent extends WidgetBase {
     for (let value in hz) {
       this.units.push({ value: value, label: hz[value] });
     }
-    this.setViewChildren('scan', this.widgetComponent, 'hamlib');
+    this.setViewChildren('hamlib', this.widgetComponent, 'hamlib');
   }
 
   numeric(v): boolean {

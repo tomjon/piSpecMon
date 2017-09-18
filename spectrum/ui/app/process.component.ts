@@ -24,10 +24,10 @@ import { DatePipe } from './date.pipe';
                    <h2 *ngIf="hamlib.timestamp">{{label('hamlib')}} status at {{hamlib.timestamp | date}}</h2>
                    <div *ngIf="hamlib.sweep">
                      <span>Scan {{hamlib.sweep.sweep_n + 1}} started at {{hamlib.sweep.timestamp | date}}</span>
-                     <span *ngFor="let peak of hamlib.sweep.peaks">Peak {{peak.strength}}dB at {{peak.freq_n | freq:values.scan}}</span>
-                     <span *ngIf="hamlib.sweep.previous">{{hamlib.sweep.previous.strength}}dB at {{hamlib.sweep.previous.freq_n | freq:values.scan}}</span>
-                     <span *ngIf="hamlib.sweep.current">Reading strength at {{hamlib.sweep.current.freq_n | freq:values.scan}}...</span>
-                     <span *ngIf="hamlib.sweep.record">Recording audio sample at {{hamlib.sweep.record.freq_n | freq:values.scan}}...</span>
+                     <span *ngFor="let peak of hamlib.sweep.peaks">Peak {{peak.strength}}dB at {{peak.freq_n | freq:values.hamlib}}</span>
+                     <span *ngIf="hamlib.sweep.previous">{{hamlib.sweep.previous.strength}}dB at {{hamlib.sweep.previous.freq_n | freq:values.hamlib}}</span>
+                     <span *ngIf="hamlib.sweep.current">Reading strength at {{hamlib.sweep.current.freq_n | freq:values.hamlib}}...</span>
+                     <span *ngIf="hamlib.sweep.record">Recording audio sample at {{hamlib.sweep.record.freq_n | freq:values.hamlib}}...</span>
                    </div>
                    <span *ngIf="hamlib.error">{{hamlib.error}}</span>
                  </div>
