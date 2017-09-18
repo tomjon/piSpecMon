@@ -23,6 +23,7 @@ export class TableComponent {
   checked: any = { };
   selected: string;
 
+  // descriptor for each available worker
   workers: any[] = [];
 
   // true when waiting for (real) status after startup
@@ -147,6 +148,55 @@ export class TableComponent {
 
   workerEnabled(config: Config, value: string): boolean {
     return config.values.workers.indexOf(value) != -1;
+  }
+
+  // table summary string for the worker (column) config (row)
+  //FIXME how to avoid the horrible switch?
+  //FIXME consider, instead of config.values.workers, having an 'enabled' switch in each config.values.rds etc.
+  configSummary(config: Config, worker: any) {
+    if (! config.values.workers.includes(worker.value)) {
+      // show that the worker is not enabled
+      return '✘';
+    }
+    let key = worker.value;
+    let values = config.values[key];
+    if (values == undefined) return '✔'; // best we can do now is show that the worker is enabled
+    switch (key) {
+    case 'hamlib':
+      if (values.freqs[0].enabled) {
+        let range = values.freqs[0].range;
+        let exp = values.freqs[0].exp;
+        let hz = this.stateService.constants.hz_labels[exp];
+        return `${range[0]} - ${range[1]} (Δ ${range[2]}) ${hz}`;
+      }
+      let bits = [];
+      for (let freq of values.freqs.filter(f => f.enabled)) {
+        let hz = this.stateService.constants.hz_labels[freq.exp];
+        bits.push(`${freq.freq}${hz}`);
+        if (bits.length == 2) {
+          bits.push('…');
+          break;
+        }
+      }
+      return bits.join(' ');
+    case 'rds':
+      if (values.scan.enabled) {
+        return `Scan (FM band)`;
+      }
+      if (values.freqs[1].enabled) {
+        return `Static (${values.freqs[1].freq}MHz)`;
+      }
+    default:
+      return '✔';
+    }
+  }
+
+  audioEnabled(config: Config, worker: any) {
+    if (! config.values.workers.includes(worker.value)) {
+      return false;
+    }
+    let values = config.values[worker.value];
+    return values != undefined && values.audio != undefined && values.audio.enabled;
   }
 
   running(config: Config): boolean {

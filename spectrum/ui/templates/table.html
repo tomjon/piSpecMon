@@ -14,11 +14,10 @@
         <td>{{config.values.user}}</td>
         <td>{{config.timestamp | date}}</td>
         <td>{{config.latest | date}}</td>
-        <!--td>
-          <ng-container *ngIf="config.values.rds && config.values.rds.scan.enabled">Scan (FM band)</ng-container>
-          <ng-container *ngIf="config.values.rds && config.values.rds.freqs[1].enabled">Static ({{config.values.rds.freqs[1].freq}}MHz)</ng-container>
-        </td-->
-        <td *ngFor="let worker of workers" class="feature">{{workerEnabled(config, worker.value) ? '✔' : '✘'}}</td>
+        <td *ngFor="let worker of workers" class="feature">
+          <span *ngIf="audioEnabled(config, worker)" class="glyphicon glyphicon-volume-up"></span>
+          {{configSummary(config, worker)}}
+        </td>
         <td class="indicator">
           <div *ngIf="user.roleIn(['admin']) || running(config)">
             <input *ngIf="! running(config)" type="checkbox" [disabled]="standby" [(ngModel)]="checked[config.id]">

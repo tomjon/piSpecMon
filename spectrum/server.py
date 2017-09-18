@@ -102,7 +102,7 @@ def process():
         values['rig'] = application.rig.values
         values['audio'] = application.audio.values
         values['rds'] = application.rds.values
-        values['scan'] = application.scan.values
+        values['hamlib'] = application.scan.values
         values['ident'] = application.ident
         values['user'] = current_user.name
 
