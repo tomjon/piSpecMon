@@ -6,7 +6,7 @@ import importlib
 
 from spectrum.power import power_on, power_off
 from spectrum.wav2mp3 import walk_convert
-from spectrum.fs_datastore import FsDataStore
+from spectrum.binary_datastore import BinaryDataStore
 from spectrum.config import DATA_PATH, CONVERT_PERIOD, USERS_FILE, ROUNDS, SSMTP_CONF, \
                             DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, \
                             DEFAULT_KEYSIGHT_SETTINGS, DEFAULT_HAMLIB_SETTINGS, VERSION_FILE, USER_TIMEOUT_SECS, PICO_PATH, \
@@ -23,7 +23,7 @@ from spectrum.common import log, psm_name
 # conditionally import workers, and define an entry point for each
 def entry_point_fn(w_class):
     def entry_point():
-        worker_process = w_class(FsDataStore(DATA_PATH))
+        worker_process = w_class(BinaryDataStore(DATA_PATH))
         worker_process.init()
         worker_process.start()
     return entry_point
@@ -43,7 +43,7 @@ def init_application():
     """ Initiliase the web application object imported from spectrum.server.
     """
     from spectrum.server import application
-    data_store = FsDataStore(DATA_PATH)
+    data_store = BinaryDataStore(DATA_PATH)
     clients = [Worker(data_store).client() for Worker in Workers]
     event_client = EventClient(Queue(EVENT_PATH))
     #FIXME tidy up DEFAULT_X_SETTINGS into one value; also PI_CONTROL_PATH and PICO_PATH probably just use the contants directly (and others?)
@@ -72,7 +72,7 @@ def audio():
 def wav2mp3():
     """ Run the wav to mp3 conversion process.
     """
-    fsds = FsDataStore(DATA_PATH)
+    fsds = BinaryDataStore(DATA_PATH)
     while True:
         walk_convert(fsds.samples_path)
         log.debug("Sleeping for %ds", CONVERT_PERIOD)

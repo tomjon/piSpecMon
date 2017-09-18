@@ -1,7 +1,7 @@
 """ Functions for powering on/off the rig.
 """
 from time import sleep
-from spectrum.fs_datastore import FsDataStore
+from spectrum.binary_datastore import BinaryDataStore
 from spectrum.common import log, parse_config
 from spectrum.config import RADIO_ON_SLEEP_SECS, RADIO_ON_SWITCH, DATA_PATH
 from spectrum.monitor import Monitor
@@ -35,8 +35,8 @@ def power_off():
     """ Turn off the rig.
     """
     log.info("Attempting to power off")
-    fsds = FsDataStore(DATA_PATH)
-    rig = fsds.settings('rig').read()
+    data = BinaryDataStore(DATA_PATH)
+    rig = data.settings('rig').read()
     parse_config(rig.values)
     monitor = Monitor(**rig.values)
     monitor.open()

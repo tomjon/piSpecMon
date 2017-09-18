@@ -1,4 +1,4 @@
-""" File system based sata store implementation.
+""" Binary based data store implementation.
 
     data
       |
@@ -37,7 +37,7 @@ import os
 import shutil
 import struct
 from spectrum.common import fs_size, fs_free
-from spectrum.datastore import ConfigBase, SettingsBase, StoreError
+from spectrum.datastore import DataStore, ConfigBase, Settings, StoreError
 
 
 class _Struct(struct.Struct):
@@ -68,23 +68,16 @@ _T_STRUCT = _Struct('Q')
 _N_STRUCT = _Struct('I')
 
 
-class FsDataStore(object): #FIXME will presumably subclass a DataStore class, if that has value
+class BinaryDatastore(DataStore):
     """ File-system based implementation of a data store.
     """
     INDEX = 'index'
 
     def __init__(self, data_path):
-        super(FsDataStore, self).__init__()
-        self.data_path = os.path.join(data_path, 'data')
-        self.settings_path = os.path.join(data_path, 'settings')
-        self.samples_path = os.path.join(data_path, 'samples')
-        self.index_path = os.path.join(self.data_path, self.INDEX)
+        super(BinaryDatastore, self).__init__(data_path)
+        self.index_path = os.path.join(data_path, self.INDEX)
 
-        # initialise directories
-        if not os.path.exists(self.data_path):
-            os.mkdir(self.data_path)
-        if not os.path.exists(self.settings_path):
-            os.mkdir(self.settings_path)
+        # initialise index directory
         if not os.path.exists(self.index_path):
             with open(self.index_path, 'w'):
                 pass
@@ -93,11 +86,6 @@ class FsDataStore(object): #FIXME will presumably subclass a DataStore class, if
         """ Return a Config object for the given config id.
         """
         return Config(self, config_id=config_id)
-
-    def settings(self, settings_id=None):
-        """ Return a Settings object for the given settings id.
-        """
-        return Settings(self, settings_id=settings_id)
 
     def iter_config(self, config_ids=None):
         """ Yield stored Config objects.
@@ -111,15 +99,6 @@ class FsDataStore(object): #FIXME will presumably subclass a DataStore class, if
             config = Config(self, config_id=config_id)
             config.read()
             yield config
-
-    def stats(self):
-        """ Return a dictionary of usage statistics name/values.
-        """
-        return {
-            'audio': fs_size(self.samples_path),
-            'size': fs_size(self.data_path),
-            'free': fs_free(self.data_path)
-        }
 
 
 class Config(ConfigBase):
@@ -420,35 +399,6 @@ class Config(ConfigBase):
         self._write_freq_data(self.ERROR_TIMES, self.ERROR_DATA, timestamp, 0, str(error))
 
 
-class Settings(SettingsBase):
-    """ File system implementation of Settings.
-    """
-    def __init__(self, data_store, **args):
-        super(Settings, self).__init__(data_store, **args)
-        self.path = os.path.join(data_store.settings_path, self.id)
-
-    def read(self, defaults=None):
-        """ Read settings value, using the defaults given if it is not already set.
-        """
-        if not os.path.exists(self.path):
-            if defaults is None:
-                raise StoreError("No defaults and no settings for {0}".format(self.id))
-            self.values = defaults
-            self.write()
-            return self
-        with open(self.path) as f:
-            self.values = json.loads(f.read())
-        return self
-
-    def write(self, values=None):
-        """ Write settings value.
-        """
-        if values is not None:
-            self.values = values
-        with open(self.path, 'w') as f:
-            f.write(json.dumps(self.values))
-        return self
-
 if __name__ == '__main__':
     import sys
     from spectrum.config import DATA_PATH
@@ -457,8 +407,7 @@ if __name__ == '__main__':
         print >>sys.stderr, "Usage: python {0} config_id".format(*sys.argv)
         sys.exit(1)
 
-    fs = FsDataStore(DATA_PATH)
-    config = fs.config(sys.argv[1]).read()
+    data = BinaryDatastore(DATA_PATH)
+    config = data.config(sys.argv[1]).read()
     for t0, levels in config.iter_spectrum():
         print t0, len(levels)
-
