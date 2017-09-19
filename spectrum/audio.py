@@ -68,7 +68,7 @@ class AudioClient(object):
     def __enter__(self):
         self.socket = zmq.Context().socket(zmq.SUB)
         self.socket.connect('tcp://localhost:{0:d}'.format(AUDIO_ZMQ_PORT))
-        self.socket.setsockopt_string(zmq.SUBSCRIBE, self.channel)
+        self.socket.setsockopt_string(zmq.SUBSCRIBE, unicode(self.channel)) #FIXME probably just want setsockopt() and not unicode
         self.file = NamedTemporaryFile(delete=False, mode='wb')
         self.path = None
         self.wav = wave.open(self.file)

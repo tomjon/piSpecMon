@@ -7,10 +7,10 @@ import { Chart } from './chart';
 
 @Component({
   selector: 'psm-rds-table',
-  inputs: [ 'data', 'timestamp' ],
+  inputs: [ 'worker' ],
   directives: [ WidgetComponent ],
   pipes: [ DatePipe ],
-  template: `<psm-widget [hidden]="isHidden" title="RDS Text" class="chart" (show)="onShow($event)">
+  template: `<psm-widget [hidden]="isHidden" title="{{label}} - RDS Text" class="chart" (show)="onShow($event)">
                <form class="form-inline" role="form">
                  <div class="form-group">
                    <label for="station">Station</label>
@@ -48,9 +48,10 @@ export class RdsTableComponent extends Chart {
         this.stations.push({ 'idx': idx, 'name': this.data.rdsNames[idx] });
       }
     }
+    if (this.idx == undefined && this.stations.length > 0) this.idx = this.stations[0].idx;
   }
 
   get isHidden(): boolean {
-    return this.data == undefined || this.data.rdsNames == undefined || this.data.rdsNames.length == 0;
+    return this.data == undefined || this.stations == undefined || this.stations.length == 0;
   }
 }

@@ -25,6 +25,9 @@ class Process(object):
     """ Start the process with start(), after supplying the data store, pid file,
         config file and status file names.
 
+        Prefix is used to in run path and config file templates, and should be
+        the name of the worker used in the data store and UI.
+
         Sub-classes may need to override get_capabilities().
     """
     def __init__(self, data_store, prefix=None, run_path=None, config_file=None):
@@ -127,14 +130,15 @@ class Process(object):
                         log.debug("Running with config: %s", json.dumps(config.values))
                         self._stop = False
                         self.status.clear()
+                        count = config.counts[self.prefix] if self.prefix in config.counts else 0
                         try:
-                            for _ in self.iterator(config):
+                            for _ in self.iterator(config, count):
                                 self._write_status()
                                 if self._stop:
                                     break
                         except BaseException as e: # pylint: disable=broad-except
                             log.exception(e)
-                            config.write_error(now(), e)
+                            config.write_error(self.prefix, now(), e)
                 if os.path.isfile(self.status_file):
                     os.remove(self.status_file)
                 if self._tidy and os.path.isfile(self.config_file):

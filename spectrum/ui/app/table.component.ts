@@ -58,16 +58,13 @@ export class TableComponent {
                           });
     } else {
       // otherwise, update the one we have
-      let max_count = 0;
       let max_latest = 0;
       for (let key in status) {
         //FIXME there is probably a nicer way to do this max stuff
         if (status[key].sweep) {
-          max_count = Math.max(max_count, status[key].sweep.sweep_n);
           max_latest = Math.max(max_latest, status[key].sweep.timestamp);
         }
       }
-      config.count = max_count;
       config.latest = max_latest;
     }
   }
@@ -134,16 +131,6 @@ export class TableComponent {
                             }
                           }
                         });
-  }
-
-  onExport() {
-    this.widgetComponent.busy(this.dataService.exportData(this.selected, this.rds))
-                        .subscribe(path => this.messageService.show('CSV written to ' + path));
-  }
-
-  onDownload() {
-    let args = this.rds ? '?rds=true' : '';
-    window.open('/export/' + this.selected + args, '_blank');
   }
 
   workerEnabled(config: Config, value: string): boolean {

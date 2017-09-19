@@ -12,9 +12,9 @@ declare var $;
 @Component({
   selector: 'psm-frequency',
   directives: [ WidgetComponent ],
-  inputs: [ 'data', 'timestamp' ],
+  inputs: [ 'worker' ],
   pipes: [ DatePipe ],
-  template: `<psm-widget [hidden]="isHidden()" title="Level / Frequency" class="chart" (show)="onShow($event)">
+  template: `<psm-widget [hidden]="isHidden()" title="{{label}} - Level / Frequency" class="chart" (show)="onShow($event)">
                <form class="form-inline" role="form">
                  <span *ngIf="sweep == 'latest'">{{timestamp | date}}</span>
                  <div class="form-group">
@@ -57,7 +57,7 @@ export class FrequencyComponent extends Chart {
   @ViewChild('chart') chart;
   @ViewChild('text') text;
 
-  constructor(stateService: StateService, dataService: DataService, private freq: FreqPipe) {
+  constructor(stateService: StateService, dataService: DataService, private freq_pipe: FreqPipe) {
     super(stateService, dataService, 'frequency');
   }
 
@@ -84,7 +84,7 @@ export class FrequencyComponent extends Chart {
   }
 
   isHidden() {
-    return this.data == undefined || this.data.spectrum.agg == undefined || ! this.data.freqs[0].enabled || this.data.spectrum.agg[this.sweep].length == 0;
+    return this.data == undefined || this.data.spectrum.agg == undefined || ! this.freq(0).enabled || this.data.spectrum.agg[this.sweep].length == 0;
   }
 
   plot() {
@@ -97,7 +97,7 @@ export class FrequencyComponent extends Chart {
 
     let agg = this.data.spectrum.agg[this.sweep];
 
-    this.x.domain([this.data.freqs[0].range[0], this.data.freqs[0].range[1]]);
+    this.x.domain([this.freq(0).range[0], this.freq(0).range[1]]);
     if (this.options.y_axis) {
       this.y.domain([this.options.y_axis[0], this.options.y_axis[1]]);
       this.yAxis.tickValues(d3.range(this.options.y_axis[0], this.options.y_axis[1] + this.options.y_axis[2], this.options.y_axis[2]));
@@ -105,7 +105,7 @@ export class FrequencyComponent extends Chart {
       this.y.domain(d3.extent(agg, d => d.v));
     }
 
-    this.line.x((d, i) => this.x(+this.data.freqs[0].range[0] + i * this.data.freqs[0].range[2]));
+    this.line.x((d, i) => this.x(+this.freq(0).range[0] + i * this.freq(0).range[2]));
 
     this.svg.append("g")
         .attr("class", "x axis")
@@ -115,7 +115,7 @@ export class FrequencyComponent extends Chart {
         .attr("transform", "translate(" + this.width + ",0)")
         .attr("text-anchor", "end")
         .attr("y", -6)
-        .text(this.hz[this.data.freqs[0].exp]);
+        .text(this.hz[this.freq(0).exp]);
 
     this.svg.append("g")
         .attr("class", "y axis")
@@ -148,7 +148,7 @@ export class FrequencyComponent extends Chart {
 
     // find frequency of click...
     let f = this.x.invert(z.x - this.margin.left);
-    let i = Math.round((f - this.data.freqs[0].range[0]) / this.data.freqs[0].range[2]);
+    let i = Math.round((f - this.freq(0).range[0]) / this.freq(0).range[2]);
     if (i < 0 || i >= this.data.spectrum.agg[this.sweep].length) {
       // out of bounds - hide info text
       this.showInfo = false;
@@ -161,7 +161,7 @@ export class FrequencyComponent extends Chart {
     this.adjustX = z.x > this.width / 2 ? -150 : 0;
     let v = this.data.spectrum.agg[this.sweep][i] ? this.data.spectrum.agg[this.sweep][i].v : 0;
     this.showY = this.y(v) + this.margin.top;
-    this.infoText = `${v}dB at ${this.freq.transform(i, this.data)}`;
+    this.infoText = `${v}dB at ${this.freq_pipe.transform(i, this.data)}`;
     setTimeout(() => this.textWidth = this.text.nativeElement.getComputedTextLength());
     this.showInfo = true;
   }

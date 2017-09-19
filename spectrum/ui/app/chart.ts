@@ -1,4 +1,4 @@
-import { Data} from './data';
+import { WorkerData} from './worker-data';
 import { StateService } from './state.service';
 import { DataService } from './data.service';
 
@@ -10,12 +10,14 @@ export abstract class Chart {
   protected max_n: number;
   protected hz: any;
 
+  protected worker: string;
+
   constructor(protected stateService: StateService, private dataService?: DataService, private name?: string) {
       stateService.registerChart(this);
   }
 
   init() {
-    this.options = this.stateService.constants[this.name + '_chart_options'];
+    this.options = this.stateService.constants[`${this.worker}_${this.name}_chart`];
     this.max_n = this.stateService.constants.max_n;
     this.hz = this.stateService.constants.hz_labels;
   }
@@ -29,8 +31,23 @@ export abstract class Chart {
     if (this.show) this._plot();
   }
 
-  get data(): Data {
-    return this.stateService.currentConfig != undefined ? this.stateService.currentConfig.data : undefined;
+  get label(): string {
+    return this.stateService.workerLabel(this.worker);
+  }
+
+  get values(): any {
+    return this.stateService.currentConfig != undefined ? this.stateService.currentConfig.values[this.worker] : undefined;
+  }
+
+  freq(idx: number): any {
+    if (this.stateService.currentConfig == undefined) return undefined;
+    let data = this.stateService.currentConfig.data;
+    return data.config.values[this.worker].freqs[idx];
+  }
+
+  get data(): WorkerData {
+    return this.stateService.currentConfig != undefined &&
+           this.stateService.currentConfig.data != undefined ? this.stateService.currentConfig.data.workers[this.worker] : undefined;
   }
 
   get timestamp(): number {

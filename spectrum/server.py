@@ -139,7 +139,9 @@ def config_endpoint(config_ids=None):
     # turn a config object into a dictionary representation, including any errors
     def _config_dict(config):
         c_dict = dict((k, v) for k, v in config.__dict__.iteritems() if k[0] != '_')
-        c_dict['errors'] = list(config.iter_error())
+        c_dict['errors'] = {}
+        for worker in config.values['workers']:
+            c_dict['errors']['worker'] = list(config.iter_error(worker))
         return c_dict
     try:
         if request.method == 'GET':
@@ -178,11 +180,14 @@ def data_endpoint(config_id):
         config = application.data_store.config(config_id).read()
         data = {}
         end = _int_arg('end')
-        data['spectrum'] = list(config.iter_spectrum(start=_int_arg('spectrum'), end=end))
-        data['audio'] = list(config.iter_audio(start=_int_arg('audio'), end=end))
-        data['rds_name'] = list(config.iter_rds_name(start=_int_arg('rds_name'), end=end))
-        data['rds_text'] = list(config.iter_rds_text(start=_int_arg('rds_text'), end=end))
-        data['temperature'] = list(config.iter_temperature(start=_int_arg('temperature'), end=end))
+        for worker in config.values['workers']:
+            start = _int_arg('start_' + worker)
+            w = data[worker] = {}
+            w['spectrum'] = list(config.iter_spectrum(worker, start=start, end=end))
+            w['audio'] = list(config.iter_audio(worker, start=start, end=end))
+            w['rds_name'] = list(config.iter_rds_name(worker, start=start, end=end))
+            w['rds_text'] = list(config.iter_rds_text(worker, start=start, end=end))
+            w['temperature'] = list(config.iter_temperature(worker, start=start, end=end))
         return json.dumps(data)
     except StoreError as e:
         return e.message, 500

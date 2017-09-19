@@ -5,7 +5,7 @@ import httplib
 import json
 import os
 import pytest
-from spectrum.datastore import ConfigBase, SettingsBase
+from spectrum.datastore import ConfigBase, Settings
 from spectrum.users import IncorrectPasswordError, InvalidUsername
 import spectrum.server as server
 
@@ -24,7 +24,7 @@ class MockConfig(ConfigBase):
         """
         return self
 
-class MockSettings(SettingsBase):
+class MockSettings(Settings):
     """ Mock Settings implementation.
     """
     def read(self, defaults=None):

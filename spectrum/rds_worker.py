@@ -48,7 +48,7 @@ class Worker(Process):
                 return
             sleep(MONKEY_POLL)
 
-    def iterator(self, config):
+    def iterator(self, config, initial_count):
         """ Decode RDS, store data via the config object, and yield status.
         """
         scan_config = parse_config(config.values, 'rds')
@@ -63,7 +63,7 @@ class Worker(Process):
             while True:
                 time_0 = now()
                 self.status['sweep'] = {'timestamp': time_0}
-                self.status['sweep']['sweep_n'] = config.count + sweep_n
+                self.status['sweep']['sweep_n'] = initial_count + sweep_n
                 yield
 
                 strengths = []
@@ -74,7 +74,7 @@ class Worker(Process):
                         yield
                     strengths.append(max(s))
 
-                config.write_spectrum(time_0, strengths) #FIXME TOTAL HACK
+                config.write_spectrum(self.prefix, time_0, strengths) #FIXME TOTAL HACK
                 sweep_n += 1
 
     # decode RDS from a single frequency
@@ -138,7 +138,7 @@ class Worker(Process):
 
         log.debug("Found RDS name %s", name) # pylint: disable=undefined-loop-variable
         try:
-            self.config.write_rds_name(now(), idx, name) # pylint: disable=undefined-loop-variable
+            self.config.write_rds_name(self.prefix, now(), idx, name) # pylint: disable=undefined-loop-variable
         except StoreError as e:
             log.exception(e)
             return
@@ -155,7 +155,7 @@ class Worker(Process):
                 self.text = text
                 log.debug("Found RDS text %s", text)
                 try:
-                    self.config.write_rds_text(now(), idx, text)
+                    self.config.write_rds_text(self.prefix, now(), idx, text)
                 except StoreError as e:
                     log.exception(e)
                     return
@@ -165,11 +165,7 @@ class Worker(Process):
         yield None, True
 
     def _sample_path(self, idx):
-        path = '{0}.wav'.format(self.config.write_audio(now(), idx)) #FIXME chunk the same as worker.py
-        dirname = os.path.dirname(path)
-        if not os.path.exists(dirname):
-            os.makedirs(dirname)
-        return path
+        return '{0}.wav'.format(self.config.write_audio(self.prefix, now(), idx)) #FIXME chunk the same as worker.py
 
     def _record(self, audio, idx):
         # record a sample, this will block until audio.duration seconds have elapsed
@@ -183,9 +179,9 @@ class Worker(Process):
         self.status['name'] = self.api.get_name()
         if self.status['name'] and self.name != self.status['name']:
             self.name = self.status['name']
-            self.config.write_rds_name(now(), idx, self.name)
+            self.config.write_rds_name(self.prefix, now(), idx, self.name)
         self.status['text'] = self.api.get_text()
         if self.status['text'] and self.text != self.status['text']:
             self.text = self.status['text']
-            self.config.write_rds_text(now(), idx, self.text)
+            self.config.write_rds_text(self.prefix, now(), idx, self.text)
         return self.status['strength']

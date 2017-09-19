@@ -54,7 +54,7 @@ class Worker(Process):
         #    Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
         super(Worker, self).start()
 
-    def iterator(self, config):
+    def iterator(self, config, initial_count):
         """ Scan the spectrum, storing data through the config object, and yield status.
         """
         scan_config = parse_config(config.values, 'hamlib')
@@ -87,7 +87,7 @@ class Worker(Process):
                 w = [(None,) * 3] * 3
 
                 self.status['sweep'] = {'timestamp': time_0, 'peaks': []}
-                self.status['sweep']['sweep_n'] = config.count + sweep_n
+                self.status['sweep']['sweep_n'] = initial_count + sweep_n
                 yield
 
                 for idx, freq in scan(scan_config):
@@ -119,11 +119,11 @@ class Worker(Process):
                     self.status['sweep'].pop(key, None)
                 yield
 
-                config.write_spectrum(time_0, strengths)
+                config.write_spectrum(self.prefix, time_0, strengths)
 
                 temp = read_temp()
                 if temp is not None:
-                    config.write_temperature(time_0, temp)
+                    config.write_temperature(self.prefix, time_0, temp) #FIXME temperature should be an independant worker?? but this way is easiest to correlate...
 
                 if audio_t is not None and now() - audio_t > period * 1000:
                     audio_t = now()
@@ -142,10 +142,7 @@ class Worker(Process):
             self.status['sweep']['record'] = {'freq_n': idx}
             yield
 
-            path = '{0}.wav'.format(config.write_audio(now(), idx))
-            if not os.path.exists(os.path.dirname(path)):
-                os.makedirs(os.path.dirname(path))
-
+            path = '{0}.wav'.format(config.write_audio(self.prefix, now(), idx))
             log.info("Recording audio at %sHz and storing in %s", freq, path)
 
             if not monitor.set_frequency(freq):

@@ -63,9 +63,12 @@ export class StateService {
   public getWorkers(): any[] {
     let workers = [];
     for (let value in this.caps) {
-      let label = this.constants.worker_labels[value] || '[unknown worker]';
-      workers.push({value: value, label: label, enabled: true});
+      workers.push({value: value, label: this.workerLabel(value), enabled: true});
     }
     return workers;
+  }
+
+  public workerLabel(workerKey: string): string {
+    return this.constants.worker_labels[workerKey] || '[unknown worker]';
   }
 }

@@ -102,15 +102,9 @@ export class AppComponent {
         let config: Config = this.table.getConfig(config_id);
         if (config != undefined) this.values = config.values;
       }
-
       let config: Config = this.stateService.currentConfig;
-      //FIXME where is the best place for this logic? Can it be simplified?
-      if (config && status.config_id == config.id && status.sweep && config.data && status.sweep.sweep_n > config.data.count && config.data.loading == undefined) {
-        this.dataService.getData(config.id, config.data.timestamps)
-                        .subscribe(data => {
-                          config.data.update(data);
-                          this.stateService.resetCharts();
-                        });
+      if (config && status.config_id == config.id && config.data) {
+        config.data.update_status(status);
       }
     }
   }

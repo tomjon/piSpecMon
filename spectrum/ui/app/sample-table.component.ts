@@ -8,10 +8,10 @@ import { Chart } from './chart';
 
 @Component({
   selector: 'psm-sample-table',
-  inputs: [ 'data', 'timestamp' ],
+  inputs: [ 'worker' ],
   directives: [ WidgetComponent ],
   pipes: [ DatePipe, FreqPipe ],
-  template: `<psm-widget [hidden]="isHidden" title="Audio Samples" class="chart" (show)="onShow($event)">
+  template: `<psm-widget [hidden]="isHidden" title="{{label}} - Audio Samples" class="chart" (show)="onShow($event)">
                <form *ngIf="data != undefined" class="form-inline" role="form">
                  <div class="form-group">
                    <label for="idx">Frequency</label>
@@ -46,10 +46,11 @@ export class SampleTableComponent extends Chart {
     for (let freq_n in this.data.samples) {
       if (! Number.isNaN(+freq_n)) this.freqs.push(+freq_n); //FIXME NaN check because we added a length property!
     }
+    if (this.freq_n == undefined && this.freqs.length > 0) this.freq_n = this.freqs[0];
   }
 
   get isHidden(): boolean {
-    return this.data == undefined || this.data.config.values.rds.audio.enabled == false || this.data.samples.length == 0;
+    return this.data == undefined || this.values.audio.enabled == false || this.data.samples.length == 0;
   }
 
   get values(): any {

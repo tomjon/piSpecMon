@@ -17,6 +17,11 @@ export class ChartsComponent {
 
   //FIXME horrible..? move to state service?
   get loading(): number {
-    return this.stateService.currentConfig ? this.stateService.currentConfig.data.loading : undefined;
+    return this.stateService.currentConfig != undefined &&
+           this.stateService.currentConfig.data != undefined ? this.stateService.currentConfig.data.loading : 0;
+  }
+
+  enabled(worker: string): boolean {
+    return this.stateService.currentConfig != undefined ? this.stateService.currentConfig.values.workers.includes(worker) : false;
   }
 }

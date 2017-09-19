@@ -9,8 +9,8 @@ import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
 @Component({
   selector: 'psm-level',
   directives: [ WidgetComponent ],
-  inputs: [ 'data', 'timestamp' ],
-  template: `<psm-widget [hidden]="isHidden" title="Level / Time" class="chart" (show)="onShow($event)">
+  inputs: [ 'worker' ],
+  template: `<psm-widget [hidden]="isHidden" title="{{label}} - Level / Time" class="chart" (show)="onShow($event)">
                <form class="form-inline" role="form">
                  <div class="form-group">
                    <label for="top">Top</label>
@@ -61,7 +61,7 @@ export class LevelComponent extends Chart {
   @ViewChild('text') text;
   @ViewChild('selectN') selectN;
 
-  constructor(stateService: StateService, dataService: DataService, private freq: FreqPipe) {
+  constructor(stateService: StateService, dataService: DataService, private freq_pipe: FreqPipe) {
     super(stateService, dataService, 'level');
   }
 
@@ -93,6 +93,14 @@ export class LevelComponent extends Chart {
 
   get isHidden(): boolean {
     return this.data == undefined || this.data.spectrum.levels == undefined || this.data.spectrum.levels.length < 2;
+  }
+
+  get freqs(): any {
+    return this.values.freqs;
+  }
+
+  get rdsNames(): any {
+    return this.data.rdsNames;
   }
 
   plot() {
@@ -171,7 +179,7 @@ export class LevelComponent extends Chart {
         .attr("x", this.width + 24)
         .attr("y", (idx, i) => 16 * i)
         .attr("dy", 12)
-        .text(idx => this.freq.transform(idx, this.data))
+        .text(idx => this.freq_pipe.transform(idx, this))
         .style("stroke", idx => this.colour(idx))
         .classed("freqLabel", true)
         .on('click', idx => {
@@ -231,10 +239,10 @@ export class LevelComponent extends Chart {
     // decide where to show the info text and lines
     this.showX = this.x(this.tick.value) + this.margin.left;
     this.adjustX = this.showX > this.width / 2 ? -300 : 0;
-    let f = +this.data.freqs[0].range[0] + this.freq_idx * this.data.freqs[0].range[2];
+    let f = +this.freq(0).range[0] + this.freq_idx * this.freq(0).range[2];
     let v = this.data.spectrum.levels[this.tick.index].level[this.freq_idx];
     this.showY = this.y(v) + this.margin.top;
-    this.infoText = `${v}dB at ${f}${this.hz[this.data.freqs[0].exp]}`;
+    this.infoText = `${v}dB at ${f}${this.hz[this.freq(0).exp]}`;
     if (this.data.rdsNames[this.freq_idx]) this.infoText += ` (${this.data.rdsNames[this.freq_idx]})`;
     this.infoText += ` at ${dt_format(new Date(this.tick.value))}`;
     setTimeout(() => this.textWidth = this.text.nativeElement.getComputedTextLength());

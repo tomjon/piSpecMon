@@ -8,8 +8,8 @@ import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
 @Component({
   selector: 'psm-temperature',
   directives: [ WidgetComponent ],
-  inputs: [ 'data', 'timestamp' ],
-  template: `<psm-widget [hidden]="isHidden()" title="Temperature / Time" class="chart" (show)="onShow($event)">
+  inputs: [ 'worker' ],
+  template: `<psm-widget [hidden]="isHidden()" title="{{label}} - Temperature / Time" class="chart" (show)="onShow($event)">
                <svg #chart (click)="onClick($event)" [attr.viewBox]="viewBox" preserveAspectRatio="xMidYMid meet">
                  <svg:line class="horizontal" *ngIf="showInfo" [attr.x1]="margin.left" [attr.x2]="width + margin.left" [attr.y1]="showY" [attr.y2]="showY" />
                  <svg:line class="vertical" *ngIf="showInfo" [attr.x1]="showX" [attr.x2]="showX" [attr.y1]="height + margin.top" [attr.y2]="showY" />

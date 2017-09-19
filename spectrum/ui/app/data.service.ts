@@ -164,7 +164,7 @@ export class DataService {
   getData(config_id, starts, end=undefined): Observable<any> {
     let params: URLSearchParams = new URLSearchParams();
     for (let key in starts) {
-      params.set(key, starts[key]);
+      params.set('start_' + key, starts[key]);
     }
     if (end != undefined) {
       params.set('end', end);

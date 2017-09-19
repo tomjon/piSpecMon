@@ -2,7 +2,8 @@
 """
 import os
 import shutil
-from spectrum.common import log
+import json
+from spectrum.common import log, fs_size, fs_free
 
 
 class StoreError(Exception):
@@ -39,7 +40,7 @@ class DataStore(object):
             'size': fs_size(self.data_path),
             'free': fs_free(self.data_path)
         }
-    
+
 
 class ConfigBase(object):
     """ Class for managing config id, timestamp, values, first and last sweep times,
@@ -56,10 +57,10 @@ class ConfigBase(object):
         self.latest = latest
         self.count = count
 
-    def audio_path(self, timestamp, freq_n):
+    def audio_path(self, worker, timestamp, freq_n):
         """ Return a (base) path at which an audio sample is stored.
         """
-        return os.path.join(self._data_store.samples_path, self.id, str(freq_n), str(timestamp))
+        return os.path.join(self._data_store.samples_path, self.id, worker, str(freq_n), str(timestamp))
 
     def _delete_audio(self):
         """ Delete all audio samples stored for the config.

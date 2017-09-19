@@ -156,3 +156,11 @@ def psm_name():
     """ Return the box name.
     """
     return os.popen('uname -n').read().strip()
+
+def mkdirs(file_path):
+    """ Ensure parent directories for the given file path exist (creating them
+        if not).
+    """
+    path = os.path.dirname(file_path)
+    if not os.path.exists(path):
+        os.makedirs(path)

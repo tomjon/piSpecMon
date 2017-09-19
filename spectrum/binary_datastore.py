@@ -4,39 +4,40 @@
       |
       +-- config_id
       |       |
-      |       +----- format                    Binary format file (see below)
+      |       +----- format                    Binary format file (timestamp of config creation)
       |       +----- config                    JSON format config file
-              +----- spectrum
-              |          |
-              |          +----- timestamps     Binary (struct) format timestamps file
-              |          +----- data           Binary (struct) format spectrum data
-              +----- audio
-              |          |
-              |          +----- timestamps     Binary (struct) format timestamps file
-              |          +----- data           Binary (struct) format audio sample data
-              +----- rds
-              |       |
-              |       +--- name
-              |       |       |
-              |       |       +----- timestamps     Binary (struct) format timestamps file
-              |       |       +----- data           Binary (struct) format RDS name data
-              |       +--- text
-              |       |       |
-              |       |       +----- timestamps     Binary (struct) format timestamps file
-              |       |       +----- data           Binary (struct) format RDS text data
-              +----- error
-              |         |
-              |         +----- timestamps      Binary (struct) format timestamps file
-              |         +----- data            Binary (struct) format error data
+      |       +----- worker_[worker]           Worker data is stored independantly
+                          |
+                          +----- spectrum
+                          |          |
+                          |          +----- format         Binary (struct) format n_freq and timestamps file
+                          |          +----- data           Binary (struct) format spectrum data
+                          +----- audio
+                          |          |
+                          |          +----- timestamps     Binary (struct) format timestamps file
+                          |          +----- data           Binary (struct) format audio sample data
+                          +----- rds
+                          |       |
+                          |       +--- name
+                          |       |       |
+                          |       |       +----- timestamps     Binary (struct) format timestamps file
+                          |       |       +----- data           Binary (struct) format RDS name data
+                          |       +--- text
+                          |       |       |
+                          |       |       +----- timestamps     Binary (struct) format timestamps file
+                          |       |       +----- data           Binary (struct) format RDS text data
+                          +----- error
+                          |         |
+                          |         +----- timestamps      Binary (struct) format timestamps file
+                          |         +----- data            Binary (struct) format error data
 
-    The format file contains the timestamp of config creation, and the number of
-    frequencies per sweep (i.e. the length of the strengths array).
+    The format file contains the timestamp of config creation.
 """
 import json
 import os
 import shutil
 import struct
-from spectrum.common import fs_size, fs_free
+from spectrum.common import mkdirs
 from spectrum.datastore import DataStore, ConfigBase, Settings, StoreError
 
 
@@ -68,13 +69,13 @@ _T_STRUCT = _Struct('Q')
 _N_STRUCT = _Struct('I')
 
 
-class BinaryDatastore(DataStore):
+class BinaryDataStore(DataStore):
     """ File-system based implementation of a data store.
     """
     INDEX = 'index'
 
     def __init__(self, data_path):
-        super(BinaryDatastore, self).__init__(data_path)
+        super(BinaryDataStore, self).__init__(data_path)
         self.index_path = os.path.join(data_path, self.INDEX)
 
         # initialise index directory
@@ -104,6 +105,8 @@ class BinaryDatastore(DataStore):
 class Config(ConfigBase):
     """ File system implementation of Config.
     """
+    WORKER_PREFIX = 'worker_'
+
     FORMAT = 'format'
     CONFIG = 'config'
     TIMESTAMPS = 'timestamps'
@@ -133,45 +136,49 @@ class Config(ConfigBase):
     ERROR_TIMES = os.path.join(ERROR, TIMESTAMPS)
     ERROR_DATA = os.path.join(ERROR, DATA)
 
-    def __init__(self, data_store, **args):
-        super(Config, self).__init__(data_store, **args)
-        self.n_freq = None
-
     def read(self):
         """ Read config attributes from the data store.
         """
-        path = os.path.join(self._data_store.data_path, self.id)
+        c_path = os.path.join(self._data_store.data_path, self.id)
         try:
-            with open(os.path.join(path, self.CONFIG)) as f:
+            with open(os.path.join(c_path, self.CONFIG)) as f:
                 self.values = json.loads(f.read())
-            with open(os.path.join(path, self.FORMAT)) as f:
+            with open(os.path.join(c_path, self.FORMAT)) as f:
                 self.timestamp = _T_STRUCT.fread(f)
                 self.n_freq = _N_STRUCT.fread(f)
         except IOError as e:
             raise StoreError(str(e))
         firsts = []
         latests = []
-        counts = {}
-        for name, offset in (
-                (self.SPECTRUM_TIMES, _T_STRUCT.size),
-                (self.AUDIO_TIMES, _T_STRUCT.size),
-                (self.RDS_NAME_TIMES, _T_STRUCT.size + _N_STRUCT.size),
-                (self.RDS_TEXT_TIMES, _T_STRUCT.size + _N_STRUCT.size)
-        ):
-            path = os.path.join(path, name)
-            if not os.path.exists(path):
+        self.counts = {}
+        for filename in os.listdir(c_path):
+            if not filename.startswith(self.WORKER_PREFIX):
                 continue
-            with open(path) as f:
-                firsts.append(_T_STRUCT.fread(f))
-                if f.tell() == 0:
+            worker = filename[len(self.WORKER_PREFIX):]
+            w_path = os.path.join(c_path, filename)
+            self.counts[worker] = 0
+
+            for name, offset, get_n in (
+                    (self.SPECTRUM_TIMES, _T_STRUCT.size, True),
+                    (self.AUDIO_TIMES, _T_STRUCT.size, False),
+                    (self.RDS_NAME_TIMES, _T_STRUCT.size + _N_STRUCT.size, False),
+                    (self.RDS_TEXT_TIMES, _T_STRUCT.size + _N_STRUCT.size, False)
+            ):
+                path = os.path.join(w_path, name)
+                if not os.path.exists(path):
                     continue
-                f.seek(-offset, os.SEEK_END)
-                latests.append(_T_STRUCT.fread(f))
-                f.seek(0, os.SEEK_END)
-                counts[name] = f.tell() / _T_STRUCT.size
+                with open(path) as f:
+                    n_freqs = _N_STRUCT.fread(f) if get_n else None
+                    firsts.append(_T_STRUCT.fread(f))
+                    f.seek(-offset, os.SEEK_END)
+                    latests.append(_T_STRUCT.fread(f))
+                    if name == self.SPECTRUM_TIMES: #FIXME while every worker stores one spectrum per iteration, this is ok...
+                        f.seek(0, os.SEEK_END)
+                        pos = f.tell()
+                        if get_n: pos -= _N_STRUCT.size
+                        self.counts[worker] = pos / _T_STRUCT.size
         self.first = min(firsts) if len(firsts) > 0 else None
         self.latest = max(latests) if len(latests) > 0 else None
-        self.count = counts[self.SPECTRUM_TIMES] if self.SPECTRUM_TIMES in counts else 0
         return self
 
     def write(self, timestamp=None, values=None):
@@ -181,7 +188,10 @@ class Config(ConfigBase):
             self.values = values
         self.id = str(timestamp)
         path = os.path.join(self._data_store.data_path, self.id)
-        os.mkdir(path)
+        try:
+            os.mkdir(path)
+        except OSError:
+            pass
         with open(self._data_store.index_path, 'a') as f:
             f.write(self.id)
             f.write('\n')
@@ -189,12 +199,6 @@ class Config(ConfigBase):
             f.write(json.dumps(self.values))
         with open(os.path.join(path, self.FORMAT), 'w') as f:
             _T_STRUCT.fwrite(f, timestamp)
-            if self.n_freq is not None:
-                _N_STRUCT.fwrite(f, self.n_freq)
-        for name in (self.SPECTRUM, self.AUDIO, self.RDS, self.RDS_NAME, self.RDS_TEXT, self.TEMPERATURE, self.ERROR):
-            os.mkdir(os.path.join(path, name))
-        with open(os.path.join(path, self.SPECTRUM_TIMES), 'a') as f:
-            pass
         return self
 
     def delete(self):
@@ -213,52 +217,65 @@ class Config(ConfigBase):
         self._delete_audio()
         self.id = None # render config object useless (id no longer valid)
 
-    def _iter_data(self, times_file, data_file, start, end, _struct):
+    def _worker_path(self, worker, mkdir=True):
+        path = os.path.join(self._data_store.data_path, self.id, 'worker_' + worker)
+        if mkdir:
+            try:
+                os.mkdir(path)
+            except OSError:
+                pass
+        return path
+
+    def _iter_data(self, worker, format_file, data_file, start, end, store_n=False):
         seek = False
-        path = os.path.join(self._data_store.data_path, self.id)
-        t_path = os.path.join(path, times_file)
+        path = self._worker_path(worker, False)
+        f_path = os.path.join(path, format_file)
         d_path = os.path.join(path, data_file)
-        if not os.path.exists(t_path) or not os.path.exists(d_path):
+        if not os.path.exists(f_path) or not os.path.exists(d_path):
             return
-        with open(t_path, 'r') as f_t, open(d_path, 'r') as f_d:
+        with open(f_path, 'r') as f_f, open(d_path, 'r') as f_d:
+            if store_n:
+                n_freq = _N_STRUCT.fread(f_f)
+                _struct = _Struct('{0}b'.format(n_freq), True)
+            else:
+                _struct = _N_STRUCT
             while True:
-                timestamp = _T_STRUCT.fread(f_t)
+                timestamp = _T_STRUCT.fread(f_f)
                 if timestamp is None or (end is not None and timestamp > end):
                     return
                 if not seek:
                     if start is not None and timestamp <= start:
                         continue
-                    f_d.seek(_struct.size * (f_t.tell() / _T_STRUCT.size - 1))
+                    pos = f_f.tell()
+                    if store_n:
+                        pos -= _N_STRUCT.size
+                    f_d.seek(_struct.size * (pos / _T_STRUCT.size - 1))
                     seek = True
                 yield timestamp, _struct.fread(f_d)
 
-    def _iter_timestamps(self, times_file, start, end):
-        seek = False
-        path = os.path.join(self._data_store.data_path, self.id)
-        t_path = os.path.join(path, times_file)
-        if not os.path.exists(t_path):
-            return
-        with open(t_path, 'r') as f_t:
-            while True:
-                timestamp = _T_STRUCT.fread(f_t)
-                if timestamp is None or (end is not None and timestamp > end):
-                    return
-                if not seek:
-                    if start is not None and timestamp <= start:
-                        continue
-                    seek = True
-                yield timestamp
-
-    def _write_data(self, times_file, data_file, timestamp, _struct, data):
-        path = os.path.join(self._data_store.data_path, self.id)
-        with open(os.path.join(path, times_file), 'a') as f:
+    def _write_data(self, worker, format_file, data_file, timestamp, data, store_n=False):
+        path = self._worker_path(worker)
+        if store_n:
+            n_freq = len(data)
+            _struct = _Struct('{0}b'.format(n_freq), True)
+        else:
+            n_freq = None
+            _struct = _N_STRUCT
+        format_path = os.path.join(path, format_file)
+        if os.path.exists(format_path):
+            n_freq = None # if we already wrote n_freq, don't do it again
+        else:
+            mkdirs(format_path)
+        with open(format_path, 'a') as f:
+            if n_freq is not None:
+                _N_STRUCT.fwrite(f, n_freq)
             _T_STRUCT.fwrite(f, timestamp)
         with open(os.path.join(path, data_file), 'a') as f:
             _struct.fwrite(f, data)
 
-    def _iter_freq_data(self, times_file, data_file, start=None, end=None):
+    def _iter_freq_data(self, worker, times_file, data_file, start=None, end=None):
         timestamp0, offset0 = None, None
-        path = os.path.join(self._data_store.data_path, self.id)
+        path = self._worker_path(worker, False)
         t_path = os.path.join(path, times_file)
         d_path = os.path.join(path, data_file)
         if not os.path.exists(t_path) or not os.path.exists(d_path):
@@ -284,119 +301,110 @@ class Config(ConfigBase):
                 size = offset - offset0 - _N_STRUCT.size if offset else -1
                 yield timestamp0, _N_STRUCT.fread(f_d), f_d.read(size)
 
-    def _write_freq_data(self, times_file, data_file, timestamp, freq_n, data):
-        path = os.path.join(self._data_store.data_path, self.id)
-        with open(os.path.join(path, times_file), 'a') as f_t, \
-             open(os.path.join(path, data_file), 'a') as f_d:
+    def _write_freq_data(self, worker, times_file, data_file, timestamp, freq_n, data):
+        path = self._worker_path(worker)
+        t_path = os.path.join(path, times_file)
+        mkdirs(t_path)
+        d_path = os.path.join(path, data_file)
+        mkdirs(d_path)
+        with open(t_path, 'a') as f_t, open(d_path, 'a') as f_d:
             _T_STRUCT.fwrite(f_t, timestamp)
             _N_STRUCT.fwrite(f_t, f_d.tell())
             _N_STRUCT.fwrite(f_d, freq_n)
             f_d.write(data)
 
-    def iter_spectrum(self, start=None, end=None):
+    def iter_spectrum(self, worker, start=None, end=None):
         """ Yield (timestamp, strengths) for each spectrum sweep in the range (or all).
         """
         if self.values is None:
             raise StoreError("Uninitialised config (call read or write)")
-        if self.n_freq is None:
-            path = os.path.join(self._data_store.data_path, self.id)
-            with open(os.path.join(path, self.FORMAT), 'r') as f:
-                _T_STRUCT.fread(f)
-                self.n_freq = _N_STRUCT.fread(f)
-            if self.n_freq is None:
-                return
-        _struct = _Struct('{0}b'.format(self.n_freq), True)
-        for _ in self._iter_data(self.SPECTRUM_TIMES, self.SPECTRUM_DATA, start, end, _struct):
+        for _ in self._iter_data(worker, self.SPECTRUM_TIMES, self.SPECTRUM_DATA, start, end, True):
             yield _
 
-    def write_spectrum(self, timestamp, strengths):
-        """ Write spectrum strengths found at the given timestamp.
+    def write_spectrum(self, worker, timestamp, strengths):
+        """ Write spectrum strengths found at the given timestamp by the specified worker.
         """
         if self.values is None:
             raise StoreError("Uninitialised config (call read or write)")
-        if self.n_freq is None:
-            self.n_freq = len(strengths)
-            path = os.path.join(self._data_store.data_path, self.id)
-            with open(os.path.join(path, self.FORMAT), 'a') as f:
-                _N_STRUCT.fwrite(f, self.n_freq)
-        _struct = _Struct('{0}b'.format(self.n_freq), True)
-        self._write_data(self.SPECTRUM_TIMES, self.SPECTRUM_DATA, timestamp, _struct, strengths)
+        self._write_data(worker, self.SPECTRUM_TIMES, self.SPECTRUM_DATA, timestamp, strengths, True)
 
-    def iter_audio(self, start=None, end=None):
+    def iter_audio(self, worker, start=None, end=None):
         """ Yield (timestamp, freq_n) for stored audio samples in the range (or all).
         """
         if self.values is None:
             raise StoreError("Uninitialised config (call read or write)")
-        for _ in self._iter_data(self.AUDIO_TIMES, self.AUDIO_DATA, start, end, _N_STRUCT):
+        for _ in self._iter_data(worker, self.AUDIO_TIMES, self.AUDIO_DATA, start, end):
             yield _
 
-    def write_audio(self, timestamp, freq_n):
+    def write_audio(self, worker, timestamp, freq_n):
         """ Write freq_n and timestamp for an audio sample.
         """
         if self.values is None:
             raise StoreError("Uninitialised config (call read or write)")
-        self._write_data(self.AUDIO_TIMES, self.AUDIO_DATA, timestamp, _N_STRUCT, freq_n)
-        return self.audio_path(timestamp, freq_n)
+        self._write_data(worker, self.AUDIO_TIMES, self.AUDIO_DATA, timestamp, freq_n)
+        path = self.audio_path(worker, timestamp, freq_n)
+        mkdirs(path)
+        return path
 
-    def iter_rds_name(self, start=None, end=None):
+    def iter_rds_name(self, worker, start=None, end=None):
         """ Yield (timestamp, freq_n, name) for RDS names in the range (or all).
         """
         if self.values is None:
             raise StoreError("Uninitialised config (call read or write)")
-        for _ in self._iter_freq_data(self.RDS_NAME_TIMES, self.RDS_NAME_DATA, start, end):
+        for _ in self._iter_freq_data(worker, self.RDS_NAME_TIMES, self.RDS_NAME_DATA, start, end):
             yield _
 
-    def write_rds_name(self, timestamp, freq_n, name):
+    def write_rds_name(self, worker, timestamp, freq_n, name):
         """ Write freq_n and timestamp for an RDS name.
         """
         if self.values is None:
             raise StoreError("Uninitialised config (call read or write)")
-        self._write_freq_data(self.RDS_NAME_TIMES, self.RDS_NAME_DATA, timestamp, freq_n, name)
+        self._write_freq_data(worker, self.RDS_NAME_TIMES, self.RDS_NAME_DATA, timestamp, freq_n, name)
 
-    def iter_rds_text(self, start=None, end=None):
+    def iter_rds_text(self, worker, start=None, end=None):
         """ Yield (timestamp, freq_n, text) for RDS text in the range (or all).
         """
         if self.values is None:
             raise StoreError("Uninitialised config (call read or write)")
-        for _ in self._iter_freq_data(self.RDS_TEXT_TIMES, self.RDS_TEXT_DATA, start, end):
+        for _ in self._iter_freq_data(worker, self.RDS_TEXT_TIMES, self.RDS_TEXT_DATA, start, end):
             yield _
 
-    def write_rds_text(self, timestamp, freq_n, text):
+    def write_rds_text(self, worker, timestamp, freq_n, text):
         """ Write freq_n, timestamp and text for RDS text in the range (or all).
         """
         if self.values is None:
             raise StoreError("Uninitialised config (call read or write)")
-        self._write_freq_data(self.RDS_TEXT_TIMES, self.RDS_TEXT_DATA, timestamp, freq_n, text)
+        self._write_freq_data(worker, self.RDS_TEXT_TIMES, self.RDS_TEXT_DATA, timestamp, freq_n, text)
 
-    def iter_temperature(self, start=None, end=None):
+    def iter_temperature(self, worker, start=None, end=None):
         """ Yield (timestamp, temperature).
         """
         if self.values is None:
             raise StoreError("Uninitialised config (call read or write)")
-        for timestamp, _, temperature in self._iter_freq_data(self.TEMPERATURE_TIMES, self.TEMPERATURE_DATA, start, end):
+        for timestamp, _, temperature in self._iter_freq_data(worker, self.TEMPERATURE_TIMES, self.TEMPERATURE_DATA, start, end):
             yield timestamp, temperature
 
-    def write_temperature(self, timestamp, temperature):
+    def write_temperature(self, worker, timestamp, temperature):
         """ Write temperature at the given timestamp.
         """
         if self.values is None:
             raise StoreError("Uninitialised config (call read or write)")
-        self._write_freq_data(self.TEMPERATURE_TIMES, self.TEMPERATURE_DATA, timestamp, 0, temperature)
+        self._write_freq_data(worker, self.TEMPERATURE_TIMES, self.TEMPERATURE_DATA, timestamp, 0, temperature)
 
-    def iter_error(self):
+    def iter_error(self, worker):
         """ Yield (timestamp, error) for all errors.
         """
         if self.values is None:
             raise StoreError("Uninitialised config (call read or write)")
-        for timestamp, _, error in self._iter_freq_data(self.ERROR_TIMES, self.ERROR_DATA):
+        for timestamp, _, error in self._iter_freq_data(worker, self.ERROR_TIMES, self.ERROR_DATA):
             yield timestamp, error
 
-    def write_error(self, timestamp, error):
+    def write_error(self, worker, timestamp, error):
         """ Write an error at the given timestamp.
         """
         if self.values is None:
             raise StoreError("Uninitialised config (call read or write)")
-        self._write_freq_data(self.ERROR_TIMES, self.ERROR_DATA, timestamp, 0, str(error))
+        self._write_freq_data(worker, self.ERROR_TIMES, self.ERROR_DATA, timestamp, 0, str(error))
 
 
 if __name__ == '__main__':
