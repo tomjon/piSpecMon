@@ -27,10 +27,11 @@ class Process(object):
 
         Sub-classes may need to override get_capabilities().
     """
-    def __init__(self, data_store, prefix):
+    def __init__(self, data_store, prefix=None, run_path=None, config_file=None):
         self.data_store = data_store
         self.prefix = prefix
-        run_path = RUN_PATH.replace('$', prefix)
+        if run_path is None: # allow for run path override, otherwise use pattern
+            run_path = RUN_PATH.replace('$', prefix)
         try:
             os.makedirs(run_path)
         except OSError:
@@ -38,7 +39,10 @@ class Process(object):
         self.pid_file = os.path.join(run_path, 'pid')
         self.status_file = os.path.join(run_path, 'status')
         self.caps_file = os.path.join(run_path, 'caps')
-        self.config_file = CONFIG_PATH.replace('$', prefix)
+        if config_file is None: # allow for config override, otherwise use pattern
+            self.config_file = CONFIG_PATH.replace('$', prefix)
+        else:
+            self.config_file = config_file
         self._exit = False
         self._stop = False
         self._tidy = False
