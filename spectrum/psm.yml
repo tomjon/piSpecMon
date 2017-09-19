@@ -113,6 +113,14 @@ default:
             threshold: -20
             period: 600
 
+    ams_settings:
+        address:
+        port: 8080
+        freqs:
+          - enabled: true
+            range: [87.5, 108.0, 0.1]
+            exp: 6
+
 # UI configuration
 ui_config:
     tick_interval: 1000

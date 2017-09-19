@@ -24,6 +24,7 @@
       <psm-audio *ngIf="user.roleIn(['admin'])"></psm-audio>
       <psm-rds *ngIf="user.roleIn(['admin', 'freq'])"></psm-rds>
       <psm-scan *ngIf="user.roleIn(['admin', 'freq'])"></psm-scan>
+      <psm-ams *ngIf="user.roleIn(['admin', 'freq'])"></psm-ams>
     </div>
   </div>
 </div>

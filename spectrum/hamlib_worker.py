@@ -112,6 +112,8 @@ class Worker(Process):
                         self.status['sweep']['peaks'].append(peak)
                         yield
 
+                    sleep(1) #FIXME do not commit this
+
                 if w[1][1] < w[2][1] and w[2][1] >= threshold:
                     peaks.append((w[2][2], w[2][0]))
 

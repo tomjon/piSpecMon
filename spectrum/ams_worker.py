@@ -3,7 +3,6 @@
 import sys
 from spectrum.process import Process
 from spectrum.common import log, parse_config, now
-from spectrum.config import AMS_SENSOR_ADDR, AMS_SENSOR_PORT
 from pyams import Sensor
 
 class Worker(Process):
@@ -27,7 +26,7 @@ class Worker(Process):
         self.status.clear()
         yield
 
-        with Sensor(AMS_SENSOR_ADDR, AMS_SENSOR_PORT) as sensor:
+        with Sensor(config.values['address'], config.values['port']) as sensor:
             debug = 'debug' in sys.argv
 
             # go half a channel either side of the range (hf is half channel span)
