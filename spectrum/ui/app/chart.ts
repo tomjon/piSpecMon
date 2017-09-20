@@ -1,6 +1,7 @@
 import { WorkerData} from './worker-data';
 import { StateService } from './state.service';
 import { DataService } from './data.service';
+import { MessageService } from './message.service';
 
 export abstract class Chart {
   private plotted: boolean = false; // whether new data has been plotted yet
@@ -12,7 +13,10 @@ export abstract class Chart {
 
   protected worker: string;
 
-  constructor(protected stateService: StateService, private dataService?: DataService, private name?: string) {
+  constructor(private messageService: MessageService,
+              protected stateService: StateService,
+              private dataService: DataService,
+              private name: string) {
       stateService.registerChart(this);
   }
 
@@ -57,6 +61,19 @@ export abstract class Chart {
   onShow(show: boolean) {
     if (show && ! this.plotted) this._plot();
     this.show = show;
+  }
+
+  onExport() {
+    let config = this.stateService.currentConfig;
+    if (config == undefined) return;
+    this.dataService.exportData(config.id, this.worker, this.name)
+                    .subscribe(path => this.messageService.show('CSV written to ' + path));
+  }
+
+  onDownload() {
+    let config = this.stateService.currentConfig;
+    if (config == undefined) return;
+    window.open(`/export/${config.id}?key=${this.worker}&name=${this.name}`, '_blank');
   }
 
   private _plot(): void {

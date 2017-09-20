@@ -328,13 +328,30 @@ def logout_endpoint():
 @application.role_required(['admin', 'freq', 'data'])
 def export_endpoint(config_id):
     """ Export data endpoint for writing file locally (POST) or streaming the output (GET).
+
+        Worker key is given as a query string parameter called 'key'.
+        Type of data is given as a query string parameter called 'name' (expecting
+        'waterfall' or 'rds' etc.)
+
+        Currently only 'waterfall' and 'rds' are supported.
     """
+    try:
+        config = application.data_store.config(config_id).read()
+    except StoreError as e:
+        return e.message, 404
+    key = request.args.get('key', None)
+    if key is None:
+        raise "No worker key specified", 400
+    name = request.args.get('name', None)
+    if name is None:
+        raise "No data name specified", 400
+
     # yield export spectrum data
     def _iter_spectrum_export(scan_config):
         yield '#TimeDate,'
         yield ','.join([str(freq) for _, freq in scan(scan_config)])
         yield '\n'
-        for timestamp, strengths in config.iter_spectrum():
+        for timestamp, strengths in config.iter_spectrum(key):
             yield str(datetime.fromtimestamp(timestamp / 1000))
             yield ','
             yield ','.join([str(v) if v > -128 else '' for v in strengths])
@@ -343,10 +360,10 @@ def export_endpoint(config_id):
     # yield export RDS data
     def _iter_rds_export(scan_config):
         def _name():
-            for timestamp, freq_n, name in config.iter_rds_name():
+            for timestamp, freq_n, name in config.iter_rds_name(key):
                 yield timestamp, freq_n, name, ''
         def _text():
-            for timestamp, freq_n, text in config.iter_rds_text():
+            for timestamp, freq_n, text in config.iter_rds_text(key):
                 yield timestamp, freq_n, '', text
         yield '#TimeDate,Freq,RDS Name,RDS Text\n'
         for timestamp, freq_n, name, text in heapq.merge(_name(), _text()): # luckily, natural sort order for tuples is what we want
@@ -359,20 +376,15 @@ def export_endpoint(config_id):
             yield text.replace('"', r'\"')
             yield '"\n'
 
-    try:
-        config = application.data_store.config(config_id).read()
-    except StoreError as e:
-        return e.message, 404
-    rds = request.args.get('rds', 'false') == 'true'
     ident = config.values['ident']
-    scan_config = parse_config(config.values, 'rds') #FIXME hm, which?!
-    export = _iter_spectrum_export(scan_config) if not rds else _iter_rds_export(scan_config)
+    scan_config = parse_config(config.values, key)
+    export = _iter_spectrum_export(scan_config) if name != 'rds' else _iter_rds_export(scan_config)
 
     date = datetime.fromtimestamp(config.timestamp / 1000.0)
     date_s = date.strftime("%Y-%m-%d-%H-%M-%S")
-    name = '_'.join([slugify(x) for x in [date_s, ident['name'], ident['description']]])
+    identifier = '_'.join([slugify(x) for x in [date_s, ident['name'], ident['description']]])
 
-    filename = '{0}{1}.csv'.format(name, '' if not rds else '_rds')
+    filename = '{0}_{1}_{2}.csv'.format(key, name, identifier)
     if request.method == 'GET':
         response = Response(export, mimetype='text/csv')
         response.headers['Content-Disposition'] = 'attachment; filename={0}'.format(filename)

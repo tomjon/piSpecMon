@@ -1,4 +1,5 @@
 import { Component, ViewChild, Input } from '@angular/core';
+import { MessageService } from './message.service';
 import { StateService } from './state.service';
 import { DataService } from './data.service';
 import { Chart } from './chart';
@@ -15,6 +16,10 @@ declare var $;
   inputs: [ 'worker' ],
   template: `<psm-widget [hidden]="isHidden" title="{{label}} - Waterfall" class="chart" (show)="onShow($event)">
                <form class="form-inline controls" role="form">
+                 <div class="form-group buttons">
+                   <button (click)="onExport()" class="btn btn-default btn-selected">Export</button>
+                   <button (click)="onDownload()" class="btn btn-default btn-selected">Download</button>
+                 </div>
                  <div *ngIf="showSamples" class="form-group">
                    <audio #audio controls preload='none'></audio>
                  </div>
@@ -63,8 +68,8 @@ export class WaterfallComponent extends Chart {
   @ViewChild('canvas') canvas;
   @ViewChild('overlay') overlay;
 
-  constructor(stateService: StateService, dataService: DataService, private freq_pipe: FreqPipe) {
-    super(stateService, dataService, 'waterfall');
+  constructor(messageService: MessageService, stateService: StateService, dataService: DataService, private freq_pipe: FreqPipe) {
+    super(messageService, stateService, dataService, 'waterfall');
   }
 
   ngOnInit() {

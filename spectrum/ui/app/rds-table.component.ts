@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { MessageService } from './message.service';
 import { StateService } from './state.service';
 import { WidgetComponent } from './widget.component';
 import { DatePipe } from './date.pipe';
@@ -12,6 +13,10 @@ import { Chart } from './chart';
   pipes: [ DatePipe ],
   template: `<psm-widget [hidden]="isHidden" title="{{label}} - RDS Text" class="chart" (show)="onShow($event)">
                <form class="form-inline" role="form">
+                 <div class="form-group buttons">
+                   <button (click)="onExport()" class="btn btn-default btn-selected">Export</button>
+                   <button (click)="onDownload()" class="btn btn-default btn-selected">Download</button>
+                 </div>
                  <div class="form-group">
                    <label for="station">Station</label>
                    <select class="form-control" [(ngModel)]="idx" name="station">
@@ -38,7 +43,7 @@ export class RdsTableComponent extends Chart {
   stations: any;
   idx: number; // the selected station index
 
-  constructor(stateService: StateService) { super(stateService) } //FIXME doesn't call super correctly... superclass has stuff we don't need
+  constructor(messageService: MessageService, stateService: StateService) { super(messageService, stateService, undefined, 'rds') }
 
   plot() {
     this.stations = [];
@@ -52,6 +57,6 @@ export class RdsTableComponent extends Chart {
   }
 
   get isHidden(): boolean {
-    return this.data == undefined || this.stations == undefined || this.stations.length == 0;
+    return this.data == undefined || this.data.rdsNames == undefined || this.data.rdsNames.length == 0;
   }
 }

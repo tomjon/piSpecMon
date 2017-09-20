@@ -1,4 +1,5 @@
 import { Component, Input, ViewChild } from '@angular/core';
+import { MessageService } from './message.service';
 import { StateService } from './state.service';
 import { DataService } from './data.service';
 import { WidgetComponent } from './widget.component';
@@ -57,8 +58,8 @@ export class FrequencyComponent extends Chart {
   @ViewChild('chart') chart;
   @ViewChild('text') text;
 
-  constructor(stateService: StateService, dataService: DataService, private freq_pipe: FreqPipe) {
-    super(stateService, dataService, 'frequency');
+  constructor(messageService: MessageService, stateService: StateService, dataService: DataService, private freq_pipe: FreqPipe) {
+    super(messageService, stateService, dataService, 'frequency');
   }
 
   ngOnInit() {

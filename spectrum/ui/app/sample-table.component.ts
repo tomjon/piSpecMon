@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { MessageService } from './message.service';
 import { StateService } from './state.service';
 import { WidgetComponent } from './widget.component';
 import { FreqPipe } from './freq.pipe';
@@ -39,7 +40,7 @@ export class SampleTableComponent extends Chart {
   freqs: number[];
   freq_n: number;
 
-  constructor(stateService: StateService) { super(stateService) } //FIXME superclass has stuff we don't want, and we don't call the super constructor properly
+  constructor(messageService: MessageService, stateService: StateService) { super(messageService, stateService, null, 'audio') }
 
   plot() {
     this.freqs = [];

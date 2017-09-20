@@ -154,9 +154,8 @@ export class DataService {
                     .catch(this.errorHandler(`stop process`));
   }
 
-  exportData(config_id, rds: boolean=false): Observable<string> {
-    let args = rds ? '?rds=true' : '';
-    return this.http.post(this.baseUrl + 'export/' + config_id + args, null, null)
+  exportData(config_id, worker_key: string, name: string): Observable<string> {
+    return this.http.post(`${this.baseUrl}export/${config_id}?key=${worker_key}&name=${name}`, null, null)
                     .map(res => res.json().path)
                     .catch(this.errorHandler("export spectrum data"));
   }

@@ -71,6 +71,11 @@ form.controls {
   left: 160px;
   margin-top: 6px;
 }
+form.controls .buttons {
+  position: absolute;
+  right: 300px;
+  margin-top: 6px;
+}
 psm-waterfall .waterfall {
   position: relative;
   margin-top: 40px;

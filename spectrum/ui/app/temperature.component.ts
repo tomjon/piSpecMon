@@ -1,4 +1,5 @@
 import { Component, Input, ViewChild } from '@angular/core';
+import { MessageService } from './message.service';
 import { StateService } from './state.service';
 import { DataService } from './data.service';
 import { WidgetComponent } from './widget.component';
@@ -41,8 +42,8 @@ export class TemperatureComponent extends Chart {
   @ViewChild('chart') chart;
   @ViewChild('text') text;
 
-  constructor(stateService: StateService, dataService: DataService) {
-    super(stateService, dataService, 'temperature');
+  constructor(messageService: MessageService, stateService: StateService, dataService: DataService) {
+    super(messageService, stateService, dataService, 'temperature');
   }
 
   ngOnInit() {
