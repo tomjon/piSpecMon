@@ -12,21 +12,22 @@ class Worker(Process):
         super(Worker, self).__init__(data_store, 'ams')
 
     def get_capabilities(self):
-        return {'models': [{'model': 'Keysight Sensor'}], 'scan': { #FIXME can we remove 'models' as it isn't used (only for Rig)
-                'antenna': [{'value': 0, 'label': 'Antenna 1'}, {'value': 1, 'label': 'Antenna 2'}, {'value': 2, 'label': 'Test Signal'}, {'value': 3, 'label': 'Terminated'}],
+        return {'antenna': [{'value': 0, 'label': 'Antenna 1'}, {'value': 1, 'label': 'Antenna 2'}, {'value': 2, 'label': 'Test Signal'}, {'value': 3, 'label': 'Terminated'}],
                 'preamp': [{'value': 0, 'label': 'Off'}, {'value': 1, 'label': 'On'}],
                 'attenuation': [{'value': 0.0, 'label': 'Off'}, {'value': 10.0, 'label': '10dB'}, {'value': 20.0, 'label': '20dB'}],
-                'window': [{'value': 0, 'label': 'Hann'}, {'value': 1, 'label': 'Gauss Top'}, {'value': 2, 'label': 'Flat Top'}, {'value': 3, 'label': 'Uniform'}, {'value': 4, 'label': 'Unknown'}]}}
+                'window': [{'value': 0, 'label': 'Hann'}, {'value': 1, 'label': 'Gauss Top'}, {'value': 2, 'label': 'Flat Top'}, {'value': 3, 'label': 'Uniform'}, {'value': 4, 'label': 'Unknown'}]}
 
-    def iterator(self, config):
+    def iterator(self, config, initial_count):
         """ Scan the spectrum, storing data through the config object, and yield status.
         """
-        frange = parse_config(config.values)['range']
+        #FIXME the 'ams' parameter cold be replace by self.worker (or whatever) - do it automatically in the parent?
+        frange = parse_config(config.values, 'ams')[0] #FIXME assumes only a range
 
         self.status.clear()
         yield
 
-        with Sensor(config.values['address'], config.values['port']) as sensor:
+        values = config.values['ams'] #FIXME the 'ams' parameter cold be replace by self.worker (or whatever) - do it automatically in the parent?
+        with Sensor(values['address'], values['port']) as sensor:
             debug = 'debug' in sys.argv
 
             # go half a channel either side of the range (hf is half channel span)
@@ -34,7 +35,7 @@ class Worker(Process):
             minF = frange[0] - hf
             maxF = frange[1] + hf
 
-            for sweep_idx, df, amps in sensor.iter_sweep(minF, maxF, **config.values['scan']):
+            for sweep_idx, df, amps in sensor.iter_sweep(minF, maxF, **values['scan']):
                 # channelise the amplitudes at channel frequencies
                 c_amps = []
                 bf = minF + frange[2]
@@ -49,9 +50,9 @@ class Worker(Process):
                         max_amp = None
 
                 time_0 = now()
-                self.status['sweep'] = {'timestamp': time_0, 'frange': frange, 'len': len(c_amps)}
-                self.status['sweep']['sweep_n'] = config.count + sweep_idx
+                self.status['sweep'] = {'timestamp': time_0}
+                self.status['sweep']['sweep_n'] = initial_count + sweep_idx #FIXME this sweep_n mechanism must go into process.py
                 freq_n = max(xrange(len(c_amps)), key=c_amps.__getitem__)
                 self.status['sweep']['peaks'] = [{'freq_n': freq_n, 'strength': c_amps[freq_n]}]
-                config.write_spectrum(time_0, c_amps)
+                config.write_spectrum(self.prefix, time_0, c_amps)
                 yield

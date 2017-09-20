@@ -176,6 +176,11 @@ export class TableComponent {
       if (values.freqs[1].enabled) {
         return `Static (${values.freqs[1].freq}MHz)`;
       }
+    case 'ams':
+      let range = values.freqs[0].range;
+      let exp = values.freqs[0].exp;
+      let hz = this.stateService.constants.hz_labels[exp];
+      return `${range[0]} - ${range[1]} (Δ ${range[2]}) ${hz}`;
     default:
       return '✔';
     }

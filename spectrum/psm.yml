@@ -116,6 +116,11 @@ default:
     ams_settings:
         address:
         port: 8080
+        scan:
+          antenna:
+          preamp:
+          attenuation:
+          window:
         freqs:
           - enabled: true
             range: [87.5, 108.0, 0.1]

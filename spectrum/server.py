@@ -103,6 +103,7 @@ def process():
         values['audio'] = application.audio.values
         values['rds'] = application.rds.values
         values['hamlib'] = application.hamlib.values
+        values['ams'] = application.ams.values
         values['ident'] = application.ident
         values['user'] = current_user.name
 

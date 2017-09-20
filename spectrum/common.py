@@ -101,14 +101,14 @@ def _convert(dic):
 
 
 #FIXME prefer to do the interpretation of freq specs, to produce a generator, in one step
-def parse_config(config, module):
+def parse_config(config, worker):
     """ Convert the given config using _convert, and return parsed scan settings.
         The return value may be fed into scan().
     """
     _convert(config)
     scan_cfg = []
-    if module in config and 'freqs' in config[module]:
-        for x in config[module]['freqs']:
+    if worker in config and 'freqs' in config[worker]:
+        for x in config[worker]['freqs']:
             # x is either a range or a single frequency
             if 'range' in x and x.get('enabled', False):
                 scan_cfg.append([int(10 ** x['exp'] * float(f)) for f in x['range']])
