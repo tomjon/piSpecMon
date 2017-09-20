@@ -4,16 +4,22 @@ from time import sleep
 from spectrum.binary_datastore import BinaryDataStore
 from spectrum.common import log, parse_config
 from spectrum.config import RADIO_ON_SLEEP_SECS, RADIO_ON_SWITCH, DATA_PATH
-from spectrum.monitor import Monitor
+try:
+    from spectrum.monitor import Monitor
+except ImportError:
+    Monitor = None
 try:
     import RPi.GPIO as GPIO
 except ImportError:
-    pass
+    GPIO = None
 
 
 def power_on():
     """ Turn on the rig.
     """
+    if GPIO is None:
+        log.error("Cannot power on - no GPIO")
+        return
     log.info("Attempting to power on")
     try:
         # if we're on a Pi, we can import GPIO and use it to turn on the rig
@@ -34,6 +40,9 @@ def power_on():
 def power_off():
     """ Turn off the rig.
     """
+    if Monitor is None:
+        log.error("Cannot power off - no Monitor/Hamlib")
+        return
     log.info("Attempting to power off")
     data = BinaryDataStore(DATA_PATH)
     rig = data.settings('rig').read()

@@ -12,7 +12,7 @@ from spectrum.config import DATA_PATH, CONVERT_PERIOD, USERS_FILE, ROUNDS, SSMTP
                             DEFAULT_AMS_SETTINGS, DEFAULT_HAMLIB_SETTINGS, VERSION_FILE, USER_TIMEOUT_SECS, PICO_PATH, \
                             EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, \
                             EVENT_PATH, EVENT_POLL_SECS, EVENT_OVERSEER_URL, \
-                            EVENT_OVERSEER_KEY
+                            EVENT_OVERSEER_KEY #FIXME totally grim, don't do this, push these down into where they are wanted
 from spectrum.audio import AudioServer
 from spectrum.users import Users
 from spectrum.queue import Queue
@@ -94,9 +94,6 @@ def users():
 def power():
     """ Power on or off the radio.
     """
-    if Hamlib is None:
-        print "Hamlib is not installed - can not power on/off"
-        sys.exit(1)
     if len(sys.argv) != 2 or sys.argv[1] not in ('on', 'off'):
         print "Usage: {0} [on|off]".format(sys.argv[0])
         sys.exit(1)
