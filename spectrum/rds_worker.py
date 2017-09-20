@@ -26,10 +26,7 @@ from spectrum.process import Process
 from spectrum.config import RDS_DEVICE, MONKEY_POLL
 from spectrum.audio import AudioClient
 import os
-try:
-    from spectrum.rds import RdsApi
-except ImportError:
-    from spectrum.fake_rds import RdsApi
+from spectrum.rds import RdsApi
 
 class Worker(Process):
     """ Process implementation for decoding RDS using the Monkey board.
