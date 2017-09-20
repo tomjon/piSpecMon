@@ -13,7 +13,7 @@ declare var $;
 
 @Component({
   selector: 'psm-ams',
-  template: `<psm-widget title="AMS Configuration">
+  template: `<psm-widget title="Keysight Configuration">
               <form role="form" #form="ngForm" novalidate>
                 <div class="form-group">
                   <div class="psm-input-group col-lg-6">

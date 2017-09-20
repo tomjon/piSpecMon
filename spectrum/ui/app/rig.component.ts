@@ -3,11 +3,12 @@ import { DataService } from './data.service';
 import { StateService } from './state.service';
 import { WidgetBase } from './widget.base';
 import { WidgetComponent } from './widget.component';
+import { InputDirective } from './input.directive';
 
 @Component({
   selector: 'psm-rig',
   templateUrl: 'templates/rig.html',
-  directives: [ WidgetComponent ]
+  directives: [ WidgetComponent, InputDirective ]
 })
 export class RigComponent extends WidgetBase {
   @Input() caps; //FIXME this should probably be on state service?
