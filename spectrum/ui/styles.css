@@ -169,6 +169,9 @@ tbody tr {
 .indicator {
   width: 30px;
 }
+.count {
+  font-style: italic
+}
 
 /* specials for range display */
 .range-slider {

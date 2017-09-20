@@ -10,4 +10,12 @@ export class Config {
   public errors: any[];
 
   public data: Data;
+
+  public update_counts(status: any) {
+    for (let worker in status) {
+      if (status[worker].sweep) {
+        this.counts[worker] = status[worker].sweep.sweep_n; //FIXME formalise this mechanism between UI and process.py
+      }
+    }
+  }
 }

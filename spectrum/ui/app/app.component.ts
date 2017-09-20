@@ -94,18 +94,21 @@ export class AppComponent {
   //FIXME intereseted components should subscribe to a Status subject of dataservice
   setStatus(status: any) {
     this.status = status;
-    if (status != undefined) {
-      let config_id: string = undefined;
-      for (let key in status) {
-        config_id = status[key].config_id;
-      }
-      if (config_id != undefined) {
-        let config: Config = this.table.getConfig(config_id);
-        if (config != undefined) this.values = config.values;
-      }
-      let config: Config = this.stateService.currentConfig;
-      if (config && status.config_id == config.id && config.data) {
-        config.data.update_status(status);
+    let config_id: string = undefined;
+    for (let key in status) {
+      let c_id = status[key].config_id;
+      if (c_id != undefined) config_id = c_id;//FIXME have server not spread config_ids everywhere :(
+    }
+
+    let config: Config = this.stateService.currentConfig;
+    if (config != undefined && config_id == config.id && config.data != undefined) {
+      config.data.update_status(status);
+    }
+
+    if (config_id != undefined) {
+      let config: Config = this.table.getConfig(config_id);
+      if (config != undefined) {
+        this.values = config.values; //FIXME horrible: this is used only for 'description' of the process/run
       }
     }
   }

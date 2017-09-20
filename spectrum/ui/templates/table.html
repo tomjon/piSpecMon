@@ -16,7 +16,7 @@
         <td>{{config.latest | date}}</td>
         <td *ngFor="let worker of workers" class="feature">
           <span *ngIf="audioEnabled(config, worker)" class="glyphicon glyphicon-volume-up"></span>
-          {{config.counts[worker.value]}} x {{configSummary(config, worker)}}
+          {{configSummary(config, worker)}} <span *ngIf="config.counts[worker.value] > 0" class="count">[{{config.counts[worker.value]}}]</span>
         </td>
         <td class="indicator">
           <div *ngIf="user.roleIn(['admin']) || running(config)">

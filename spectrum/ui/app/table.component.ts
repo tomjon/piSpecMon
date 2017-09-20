@@ -42,7 +42,8 @@ export class TableComponent {
   @Input('status') set _status(status) {
     if (status == undefined) return;
     this.standby = false;
-    for (let key in status) {
+    this.config_id = undefined;
+    for (let key in status) { //FIXME there's a fixme for this in app.component as well :(
       if (status[key].config_id) this.config_id = status[key].config_id;
     }
     if (! this.config_id) return;
@@ -65,7 +66,9 @@ export class TableComponent {
           max_latest = Math.max(max_latest, status[key].sweep.timestamp);
         }
       }
-      config.latest = max_latest;
+      config.latest = max_latest; //FIXME do this in config object
+
+      config.update_counts(status);
     }
   }
 

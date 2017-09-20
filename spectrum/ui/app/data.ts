@@ -65,7 +65,8 @@ export class Data {
   public get timestamps(): { [key: string]: number; } {
     let t: { [key: string]: number; } = {};
     for (let key in this.workers) {
-      t[key] = this.workers[key].timestamp;
+      let t0 = this.workers[key].timestamp;
+      if (t0 != undefined) t[key] = t0;
     }
     return t; //FIXME might be able to do this with a one-liner, like this.workers.map(..) but does that work on objects?
   }
@@ -79,7 +80,7 @@ export class Data {
   }
 
   public update_status(status: any) {
-    if (status.sweep && this.loading == undefined) {
+    if (this.loading == undefined) {
       this.dataService.getData(this.config.id, this.timestamps)
                       .subscribe(data => {
                         this.update(data);
