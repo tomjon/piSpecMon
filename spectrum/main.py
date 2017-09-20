@@ -36,7 +36,7 @@ for name in WORKER_MODULES:
         Workers.append(Worker)
         setattr(sys.modules[__name__], name, entry_point_fn(Worker))
     except (ImportError, OSError) as e:
-        log.warn("Not importing %s module: %s", name, e.message)
+        log.info("Not importing %s module: %s", name, e.message)
 
 
 def init_application():

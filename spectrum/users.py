@@ -1,9 +1,11 @@
 """ Module provides functions for manipulating the users.passwords file (which is very much
     like /etc/passwords).
 """
+from spectrum.common import log
 try:
     from hashlib import pbkdf2_hmac
 except ImportError:
+    log.warn("No pbkdf2_hmac function - no password protection")
     def pbkdf2_hmac(*args):
         return "FAKEHASH"
 
