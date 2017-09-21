@@ -71,10 +71,10 @@ class AudioClient(object):
     def __enter__(self):
         self.socket = zmq.Context().socket(zmq.SUB)
         self.socket.connect('tcp://localhost:{0:d}'.format(AUDIO_ZMQ_PORT))
-        self.socket.setsockopt(zmq.SUBSCRIBE, self.channel)
+        self.socket.setsockopt(zmq.SUBSCRIBE, str(self.channel))
         self.temp = NamedTemporaryFile(delete=False, mode='wb') if self.f is None else None
         self.path = None
-        self.wav = wave.open(self.temp or self.f)
+        self.wav = wave.open(self.temp or self.f, 'wb')
         self.wav.setsampwidth(SAMPLE_WIDTH)
         self.wav.setnchannels(1)
         self.wav.setframerate(RATE)
@@ -82,8 +82,8 @@ class AudioClient(object):
 
     def __exit__(self, *args):
         self.wav.close()
-        self.temp.close()
-        if self.temp:
+        if self.temp is not None:
+            self.temp.close()
             if self.path is None:
                 os.remove(self.temp.name)
             else:

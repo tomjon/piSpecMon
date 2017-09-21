@@ -20,9 +20,14 @@ import { InputDirective } from './input.directive';
                   </select>
                 </div>
               </form>
+              <div [hidden]="true">
+                <audio #audioL controls preload="none"></audio>
+                <audio #audioR controls preload="none"></audio>
+              </div>
               <div class="form-group">
-                <audio controls src="{{url('L')}}" preload="none"></audio>
-                <audio controls src="{{url('R')}}" preload="none"></audio>
+                <label>Play one second of audio from:</label>
+                <button (click)="onClick('L')">Left</button>
+                <button (click)="onClick('R')">Right</button>
               </div>
              </psm-widget>`,
   directives: [ WidgetComponent, InputDirective ]
@@ -30,6 +35,9 @@ import { InputDirective } from './input.directive';
 export class AudioComponent extends WidgetBase {
   //FIXME can this go on a Widget parent class? probably only after moving to Angular 4...
   @ViewChild(WidgetComponent) widgetComponent;
+
+  @ViewChild('audioL') L;
+  @ViewChild('audioR') R;
 
   //FIXME boo :(
   constructor(dataService: DataService, stateService: StateService) { super(dataService, stateService) }
@@ -39,7 +47,10 @@ export class AudioComponent extends WidgetBase {
     this.setViewChildren('audio', this.widgetComponent);
   }
 
-  url(channel: string): string {
-    this.dataService.getAudioUrl(channel);
+  onClick(channel) {
+    let audio = this[channel].nativeElement;
+    audio.src = this.dataService.getAudioUrl(channel) + '?' + Date.now();
+    audio.load();
+    audio.play();
   }
 }

@@ -215,6 +215,7 @@ def audio_endpoint(config_id, freq_n, timestamp):
             log.error("Error sending file partial: %s", e)
     return 'File not found', 404
 
+
 @application.route('/live/<channel>')
 def live_endpoint(channel):
     """ Endpoint for live streaming an audio channel.
@@ -222,9 +223,13 @@ def live_endpoint(channel):
     class Buffer(object):
         def __init__(self):
             self.b = []
+            self.len = 0
+            self.foo = True
 
         def write(self, x):
+            if not self.foo: return
             self.b.append(x)
+            self.len += len(x)
 
         def read(self):
             try:
@@ -232,13 +237,35 @@ def live_endpoint(channel):
             finally:
                 del self.b[:]
 
-    def iter_wav():
-        f = Buffer()
-        with AudioClient(channel, f) as audio:
-            for _ in iter(audio):
-                yield f.read()
+        def tell(self):
+            return self.len
 
-    return Response(iter_wav(), mimetype="audio/x-wav")
+        def seek(self, pos, how):
+            pass
+
+        def flush(self):
+            pass
+
+        def close(self):
+            self.foo = False
+
+    f = Buffer()
+    with AudioClient(channel, f) as audio:
+        for count, _ in enumerate(audio):
+            data = f.read()
+            break
+
+    range_header = request.headers.get('Range', 'bytes=0-')
+    if range_header[:6] != 'bytes=':
+        return "Bad range header", 400
+    r0, r1 = range_header[6:].split('-')
+
+    if r0 != '0': return "Unsupported range header", 400
+
+    rsp = Response(data, 206, mimetype="audio/x-wav", direct_passthrough=True)
+    bytes_range = 'bytes {0}-{1}/{2}'.format(0, len(data) - 1, len(data))
+    rsp.headers.add('Content-Range', bytes_range)
+    return rsp
 
 
 @application.route('/users')
