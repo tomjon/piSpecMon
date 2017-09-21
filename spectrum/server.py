@@ -13,6 +13,7 @@ from spectrum.datastore import StoreError
 from spectrum.common import log, now, parse_config, scan, freq
 from spectrum.users import IncorrectPasswordError, UsersError
 from spectrum.webapp import WebApplication
+from spectrum.audio import AudioClient
 from spectrum.event import EVENT_IDENT, EVENT_LOGIN, EVENT_LOGOUT, EVENT_START, EVENT_STOP
 from spectrum.config import UI_CONFIG
 
@@ -213,6 +214,31 @@ def audio_endpoint(config_id, freq_n, timestamp):
         except IOError as e:
             log.error("Error sending file partial: %s", e)
     return 'File not found', 404
+
+@application.route('/live/<channel>')
+def live_endpoint(channel):
+    """ Endpoint for live streaming an audio channel.
+    """
+    class Buffer(object):
+        def __init__(self):
+            self.b = []
+
+        def write(self, x):
+            self.b.append(x)
+
+        def read(self):
+            try:
+                return ''.join(self.b)
+            finally:
+                del self.b[:]
+
+    def iter_wav():
+        f = Buffer()
+        with AudioClient(channel, f) as audio:
+            for _ in iter(audio):
+                yield f.read()
+
+    return Response(iter_wav(), mimetype="audio/x-wav")
 
 
 @application.route('/users')

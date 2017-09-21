@@ -61,17 +61,20 @@ class AudioServer(object): # pylint: disable=too-few-public-methods
 class AudioClient(object):
     """ Client API for recording audio to a wav file.
     """
-    def __init__(self, channel):
+    def __init__(self, channel, f=None):
+        if channel not in (CHANNEL_LEFT, CHANNEL_RIGHT):
+            raise Exception("Bad channel: " + channel)
         self.socket = None
         self.channel = channel
+        self.f = f # a file-like object, otherwise a temporary file is created
 
     def __enter__(self):
         self.socket = zmq.Context().socket(zmq.SUB)
         self.socket.connect('tcp://localhost:{0:d}'.format(AUDIO_ZMQ_PORT))
-        self.socket.setsockopt_string(zmq.SUBSCRIBE, unicode(self.channel)) #FIXME probably just want setsockopt() and not unicode
-        self.file = NamedTemporaryFile(delete=False, mode='wb')
+        self.socket.setsockopt(zmq.SUBSCRIBE, self.channel)
+        self.temp = NamedTemporaryFile(delete=False, mode='wb') if self.f is None else None
         self.path = None
-        self.wav = wave.open(self.file)
+        self.wav = wave.open(self.temp or self.f)
         self.wav.setsampwidth(SAMPLE_WIDTH)
         self.wav.setnchannels(1)
         self.wav.setframerate(RATE)
@@ -79,11 +82,14 @@ class AudioClient(object):
 
     def __exit__(self, *args):
         self.wav.close()
-        self.file.close()
-        if self.path is None:
-            os.remove(self.file.name)
+        self.temp.close()
+        if self.temp:
+            if self.path is None:
+                os.remove(self.temp.name)
+            else:
+                os.rename(self.temp.name, self.path)
         else:
-            os.rename(self.file.name, self.path)
+            self.f.close()
         self.socket.close()
 
     def __iter__(self):
@@ -93,4 +99,6 @@ class AudioClient(object):
             yield
 
     def write(self, path):
+        if self.temp is None:
+            raise Exception("No temporary file exists (file like object specified at __init__)")
         self.path = path

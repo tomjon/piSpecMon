@@ -193,6 +193,10 @@ export class DataService {
                     .catch(this.errorHandler("get PICO status"));
   }
 
+  getAudioUrl(channel: string): string {
+    return `${this.baseUrl}live/${channel}`;
+  }
+
   private errorHandler(source: any) {
     let errors = this.errorService;
     return function (error: any, caught: Observable<any>): Observable<any> {
