@@ -25,12 +25,13 @@ import { InputDirective } from './input.directive';
                 <audio #audioR controls preload="none"></audio>
               </div>
               <div class="form-group">
-                <label>Play one second of audio from:</label>
+                Play <input type="number" min="1" step="1" [(ngModel)]="n" /> second of audio from:
                 <button (click)="onClick('L')">Left</button>
                 <button (click)="onClick('R')">Right</button>
               </div>
              </psm-widget>`,
-  directives: [ WidgetComponent, InputDirective ]
+  directives: [ WidgetComponent, InputDirective ],
+  styles: ['input[type=number] { width: 40px }']
 })
 export class AudioComponent extends WidgetBase {
   //FIXME can this go on a Widget parent class? probably only after moving to Angular 4...
@@ -38,6 +39,8 @@ export class AudioComponent extends WidgetBase {
 
   @ViewChild('audioL') L;
   @ViewChild('audioR') R;
+
+  private n: number = 1;
 
   //FIXME boo :(
   constructor(dataService: DataService, stateService: StateService) { super(dataService, stateService) }
@@ -49,7 +52,8 @@ export class AudioComponent extends WidgetBase {
 
   onClick(channel) {
     let audio = this[channel].nativeElement;
-    audio.src = this.dataService.getAudioUrl(channel) + '?' + Date.now();
+    let qs = `?n=${this.n}&x=${Date.now()}`; // the Date.now() is a cache buster
+    audio.src = this.dataService.getAudioUrl(channel) + qs;
     audio.load();
     audio.play();
   }

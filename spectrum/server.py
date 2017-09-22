@@ -5,6 +5,7 @@ import os
 import subprocess
 import heapq
 from datetime import datetime
+from StringIO import StringIO
 from slugify import slugify
 from flask import redirect, request, Response, send_file
 from flask_login import current_user
@@ -219,41 +220,25 @@ def audio_endpoint(config_id, freq_n, timestamp):
 @application.route('/live/<channel>')
 def live_endpoint(channel):
     """ Endpoint for live streaming an audio channel.
+
+        FIXME: this doesn't actually stream, rather sends the whole .wav in one go
     """
-    class Buffer(object):
-        def __init__(self):
-            self.b = []
-            self.len = 0
-            self.foo = True
+    try:
+        n = int(request.args.get('n', 1))
+        if n < 0 or n > 600:
+            raise ValueError()
+    except ValueError:
+        return 'Bad value for "n"', 400
 
-        def write(self, x):
-            if not self.foo: return
-            self.b.append(x)
-            self.len += len(x)
-
-        def read(self):
-            try:
-                return ''.join(self.b)
-            finally:
-                del self.b[:]
-
-        def tell(self):
-            return self.len
-
-        def seek(self, pos, how):
-            pass
-
-        def flush(self):
-            pass
-
+    class Buffer(StringIO):
         def close(self):
-            self.foo = False
+            self.v = self.getvalue()
+            StringIO.close(self)
 
     f = Buffer()
     with AudioClient(channel, f) as audio:
         for count, _ in enumerate(audio):
-            data = f.read()
-            break
+            if count >= n: break
 
     range_header = request.headers.get('Range', 'bytes=0-')
     if range_header[:6] != 'bytes=':
@@ -262,8 +247,8 @@ def live_endpoint(channel):
 
     if r0 != '0': return "Unsupported range header", 400
 
-    rsp = Response(data, 206, mimetype="audio/x-wav", direct_passthrough=True)
-    bytes_range = 'bytes {0}-{1}/{2}'.format(0, len(data) - 1, len(data))
+    rsp = Response(f.v, 206, mimetype="audio/x-wav", direct_passthrough=True)
+    bytes_range = 'bytes {0}-{1}/{2}'.format(0, len(f.v) - 1, len(f.v))
     rsp.headers.add('Content-Range', bytes_range)
     return rsp
 
