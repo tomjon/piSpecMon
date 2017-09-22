@@ -19,14 +19,14 @@
     If static and additionally recording audio, at the same time as collecting
     RDS, samples are recorded.
 """
+import os
 from time import sleep, time
 from spectrum.common import log, parse_config, scan, now
 from spectrum.datastore import StoreError
 from spectrum.process import Process
 from spectrum.config import RDS_DEVICE, MONKEY_POLL
 from spectrum.audio import AudioClient
-import os
-from spectrum.fake_rds import RdsApi
+from spectrum.rds import RdsApi
 
 class Worker(Process):
     """ Process implementation for decoding RDS using the Monkey board.

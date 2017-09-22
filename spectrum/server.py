@@ -197,9 +197,9 @@ def data_endpoint(config_id):
         return e.message, 500
 
 
-@application.route('/audio/<config_id>/<freq_n>/<timestamp>')
+@application.route('/audio/<config_id>/<worker>/<freq_n>/<timestamp>')
 @application.role_required(['admin', 'freq', 'data'])
-def audio_endpoint(config_id, freq_n, timestamp):
+def audio_endpoint(config_id, worker, freq_n, timestamp):
     """ Endpoint for streaming audio sample data.
     """
     if '.' in config_id or '/' in config_id or '\\' in config_id:
@@ -208,7 +208,7 @@ def audio_endpoint(config_id, freq_n, timestamp):
         int(timestamp), int(freq_n)
     except ValueError:
         return 'Bad parameter', 400
-    base = application.data_store.config(config_id).audio_path(timestamp, freq_n)
+    base = application.data_store.config(config_id).audio_path(worker, timestamp, freq_n)
     for ext in ['mp3', 'ogg', 'wav']:
         path = '{0}.{1}'.format(base, ext)
         try:

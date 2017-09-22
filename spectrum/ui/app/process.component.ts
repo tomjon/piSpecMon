@@ -40,6 +40,15 @@ import { DatePipe } from './date.pipe';
                    </div>
                    <span *ngIf="ams.error">{{ams.error}}</span>
                  </div>
+                 <div *ngIf="sdr && (sdr.config_id || sdr.error)" [ngClass]="{ status: true, error: sdr.error != undefined }">
+                   <h2>{{label('sdr')}} <ng-container *ngIf="sdr.timestamp">at {{sdr.timestamp | date}}</ng-container></h2>
+                   <div *ngIf="sdr.sweep">
+                     <span>Scan {{sdr.sweep.sweep_n + 1}} started at {{sdr.sweep.timestamp | date}}</span>
+                     <span>Current range {{sdr.sweep.freq_0}} - {{sdr.sweep.freq_1}} MHz</span>
+                     <span>Max strength {{sdr.sweep.max}}</span>
+                   </div>
+                   <span *ngIf="sdr.error">{{sdr.error}}</span>
+                 </div>
                  <div class="form-group">
                    <div *ngFor="let worker of workers">
                      <input [disabled]="running || ! workerAvailable(worker)" type="checkbox" class="toggle" [(ngModel)]="worker.enabled" [name]="worker.value"/>
@@ -100,6 +109,10 @@ export class ProcessComponent {
 
   get ams(): any {
     return this.status['ams'];
+  }
+
+  get sdr(): any {
+    return this.status['sdr'];
   }
 
   get running(): boolean {

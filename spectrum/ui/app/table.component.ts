@@ -177,6 +177,7 @@ export class TableComponent {
         return `Static (${values.freqs[1].freq}MHz)`;
       }
     case 'ams':
+    case 'sdr':
       let range = values.freqs[0].range;
       let exp = values.freqs[0].exp;
       let hz = this.stateService.constants.hz_labels[exp];

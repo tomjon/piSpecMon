@@ -19,7 +19,7 @@ export class Data {
     this.config = config;
     this.workers = {};
     for (let worker of config.values.workers) {
-      this.workers[worker] = new WorkerData();
+      this.workers[worker] = new WorkerData(worker);
     }
     this.loadData();
   }

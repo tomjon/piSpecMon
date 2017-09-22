@@ -10,6 +10,8 @@ export class WorkerData {
   temperature: any = [];
   timestamp: number;
 
+  constructor(private key: string) {}
+
   update(data: any, config_id: string, max_n: number, detectPeaks: boolean): void {
     this.mapSpectrum(data.spectrum, max_n, detectPeaks);
     this.mapAudio(data.audio, config_id);
@@ -37,7 +39,7 @@ export class WorkerData {
       let audio_t = a[0];
       this.update_timestamp(audio_t);
       let freq_n = a[1];
-      let path = `/audio/${config_id}/${freq_n}/${audio_t}`;
+      let path = `/audio/${config_id}/${this.key}/${freq_n}/${audio_t}`;
       if (! this.samples[freq_n]) {
         this.samples[freq_n] = [];
         ++this.samples.length;
