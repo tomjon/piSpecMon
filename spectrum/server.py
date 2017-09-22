@@ -59,7 +59,7 @@ def settings(key=None):
     if request.method == 'GET':
         # return all settings
         values = {'ident': application.ident}
-        for key in ['rig', 'audio', 'rds', 'ams', 'hamlib']: #FIXME improve by storing rig, audio, .. in a dict on the app
+        for key in ['rig', 'audio', 'rds', 'ams', 'hamlib', 'sdr']: #FIXME improve by storing rig, audio, .. in a dict on the app
             values[key] = getattr(application, key).values
         return json.dumps(values)
     else:
@@ -67,7 +67,7 @@ def settings(key=None):
         if key == 'ident':
             application.set_ident(request.get_json()) #FIXME treat ident same as other keys by storing ident differently?
             application.event_client.write(EVENT_IDENT, application.ident)
-        elif key in ['rig', 'audio', 'rds', 'ams', 'hamlib']:#FIXME as above
+        elif key in ['rig', 'audio', 'rds', 'ams', 'hamlib', 'sdr']:#FIXME as above
             getattr(application, key).write(request.get_json())
         else:
             return "Key not found", 404
@@ -104,6 +104,7 @@ def process():
         values['rig'] = application.rig.values
         values['audio'] = application.audio.values
         values['rds'] = application.rds.values
+        values['sdr'] = application.sdr.values
         values['hamlib'] = application.hamlib.values
         values['ams'] = application.ams.values
         values['ident'] = application.ident

@@ -26,6 +26,7 @@ import { FreqPipe } from './freq.pipe';
 import { InputDirective } from './input.directive';
 import { ProcessComponent } from './process.component';
 import { AmsComponent } from './ams.component';
+import { SdrComponent } from './sdr.component';
 import { HTTP_PROVIDERS } from '@angular/http';
 
 // Add the RxJS Observable operators we need in this app
@@ -42,7 +43,7 @@ let modelSort = function (a, b) {
 @Component({
   selector: 'psm-app',
   templateUrl: 'templates/app.html',
-  directives: [ InputDirective, LoginComponent, ErrorComponent, ProcessComponent, IdentComponent, DetailsComponent, PiComponent, PicoComponent, LogsComponent, StatsComponent, RigComponent, AudioComponent, RdsComponent, TableComponent, ScanComponent, ChartsComponent, AmsComponent ],
+  directives: [ InputDirective, LoginComponent, ErrorComponent, ProcessComponent, IdentComponent, DetailsComponent, PiComponent, PicoComponent, LogsComponent, StatsComponent, RigComponent, AudioComponent, RdsComponent, TableComponent, ScanComponent, ChartsComponent, AmsComponent, SdrComponent ],
   providers: [ DataService, StateService, ErrorService, MessageService, UiSettingsService, HTTP_PROVIDERS, FreqPipe ],
   pipes: [ DatePipe, FreqPipe ]
 })

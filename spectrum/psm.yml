@@ -113,6 +113,17 @@ default:
             threshold: -20
             period: 600
 
+    sdr_settings:
+        scan:
+          antenna: 0
+        freqs:
+          - enabled: true
+            range: [87.5, 108.0, 0.1]
+            exp: 6
+          - enabled: false
+            freq:
+            exp: 6
+
     ams_settings:
         address:
         port: 8080
@@ -192,20 +203,20 @@ ui_config:
         y_ticks: 10
 
     sdr_frequency_chart:
-        y_axis: [-128, -32, 16]
+        y_axis: [0, 128, 16]
         margin: { top: 25, left: 80, right: 80, bottom: 30 }
         width: 1200
         height: 400
 
     sdr_level_chart:
-        y_axis: [-128, -32, 16]
+        y_axis: [0, 128, 16]
         margin: { top: 30, left: 40, right: 200, bottom: 40 }
         width: 1200
         height: 400
         x_ticks: 7
 
     sdr_waterfall_chart:
-        heat: [-127, -80, -32]
+        heat: [0, 64, 128]
         margin: { top: 25, left: 80, right: 80, bottom: 30 }
         width: 1200
         height: 400

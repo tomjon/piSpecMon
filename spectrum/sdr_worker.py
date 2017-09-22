@@ -14,8 +14,7 @@ class Worker(Process):
         self.cv = threading.Condition()
 
     def get_capabilities(self):
-        return {'models': [{'model': 'SDR Play'}], 'scan': {  #FIXME can we remove 'models' as it isn't used (only for Rig)
-                'antenna': [{'value': 0, 'label': 'Ant A'}, {'value': 1, 'label': 'Ant B'}, {'value': 2, 'label': 'High Z'}]}}
+        return {'antenna': [{'value': 0, 'label': 'Ant A'}, {'value': 1, 'label': 'Ant B'}, {'value': 2, 'label': 'High Z'}]}
 
     def callback(self, reinit, gains, levels):
         try:
@@ -53,7 +52,7 @@ class Worker(Process):
                 if self.sdr.sdr_config.rfMHz - 0.4 * self.sdr.sdr_config.fsMHz > self.range[1]:
                     # sweep complete, start new one
                     if None not in self.sweep:
-                        self.config.write_spectrum(self.time_0, self.sweep)
+                        self.config.write_spectrum(self.prefix, self.time_0, self.sweep)
                         self.sweep_n += 1
                     self.time_0 = now()
                     self.sweep = [None] * (int((self.range[1] - self.range[0]) / self.range[2]) + 1)
@@ -80,20 +79,22 @@ class Worker(Process):
         finally:
             self.cv.release()
 
-    def iterator(self, config):
+    def iterator(self, config, initial_count):
         """ Scan the spectrum, storing data through the config object, and yield status.
         """
-        self.range = [f / 1e6 for f in parse_config(config.values)['range']]
+        values = config.values[self.prefix] #FIXME this should just be passed in, or something...
+
+        self.range = [f / 1e6 for f in parse_config(config.values, self.prefix)[0]]
         self.config = config
 
         self.status.clear()
         yield
 
         debug = 'debug' in sys.argv
-        self.sdr = SdrPlay(rfMHz=self.range[0], cwMHz=self.range[2], antenna=config.values['scan']['antenna'], verbose=debug, **config.values)
+        self.sdr = SdrPlay(rfMHz=self.range[0], cwMHz=self.range[2], verbose=debug, **values['scan'])
         self.sdr.sdr_config.rfMHz += 0.4 * self.sdr.sdr_config.fsMHz
         self.stop = False
-        self.sweep_n = config.count
+        self.sweep_n = initial_count
         self.time_0 = now()
         self.freq_0 = self.sdr.freq_0()
         self.levels = None
@@ -105,7 +106,7 @@ class Worker(Process):
         sdr_thread.start()
 
         try:
-            log.debug("Scan: %s %s", config.values['scan'], self.range)
+            log.debug("Scan: %s %s", values['scan'], self.range)
             while True:
                 self.cv.acquire()
                 if self.stop:
