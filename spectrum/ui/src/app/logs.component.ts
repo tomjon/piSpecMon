@@ -6,11 +6,11 @@ import { WidgetComponent } from './widget.component';
   template: `<psm-widget title="System Logs">
                <form role="form">
                  <div class="form-group">
-                   <div class="psm-input-group col-lg-6">
+                   <div class="psm-input-group">
                      <label for="n">Tail size</label>
                      <input type="number" pattern="[0-9]+" min="1" step="1" class="form-control" required [(ngModel)]="tail_n" name="n" #n="ngModel">
                    </div>
-                   <div class="psm-input-group col-lg-6">
+                   <div class="psm-input-group">
                      <label for="level">Level</label>
                      <select class="form-control" [(ngModel)]="filter" name="level">
                        <option value="">All</option>

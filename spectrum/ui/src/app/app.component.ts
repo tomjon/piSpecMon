@@ -15,50 +15,55 @@ let modelSort = function (a, b) {
 
 @Component({
   selector: 'psm-app',
-  template: `<div *ngIf="stateService.ready" class="container-fluid">
-              <div class="row">
-                <div class="col-lg-12">
-                  <h1 class="header"><img src="assets/ofcom.gif" alt="Ofcom"> <span class="name">{{stateService.values.ident.name}}</span> ({{stateService.values.ident.description}})</h1>
-                  <psm-login [user]="user"></psm-login>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-lg-9">
-                  <psm-table #table [user]="user" [status]="status"></psm-table> <!-- FIXME 'user' via state service -->
-                  <!--div class="error" *ngFor="let error of errors">{{error[0] | date}} {{error[1]}}</div FIXME -->
-                  <psm-process [status]="status" [values]="values"></psm-process>
-                  <psm-charts [hidden]="config == undefined"></psm-charts>
-                </div>
-                <div class="col-lg-3">
-                  <psm-error></psm-error>
-                  <psm-ident></psm-ident>
-                  <!--psm-details></psm-details FIXME -->
-                  <psm-logs *ngIf="user.roleIn(['admin'])"></psm-logs>
-                  <psm-pi *ngIf="user.roleIn(['admin'])"></psm-pi>
-                  <psm-pico *ngIf="user.roleIn(['admin'])"></psm-pico>
-                  <psm-stats *ngIf="user.roleIn(['admin'])"></psm-stats>
-                  <psm-rig *ngIf="user.roleIn(['admin'])"></psm-rig>
-                  <psm-audio *ngIf="user.roleIn(['admin'])"></psm-audio>
-                  <psm-rds *ngIf="user.roleIn(['admin', 'freq'])"></psm-rds>
-                  <psm-scan *ngIf="user.roleIn(['admin', 'freq'])"></psm-scan>
-                  <psm-ams *ngIf="user.roleIn(['admin', 'freq'])"></psm-ams>
-                  <psm-sdr *ngIf="user.roleIn(['admin', 'freq'])"></psm-sdr>
-                </div>
-              </div>
-            </div>
-            <div id="messageModal" class="modal fade" role="dialog">
-              <div class="modal-dialog">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h4 class="modal-title"></h4>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
-                  </div>
-                </div>
-              </div>
-            </div>`
+  template:
+    `<div *ngIf="stateService.ready" class="container-fluid">
+       <div class="row">
+         <div class="col-lg-12">
+           <h1 class="header"><img src="assets/ofcom.gif" alt="Ofcom"> <span class="name">{{stateService.values.ident.name}}</span> ({{stateService.values.ident.description}})</h1>
+           <psm-login [user]="user"></psm-login>
+         </div>
+       </div>
+       <div class="row">
+         <div class="col-lg-9">
+           <psm-table #table [user]="user" [status]="status"></psm-table> <!-- FIXME 'user' via state service -->
+           <!--div class="error" *ngFor="let error of errors">{{error[0] | date}} {{error[1]}}</div FIXME -->
+           <psm-process [status]="status" [values]="values"></psm-process>
+           <psm-charts [hidden]="config == undefined"></psm-charts>
+         </div>
+         <div class="col-lg-3">
+           <psm-error></psm-error>
+           <psm-ident></psm-ident>
+           <!--psm-details></psm-details FIXME -->
+           <psm-logs *ngIf="user.roleIn(['admin'])"></psm-logs>
+           <psm-pi *ngIf="user.roleIn(['admin'])"></psm-pi>
+           <psm-pico *ngIf="user.roleIn(['admin'])"></psm-pico>
+           <psm-stats *ngIf="user.roleIn(['admin'])"></psm-stats>
+           <psm-rig *ngIf="user.roleIn(['admin'])"></psm-rig>
+           <psm-audio *ngIf="user.roleIn(['admin'])"></psm-audio>
+           <psm-rds *ngIf="user.roleIn(['admin', 'freq'])"></psm-rds>
+           <psm-scan *ngIf="user.roleIn(['admin', 'freq'])"></psm-scan>
+           <psm-ams *ngIf="user.roleIn(['admin', 'freq'])"></psm-ams>
+           <psm-sdr *ngIf="user.roleIn(['admin', 'freq'])"></psm-sdr>
+         </div>
+       </div>
+     </div>
+     <div id="messageModal" class="modal fade" role="dialog">
+       <div class="modal-dialog">
+         <div class="modal-content">
+           <div class="modal-header">
+             <button type="button" class="close" data-dismiss="modal">&times;</button>
+             <h4 class="modal-title"></h4>
+           </div>
+           <div class="modal-footer">
+             <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+           </div>
+         </div>
+       </div>
+     </div>`,
+  styles: [
+    `.header { float: left }`,
+    `.header img { margin-right: 20px }`
+  ]
 })
 export class AppComponent {
   user: User; //FIXME get rid - use stateService.user

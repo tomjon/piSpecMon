@@ -1,13 +1,6 @@
 /* You can add global styles to this file, and also import other style files */
 /* FIXME: lots of these are local, though; move back to component.ts */
 
-.header {
-  float: left;
-}
-.header img {
-  margin-right: 20px;
-}
-
 .error {
   color: red;
 }
@@ -16,11 +9,13 @@
   cursor: pointer;
   margin-left: 4px;
 }
+
 .disabled {
   color: grey;
   cursor: default;
 }
 
+/* psmInput (input.directive.ts) */
 .current {
   color: cornflowerblue;
   border-color: lightblue;
@@ -189,19 +184,23 @@ psm-sample-table th, psm-sample-table td, psm-rds-table th, psm-rds-table td {
 }
 
 /* forms */
-.ng-valid[required] {
+input.ng-valid[required] {
   border-left: 5px solid #42A948; /* green */
 }
-.ng-invalid {
+input.ng-invalid {
   border-left: 5px solid #a94442; /* red */
 }
 .psm-input-group {
-  padding: 0px 5px 0px 0px;
+  width: 50%;
+  float: left;
+}
+.psm-input-group:first-child {
+  padding-right: 5px;
 }
 .psm-input-group:last-child {
-  padding-right: 0;
+  padding-left: 5px;
 }
-.form-group:after {
+.psm-input-group:after {
   display: inline-block;
   width: 100%;
   content: ''

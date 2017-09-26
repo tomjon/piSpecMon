@@ -13,10 +13,10 @@ declare var $;
 @Component({
   selector: 'psm-widget',
   template:
-    `<div *ngIf="enabled" class="container" [ngClass]="{'container-notitle': title == undefined}">
+    `<div *ngIf="enabled" class="container" [ngClass]="{'notitle': title == undefined}">
        <h1 *ngIf="title" (click)="toggle()">
          {{title}}
-          <span *ngIf="show" class="toggle glyphicon glyphicon-collapse-down"></span>
+         <span *ngIf="show" class="toggle glyphicon glyphicon-collapse-down"></span>
          <span *ngIf="! show" class="toggle glyphicon glyphicon-collapse-up"></span>
          <span *ngIf="loading" class="busy glyphicon glyphicon-transfer"></span>
        </h1>
@@ -29,10 +29,10 @@ declare var $;
      </div>`,
   styles: [
     `.container { width: auto; background: lightgoldenrodyellow; margin: 5px; position: relative }`,
-    `.container h1 { font-size: 20px; margin-top: 10; cursor: pointer }`,
-    `.container .toggle { float: left; margin-right: 4px }`,
-    `.container .icons { position: absolute; right: 16px; top: 12px }`,
-    `.container-notitle { padding-top: 10px; padding-bottom: 10px; background: initial }`
+    `h1 { font-size: 20px; margin-top: 10; cursor: pointer }`,
+    `.toggle { float: left; margin-right: 4px }`,
+    `.icons { position: absolute; right: 16px; top: 12px }`,
+    `.notitle { padding-top: 10px; padding-bottom: 10px; background: initial }`
   ]
 })
 export class WidgetComponent {
