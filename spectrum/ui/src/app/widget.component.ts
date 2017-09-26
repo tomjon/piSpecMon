@@ -29,7 +29,7 @@ declare var $;
      </div>`,
   styles: [
     `.container { width: auto; background: lightgoldenrodyellow; margin: 5px; position: relative }`,
-    `h1 { font-size: 20px; margin-top: 10; cursor: pointer }`,
+    `h1 { font-size: 20px; margin-top: 15px; margin-bottom: 15px; cursor: pointer }`,
     `.toggle { float: left; margin-right: 4px }`,
     `.icons { position: absolute; right: 16px; top: 12px }`,
     `.notitle { padding-top: 10px; padding-bottom: 10px; background: initial }`
