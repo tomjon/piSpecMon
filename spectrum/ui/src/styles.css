@@ -1,0 +1,208 @@
+/* You can add global styles to this file, and also import other style files */
+/* FIXME: lots of these are local, though; move back to component.ts */
+
+.header {
+  float: left;
+}
+.header img {
+  margin-right: 20px;
+}
+
+.error {
+  color: red;
+}
+
+.glyphicon {
+  cursor: pointer;
+  margin-left: 4px;
+}
+.disabled {
+  color: grey;
+  cursor: default;
+}
+
+.current {
+  color: cornflowerblue;
+  border-color: lightblue;
+}
+
+/* charts */
+.chart svg {
+	width: 100%;
+}
+.axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+line.vertical, line.horizontal {
+  fill: none;
+  stroke: lightgreen;
+  stroke-width: 1px;
+}
+.chart h1 {
+  float: left;
+}
+.chart form {
+  position: absolute;
+  right: 30px;
+  margin-top: 10px;
+}
+psm-frequency span {
+  margin-right: 15px;
+}
+rect.info {
+  fill: black;
+  fill-opacity: 0.2;
+}
+text.info {
+  cursor: default;
+}
+.freqLabel, .freqCheck {
+  cursor: pointer;
+}
+.hidden {
+  opacity: 0;
+}
+form.controls {
+  position: absolute;
+  left: 160px;
+  margin-top: 6px;
+}
+form.controls .buttons {
+  position: absolute;
+  right: 300px;
+  margin-top: 6px;
+}
+psm-waterfall .waterfall {
+  position: relative;
+  margin-top: 40px;
+}
+psm-waterfall svg {
+  position: relative;
+  z-index: 1;
+}
+psm-waterfall canvas {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+}
+psm-waterfall .infoText {
+  margin-right: 30px;
+}
+rect.audio {
+  fill: green;
+  cursor: pointer;
+}
+
+/* status displays */
+.status {
+  background: lightgreen;
+  padding: 10px;
+  margin-bottom: 15px;
+  display: inline-block;
+  vertical-align: top;
+}
+.status h2 {
+  font-size: 16px;
+  margin: 0 0 10px 0;
+}
+.status span {
+  display: block;
+}
+.status.error {
+  background: pink;
+}
+
+/* specials for the Hamlib scanner */
+.freqlist {
+  margin-bottom: 10px;
+}
+psm-scan .message {
+  padding-bottom: 10px;
+}
+
+/* specials for the sweep table component */
+tbody tr {
+  cursor: default;
+}
+.btn-selected {
+  background: lightblue;
+}
+.btn-right {
+  float: right;
+}
+.row-selected {
+  background: lightblue;
+}
+.running {
+  color: green;
+}
+.feature {
+  text-align: center;
+}
+.indicator {
+  width: 30px;
+}
+.count {
+  font-style: italic
+}
+
+/* specials for range display */
+.range-slider {
+  height: 50px;
+}
+.range-controls * {
+  margin: -2px 0px 5px 10px;
+  display: inline-block;
+}
+
+/* specials for the login component */
+psm-login {
+  float: right;
+  margin-top: 10px;
+  min-width: 450px;
+}
+psm-login span {
+  margin-right: 10px;
+}
+
+/* specials for Audio samples and RDS text display */
+psm-sample-table table, psm-sample-table div, psm-rds-table table, psm-rds-table div {
+  clear: both;
+  margin-bottom: 10px;
+}
+psm-sample-table table, psm-rds-table table {
+  display: block;
+  max-height: 600px;
+  overflow-y: scroll;
+  margin-top: 50px;
+}
+psm-sample-table th, psm-sample-table td, psm-rds-table th, psm-rds-table td {
+  padding: 5px
+}
+
+/* forms */
+.ng-valid[required] {
+  border-left: 5px solid #42A948; /* green */
+}
+.ng-invalid {
+  border-left: 5px solid #a94442; /* red */
+}
+.psm-input-group {
+  padding: 0px 5px 0px 0px;
+}
+.psm-input-group:last-child {
+  padding-right: 0;
+}
+.form-group:after {
+  display: inline-block;
+  width: 100%;
+  content: ''
+}
