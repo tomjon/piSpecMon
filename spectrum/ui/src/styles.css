@@ -192,16 +192,26 @@ input.ng-invalid {
 }
 .psm-input-group {
   width: 50%;
-  float: left;
 }
-.psm-input-group:first-child {
+.psm-input-group-4 {
+  width: 25%;
+}
+.psm-input-group, .psm-input-group-4 {
+  float: left;
+  padding-left: 5px;
   padding-right: 5px;
 }
-.psm-input-group:last-child {
-  padding-left: 5px;
+.psm-input-group:first-child, .psm-input-group-4:first-child {
+  padding-left: 0;
 }
-.psm-input-group:after {
+.psm-input-group:last-child, .psm-input-group-4:last-child {
+  padding-right: 0;
+}
+.psm-input-group:after, .psm-input-group-4:after {
   display: inline-block;
   width: 100%;
   content: ''
+}
+.form-group, .alert {
+  clear: both;
 }

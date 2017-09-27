@@ -25,19 +25,19 @@ declare var $;
                   <label for="start">Frequency range</label>
                   <input psmInput type="checkbox" (ngModelChange)="freqsEnabled = rangeEnabled" [(ngModel)]="rangeEnabled" class="toggle" name="range">
                   <div>
-                    <div class="psm-input-group col-lg-3">
+                    <div class="psm-input-group-4">
                       <input psmInput [disabled]="! rangeEnabled" type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[0]" name="start" #start="ngModel">
                       <div class="help">start</div>
                     </div>
-                    <div class="psm-input-group col-lg-3">
+                    <div class="psm-input-group-4">
                       <input psmInput [disabled]="! rangeEnabled" type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[1]" name="end" #end="ngModel">
                       <div class="help">end</div>
                     </div>
-                    <div class="psm-input-group col-lg-3">
+                    <div class="psm-input-group-4">
                       <input psmInput [disabled]="! rangeEnabled" type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[2]" name="step" #step="ngModel">
                       <div class="help">step</div>
                     </div>
-                    <div class="psm-input-group col-lg-3">
+                    <div class="psm-input-group-4">
                       <select psmInput class="form-control" [disabled]="! rangeEnabled" [(ngModel)]="values.freqs[0].exp" name="units">
                         <option *ngFor="let u of units" value="{{u.value}}">{{u.label}}</option>
                       </select>
@@ -56,20 +56,20 @@ declare var $;
                   <input psmInput type="checkbox" (ngModelChange)="rangeEnabled = freqsEnabled" [(ngModel)]="freqsEnabled" class="toggle" name="freqs">
                   <div *ngFor="let freq of values.freqs; let n = index; let last = last">
                     <ng-container *ngIf="freq.range == undefined">
-                      <div class="psm-input-group col-lg-3">
+                      <div class="psm-input-group-4">
                         <input psmInput [disabled]="! freqsEnabled" type="text" required class="form-control" [(ngModel)]="freq.freq" name="value_{{n}}">
                         <div *ngIf="last" class="help">value</div>
                       </div>
-                      <div class="psm-input-group col-lg-3">
+                      <div class="psm-input-group-4">
                         <select psmInput class="form-control" [disabled]="! freqsEnabled" [(ngModel)]="freq.exp" name="units_{{n}}">
                           <option *ngFor="let u of units" value="{{u.value}}">{{u.label}}</option>
                         </select>
                         <div *ngIf="last" class="help">units</div>
                       </div>
-                      <div class="psm-input-group col-lg-3">
+                      <div class="psm-input-group-4">
                         <button class="form-control" [disabled]="! numeric(freq.freq) || ! freqsEnabled" (click)="onInsert(n)">Insert</button>
                       </div>
-                      <div class="psm-input-group col-lg-3">
+                      <div class="psm-input-group-4">
                         <button class="form-control" [disabled]="values.freqs.length <= 2 || ! freqsEnabled" (click)="onDelete(n)">Delete</button>
                       </div>
                     </ng-container>
@@ -79,14 +79,14 @@ declare var $;
                   </div>
                 </div>
                 <div class="form-group">
-                  <div class="psm-input-group col-lg-6">
+                  <div class="psm-input-group">
                     <label for="audio">Collect audio</label>
                     <select psmInput class="form-control" [(ngModel)]="values.audio.enabled" name="audio">
                       <option [ngValue]="true">On</option>
                       <option [ngValue]="false">Off</option>
                     </select>
                   </div>
-                  <div class="psm-input-group col-lg-6">
+                  <div class="psm-input-group">
                     <label for="duration">Sample duration (s)</label>
                     <input psmInput type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="values.audio.duration" name="duration" #duration="ngModel">
                   </div>
@@ -95,11 +95,11 @@ declare var $;
                   Sample duration is a required integer parameter
                 </div>
                 <div class="form-group">
-                  <div class="psm-input-group col-lg-6">
+                  <div class="psm-input-group">
                     <label for="threshold">Level threshold (dB)</label>
                     <input psmInput type="number" pattern="-?[0-9]+" required class="form-control" [(ngModel)]="values.audio.threshold" name="threshold" #threshold="ngModel">
                   </div>
-                  <div class="psm-input-group col-lg-6">
+                  <div class="psm-input-group">
                     <label for="period">Sample period (s)</label>
                     <input psmInput type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="values.audio.period" name="period" #period="ngModel">
                   </div>

@@ -15,21 +15,21 @@ import { InputDirective } from './input.directive';
                   <label for="scan_mode">Scan Mode</label>
                   <input psmInput type="checkbox" (ngModelChange)="staticEnabled = scanEnabled" [(ngModel)]="scanEnabled" class="toggle" name="scan_mode">
                   <div>
-                    <div class="psm-input-group col-lg-6">
+                    <div class="psm-input-group">
                       <label for="strength_threshold">Strength threshold</label>
                       <input psmInput [disabled]="! scanEnabled" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="values.scan.strength_threshold" name="strength_threshold" #strength_threshold="ngModel">
                     </div>
-                    <div class="psm-input-group col-lg-6">
+                    <div class="psm-input-group">
                       <label for="strength_timeout">Strength timeout (s)</label>
                       <input psmInput [disabled]="! scanEnabled" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="values.scan.strength_timeout" name="strength_timeout" #strength_timeout="ngModel">
                     </div>
                   </div>
                   <div>
-                    <div class="psm-input-group col-lg-6">
+                    <div class="psm-input-group">
                       <label for="name_timeout">Name timeout (s)</label>
                       <input psmInput [disabled]="! scanEnabled" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="values.scan.name_timeout" name="name_timeout" #name_timeout="ngModel">
                     </div>
-                    <div class="psm-input-group col-lg-6">
+                    <div class="psm-input-group">
                       <label for="text_timeout">Text timeout (s)</label>
                       <input psmInput [disabled]="! scanEnabled" type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="values.scan.text_timeout" name="text_timeout" #text_timeout="ngModel">
                     </div>
@@ -59,11 +59,11 @@ import { InputDirective } from './input.directive';
                   Frequency is a required parameter
                 </div>
                 <div class="form-group">
-                  <div class="psm-input-group col-lg-6">
+                  <div class="psm-input-group">
                     <label for="duration">Dwell (s)</label>
                     <input psmInput type="number" pattern="[0-9]+" required class="form-control" [(ngModel)]="values.duration" name="duration" #duration="ngModel">
                   </div>
-                  <div class="psm-input-group col-lg-6">
+                  <div class="psm-input-group">
                     <label for="audio">Collect audio</label>
                     <select psmInput class="form-control" [(ngModel)]="values.audio.enabled" name="audio">
                       <option [ngValue]="true">On</option>

@@ -22,19 +22,19 @@ declare var $;
                 <div class="form-group">
                   <label>Frequency Range</label>
                   <div>
-                    <div class="psm-input-group col-lg-3">
+                    <div class="psm-input-group-4">
                       <input psmInput type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[0]" name="start" #start="ngModel">
                       <div class="help">start</div>
                     </div>
-                    <div class="psm-input-group col-lg-3">
+                    <div class="psm-input-group-4">
                       <input psmInput type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[1]" name="end" #end="ngModel">
                       <div class="help">end</div>
                     </div>
-                    <div class="psm-input-group col-lg-3">
+                    <div class="psm-input-group-4">
                       <input psmInput type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[2]" name="step" #step="ngModel">
                       <div class="help">step</div>
                     </div>
-                    <div class="psm-input-group col-lg-3">
+                    <div class="psm-input-group-4">
                       <select psmInput class="form-control" [(ngModel)]="values.freqs[0].exp" name="units">
                         <option *ngFor="let u of units" value="{{u.value}}">{{u.label}}</option>
                       </select>
