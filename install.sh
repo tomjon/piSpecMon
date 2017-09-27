@@ -3,13 +3,14 @@
 # chdir to where the script lives
 cd "${0%/*}"
 
-# compile typescript into javascript
+# build UI
 hash npm 2>/dev/null || ({
-  curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
   sudo apt-get install nodejs
-  (cd spectrum/ui && npm install)
 })
-(cd spectrum/ui && npm run tsc)
+hash ng 2> /dev/null || ({
+  sudo npm install -g @angular/cli
+})
+(cd spectrum/ui && ng build --base-href=.)
 
 # build Python egg (includes javascript built above)
 sudo apt-get install -y python-pip
