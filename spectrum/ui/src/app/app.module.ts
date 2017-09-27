@@ -71,6 +71,7 @@ import './rxjs-operators'; //FIXME is this necessary?
     SampleTableComponent,
     RdsTableComponent,
     TemperatureComponent,
+    InputDirective,
     DatePipe,
     FreqPipe,
     BytesPipe
