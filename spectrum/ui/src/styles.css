@@ -17,8 +17,8 @@
 
 /* psmInput (input.directive.ts) */
 .current {
-  color: cornflowerblue;
-  border-color: lightblue;
+  color: cornflowerblue !important;
+  border-color: lightblue !important;
 }
 
 /* charts */
