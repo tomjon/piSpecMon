@@ -85,7 +85,8 @@ import './rxjs-operators'; //FIXME is this necessary?
     StateService,
     MessageService,
     ErrorService,
-    UiSettingsService
+    UiSettingsService,
+    FreqPipe
   ],
   bootstrap: [AppComponent]
 })
