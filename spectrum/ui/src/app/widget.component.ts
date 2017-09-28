@@ -89,7 +89,7 @@ export class WidgetComponent {
   }
 
   get enabled(): boolean {
-    return this.key == undefined || this.stateService.caps[this.key] != undefined;
+    return this.key == undefined || this.stateService.workerEnabled(this.key);
   }
 
   toggle() {

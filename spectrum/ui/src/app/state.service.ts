@@ -60,9 +60,14 @@ export class StateService {
     }
   }
 
+  public workerEnabled(key: string): boolean {
+    return this.caps[key] === undefined || this.caps[key] != null;
+  }
+
   public getWorkers(): any[] {
     let workers = [];
     for (let value in this.caps) {
+      if (! this.workerEnabled(value)) continue;
       workers.push({value: value, label: this.workerLabel(value), enabled: true});
     }
     return workers;

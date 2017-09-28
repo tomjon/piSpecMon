@@ -97,18 +97,16 @@ export class ProcessComponent {
     return worker != undefined ? worker.label : '[unknown worker]';
   }
 
+  //FIXME erk
   get rds(): any {
     return this.status['rds'];
   }
-
   get hamlib(): any {
     return this.status['hamlib'];
   }
-
   get ams(): any {
     return this.status['ams'];
   }
-
   get sdr(): any {
     return this.status['sdr'];
   }

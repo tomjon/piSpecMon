@@ -17,6 +17,7 @@ from spectrum.webapp import WebApplication
 from spectrum.audio import AudioClient
 from spectrum.event import EVENT_IDENT, EVENT_LOGIN, EVENT_LOGOUT, EVENT_START, EVENT_STOP
 from spectrum.config import UI_CONFIG
+from spectrum.main import WORKER_MODULES
 
 
 application = WebApplication(__name__) # pylint: disable=invalid-name
@@ -47,6 +48,11 @@ def caps():
     """ Serve worker capabilities JSON.
     """
     caps = dict((c.prefix, c.get_capabilities()) for c in application.clients)
+    #FIXME a hack until we streamline the worker stuff
+    for name in WORKER_MODULES:
+        name = name[:-7]
+        if name not in caps:
+            caps[name] = None
     return json.dumps(caps)
 
 
