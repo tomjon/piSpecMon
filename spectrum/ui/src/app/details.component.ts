@@ -123,7 +123,7 @@ export class DetailsComponent extends WidgetBase {
   @ViewChild('passwordForm') resetForm;
   @ViewChild('newForm') newUserForm;
 
-  constructor(dataService: DataService, stateService: StateService, private messageService: MessageService) { super(dataService, stateService) }
+  constructor(private dataService: DataService, stateService: StateService, private messageService: MessageService) { super(stateService) }
 
   ngOnInit() {
     this.setViewChildren(undefined, this.widgetComponent);

@@ -2,14 +2,15 @@ import { Component, Input, Output, EventEmitter, ContentChild } from '@angular/c
 import { Subject } from 'rxjs/Subject';
 import { NgForm } from '@angular/forms';
 import { Observable } from 'rxjs/Observable';
+import { DataService } from './data.service';
 import { StateService } from './state.service';
 import { UiSettingsService } from './ui-settings.service';
 import { Config } from './config';
 import { WidgetBase } from './widget.base';
+import { equals } from './object-equals';
 
 declare var $;
 
-//FIXME references widgetBase will hopefully disappear when/if widget component merged with base
 @Component({
   selector: 'psm-widget',
   template:
@@ -21,11 +22,13 @@ declare var $;
          <span *ngIf="loading" class="busy glyphicon glyphicon-transfer"></span>
        </h1>
        <div *ngIf="showIcons && show" class="icons">
-         <span *ngIf="! title && loading" class="busy glyphicon glyphicon-transfer"></span>
+         <span *ngIf="loading" class="busy glyphicon glyphicon-transfer"></span>
          <span (click)="onReset()" class="glyphicon glyphicon-arrow-left" [ngClass]="{disabled: ! canReset}"></span>
          <span (click)="onSubmit()" class="glyphicon glyphicon-save" [ngClass]="{disabled: ! canSubmit}"></span>
        </div>
-       <ng-content *ngIf="show"></ng-content>
+       <form *ngIf="show" role="form" #form="ngForm">
+         <ng-content></ng-content>
+       </form>
      </div>`,
   styles: [
     `.container { width: auto; background: lightgoldenrodyellow; margin: 5px; position: relative }`,
@@ -36,6 +39,8 @@ declare var $;
   ]
 })
 export class WidgetComponent {
+  _values: any; // user input values
+
   _loading: number = 0;
   show: boolean = false;
 
@@ -44,14 +49,16 @@ export class WidgetComponent {
   //FIXME can perhaps do away with form entirely, and do your own validation (i.e. call each input's validation method)
   @ContentChild('form') form: NgForm; //FIXME should the form, in fact, be part of the widget.html? If you need component access to the form, it should be via the widget base (easier if inhertance)
 
+  @Input() key: string;
   @Input() title: string;
   @Output('show') showEmitter = new EventEmitter<boolean>();
 
   loadingChange: Subject<boolean> = new Subject<boolean>();
 
-  constructor(private stateService: StateService, private uiSettings: UiSettingsService) {}
+  constructor(protected dataService: DataService, private stateService: StateService, private uiSettings: UiSettingsService) {}
 
   ngOnInit() {
+    this._values = $.extend(true, {}, this.stateService.values[this.key]);
     if (this.title) {
       this.uiSettings.get(this.title)
                      .subscribe(show => {
@@ -64,8 +71,28 @@ export class WidgetComponent {
     }
   }
 
-  get enabled(): boolean {
-    if (this.widgetBase == undefined || this.widgetBase._key == undefined || ! this.widgetBase._reqs_caps) return true;
+  // values either refers to the current selected config values, or the user entered values
+  get values(): any {
+    if (this.key != undefined && this.stateService.currentConfig != undefined) {
+      return this.stateService.currentConfig.values[this.key];
+    }
+    return this._values;
+  }
+
+  get isPristine(): boolean {
+    return equals(this.values, this.stateService.values[this.key]);
+  }
+
+  get canReset(): boolean {
+    return ! this.loading && this.stateService.currentConfig == undefined && ! this.isPristine;
+  }
+
+  get canSubmit(): boolean {
+    return ! this.loading && ! this.isPristine;
+  }
+
+  get enabled(): boolean {//FIXME references to widget base go when reqs_caps tidied up
+    if (this.widgetBase == undefined || this.key == undefined || ! this.widgetBase._reqs_caps) return true;
     return this.stateService.caps[this.widgetBase._reqs_caps] != undefined;
   }
 
@@ -80,28 +107,21 @@ export class WidgetComponent {
   }
 
   get showIcons(): boolean {
-    return this.title && this.form && this.stateService.user.roleIn(['admin', 'freq']); //FIXME clearly should be based on what privs the widget requires...
-  }
-
-  get canReset(): boolean {
-    return ! this.loading && this.widgetBase.canReset;
+    return this.key && this.title && this.stateService.user.roleIn(['admin', 'freq']); //FIXME clearly should be based on what privs the widget requires...
   }
 
   onReset(): void {
     if (! this.canReset) return;
-    this.widgetBase.reset();
-    if (this.form) this.pristine(this.form);
-  }
-
-  get canSubmit(): boolean {
-    return ! this.loading && this.widgetBase.canSubmit;
+    this._values = Object.assign({}, this.stateService.values[this.key]);
   }
 
   onSubmit(): void {
     if (! this.canSubmit) return;
-    this.busy(this.widgetBase.setSettings())
-        .subscribe(() => this.widgetBase.assignValues());
-    if (this.form) this.pristine(this.form);
+    this.busy(this.dataService.setSettings(this.key, this.values))
+        .subscribe(() => {
+          Object.assign(this.stateService.values[this.key], this.values);
+          Object.assign(this._values, this.values);
+        });
   }
 
   busy(obs: Observable<any>): Observable<any> {
@@ -114,18 +134,5 @@ export class WidgetComponent {
         this.loadingChange.next(this.loading);
       };
     });
-  }
-
-  pristine(form: any, value?: boolean): void {
-    if (value == undefined) value = true; // default argument value not working, weirdly
-    if (! form) return;
-    form['_touched'] = ! value;
-    form['_pristine'] = value;
-    form.form['_touched'] = ! value;
-    form.form['_pristine'] = value;
-    for (let k in form.form.controls) {
-      form.form.controls[k]['_touched'] = ! value;
-      form.form.controls[k]['_pristine'] = value;
-    }
   }
 }

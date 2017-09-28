@@ -135,7 +135,8 @@ export class ProcessComponent {
   get showStart(): boolean {
     if (! this.validWorkers) return false;
     for (let widget of this.stateService.widgets) {
-      if (! widget.isPristine) return false;
+      if (! widget.widgetComponent.isPristine) return false;
+      //FIXME rather, here, ask AppComponent (or have an input) and it has a ViewChildren of all WidgetComponents
     }
     return ! this.running;
   }
