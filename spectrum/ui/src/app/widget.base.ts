@@ -7,9 +7,6 @@ import { User } from './user';
 declare var $;
 
 export abstract class WidgetBase {
-  public _reqs_caps: string; //FIXME horrible - how else to indicate the dependency? (on what exactly)
-  //FIXME I now think you can use the same as the key - and use the key twice on different widgets just fine
-
   @ViewChild(WidgetComponent) widgetComponent;
 
   //FIXME simplify around the place by using state service through widget component where necessary
@@ -17,8 +14,6 @@ export abstract class WidgetBase {
 
   //FIXME this is really bad (and no longer uses key or WidgetComponent)
   protected setViewChildren(key: string, widgetComponent: WidgetComponent, reqs_caps?: string) {
-    if (reqs_caps != undefined) this._reqs_caps = reqs_caps;
-    widgetComponent.widgetBase = this; //FIXME yuck!
     this.stateService.registerWidget(this); //FIXME yuck - see elsewhere
   }
 
@@ -27,7 +22,8 @@ export abstract class WidgetBase {
   }
 
   get caps(): any {
-    return this.stateService.caps[this._reqs_caps] || {};
+    if (this.widgetComponent.key == undefined) return undefined;
+    return this.stateService.caps[this.widgetComponent.key] || {};
   }
 
   get capsKeys(): string[] {

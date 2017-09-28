@@ -15,7 +15,7 @@ class WebApplication(SecureStaticFlask): # pylint: disable=too-many-instance-att
     def __init__(self, name):
         super(WebApplication, self).__init__(name, 'ui/dist')
 
-    def initialise(self, data_store, users, clients, default_rig_settings, # pylint: disable=arguments-differ
+    def initialise(self, data_store, users, clients, # pylint: disable=arguments-differ
                    default_audio_settings, default_rds_settings, default_ams_settings, default_hamlib_settings,
                    default_sdr_settings, log_path,
                    version_file, user_timeout_secs, export_directory, pi_control_path, pico_path,
@@ -26,7 +26,6 @@ class WebApplication(SecureStaticFlask): # pylint: disable=too-many-instance-att
         self.data_store = data_store
         super(WebApplication, self).initialise(users, user_timeout_secs)
         #FIXME these need rationalising
-        self.rig = self.data_store.settings('rig').read(default_rig_settings)
         self.audio = self.data_store.settings('audio').read(default_audio_settings)
         self.ams = self.data_store.settings('ams').read(default_ams_settings)
         self.rds = self.data_store.settings('rds').read(default_rds_settings)

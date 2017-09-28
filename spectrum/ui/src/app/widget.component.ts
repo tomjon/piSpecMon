@@ -6,7 +6,6 @@ import { DataService } from './data.service';
 import { StateService } from './state.service';
 import { UiSettingsService } from './ui-settings.service';
 import { Config } from './config';
-import { WidgetBase } from './widget.base';
 import { equals } from './object-equals';
 
 declare var $;
@@ -43,8 +42,6 @@ export class WidgetComponent {
 
   _loading: number = 0;
   show: boolean = false;
-
-  widgetBase: WidgetBase; //FIXME set by widget base
 
   //FIXME can perhaps do away with form entirely, and do your own validation (i.e. call each input's validation method)
   @ContentChild('form') form: NgForm; //FIXME should the form, in fact, be part of the widget.html? If you need component access to the form, it should be via the widget base (easier if inhertance)
@@ -91,9 +88,8 @@ export class WidgetComponent {
     return ! this.loading && ! this.isPristine;
   }
 
-  get enabled(): boolean {//FIXME references to widget base go when reqs_caps tidied up
-    if (this.widgetBase == undefined || this.key == undefined || ! this.widgetBase._reqs_caps) return true;
-    return this.stateService.caps[this.widgetBase._reqs_caps] != undefined;
+  get enabled(): boolean {
+    return this.key == undefined || this.stateService.caps[this.key] != undefined;
   }
 
   toggle() {

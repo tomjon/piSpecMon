@@ -8,7 +8,7 @@ from spectrum.power import power_on, power_off
 from spectrum.wav2mp3 import walk_convert
 from spectrum.binary_datastore import BinaryDataStore
 from spectrum.config import DATA_PATH, CONVERT_PERIOD, USERS_FILE, ROUNDS, SSMTP_CONF, \
-                            DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, \
+                            DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, \
                             DEFAULT_AMS_SETTINGS, DEFAULT_HAMLIB_SETTINGS, DEFAULT_SDR_SETTINGS, VERSION_FILE, USER_TIMEOUT_SECS, PICO_PATH, \
                             EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, \
                             EVENT_PATH, EVENT_POLL_SECS, EVENT_OVERSEER_URL, \
@@ -48,7 +48,7 @@ def init_application():
     event_client = EventClient(Queue(EVENT_PATH))
     #FIXME tidy up DEFAULT_X_SETTINGS into one value; also PI_CONTROL_PATH and PICO_PATH probably just use the contants directly (and others?)
     application.initialise(data_store, Users(USERS_FILE, ROUNDS), clients,
-                           DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, DEFAULT_AMS_SETTINGS,
+                           DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, DEFAULT_AMS_SETTINGS,
                            DEFAULT_HAMLIB_SETTINGS, DEFAULT_SDR_SETTINGS, LOG_PATH, VERSION_FILE, USER_TIMEOUT_SECS,
                            EXPORT_DIRECTORY, PI_CONTROL_PATH, PICO_PATH, event_client)
     return application
