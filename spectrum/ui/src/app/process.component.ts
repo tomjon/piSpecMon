@@ -1,9 +1,7 @@
-import { Component, ViewChild, Input } from '@angular/core';
+import { Component } from '@angular/core';
 import { DataService } from './data.service';
-import { WidgetComponent } from './widget.component';
 import { StateService } from './state.service';
-import { FreqPipe } from './freq.pipe';
-import { DatePipe } from './date.pipe';
+import { StatusService } from './status.service';
 
 @Component({
   selector: 'psm-process',
@@ -63,26 +61,29 @@ import { DatePipe } from './date.pipe';
   styles: ["button { margin-bottom: 10px }"]
 })
 export class ProcessComponent {
-  private _status: any;
-  @Input() set status(status: any) {
-    this._status = status;
-    for (let worker of this.workers) {
-      if (! this.workerAvailable(worker)) worker.enabled = false;
-    }
-  }
-  get status(): any {
-    return this._status;
-  }
+  private status: any = {};
 
-  @Input() values: any; //FIXME make this available from state service (so table info goes into the service)
-
-  private _description: string;
+  private description: string;
   private workers: any[] = [];
 
-  constructor(private dataService: DataService, private stateService: StateService) {}
+  constructor(private dataService: DataService,
+              private stateService: StateService,
+              statusService: StatusService) {
+    statusService.subscribe(status => {
+      this.status = status;
+      for (let worker of this.workers) {
+        if (! this.workerAvailable(worker)) worker.enabled = false;
+      }
+    });
+  }
 
   ngOnInit() {
     this.workers = this.stateService.getWorkers();
+  }
+
+  // return the config values of the currently running job (if any)
+  private get values(): any {
+    return this.stateService.runningConfig != undefined ? this.stateService.runningConfig.values : undefined;
   }
 
   private workerAvailable(worker: any): boolean {
@@ -115,14 +116,6 @@ export class ProcessComponent {
     return false;
   }
 
-  get description(): string {
-    return this.running ? this.values.description : this._description;
-  }
-
-  set description(value: string) {
-    this._description = value;
-  }
-
   get validWorkers(): boolean {
     return this.workers.filter(w => w.enabled).length > 0;
   }
@@ -139,7 +132,7 @@ export class ProcessComponent {
   onStart() {
 //    this.standby = true;
     let workers = this.workers.filter(w => w.enabled).map(w => w.value);
-    this.dataService.start(workers, this._description)
+    this.dataService.start(workers, this.description)
                     .subscribe();
   }
 

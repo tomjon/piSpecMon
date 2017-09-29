@@ -1,12 +1,9 @@
-import { Component, Input, Output, ViewChild, EventEmitter } from '@angular/core';
-import { WidgetComponent } from './widget.component';
-import { MessageService } from './message.service';
+import { Component } from '@angular/core';
 import { DataService } from './data.service';
 import { StateService } from './state.service';
+import { StatusService } from './status.service';
 import { User } from './user';
 import { Config } from './config';
-import { DatePipe } from './date.pipe';
-import { UnitsPipe } from './units.pipe';
 
 @Component({
   selector: 'psm-table',
@@ -47,10 +44,6 @@ import { UnitsPipe } from './units.pipe';
             </psm-widget>`
 })
 export class TableComponent {
-  @Input() user: User;
-  @Output('select') select = new EventEmitter<Config>();
-
-  configs: Config[] = [ ];
   checked: any = { };
   selected: string;
 
@@ -60,74 +53,28 @@ export class TableComponent {
   // true when waiting for (real) status after startup
   standby: boolean = true;
 
-  // id of the running config set, if any
-  config_id: string;
-
-  // rds checkbox for export/download
-  rds: boolean = false;
-
-  @ViewChild(WidgetComponent) widgetComponent;
-
-  constructor(private dataService: DataService, private stateService: StateService, private messageService: MessageService) { }
-
-  @Input('status') set _status(status) {
-    if (status == undefined) return;
-    this.standby = false;
-    this.config_id = undefined;
-    for (let key in status) { //FIXME there's a fixme for this in app.component as well :(
-      if (status[key].config_id) this.config_id = status[key].config_id;
-    }
-    if (! this.config_id) return;
-
-    let config: Config = this.configs.find(set => set.id == this.config_id);
-    if (! config) {
-      // if we are seeing a new config, add it to the table
-      this.widgetComponent.busy(this.dataService.getConfig(this.config_id))
-                          .subscribe(configs => {
-                            if (! this.configs.find(set => set.id == configs[0].id)) {
-                              this.configs.push(configs[0]);
-                            }
-                          });
-    } else {
-      // otherwise, update the one we have
-      let max_latest = 0;
-      for (let key in status) {
-        //FIXME there is probably a nicer way to do this max stuff
-        if (status[key].sweep) {
-          max_latest = Math.max(max_latest, status[key].sweep.timestamp);
-        }
-      }
-      config.latest = max_latest; //FIXME do this in config object
-
-      config.update_counts(status);
-    }
-  }
+  constructor(private dataService: DataService,
+              private stateService: StateService,
+              statusService: StatusService) { }
 
   ngOnInit() {
-    this.widgetComponent.busy(this.dataService.getConfig())
-                        .subscribe(configs => this.configs = configs);
     this.workers = this.stateService.getWorkers();
+  }
+
+  get configs(): Config[] {
+    return this.stateService.configs;
+  }
+
+  get user(): User {
+    return this.stateService.user;
   }
 
   onSelect(config_id, e) {
     if (e.target.tagName != 'INPUT') {
       this.selected = this.selected == config_id ? undefined : config_id;
-      let config = this.getConfig(this.selected);
-      this.select.emit(config); //FIXME this can go?
+      let config = this.stateService.getConfig(this.selected);
       this.stateService.currentConfig = config;
     }
-  }
-
-  getConfig(config_id: string): Config {
-    if (config_id == undefined) {
-      return undefined;
-    }
-    for (let config of this.configs) {
-      if (config.id == config_id) {
-        return config;
-      }
-    }
-    return undefined;
   }
 
   checkedIds(): string[] {
@@ -140,7 +87,7 @@ export class TableComponent {
 
   onCheckAll() {
     for (let config of this.configs) {
-      if (config.id != this.config_id) this.checked[config.id] = true;
+      if (config != this.stateService.runningConfig) this.checked[config.id] = true;
     }
   }
 
@@ -149,22 +96,21 @@ export class TableComponent {
   }
 
   get maxChecked(): number {
-    return this.configs.length - (this.config_id ? 1 : 0);
+    return this.configs.length - (this.stateService.runningConfig != undefined ? 1 : 0);
   }
 
   onDelete() {
     let ids = this.checkedIds();
-    this.widgetComponent.busy(this.dataService.deleteConfig(ids))
-                        .subscribe(() => {
-                          for (let id of ids) {
-                            delete this.checked[id];
-                            this.configs.splice(this.configs.findIndex(c => c.id == id), 1);
-                            if (this.selected == id) {
-                              this.selected = undefined;
-                              this.select.emit(null);
-                            }
-                          }
-                        });
+    this.dataService.deleteConfig(ids)
+                    .subscribe(() => {
+                      for (let id of ids) {
+                        delete this.checked[id];
+                        this.configs.splice(this.configs.findIndex(c => c.id == id), 1);
+                        if (this.selected == id) {
+                          this.selected = undefined;
+                        }
+                      }
+                    });
   }
 
   workerEnabled(config: Config, value: string): boolean {
@@ -227,6 +173,6 @@ export class TableComponent {
   }
 
   running(config: Config): boolean {
-    return config.id == this.config_id;
+    return config == this.stateService.runningConfig;
   }
 }

@@ -6,6 +6,7 @@ import { HttpModule } from '@angular/http';
 import { DataService } from './data.service';
 import { ErrorService } from './error.service';
 import { MessageService } from './message.service';
+import { StatusService } from './status.service';
 import { UiSettingsService } from './ui-settings.service';
 import { StateService } from './state.service';
 
@@ -86,6 +87,7 @@ import './rxjs-operators'; //FIXME is this necessary?
   providers: [
     DataService,
     StateService,
+    StatusService,
     MessageService,
     ErrorService,
     UiSettingsService,

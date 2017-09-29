@@ -1,6 +1,7 @@
 import { Config } from './config';
 import { DataService } from './data.service';
 import { StateService } from './state.service';
+import { StatusService } from './status.service';
 import { WorkerData } from './worker-data';
 
 /**
@@ -8,20 +9,31 @@ import { WorkerData } from './worker-data';
  */
 export class Data {
   config: Config;
-
-  //freqs: any; USE config.values.[worker].freqs or whatever
-
   loading: number;
-
   workers: { [key: string]: WorkerData; }; // per worker data
 
-  constructor(private stateService: StateService, private dataService: DataService, config: Config) {
+  constructor(private stateService: StateService, private dataService: DataService, statusService: StatusService, config: Config) {
     this.config = config;
     this.workers = {};
     for (let worker of config.values.workers) {
       this.workers[worker] = new WorkerData(worker);
     }
     this.loadData();
+    statusService.subscribe(status => {
+      let config_id: string = undefined;
+      for (let key in status) {
+        let c_id = status[key].config_id;
+        if (c_id != undefined) config_id = c_id;//FIXME have server not spread config_ids everywhere :(
+      }
+      let config: Config = stateService.currentConfig;
+      if (config != undefined && config_id == config.id && this.loading == undefined) {
+        this.dataService.getData(this.config.id, this.timestamps)
+                        .subscribe(data => {
+                          this.update(data);
+                          this.stateService.resetCharts();
+                        });
+      }
+    });
   }
 
   get config_id(): string {
@@ -76,16 +88,6 @@ export class Data {
       let max_n = this.stateService.constants.max_n;
       let detectPeaks = this.config.values[worker].freqs[0].enabled;
       this.workers[worker].update(data[worker], this.config.id, max_n, detectPeaks);
-    }
-  }
-
-  public update_status(status: any) {
-    if (this.loading == undefined) {
-      this.dataService.getData(this.config.id, this.timestamps)
-                      .subscribe(data => {
-                        this.update(data);
-                        this.stateService.resetCharts();
-                      });
     }
   }
 }
