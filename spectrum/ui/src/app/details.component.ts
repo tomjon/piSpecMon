@@ -117,16 +117,14 @@ export class DetailsComponent extends WidgetBase {
   // workaround for <select> not working with object values properly
   username: string;
 
-  @ViewChild(WidgetComponent) widgetComponent;
   @ViewChild('form') form;
 
   @ViewChild('passwordForm') resetForm;
   @ViewChild('newForm') newUserForm;
 
-  constructor(private dataService: DataService, stateService: StateService, private messageService: MessageService) { super(stateService) }
+  constructor(private dataService: DataService, stateService: StateService, private messageService: MessageService) { super() }
 
   ngOnInit() {
-    this.setViewChildren(undefined, this.widgetComponent);
     this.onReset();
   }
 

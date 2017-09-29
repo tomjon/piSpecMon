@@ -1,10 +1,6 @@
-import { Component, Input, ViewChild } from '@angular/core';
-import { StateService } from './state.service';
+import { Component } from '@angular/core';
 import { WidgetBase } from './widget.base';
-import { WidgetComponent } from './widget.component';
-import { Config } from './config';
-import { DatePipe } from './date.pipe';
-import { InputDirective } from './input.directive';
+import { StateService } from './state.service';
 
 @Component({
   selector: 'psm-rds',
@@ -77,9 +73,7 @@ import { InputDirective } from './input.directive';
 export class RdsComponent extends WidgetBase {
   units: any[] = [];
 
-  @ViewChild(WidgetComponent) widgetComponent;
-
-  constructor(stateService: StateService) { super(stateService) }
+  constructor (private stateService: StateService) { super() }
 
   ngOnInit() {
     //FIXME repeated code from scan.component.ts
@@ -87,7 +81,6 @@ export class RdsComponent extends WidgetBase {
     for (let value in hz) {
       this.units.push({ value: value, label: hz[value] });
     }
-    this.setViewChildren('rds', this.widgetComponent, 'rds');
   }
 
   get scanEnabled(): boolean {

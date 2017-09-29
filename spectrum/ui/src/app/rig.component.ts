@@ -1,7 +1,5 @@
-import { Component, Input, ViewChild } from '@angular/core';
-import { StateService } from './state.service';
+import { Component } from '@angular/core';
 import { WidgetBase } from './widget.base';
-import { WidgetComponent } from './widget.component';
 
 @Component({
   selector: 'psm-rig',
@@ -99,12 +97,6 @@ import { WidgetComponent } from './widget.component';
      </psm-widget>`
 })
 export class RigComponent extends WidgetBase {
-  constructor(stateService: StateService) { super(stateService) }
-
-  ngOnInit() {
-    this.setViewChildren('rig', this.widgetComponent, 'hamlib');
-  }
-
   get rig(): any {
     return this.values.rig;
   }

@@ -1,7 +1,5 @@
-import { Component, Input, ViewChild } from '@angular/core';
-import { StateService } from './state.service';
+import { Component } from '@angular/core';
 import { WidgetBase } from './widget.base';
-import { WidgetComponent } from './widget.component';
 
 @Component({
   selector: 'psm-ident',
@@ -25,9 +23,4 @@ import { WidgetComponent } from './widget.component';
      </psm-widget>`
 })
 export class IdentComponent extends WidgetBase {
-  constructor(stateService: StateService) { super(stateService) }
-
-  ngOnInit() {
-    this.setViewChildren('ident', this.widgetComponent);
-  }
 }

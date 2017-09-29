@@ -1,12 +1,6 @@
-import { Component, Input, ViewChild } from '@angular/core';
-import { StateService } from './state.service';
+import { Component } from '@angular/core';
 import { WidgetBase } from './widget.base';
-import { WidgetComponent } from './widget.component';
-import { Config } from './config';
-import { User } from './user';
-import { DatePipe } from './date.pipe';
-import { FreqPipe } from './freq.pipe';
-import { InputDirective } from './input.directive';
+import { StateService } from './state.service';
 
 declare var $;
 
@@ -113,18 +107,17 @@ declare var $;
 export class ScanComponent extends WidgetBase { //FIXME Scan is now a bad name
   units: any[] = [];
 
-  @ViewChild(WidgetComponent) widgetComponent;
-
-  constructor(stateService: StateService) { super(stateService) }
+  constructor (private stateService: StateService) { super() }
 
   ngOnInit() {
+    //FIXME copy code
     let hz = this.stateService.constants.hz_labels;
     for (let value in hz) {
       this.units.push({ value: value, label: hz[value] });
     }
-    this.setViewChildren('hamlib', this.widgetComponent, 'hamlib');
   }
 
+  //FIXME copy code for range stuff
   numeric(v): boolean {
     return $.isNumeric(v);
   }

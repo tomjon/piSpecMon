@@ -1,7 +1,6 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component } from '@angular/core';
 import { StateService } from './state.service';
 import { WidgetBase } from './widget.base';
-import { WidgetComponent } from './widget.component';
 
 declare var $;
 
@@ -51,9 +50,7 @@ declare var $;
 export class SdrComponent extends WidgetBase {
   units: any[] = [];
 
-  @ViewChild(WidgetComponent) widgetComponent;
-
-  constructor(stateService: StateService) { super(stateService) }
+  constructor(private stateService: StateService) { super() }
 
   ngOnInit() {
     //FIXME copy code - lots of template (for frequency range) also copied
@@ -61,7 +58,6 @@ export class SdrComponent extends WidgetBase {
     for (let value in hz) {
       this.units.push({ value: value, label: hz[value] });
     }
-    this.setViewChildren('sdr', this.widgetComponent, 'sdr');
   }
 
   //FIXME following three functions are copy-code

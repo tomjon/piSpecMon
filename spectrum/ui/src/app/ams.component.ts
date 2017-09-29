@@ -1,9 +1,6 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component } from '@angular/core';
 import { StateService } from './state.service';
 import { WidgetBase } from './widget.base';
-import { WidgetComponent } from './widget.component';
-import { Config } from './config';
-import { User } from './user';
 
 declare var $;
 
@@ -100,9 +97,7 @@ declare var $;
 export class AmsComponent extends WidgetBase {
   units: any[] = [];
 
-  @ViewChild(WidgetComponent) widgetComponent;
-
-  constructor(stateService: StateService) { super(stateService) }
+  constructor(private stateService: StateService) { super() }
 
   ngOnInit() {
     //FIXME copy code
@@ -110,7 +105,6 @@ export class AmsComponent extends WidgetBase {
     for (let value in hz) {
       this.units.push({ value: value, label: hz[value] });
     }
-    this.setViewChildren('ams', this.widgetComponent, 'ams');
   }
 
   numeric(v): boolean {

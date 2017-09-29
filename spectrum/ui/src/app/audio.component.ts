@@ -1,8 +1,6 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { DataService } from './data.service';
-import { StateService } from './state.service';
 import { WidgetBase } from './widget.base';
-import { WidgetComponent } from './widget.component';
 
 @Component({
   selector: 'psm-audio',
@@ -30,21 +28,12 @@ import { WidgetComponent } from './widget.component';
   styles: ['input[type=number] { width: 40px }']
 })
 export class AudioComponent extends WidgetBase {
-  //FIXME can this go on a Widget parent class? probably only after moving to Angular 4...
-  @ViewChild(WidgetComponent) widgetComponent;
-
   @ViewChild('audioL') L;
   @ViewChild('audioR') R;
 
   private n: number = 1;
 
-  //FIXME boo :(
-  constructor(private dataService: DataService, stateService: StateService) { super(stateService) }
-
-  //FIXME this also gets copy pasted everywhere...
-  ngOnInit() {
-    this.setViewChildren('audio', this.widgetComponent);
-  }
+  constructor (private dataService: DataService) { super() }
 
   onClick(channel) {
     let audio = this[channel].nativeElement;
