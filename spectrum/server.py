@@ -16,7 +16,7 @@ from spectrum.users import IncorrectPasswordError, UsersError
 from spectrum.webapp import WebApplication
 from spectrum.audio import AudioClient
 from spectrum.event import EVENT_IDENT, EVENT_LOGIN, EVENT_LOGOUT, EVENT_START, EVENT_STOP
-from spectrum.config import UI_CONFIG
+from spectrum.config import UI_CONFIG, EXPORT_DIRECTORY, PI_CONTROL_PATH, PICO_PATH
 from spectrum.main import WORKER_MODULES
 
 
@@ -434,7 +434,7 @@ def export_endpoint(config_id):
         response.headers['Content-Disposition'] = 'attachment; filename={0}'.format(filename)
         return response
     else:
-        path = os.path.join(application.export_directory, filename)
+        path = os.path.join(EXPORT_DIRECTORY, filename)
         with open(path, 'w') as f:
             for x in export:
                 f.write(x)
@@ -488,7 +488,7 @@ def pi_endpoint(command):
     """ Endpoint for executing a Pi control command.
     """
     if command in ['shutdown', 'reboot']:
-        os.system("{0} {1}".format(application.pi_control_path, command))
+        os.system("{0} {1}".format(PI_CONTROL_PATH, command))
         return "OK"
     return "Command not recognized: " + command, 400
 
@@ -501,7 +501,7 @@ def pico_endpoint():
     result = {}
     try:
         python = subprocess.check_output(['which', 'python']).strip()
-        args = [python, application.pico_path]
+        args = [python, PICO_PATH]
         result['text'] = subprocess.check_output(args, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         result['error'] = e.output
