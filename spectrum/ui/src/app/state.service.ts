@@ -71,16 +71,12 @@ export class StateService {
   }
 
   private updateConfigs(status: any): void {
-    let config_id = undefined;
-    for (let key in status) { //FIXME there's a fixme for this in data.ts as well :(
-      if (status[key].config_id) config_id = status[key].config_id;
-    }
-    if (! config_id) return;
+    if (! status.config_id) return;
 
-    this._runningConfig = this.configs.find(config => config.id == config_id);
+    this._runningConfig = this.configs.find(config => config.id == status.config_id);
     if (this._runningConfig == undefined) {
       // if we are seeing a new config, add it to the table
-      this.dataService.getConfig(config_id)
+      this.dataService.getConfig(status.config_id)
                       .subscribe(configs => {
                         if (! this.configs.find(set => set.id == configs[0].id)) {
                           this.configs.push(configs[0]);

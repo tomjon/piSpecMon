@@ -84,7 +84,6 @@ class Process(object):
 
     # write status to the status file
     def _write_status(self):
-        self.status['config_id'] = self.config_id
         log.debug("Writing status %s", json.dumps(self.status))
         tmp = self.status_file + '_tmp'
         with open(tmp, 'w') as f:
@@ -234,6 +233,11 @@ class Client(object):
         if self.error is not None:
             status['error'] = self.error
         return status
+
+    def config_id(self):
+        """ Read and return the running config id, if any.
+        """
+        return self.process._read_config()
 
     def start(self, config_id):
         """ Tell the process to start processing the specified config id.

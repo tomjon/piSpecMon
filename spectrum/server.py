@@ -94,7 +94,15 @@ def process():
         { "workers": ["hamlib", "rds"], "description": "foo" }
     """
     if request.method == 'GET':
+        config_id = None
+        for client in application.clients:
+            if config_id is None:
+                config_id = client.config_id()
+            elif config_id != client.config_id():
+                return "Unexpected differing config_id", 500
         status = dict((c.prefix, c.status()) for c in application.clients)
+        if config_id is not None:
+            status['config_id'] = config_id
         return json.dumps(status)
     elif request.method == 'PUT':
         for c in application.clients:

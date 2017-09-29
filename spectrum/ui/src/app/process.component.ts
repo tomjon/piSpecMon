@@ -16,7 +16,7 @@ import { StatusService } from './status.service';
                    <span *ngIf="rds.text"><i>{{rds.text}}</i></span>
                    <span *ngIf="rds.error">{{rds.error}}</span>
                  </div>
-                 <div *ngIf="hamlib && (hamlib.config_id || hamlib.error)" [ngClass]="{ status: true, error: hamlib.error != undefined }">
+                 <div *ngIf="hamlib && (hamlib.timestamp || hamlib.error)" [ngClass]="{ status: true, error: hamlib.error != undefined }">
                    <h2>{{label('hamlib')}} <ng-container *ngIf="hamlib.timestamp">at {{hamlib.timestamp | date}}</ng-container></h2>
                    <div *ngIf="hamlib.sweep">
                      <span>Scan {{hamlib.sweep.sweep_n + 1}} started at {{hamlib.sweep.timestamp | date}}</span>
@@ -27,7 +27,7 @@ import { StatusService } from './status.service';
                    </div>
                    <span *ngIf="hamlib.error">{{hamlib.error}}</span>
                  </div>
-                 <div *ngIf="ams && (ams.config_id || ams.error)" [ngClass]="{ status: true, error: ams.error != undefined }">
+                 <div *ngIf="ams && (ams.timestamp || ams.error)" [ngClass]="{ status: true, error: ams.error != undefined }">
                    <h2>{{label('ams')}} <ng-container *ngIf="ams.timestamp">at {{ams.timestamp | date}}</ng-container></h2>
                    <div *ngIf="ams.sweep">
                      <span>Scan {{ams.sweep.sweep_n + 1}} started at {{ams.sweep.timestamp | date}}</span>
@@ -35,7 +35,7 @@ import { StatusService } from './status.service';
                    </div>
                    <span *ngIf="ams.error">{{ams.error}}</span>
                  </div>
-                 <div *ngIf="sdr && (sdr.config_id || sdr.error)" [ngClass]="{ status: true, error: sdr.error != undefined }">
+                 <div *ngIf="sdr && (sdr.timestamp || sdr.error)" [ngClass]="{ status: true, error: sdr.error != undefined }">
                    <h2>{{label('sdr')}} <ng-container *ngIf="sdr.timestamp">at {{sdr.timestamp | date}}</ng-container></h2>
                    <div *ngIf="sdr.sweep">
                      <span>Scan {{sdr.sweep.sweep_n + 1}} started at {{sdr.sweep.timestamp | date}}</span>
@@ -110,10 +110,7 @@ export class ProcessComponent {
   }
 
   get running(): boolean {
-    for (let key in this.status) {
-      if (this.status[key].config_id) return true;
-    }
-    return false;
+    return this.stateService.runningConfig != undefined;
   }
 
   get validWorkers(): boolean {

@@ -20,13 +20,8 @@ export class Data {
     }
     this.loadData();
     statusService.subscribe(status => {
-      let config_id: string = undefined;
-      for (let key in status) {
-        let c_id = status[key].config_id;
-        if (c_id != undefined) config_id = c_id;//FIXME have server not spread config_ids everywhere :(
-      }
       let config: Config = stateService.currentConfig;
-      if (config != undefined && config_id == config.id && this.loading == undefined) {
+      if (config != undefined && status.config_id == config.id && this.loading == undefined) {
         this.dataService.getData(this.config.id, this.timestamps)
                         .subscribe(data => {
                           this.update(data);
