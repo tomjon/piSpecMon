@@ -13,36 +13,9 @@ declare var $;
                   <option *ngFor="let o of caps.modes" [value]="o.value">{{o.label}}</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label for="start">Frequency range</label>
+              <psm-freq-range [range]="values.freqs[0]" [disabled]="! rangeEnabled">
                 <input psmInput type="checkbox" (ngModelChange)="freqsEnabled = rangeEnabled" [(ngModel)]="rangeEnabled" class="toggle" name="range">
-                <div>
-                  <div class="psm-input-group-4">
-                    <input psmInput [disabled]="! rangeEnabled" type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[0]" name="start" #start="ngModel">
-                    <div class="help">start</div>
-                  </div>
-                  <div class="psm-input-group-4">
-                    <input psmInput [disabled]="! rangeEnabled" type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[1]" name="end" #end="ngModel">
-                    <div class="help">end</div>
-                  </div>
-                  <div class="psm-input-group-4">
-                    <input psmInput [disabled]="! rangeEnabled" type="text" required class="form-control" [(ngModel)]="values.freqs[0].range[2]" name="step" #step="ngModel">
-                    <div class="help">step</div>
-                  </div>
-                  <div class="psm-input-group-4">
-                    <select psmInput class="form-control" [disabled]="! rangeEnabled" [(ngModel)]="values.freqs[0].exp" name="units">
-                      <option *ngFor="let u of units" value="{{u.value}}">{{u.label}}</option>
-                    </select>
-                    <div class="help">units</div>
-                  </div>
-                </div>
-                <div [hidden]="! rangeEnabled || (validNumber(start) && validNumber(end) && validNumber(step))" class="alert alert-danger">
-                  Frequency range is a required parameter, and must consist of numbers
-                </div>
-                <div [hidden]="! rangeEnabled || ! validNumber(start) || ! validNumber(end) || ! validNumber(step) || validRange" class="alert alert-danger">
-                  Invalid range: end frequency must be greater than start frequency
-                </div>
-              </div>
+              </psm-freq-range>
               <div class="form-group freqlist">
                 <label>Discrete frequencies</label>
                 <input psmInput type="checkbox" (ngModelChange)="rangeEnabled = freqsEnabled" [(ngModel)]="freqsEnabled" class="toggle" name="freqs">

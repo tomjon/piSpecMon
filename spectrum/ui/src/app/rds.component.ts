@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { WidgetBase } from './widget.base';
-import { StateService } from './state.service';
 
 @Component({
   selector: 'psm-rds',
@@ -71,18 +70,6 @@ import { StateService } from './state.service';
             </psm-widget>`
 })
 export class RdsComponent extends WidgetBase {
-  units: any[] = [];
-
-  constructor (private stateService: StateService) { super() }
-
-  ngOnInit() {
-    //FIXME repeated code from scan.component.ts
-    let hz = this.stateService.constants.hz_labels;
-    for (let value in hz) {
-      this.units.push({ value: value, label: hz[value] });
-    }
-  }
-
   get scanEnabled(): boolean {
     return this.values.scan.enabled;
   }

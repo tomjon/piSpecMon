@@ -11,6 +11,7 @@ import { StateService } from './state.service';
 
 import { AppComponent } from './app.component';
 import { WidgetComponent } from './widget.component';
+import { FreqRangeComponent } from './freq-range.component';
 import { LoginComponent } from './login.component';
 import { IdentComponent } from './ident.component';
 import { DetailsComponent } from './details.component';
@@ -48,6 +49,7 @@ import './rxjs-operators'; //FIXME is this necessary?
   declarations: [
     AppComponent,
     WidgetComponent, //FIXME order these coherently
+    FreqRangeComponent,
     LoginComponent,
     IdentComponent,
     DetailsComponent,
