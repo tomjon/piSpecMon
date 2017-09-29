@@ -19,9 +19,20 @@ export class StateService {
   public caps: {};
   public user: User;
   public values: any; // the current server settings (back to which we can reset, or replace on submit)
-  public constants: any;
+
+  private _constants: any;
+  public set constants(constants: any) {
+    this._constants = constants;
+    for (let value in constants.hz_labels) {
+      this.units.push({ value: value, label: constants.hz_labels[value] });
+    }
+  }
+  public get constants(): any {
+    return this._constants;
+  }
 
   private widgets: WidgetComponent[] = [];
+  private units: any[] = [];
 
   constructor(private dataService: DataService) {}
 

@@ -24,7 +24,7 @@ declare var $;
         </div>
         <div class="psm-input-group-4">
           <select psmInput [disabled]="disabled" class="form-control" [(ngModel)]="range.exp" name="units">
-            <option *ngFor="let u of units" value="{{u.value}}">{{u.label}}</option>
+            <option *ngFor="let u of stateService.units" value="{{u.value}}">{{u.label}}</option>
           </select>
           <div class="help">units</div>
         </div>
@@ -32,7 +32,7 @@ declare var $;
       <div [hidden]="validNumber(start) && validNumber(end) && validNumber(step)" class="alert alert-danger">
         Frequency range is a required parameter, and must consist of numbers
       </div>
-      <div [hidden]="! validNumber(start) || ! validNumber(end) || ! validNumber(step) || validRange" class="alert alert-danger">
+      <div [hidden]="! validNumber(start) || ! validNumber(end) || ! validNumber(step) || valid" class="alert alert-danger">
         Invalid range: end frequency must be greater than start frequency
       </div>
     </div>`
@@ -41,26 +41,17 @@ export class FreqRangeComponent {
   @Input() range: any;
   @Input() disabled: boolean;
 
-  units: any[] = [];
-
   constructor(private stateService: StateService) {}
 
-  ngOnInit() {
-    let hz = this.stateService.constants.hz_labels;
-    for (let value in hz) {
-      this.units.push({ value: value, label: hz[value] });
-    }
-  }
-
-  numeric(v: any): boolean {
+  private numeric(v: any): boolean {
     return $.isNumeric(v);
   }
 
-  validNumber(input: any): boolean {
+  private validNumber(input: any): boolean {
     return (input.valid && $.isNumeric(input.model)) || input.pristine;
   }
 
-  get validRange(): boolean {
+  public get valid(): boolean {
     return +(this.range.range[0]) + +(this.range.range[2]) <= +(this.range.range[1]);
   }
 }

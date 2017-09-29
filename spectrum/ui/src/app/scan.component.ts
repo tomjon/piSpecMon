@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { WidgetBase } from './widget.base';
 import { StateService } from './state.service';
+import { FreqRangeComponent } from './freq-range.component';
 
 declare var $;
 
@@ -27,7 +28,7 @@ declare var $;
                     </div>
                     <div class="psm-input-group-4">
                       <select psmInput class="form-control" [disabled]="! freqsEnabled" [(ngModel)]="freq.exp" name="units_{{n}}">
-                        <option *ngFor="let u of units" value="{{u.value}}">{{u.label}}</option>
+                        <option *ngFor="let u of stateService.units" value="{{u.value}}">{{u.label}}</option>
                       </select>
                       <div *ngIf="last" class="help">units</div>
                     </div>
@@ -78,19 +79,11 @@ declare var $;
              </psm-widget>`
 })
 export class ScanComponent extends WidgetBase { //FIXME Scan is now a bad name
-  units: any[] = [];
+  @ViewChild(FreqRangeComponent) range: FreqRangeComponent;
 
   constructor (private stateService: StateService) { super() }
 
-  ngOnInit() {
-    //FIXME copy code
-    let hz = this.stateService.constants.hz_labels;
-    for (let value in hz) {
-      this.units.push({ value: value, label: hz[value] });
-    }
-  }
-
-  //FIXME copy code for range stuff
+  //FIXME this copy-code from freq range component will get removed if/when discrete freqs get used everywhere and make it into the range component (which will have to be renamed)
   numeric(v): boolean {
     return $.isNumeric(v);
   }
@@ -105,10 +98,6 @@ export class ScanComponent extends WidgetBase { //FIXME Scan is now a bad name
 
   set rangeEnabled(value: boolean) {
     this.values.freqs[0].enabled = value;
-  }
-
-  get validRange(): boolean {
-    return +(this.values.freqs[0].range[0]) + +(this.values.freqs[0].range[2]) <= +(this.values.freqs[0].range[1]);
   }
 
   get freqsEnabled(): boolean {
@@ -132,7 +121,7 @@ export class ScanComponent extends WidgetBase { //FIXME Scan is now a bad name
 
   // return whether the inputs represent a valid scan
   get validScan(): boolean {
-    return (this.rangeEnabled && this.validRange) || (this.freqsEnabled && this.validFreqs);
+    return (this.rangeEnabled && this.range.valid) || (this.freqsEnabled && this.validFreqs);
   }
 
   // insert a discrete frequency at position n
