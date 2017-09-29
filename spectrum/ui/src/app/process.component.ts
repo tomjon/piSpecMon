@@ -8,7 +8,6 @@ import { DatePipe } from './date.pipe';
 @Component({
   selector: 'psm-process',
   template: `<psm-widget title="Processes">
-               <form role="form">
                  <!--FIXME clearly some generalisation can occur here-->
                  <div *ngIf="rds && (rds.timestamp || rds.error)" [ngClass]="{ status: true, error: rds.error != undefined }">
                    <h2>{{label('rds')}} <ng-container *ngIf="rds.timestamp">at {{rds.timestamp | date}}</ng-container></h2>
@@ -60,8 +59,8 @@ import { DatePipe } from './date.pipe';
                  </div>
                  <button (click)="onStart()" class="btn btn-default" [disabled]="! showStart">Start</button>
                  <button (click)="onStop()" class="btn btn-default" [disabled]="! showStop">Stop</button>
-               </form>
-             </psm-widget>`
+             </psm-widget>`,
+  styles: ["button { margin-bottom: 10px }"]
 })
 export class ProcessComponent {
   private _status: any;
@@ -76,8 +75,6 @@ export class ProcessComponent {
   }
 
   @Input() values: any; //FIXME make this available from state service (so table info goes into the service)
-
-  @ViewChild(WidgetComponent) widgetComponent;
 
   private _description: string;
   private workers: any[] = [];
@@ -132,11 +129,7 @@ export class ProcessComponent {
 
   get showStart(): boolean {
     if (! this.validWorkers) return false;
-    for (let widget of this.stateService.widgets) {
-      if (! widget.widgetComponent.isPristine) return false;
-      //FIXME rather, here, ask AppComponent (or have an input) and it has a ViewChildren of all WidgetComponents
-    }
-    return ! this.running;
+    return ! this.running && this.stateService.isPristine;
   }
 
   get showStop(): boolean {

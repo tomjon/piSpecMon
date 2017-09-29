@@ -70,16 +70,13 @@ export class AppComponent {
   models: any[] = [ ];
   caps: any = {'scan': {}};
 
-  status: any = {};
+  status: any = {}; //FIXME needed?
 
   values: any = {}; //FIXME config values pulled out of the table component matching the latest status update
 
   constructor(private dataService: DataService, private stateService: StateService, private messageService: MessageService) { }
 
   @ViewChild('table') table;
-
-  //FIXME this might work in Angular 4 (currently we don't like 'descendants')
-  //@ViewChildren(WidgetComponent, {descendants: true}) widgets: QueryList<WidgetComponent>;
 
   ngOnInit() {
     //FIXME this interaction between state service and data service looks... weird... and in the wrong place

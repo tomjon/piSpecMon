@@ -5,7 +5,7 @@ import { Config } from './config';
 import { Data } from './data';
 import { User } from './user';
 import { Chart } from './chart';
-import { WidgetBase } from './widget.base';
+import { WidgetComponent } from './widget.component';
 
 @Injectable()
 export class StateService {
@@ -21,13 +21,19 @@ export class StateService {
   public values: any; // the current server settings (back to which we can reset, or replace on submit)
   public constants: any;
 
-  //FIXME mechanism for AppComponent to get list of all widgets... hopefully something better in angular 4
-  public widgets: WidgetBase[] = [];
+  private widgets: WidgetComponent[] = [];
 
   constructor(private dataService: DataService) {}
 
-  registerWidget(widget: WidgetBase) {
+  //FIXME A better method of finding all WidgetComponent instances might be something like this in AppComponent:
+  //@ViewChildren('psm-widget', {descendants: true}) private widgets: QueryList<WidgetComponent>;
+  // but descendants isn't allowed - will this ever exist?
+  registerWidget(widget: WidgetComponent) {
     this.widgets.push(widget);
+  }
+
+  public get isPristine(): boolean {
+    return ! this.widgets.some(w => ! w.isPristine);
   }
 
   //FIXME could change this to 'config'

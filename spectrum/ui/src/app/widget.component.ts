@@ -52,7 +52,9 @@ export class WidgetComponent {
 
   loadingChange: Subject<boolean> = new Subject<boolean>();
 
-  constructor(protected dataService: DataService, private stateService: StateService, private uiSettings: UiSettingsService) {}
+  constructor(protected dataService: DataService, private stateService: StateService, private uiSettings: UiSettingsService) {
+    this.stateService.registerWidget(this);
+  }
 
   ngOnInit() {
     this._values = $.extend(true, {}, this.stateService.values[this.key]);
@@ -68,6 +70,11 @@ export class WidgetComponent {
     }
   }
 
+  get caps(): any {
+    if (this.key == undefined) return undefined;
+    return this.stateService.caps[this.key] || {};
+  }
+
   // values either refers to the current selected config values, or the user entered values
   get values(): any {
     if (this.key != undefined && this.stateService.currentConfig != undefined) {
@@ -77,7 +84,7 @@ export class WidgetComponent {
   }
 
   get isPristine(): boolean {
-    return equals(this.values, this.stateService.values[this.key]);
+    return this.key == undefined || equals(this.values, this.stateService.values[this.key]);
   }
 
   get canReset(): boolean {
