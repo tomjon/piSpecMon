@@ -28,6 +28,7 @@ import { ErrorComponent } from './error.component';
 import { TableComponent } from './table.component';
 import { ChartsComponent } from './charts.component';
 import { ProcessComponent } from './process.component';
+import { StatusComponent } from './status.component';
 import { AmsComponent } from './ams.component';
 import { SdrComponent } from './sdr.component';
 import { FrequencyComponent } from './frequency.component';
@@ -66,6 +67,7 @@ import './rxjs-operators'; //FIXME is this necessary?
     TableComponent,
     ChartsComponent,
     ProcessComponent,
+    StatusComponent,
     AmsComponent,
     SdrComponent,
     FrequencyComponent,

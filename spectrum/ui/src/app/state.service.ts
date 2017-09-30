@@ -71,9 +71,9 @@ export class StateService {
   }
 
   private updateConfigs(status: any): void {
-    if (! status.config_id) return;
-
     this._runningConfig = this.configs.find(config => config.id == status.config_id);
+    if (! status.config_id) return; // we don't do this at first because we need to clear _runningConfig when nothing is running
+    
     if (this._runningConfig == undefined) {
       // if we are seeing a new config, add it to the table
       this.dataService.getConfig(status.config_id)
