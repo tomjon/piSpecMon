@@ -1,12 +1,10 @@
 """ Common functions and logging setup.
 """
-import logging
-import logging.handlers
 import sys
 import os
 import itertools
 import time
-from spectrum.config import LOG_PATH, LOG_SIZE
+from spectrum.config import LOG_PATH, LOG_SIZE, LOG_LEVEL
 
 
 def get_logger():
@@ -19,7 +17,7 @@ def get_logger():
     logger.filename = '{0}.log'.format(os.path.basename(sys.argv[0]).replace('.py', ''))
     logger.path = os.path.join(LOG_PATH, logger.filename)
     rf_handler = logging.handlers.RotatingFileHandler(logger.path, maxBytes=LOG_SIZE, backupCount=0)
-    rf_handler.setLevel(logging.INFO)
+    rf_handler.setLevel(getattr(logging, LOG_LEVEL, logging.DEBUG))
 
     # create console handler with a higher log level (these end up in system journal)
     c_handler = logging.StreamHandler()

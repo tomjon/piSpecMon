@@ -113,7 +113,7 @@ setup(
             'psm-power=spectrum.main:power',
             'psm-email=spectrum.main:email',
             'psm-wav2mp3=spectrum.main:wav2mp3',
-            'psm-event=spectrum.main:event'
+            'psm-rdevice=spectrum.main:rdevice'
         ],
     },
 )

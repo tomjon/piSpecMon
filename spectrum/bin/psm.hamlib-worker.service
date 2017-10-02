@@ -4,6 +4,7 @@ After=basic.target
 
 [Service]
 Type=idle
+Environment=SES_CONFIG_PATH=/etc/psm.yml
 ExecStart=/usr/local/bin/psm-hamlib-worker
 Restart=always
 RestartSec=1

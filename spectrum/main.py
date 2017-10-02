@@ -14,7 +14,7 @@ from spectrum.audio import AudioServer
 from spectrum.users import Users
 from spectrum.queue import Queue
 from spectrum.event import EventManager, EventClient
-from spectrum.common import log, psm_name
+from spectrum.common import log
 
 
 # conditionally import workers, and define an entry point for each
@@ -114,15 +114,8 @@ def email():
         f.write("AuthPass={0}\n".format(sys.argv[1]))
 
 
-def event():
-    """ Run the PSM Event Manager.
+def rdevice():
+    """ Run the PSM Event Manager (RDevice implementation).
     """
-    if EVENT_OVERSEER_URL.strip() == '':
-        print "Not running: overseer URL missing"
-        return
-    if EVENT_OVERSEER_KEY.strip() == '':
-        print "Not running: overseer key missing"
-        return
-    args = (Queue(EVENT_PATH), EVENT_POLL_SECS, EVENT_OVERSEER_URL, EVENT_OVERSEER_KEY)
-    manager = EventManager(psm_name(), *args)
+    manager = EventManager(Queue(EVENT_PATH))
     manager.run()
