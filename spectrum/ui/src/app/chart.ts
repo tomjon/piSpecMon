@@ -1,3 +1,4 @@
+import { Input } from '@angular/core';
 import { WidgetBase } from './widget.base';
 import { WorkerData} from './worker-data';
 import { StateService } from './state.service';
@@ -16,7 +17,7 @@ export abstract class Chart extends WidgetBase {
   protected max_n: number;
   protected hz: any;
 
-  protected worker: string;
+  @Input() protected worker: string;
 
   constructor(private messageService: MessageService,
               protected stateService: StateService,

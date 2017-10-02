@@ -8,7 +8,6 @@ import { Chart } from './chart';
 
 @Component({
   selector: 'psm-rds-table',
-  inputs: [ 'worker' ],
   template: `<psm-widget [hidden]="isHidden" title="{{label}} - RDS Text" class="chart" (show)="onShow($event)">
                <div class="chart-form">
                  <div class="form-group buttons">

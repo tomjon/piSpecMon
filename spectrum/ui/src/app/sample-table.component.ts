@@ -9,7 +9,6 @@ import { Chart } from './chart';
 
 @Component({
   selector: 'psm-sample-table',
-  inputs: [ 'worker' ],
   template: `<psm-widget [hidden]="isHidden" title="{{label}} - Audio Samples" class="chart" (show)="onShow($event)">
                <div *ngIf="data != undefined" class="chart-form">
                  <div class="form-group">

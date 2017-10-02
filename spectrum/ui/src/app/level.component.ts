@@ -9,7 +9,6 @@ import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
 
 @Component({
   selector: 'psm-level',
-  inputs: [ 'worker' ],
   template: `<psm-widget [hidden]="isHidden" title="{{label}} - Level / Time" class="chart" (show)="onShow($event)">
                <div class="chart-form">
                  <div class="form-group">

@@ -10,7 +10,6 @@ import { _d3 as d3 } from './d3_import';
 
 @Component({
   selector: 'psm-frequency',
-  inputs: [ 'worker' ],
   template: `<psm-widget [hidden]="isHidden()" title="{{label}} - Level / Frequency" class="chart" (show)="onShow($event)">
                <div class="chart-form">
                  <span *ngIf="sweep == 'latest'">{{timestamp | date}}</span>

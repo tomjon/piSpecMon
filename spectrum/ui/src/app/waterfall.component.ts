@@ -12,7 +12,6 @@ declare var $;
 
 @Component({
   selector: 'psm-waterfall',
-  inputs: [ 'worker' ],
   template: `
     <psm-widget [hidden]="isHidden" title="{{label}} - Waterfall" class="chart" (show)="onShow($event)">
       <div class="chart-form">
