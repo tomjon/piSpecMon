@@ -9,6 +9,7 @@ from flask import Flask, current_app, redirect, request, Response, send_file
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
 from spectrum.common import log
 from spectrum.users import IncorrectPasswordError
+from spectrum.config import USER_TIMEOUT_SECS
 
 
 class User(object):
@@ -48,13 +49,12 @@ class SecureStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
         self._init_logging()
         self.after_request(lambda rsp: rsp.headers.add('Accept-Ranges', 'bytes') or rsp)
 
-    def initialise(self, users, user_timeout_secs):
+    def initialise(self, users):
         """ Initialise the application - need a second initialiser so that we can instantiate
             the application at the module level for use in endpoint decorators.
         """
         # pylint: disable=attribute-defined-outside-init
         self.users = users
-        self.user_timeout_secs = user_timeout_secs
         login_manager = LoginManager()
         login_manager.init_app(self)
         login_manager.user_loader(self.load_user)
@@ -152,7 +152,7 @@ class SecureStaticFlask(Flask): # pylint: disable=too-many-instance-attributes
         """
         # check for user timeouts
         for name in self.logged_in_users:
-            if not self.debug and time() > self.request_times[name] + self.user_timeout_secs:
+            if not self.debug and time() > self.request_times[name] + USER_TIMEOUT_SECS:
                 self.logged_in_users.remove(name)
         # check whether current user has been logged out?
         if not hasattr(current_user, 'name'):

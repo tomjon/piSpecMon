@@ -1,0 +1,198 @@
+/* You can add global styles to this file, and also import other style files */
+/* FIXME: lots of these are local, though; move back to component.ts */
+
+.error {
+  color: red;
+}
+
+.glyphicon {
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.disabled {
+  color: grey;
+  cursor: default;
+}
+
+/* psmInput (input.directive.ts) */
+.current {
+  color: cornflowerblue !important;
+  border-color: lightblue !important;
+}
+
+/* charts */
+.chart svg {
+	width: 100%;
+}
+.axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+line.vertical, line.horizontal {
+  fill: none;
+  stroke: lightgreen;
+  stroke-width: 1px;
+}
+.chart h1 {
+  float: left;
+}
+.chart-form {
+  position: absolute;
+  right: 30px;
+  margin-top: 10px;
+}
+.chart-form .form-group {
+  display: inline-block;
+}
+.chart-form .form-control {
+  width: auto;
+  height: auto;
+  display: inline;
+}
+psm-frequency span {
+  margin-right: 15px;
+}
+rect.info {
+  fill: black;
+  fill-opacity: 0.2;
+}
+text.info {
+  cursor: default;
+}
+.freqLabel, .freqCheck {
+  cursor: pointer;
+}
+.hidden {
+  opacity: 0;
+}
+rect.audio {
+  fill: green;
+  cursor: pointer;
+}
+
+/* status displays */
+.status {
+  background: lightgreen;
+  padding: 10px;
+  margin-bottom: 15px;
+  display: inline-block;
+  vertical-align: top;
+}
+.status h2 {
+  font-size: 16px;
+  margin: 0 0 10px 0;
+}
+.status span {
+  display: block;
+}
+.status.error {
+  background: pink;
+}
+
+/* specials for the Hamlib scanner */
+.freqlist {
+  margin-bottom: 10px;
+}
+psm-scan .message {
+  padding-bottom: 10px;
+}
+
+/* specials for the sweep table component */
+tbody tr {
+  cursor: default;
+}
+.btn-selected {
+  background: lightblue;
+}
+.btn-right {
+  float: right;
+}
+.row-selected {
+  background: lightblue;
+}
+.running {
+  color: green;
+}
+.feature {
+  text-align: center;
+}
+.indicator {
+  width: 30px;
+}
+.count {
+  font-style: italic
+}
+
+/* specials for range display */
+.range-slider {
+  height: 50px;
+}
+.range-controls * {
+  margin: -2px 0px 5px 10px;
+  display: inline-block;
+}
+
+/* specials for the login component */
+psm-login {
+  float: right;
+  margin-top: 10px;
+  min-width: 450px;
+}
+psm-login span {
+  margin-right: 10px;
+}
+
+/* specials for Audio samples and RDS text display */
+psm-sample-table table, psm-sample-table div, psm-rds-table table, psm-rds-table div {
+  clear: both;
+  margin-bottom: 10px;
+}
+psm-sample-table table, psm-rds-table table {
+  display: block;
+  max-height: 600px;
+  overflow-y: scroll;
+  margin-top: 50px;
+}
+psm-sample-table th, psm-sample-table td, psm-rds-table th, psm-rds-table td {
+  padding: 5px
+}
+
+/* forms */
+input.ng-valid[required] {
+  border-left: 5px solid #42A948; /* green */
+}
+input.ng-invalid {
+  border-left: 5px solid #a94442; /* red */
+}
+.psm-input-group {
+  width: 50%;
+}
+.psm-input-group-4 {
+  width: 25%;
+}
+.psm-input-group, .psm-input-group-4 {
+  float: left;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+.psm-input-group:first-child, .psm-input-group-4:first-child {
+  padding-left: 0;
+}
+.psm-input-group:last-child, .psm-input-group-4:last-child {
+  padding-right: 0;
+}
+.psm-input-group:after, .psm-input-group-4:after {
+  display: inline-block;
+  width: 100%;
+  content: ''
+}
+.form-group, .alert {
+  clear: both;
+}

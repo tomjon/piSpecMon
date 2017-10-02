@@ -41,10 +41,10 @@ rds_device: ttyACM0
 data_path: /var/lib/psm
 
 # location of the pi_control binary
-pi_control_path: /usr/bin/pi_control
+pi_control_path: /usr/local/bin/pi_control
 
 # location of the pid_kill binary
-pid_kill_path: /usr/bin/pid_kill
+pid_kill_path: /usr/local/bin/pid_kill
 
 # location of the pico_status script
 pico_path: /usr/local/bin/pico_status.py
@@ -65,19 +65,6 @@ event_path: /var/lib/psm/events
 
 # default settings - if left empty, rig model is set later using Hamlib
 default:
-    rig_settings:
-        model:
-        data_bits: 8
-        rate: 9600
-        stop_bits: 1
-        parity: 0
-        attenuation: False
-        radio_on: '*'
-        set_check: 2
-        retries: 2
-        interval: 1000
-        write_delay: 50
-
     audio_settings:
         rate: 44100
         receiver_channel: L
@@ -102,7 +89,19 @@ default:
         duration: 10
 
     hamlib_settings:
-        mode: 64
+      rig:
+          model:
+          data_bits: 8
+          rate: 9600
+          stop_bits: 1
+          parity: 0
+          attenuation: False
+          radio_on: '*'
+          set_check: 2
+          retries: 2
+          interval: 1000
+          write_delay: 50
+        mode: 64 #FIXME move into freqs or monitor possibly... looks orphaned out here
         freqs:
           - enabled: true
             range: [87.5, 108.0, 0.1]

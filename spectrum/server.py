@@ -16,7 +16,8 @@ from spectrum.users import IncorrectPasswordError, UsersError
 from spectrum.webapp import WebApplication
 from spectrum.audio import AudioClient
 from spectrum.event import EVENT_IDENT, EVENT_LOGIN, EVENT_LOGOUT, EVENT_START, EVENT_STOP
-from spectrum.config import UI_CONFIG
+from spectrum.config import UI_CONFIG, EXPORT_DIRECTORY, PI_CONTROL_PATH, PICO_PATH
+from spectrum.main import WORKER_MODULES
 
 
 application = WebApplication(__name__) # pylint: disable=invalid-name
@@ -36,17 +37,22 @@ def main_endpoint():
 def favicon_endpoint():
     """ Serve a favicon.
     """
-    path = os.path.join(application.root_path, 'ui', 'favicon.ico')
+    path = os.path.join(application.root_path, 'ui', 'dist', 'assets', 'favicon.ico')
     return send_file(path, mimetype='image/vnd.microsoft.icon')
 
 
-# rig capabilities API
+# capabilities API
 @application.route('/caps')
 @application.role_required(['admin', 'freq', 'data'])
 def caps():
     """ Serve worker capabilities JSON.
     """
     caps = dict((c.prefix, c.get_capabilities()) for c in application.clients)
+    #FIXME a hack until we streamline the worker stuff
+    for name in WORKER_MODULES:
+        name = name[:-7]
+        if name not in caps:
+            caps[name] = None
     return json.dumps(caps)
 
 
@@ -59,7 +65,7 @@ def settings(key=None):
     if request.method == 'GET':
         # return all settings
         values = {'ident': application.ident}
-        for key in ['rig', 'audio', 'rds', 'ams', 'hamlib', 'sdr']: #FIXME improve by storing rig, audio, .. in a dict on the app
+        for key in ['audio', 'rds', 'ams', 'hamlib', 'sdr']: #FIXME improve by storing audio, .. in a dict on the app
             values[key] = getattr(application, key).values
         return json.dumps(values)
     else:
@@ -67,7 +73,7 @@ def settings(key=None):
         if key == 'ident':
             application.set_ident(request.get_json()) #FIXME treat ident same as other keys by storing ident differently?
             application.event_client.write(EVENT_IDENT, application.ident)
-        elif key in ['rig', 'audio', 'rds', 'ams', 'hamlib', 'sdr']:#FIXME as above
+        elif key in ['audio', 'rds', 'ams', 'hamlib', 'sdr']:#FIXME as above
             getattr(application, key).write(request.get_json())
         else:
             return "Key not found", 404
@@ -88,7 +94,15 @@ def process():
         { "workers": ["hamlib", "rds"], "description": "foo" }
     """
     if request.method == 'GET':
+        config_id = None
+        for client in application.clients:
+            if config_id is None:
+                config_id = client.config_id()
+            elif config_id != client.config_id():
+                return "Unexpected differing config_id", 500
         status = dict((c.prefix, c.status()) for c in application.clients)
+        if config_id is not None:
+            status['config_id'] = config_id
         return json.dumps(status)
     elif request.method == 'PUT':
         for c in application.clients:
@@ -101,7 +115,6 @@ def process():
         values['workers'] = params.get('workers', [])
 
         #FIXME this all gets tidied up, too, perhaps into values['values']
-        values['rig'] = application.rig.values
         values['audio'] = application.audio.values
         values['rds'] = application.rds.values
         values['sdr'] = application.sdr.values
@@ -429,7 +442,7 @@ def export_endpoint(config_id):
         response.headers['Content-Disposition'] = 'attachment; filename={0}'.format(filename)
         return response
     else:
-        path = os.path.join(application.export_directory, filename)
+        path = os.path.join(EXPORT_DIRECTORY, filename)
         with open(path, 'w') as f:
             for x in export:
                 f.write(x)
@@ -483,7 +496,7 @@ def pi_endpoint(command):
     """ Endpoint for executing a Pi control command.
     """
     if command in ['shutdown', 'reboot']:
-        os.system("{0} {1}".format(application.pi_control_path, command))
+        os.system("{0} {1}".format(PI_CONTROL_PATH, command))
         return "OK"
     return "Command not recognized: " + command, 400
 
@@ -496,7 +509,7 @@ def pico_endpoint():
     result = {}
     try:
         python = subprocess.check_output(['which', 'python']).strip()
-        args = [python, application.pico_path]
+        args = [python, PICO_PATH]
         result['text'] = subprocess.check_output(args, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         result['error'] = e.output

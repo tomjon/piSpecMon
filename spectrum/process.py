@@ -78,11 +78,12 @@ class Process(object):
         except ValueError:
             raise ProcessError("Bad PID: {0}".format(pid))
         except OSError as e:
-            raise ProcessError("Bad PID ({0}): {1}".format(errno.errorcode[e.errno], pid))
+            if e.errno not in errno.errorcode:
+                raise ProcessError("Bad PID ({0}): {1}".format(pid, e.message))
+            raise ProcessError("Bad PID ({0}): {1}".format(pid, errno.errorcode[e.errno]))
 
     # write status to the status file
     def _write_status(self):
-        self.status['config_id'] = self.config_id
         log.debug("Writing status %s", json.dumps(self.status))
         tmp = self.status_file + '_tmp'
         with open(tmp, 'w') as f:
@@ -232,6 +233,11 @@ class Client(object):
         if self.error is not None:
             status['error'] = self.error
         return status
+
+    def config_id(self):
+        """ Read and return the running config id, if any.
+        """
+        return self.process._read_config()
 
     def start(self, config_id):
         """ Tell the process to start processing the specified config id.
