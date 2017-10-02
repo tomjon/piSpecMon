@@ -4,8 +4,6 @@ import { WidgetComponent } from './widget.component';
 export abstract class WidgetBase {
   @ViewChild(WidgetComponent) widgetComponent;
 
-  protected units: any[] = [];
-
   get values(): any {
     return this.widgetComponent.values;
   }

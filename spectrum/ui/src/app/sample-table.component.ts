@@ -11,14 +11,14 @@ import { Chart } from './chart';
   selector: 'psm-sample-table',
   inputs: [ 'worker' ],
   template: `<psm-widget [hidden]="isHidden" title="{{label}} - Audio Samples" class="chart" (show)="onShow($event)">
-               <form *ngIf="data != undefined" class="form-inline" role="form">
+               <div *ngIf="data != undefined" class="chart-form">
                  <div class="form-group">
                    <label for="idx">Frequency</label>
                    <select class="form-control" [(ngModel)]="freq_n" name="idx">
                      <option *ngFor="let freq_n of freqs" [value]="freq_n">{{freq_n | freq:values.rds}}</option>
                    </select>
                  </div>
-               </form>
+               </div>
                <table *ngIf="data != undefined && data.samples[freq_n] && data.samples[freq_n].length > 0">
                  <tr>
                    <th>Timestamp</th>

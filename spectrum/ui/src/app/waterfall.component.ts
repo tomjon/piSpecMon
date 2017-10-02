@@ -13,33 +13,38 @@ declare var $;
 @Component({
   selector: 'psm-waterfall',
   inputs: [ 'worker' ],
-  template: `<psm-widget [hidden]="isHidden" title="{{label}} - Waterfall" class="chart" (show)="onShow($event)">
-               <form class="form-inline controls" role="form">
-                 <div class="form-group buttons">
-                   <button (click)="onExport()" class="btn btn-default btn-selected">Export</button>
-                   <button (click)="onDownload()" class="btn btn-default btn-selected">Download</button>
-                 </div>
-                 <div *ngIf="showSamples" class="form-group">
-                   <audio #audio controls preload='none'></audio>
-                 </div>
-               </form>
-               <form class="form-inline" role="form">
-                 <span class="infoText">{{infoText}}</span>
-                 <label for="samples">Overlay audio samples</label>
-                 <input type="checkbox" name="samples" [disabled]="! data || data.audio.length == 0" [(ngModel)]="showSamples">
-                 <label for="follow">Follow</label>
-                 <input type="checkbox" name="follow" [(ngModel)]="follow" (ngModelChange)="plot()">
-               </form>
-               <div class="waterfall">
-                 <svg #chart (click)="onClick($event)" [attr.viewBox]="viewBox" preserveAspectRatio="xMidYMid meet">
-                   <svg:g />
-                 </svg>
-                 <canvas #canvas width="{{options.width}}" height="{{options.height}}"></canvas>
-                 <canvas #overlay [hidden]="! showSamples" width="{{options.width}}" height="{{options.height}}"></canvas>
-               </div>
-             </psm-widget>`,
-  styles: ["label { margin-left: 20px }",
-           "input { cursor: pointer }"]
+  template: `
+    <psm-widget [hidden]="isHidden" title="{{label}} - Waterfall" class="chart" (show)="onShow($event)">
+      <div class="chart-form">
+        <div class="form-group buttons">
+          <button (click)="onExport()" class="btn btn-default btn-selected">Export</button>
+          <button (click)="onDownload()" class="btn btn-default btn-selected">Download</button>
+        </div>
+        <div *ngIf="showSamples" class="form-group">
+          <audio #audio controls preload='none'></audio>
+        </div>
+        <span class="infoText">{{infoText}}</span>
+        <label for="samples">Overlay audio samples</label>
+        <input type="checkbox" name="samples" [disabled]="! data || data.audio.length == 0" [(ngModel)]="showSamples">
+        <label for="follow">Follow</label>
+        <input type="checkbox" name="follow" [(ngModel)]="follow" (ngModelChange)="plot()">
+      </div>
+      <div class="waterfall">
+        <svg #chart (click)="onClick($event)" [attr.viewBox]="viewBox" preserveAspectRatio="xMidYMid meet">
+          <svg:g />
+        </svg>
+        <canvas #canvas width="{{options.width}}" height="{{options.height}}"></canvas>
+        <canvas #overlay [hidden]="! showSamples" width="{{options.width}}" height="{{options.height}}"></canvas>
+      </div>
+    </psm-widget>`,
+  styles: [
+    "label { margin-left: 20px }",
+    "input { cursor: pointer }",
+    ".waterfall { position: relative }",
+    "svg { position: relative; z-index: 1 }",
+    "canvas { position: absolute; top: 50px; left: 0px; width: 100% }",
+    ".infoText { margin-right: 30px }"
+  ]
 })
 export class WaterfallComponent extends Chart {
   svg: any;

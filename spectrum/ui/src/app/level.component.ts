@@ -11,7 +11,7 @@ import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
   selector: 'psm-level',
   inputs: [ 'worker' ],
   template: `<psm-widget [hidden]="isHidden" title="{{label}} - Level / Time" class="chart" (show)="onShow($event)">
-               <form class="form-inline" role="form">
+               <div class="chart-form">
                  <div class="form-group">
                    <label for="top">Top</label>
                    <select class="form-control" #selectN [(ngModel)]="N" (ngModelChange)="plot()" name="top"></select>
@@ -24,7 +24,7 @@ import { _d3 as d3, dt_format, insertLineBreaks, timeTicks } from './d3_import';
                      <option value="min">Minimum</option>
                    </select>
                  </div>
-               </form>
+               </div>
                <svg #chart (click)="onClick($event)" [attr.viewBox]="viewBox" preserveAspectRatio="xMidYMid meet">
                  <svg:line class="horizontal" *ngIf="showInfo" [attr.x1]="margin.left" [attr.x2]="width + margin.left" [attr.y1]="showY" [attr.y2]="showY" />
                  <svg:line class="vertical" *ngIf="showInfo" [attr.x1]="showX" [attr.x2]="showX" [attr.y1]="height + margin.top" [attr.y2]="showY" />

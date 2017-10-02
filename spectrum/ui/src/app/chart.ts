@@ -1,9 +1,14 @@
+import { WidgetBase } from './widget.base';
 import { WorkerData} from './worker-data';
 import { StateService } from './state.service';
 import { DataService } from './data.service';
 import { MessageService } from './message.service';
 
-export abstract class Chart {
+/**
+ * TODO: you could get at chart settings through the widget base settings 'values'
+ * but these should not make it into the config values that are stored for the workers.
+ */
+export abstract class Chart extends WidgetBase {
   private plotted: boolean = false; // whether new data has been plotted yet
   private show: boolean = false; // whether the chart is to be shown (otherwise, it is hidden)
 
@@ -17,6 +22,7 @@ export abstract class Chart {
               protected stateService: StateService,
               private dataService: DataService,
               private name: string) {
+      super();
       stateService.registerChart(this);
   }
 

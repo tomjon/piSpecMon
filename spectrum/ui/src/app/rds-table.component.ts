@@ -10,7 +10,7 @@ import { Chart } from './chart';
   selector: 'psm-rds-table',
   inputs: [ 'worker' ],
   template: `<psm-widget [hidden]="isHidden" title="{{label}} - RDS Text" class="chart" (show)="onShow($event)">
-               <form class="form-inline" role="form">
+               <div class="chart-form">
                  <div class="form-group buttons">
                    <button (click)="onExport()" class="btn btn-default btn-selected">Export</button>
                    <button (click)="onDownload()" class="btn btn-default btn-selected">Download</button>
@@ -21,7 +21,7 @@ import { Chart } from './chart';
                      <option *ngFor="let station of stations" [value]="station.idx">{{station.name}}</option>
                    </select>
                  </div>
-               </form>
+               </div>
                <table *ngIf="data != undefined && data.rdsText[idx]">
                  <tr>
                    <th>Timestamp</th>

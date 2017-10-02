@@ -43,10 +43,18 @@ line.vertical, line.horizontal {
 .chart h1 {
   float: left;
 }
-.chart form {
+.chart-form {
   position: absolute;
   right: 30px;
   margin-top: 10px;
+}
+.chart-form .form-group {
+  display: inline-block;
+}
+.chart-form .form-control {
+  width: auto;
+  height: auto;
+  display: inline;
 }
 psm-frequency span {
   margin-right: 15px;
@@ -63,33 +71,6 @@ text.info {
 }
 .hidden {
   opacity: 0;
-}
-form.controls {
-  position: absolute;
-  left: 160px;
-  margin-top: 6px;
-}
-form.controls .buttons {
-  position: absolute;
-  right: 300px;
-  margin-top: 6px;
-}
-psm-waterfall .waterfall {
-  position: relative;
-  margin-top: 40px;
-}
-psm-waterfall svg {
-  position: relative;
-  z-index: 1;
-}
-psm-waterfall canvas {
-  position: absolute;
-  top: 0px;
-  left: 0px;
-  width: 100%;
-}
-psm-waterfall .infoText {
-  margin-right: 30px;
 }
 rect.audio {
   fill: green;
