@@ -1,15 +1,15 @@
 [Unit]
-Description=Pi Spectrum Monitor Monkey Service
+Description=Pi Spectrum Monitor RDevice Service
 After=basic.target
 
 [Service]
 Type=idle
 Environment=SES_CONFIG_PATH=/etc/psm.yml
-ExecStart=/usr/local/bin/psm-rds-worker
+ExecStart=/usr/local/bin/psm-rdevice
 Restart=always
 RestartSec=1
 WorkingDirectory=~
-RuntimeDirectory=psm-rds-worker
+RuntimeDirectory=psm-rdevice
 User=ses
 Group=ses
 

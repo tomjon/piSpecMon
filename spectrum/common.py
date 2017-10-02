@@ -1,59 +1,14 @@
 """ Common functions and logging setup.
 """
-import logging
-import logging.handlers
 import sys
 import os
 import itertools
 import time
-from spectrum.config import LOG_PATH, LOG_SIZE
+from ses_common.logger import get_logger
+from ses_common.config import LOG_PATH, LOG_SIZE, LOG_LEVEL
 
 
-def get_logger():
-    """ Get a logger based on the system path.
-    """
-    logger = logging.getLogger('werkzeug') # use this name so flask doesn't use its own logger
-    logger.setLevel(logging.DEBUG)
-
-    # create file handler which logs even debug messages (these end up in log file)
-    logger.filename = '{0}.log'.format(os.path.basename(sys.argv[0]).replace('.py', ''))
-    logger.path = os.path.join(LOG_PATH, logger.filename)
-    rf_handler = logging.handlers.RotatingFileHandler(logger.path, maxBytes=LOG_SIZE, backupCount=0)
-    rf_handler.setLevel(logging.INFO)
-
-    # create console handler with a higher log level (these end up in system journal)
-    c_handler = logging.StreamHandler()
-    c_handler.setLevel(logging.DEBUG if 'debug' in sys.argv else logging.WARN)
-
-    # create formatter and add it to the handlers
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    rf_handler.setFormatter(formatter)
-    c_handler.setFormatter(formatter)
-
-    # add the handlers to the logger
-    logger.addHandler(rf_handler)
-    logger.addHandler(c_handler)
-
-    logger.info("Obtained logger")
-    return logger
-
-log = get_logger() # pylint: disable=invalid-name
-
-
-class FakeLogger(object):
-    """ Fake logger that does nothing.
-    """
-    def error(self, *_): # pylint: disable=missing-docstring
-        pass
-
-    def warn(self, *_): # pylint: disable=missing-docstring
-        pass
-
-    def info(self, *_): # pylint: disable=missing-docstring
-        pass
-
-    def debug(self, *_): # pylint: disable=missing-docstring
-        pass
+log = get_logger(name='werkzeug', dir_path=LOG_PATH, size=LOG_SIZE, level=LOG_LEVEL) # pylint: disable=invalid-name
 
 
 def now():

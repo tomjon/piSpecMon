@@ -3,7 +3,7 @@
 import time
 import json
 import requests
-from spectrum.config import ELASTICSEARCH, SAMPLES_PATH
+from ses_common.config import ELASTICSEARCH, SAMPLES_PATH
 from spectrum.common import log, fs_size, fs_free
 from spectrum.datastore import ConfigBase, SettingsBase, StoreError
 

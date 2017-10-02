@@ -74,7 +74,7 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['pyyaml', 'requests', 'pydub', 'flask', 'flask-login', 'python-slugify', 'pyzmq'],
+    install_requires=['pyyaml', 'requests', 'pydub', 'flask', 'flask-login', 'python-slugify', 'pyzmq', 'ses-common'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
@@ -113,7 +113,7 @@ setup(
             'psm-power=spectrum.main:power',
             'psm-email=spectrum.main:email',
             'psm-wav2mp3=spectrum.main:wav2mp3',
-            'psm-event=spectrum.main:event'
+            'psm-rdevice=spectrum.main:rdevice'
         ],
     },
 )
