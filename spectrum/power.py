@@ -1,7 +1,6 @@
 """ Functions for powering on/off the rig.
 """
 from time import sleep
-from ses_common.config import RADIO_ON_SLEEP_SECS, RADIO_ON_SWITCH, DATA_PATH
 from spectrum.binary_datastore import BinaryDataStore
 from spectrum.config import RADIO_ON_SLEEP_SECS, RADIO_ON_SWITCH, DATA_PATH
 try:
