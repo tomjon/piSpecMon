@@ -160,17 +160,4 @@ export class TemperatureComponent extends Chart {
     setTimeout(() => this.textWidth = this.text.nativeElement.getComputedTextLength());
     this.showInfo = true;
   }
-
-  // return the value in the (monotonic increasing) ticks array closest to the given value, v
-  private nearestTick(value: number, ticks: number[]): any {
-    let t0: any = { };
-    for (let idx in ticks) {
-      let t = { value: ticks[idx], index: idx };
-      if (t.value > value) {
-        return t0 != undefined && (value - t0.value <= t.value - value) ? t0 : t;
-      }
-      t0 = t;
-    }
-    return t0;
-  }
 }

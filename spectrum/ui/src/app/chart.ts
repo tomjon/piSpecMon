@@ -90,4 +90,17 @@ export abstract class Chart extends WidgetBase {
   }
 
   abstract plot(): void;
+
+  // return the value in the (monotonic increasing) ticks array closest to the given value, v
+  protected nearestTick(value: number, ticks: number[]): any {
+    let t0: any = { };
+    for (let idx in ticks) {
+      let t = { value: ticks[idx], index: idx };
+      if (t.value > value) {
+        return t0 != undefined && (value - t0.value <= t.value - value) ? t0 : t;
+      }
+      t0 = t;
+    }
+    return t0;
+  }
 }
