@@ -17,7 +17,7 @@ sudo apt-get install -y python-pip
 sudo -H pip install -e .
 
 # copy default config to /etc/psm.yml
-sudo cp spectrum/psm.yml /etc
+sudo cp psm.yml /etc
 
 # function returning config values, ultimately from the YML
 function vbl {
