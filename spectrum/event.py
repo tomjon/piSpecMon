@@ -5,7 +5,11 @@ import json
 import httplib
 import requests
 from spectrum.common import log, now
-from ses_rdevice import rdevice
+
+try:
+    from ses_rdevice import rdevice
+except ImportError:
+    rdevice = None
 
 # event types
 EVENT_INIT = 'init'
@@ -42,6 +46,9 @@ class EventManager(object):
 #                    log.info("Delivered event %s", message_id)
 #                elif r is False:
 #                    log.warn("Could not deliver event %s", message_id)
+        if rdevice is None:
+            log.error("No rdevice support")
+            return
         rdevice.main(rdevice.sleep_timer(), upload=self.upload)
 
 

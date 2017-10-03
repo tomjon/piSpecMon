@@ -7,9 +7,7 @@ import importlib
 from spectrum.power import power_on, power_off
 from spectrum.wav2mp3 import walk_convert
 from spectrum.binary_datastore import BinaryDataStore
-from spectrum.config import DATA_PATH, CONVERT_PERIOD, USERS_FILE, ROUNDS, SSMTP_CONF, \
-                            EVENT_PATH, EVENT_POLL_SECS, EVENT_OVERSEER_URL, \
-                            EVENT_OVERSEER_KEY
+from spectrum.config import DATA_PATH, CONVERT_PERIOD, USERS_FILE, ROUNDS, SSMTP_CONF, EVENT_PATH
 from spectrum.audio import AudioServer
 from spectrum.users import Users
 from spectrum.queue import Queue

@@ -89,7 +89,7 @@ gcc -o spectrum/bin/pi_control spectrum/pi_control.c && (
 PID_KILL_PATH=`vbl PID_KILL_PATH`
 gcc -o spectrum/bin/pid_kill spectrum/pid_kill.c && (
   sudo cp spectrum/bin/pid_kill $PID_KILL_PATH
-  sudo setcap cap_kill+ep /usr/bin/pid_kill
+  sudo setcap cap_kill+ep $PID_KILL_PATH
 )
 
 # remind about post install steps

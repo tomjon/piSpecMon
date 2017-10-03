@@ -4,6 +4,7 @@ import sys
 import os
 import itertools
 import time
+import logging, logging.handlers
 from spectrum.config import LOG_PATH, LOG_SIZE, LOG_LEVEL
 
 

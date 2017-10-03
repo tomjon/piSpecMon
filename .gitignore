@@ -48,6 +48,7 @@ spectrum/ui/app/*.js
 spectrum/ui/app/*.map
 spectrum/ui/node_modules
 spectrum/ui/typings
+spectrum/ui/dist/
 .cache/
 spectrum.egg-info
 spectrum/pid_kill
