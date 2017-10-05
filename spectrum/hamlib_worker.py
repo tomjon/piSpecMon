@@ -19,7 +19,11 @@ except:
 def read_temp():
     if not os.path.exists(PICO_PATH) or i2c is None:
         return None
-    data = i2c.read_byte_data(0x69, 0x0C)
+    try:
+        data = i2c.read_byte_data(0x69, 0x0C)
+    except IOError as e:
+        log.exception(e)
+        return None
     return format(data, "02x")
 
 
@@ -154,5 +158,5 @@ class Worker(Process):
                 for count, _ in enumerate(audio):
                     self.status['sweep']['record']['strength'] = monitor.get_strength()
                     yield
-                    if count >= config.values['hamlib']['audio']['duration']: break
+                    if count >= config.values['hamlib']['audio']['duration'] - 1: break
                 audio.write(path)
