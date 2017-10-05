@@ -9,6 +9,7 @@ import { StateService } from './state.service';
                 <psm-level worker="hamlib"></psm-level>
                 <psm-temperature worker="hamlib"></psm-temperature>
                 <psm-waterfall worker="hamlib"></psm-waterfall>
+                <psm-sample-table worker="hamlib"></psm-sample-table>
               </ng-container>
               <ng-container *ngIf="enabled('rds')">
                 <psm-frequency worker="rds"></psm-frequency>

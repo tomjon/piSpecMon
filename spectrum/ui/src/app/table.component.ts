@@ -51,7 +51,7 @@ export class TableComponent {
   workers: any[] = [];
 
   // true when waiting for (real) status after startup
-  standby: boolean = true;
+  standby: boolean = false; //FIXME move 'standby' to statusService
 
   constructor(private dataService: DataService,
               private stateService: StateService,

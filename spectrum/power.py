@@ -3,6 +3,7 @@
 from time import sleep
 from spectrum.binary_datastore import BinaryDataStore
 from spectrum.config import RADIO_ON_SLEEP_SECS, RADIO_ON_SWITCH, DATA_PATH
+from spectrum.common import log
 try:
     from spectrum.monitor import Monitor
 except ImportError:
