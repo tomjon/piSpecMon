@@ -14,7 +14,7 @@ import { Chart } from './chart';
                  <div class="form-group">
                    <label for="idx">Frequency</label>
                    <select class="form-control" [(ngModel)]="freq_n" name="idx">
-                     <option *ngFor="let freq_n of freqs" [value]="freq_n">{{freq_n | freq:values.rds}}</option>
+                     <option *ngFor="let freq_n of freqs" [value]="freq_n">{{freq_n | freq:values}}</option>
                    </select>
                  </div>
                </div>
@@ -49,9 +49,5 @@ export class SampleTableComponent extends Chart {
 
   get isHidden(): boolean {
     return this.data == undefined || this.values.audio.enabled == false || this.data.samples.length == 0;
-  }
-
-  get values(): any {
-    return this.stateService.currentConfig != undefined ? this.stateService.currentConfig.values : undefined;
   }
 }
