@@ -202,10 +202,18 @@ def data_endpoint(config_id):
             start = _int_arg('start_' + worker)
             w = data[worker] = {}
             w['spectrum'] = list(config.iter_spectrum(worker, start=start, end=end))
-            w['audio'] = list(config.iter_audio(worker, start=start, end=end))
             w['rds_name'] = list(config.iter_rds_name(worker, start=start, end=end))
             w['rds_text'] = list(config.iter_rds_text(worker, start=start, end=end))
             w['temperature'] = list(config.iter_temperature(worker, start=start, end=end))
+
+            w['audio'] = []
+            for timestamp, freq_n in config.iter_audio(worker, start=start, end=end):
+                sample = {'timestamp': timestamp, 'freq_n': freq_n}
+                path = application.find_audio_path(config_id, worker, freq_n, timestamp)
+                if path is not None:
+                    sample['filetype'] = (os.path.splitext(path)[1] or '.')[1:]
+                    sample['filesize'] = os.path.getsize(path)
+                w['audio'].append(sample)
         return json.dumps(data)
     except StoreError as e:
         return e.message, 500
@@ -222,13 +230,9 @@ def audio_endpoint(config_id, worker, freq_n, timestamp):
         int(timestamp), int(freq_n)
     except ValueError:
         return 'Bad parameter', 400
-    base = application.data_store.config(config_id).audio_path(worker, timestamp, freq_n)
-    for ext in ['mp3', 'ogg', 'wav']:
-        path = '{0}.{1}'.format(base, ext)
-        try:
-            return application.send_file_partial(path)
-        except IOError as e:
-            log.error("Error sending file partial: %s", e)
+    path = application.find_audio_path(config_id, worker, freq_n, timestamp)
+    if path is not None:
+        return application.send_file_partial(path)
     return 'File not found', 404
 
 

@@ -3,7 +3,7 @@ export class WorkerData {
     levels: [],
     agg: { latest: [], min: [], max: [], avg: [] }
   };
-  samples: any = {};
+  samples: any = [];
   audio: any = {length: 0};
   rdsNames: any = {};
   rdsText: any = {};
@@ -29,27 +29,23 @@ export class WorkerData {
   }
 
   private mapAudio(audio: any[], config_id: string) {
-    // want this.samples to be a lookup from freq_n to a list of { timestamp: .., path: .. }
+    // want this.samples to be a lookup from freq_n to a list of {timestamp: .., path: .., filetype: .., filesize: ..}
     // want this.audio to be a lookup like this.audio[{sweep_n}_{freq_n}] = ..
-    this.audio.length = audio.length;
+    this.audio.length = audio.length; //FIXME a mistake to do this? Use Object.keys.length or whatever instead where needed?
     let sweep_n = -1;
     let sweep_t = null;
-    if (! this.samples.length) this.samples.length = 0;
     for (let a of audio) {
-      let audio_t = a[0];
-      this.update_timestamp(audio_t);
-      let freq_n = a[1];
-      let path = `/audio/${config_id}/${this.key}/${freq_n}/${audio_t}`;
-      if (! this.samples[freq_n]) {
-        this.samples[freq_n] = [];
-        ++this.samples.length;
+      this.update_timestamp(a.timestamp);
+      a.path = `/audio/${config_id}/${this.key}/${a.freq_n}/${a.timestamp}`;
+      if (! this.samples[a.freq_n]) {
+        this.samples[a.freq_n] = [];
       }
-      this.samples[freq_n].push({ timestamp: audio_t, path: path });
-      while (sweep_t == null || (sweep_t != 0 && audio_t > sweep_t)) {
+      this.samples[a.freq_n].push(a);
+      while (sweep_t == null || (sweep_t != 0 && a.timestamp > sweep_t)) {
         let sweep = this.spectrum.levels[++sweep_n];
         sweep_t = sweep ? sweep.timestamp : 0;
       }
-      this.audio[`${sweep_n - 1}_${freq_n}`] = path;
+      this.audio[`${sweep_n - 1}_${a.freq_n}`] = a.path;
     }
   }
 

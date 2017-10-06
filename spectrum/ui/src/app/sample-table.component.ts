@@ -1,10 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { MessageService } from './message.service';
 import { StateService } from './state.service';
-import { WidgetComponent } from './widget.component';
-import { FreqPipe } from './freq.pipe';
-import { DatePipe } from './date.pipe';
-import { Data } from './data';
 import { Chart } from './chart';
 
 @Component({
@@ -22,10 +18,15 @@ import { Chart } from './chart';
                  <tr>
                    <th>Timestamp</th>
                    <th>Sample</th>
+                   <th>File details</th>
                  </tr>
                  <tr *ngFor="let sample of data.samples[freq_n].slice().reverse()">
                    <td>{{sample.timestamp | date}}</td>
-                   <td><audio controls src="{{sample.path}}" preload="none"></audio></td>
+                   <td>
+                     <audio *ngIf="sample.filesize != undefined" controls src="{{sample.path}}" preload="none"></audio>
+                     <span *ngIf="sample.filesize == undefined">Sample recording</span>
+                   </td>
+                   <td>{{sample.filetype}} {{sample.filesize | bytes}}</td>
                  </tr>
                </table>
                <div *ngIf="data != undefined && (! data.samples[freq_n] || data.samples[freq_n].length == 0)">

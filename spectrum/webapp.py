@@ -47,3 +47,11 @@ class WebApplication(SecureStaticFlask): # pylint: disable=too-many-instance-att
         if self.user_has_role(['admin', 'freq']) and 'description' in ident:
             self.ident['description'] = ident['description']
             self.description.write(ident['description'])
+
+    def find_audio_path(self, config_id, worker, freq_n, timestamp):
+        base = self.data_store.config(config_id).audio_path(worker, timestamp, freq_n)
+        for ext in ['mp3', 'ogg', 'wav']:
+            path = '{0}.{1}'.format(base, ext)
+            if os.path.isfile(path):
+                return path
+        return None
