@@ -37,6 +37,7 @@ import { WaterfallComponent } from './waterfall.component';
 import { SampleTableComponent } from './sample-table.component';
 import { RdsTableComponent } from './rds-table.component';
 import { TemperatureComponent } from './temperature.component';
+import { WorkerErrorComponent } from './worker-error.component';
 
 import { InputDirective } from './input.directive';
 
@@ -50,7 +51,7 @@ import './rxjs-operators'; //FIXME is this necessary?
 @NgModule({
   declarations: [
     AppComponent,
-    WidgetComponent, //FIXME order these coherently
+    WidgetComponent,
     FreqRangeComponent,
     LoginComponent,
     IdentComponent,
@@ -76,6 +77,7 @@ import './rxjs-operators'; //FIXME is this necessary?
     SampleTableComponent,
     RdsTableComponent,
     TemperatureComponent,
+    WorkerErrorComponent,
     InputDirective,
     DatePipe,
     FreqPipe,

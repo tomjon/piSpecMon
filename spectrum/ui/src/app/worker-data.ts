@@ -1,4 +1,5 @@
 export class WorkerData {
+  errors: string[] = [];
   spectrum: any = {
     levels: [],
     agg: { latest: [], min: [], max: [], avg: [] }
@@ -13,6 +14,7 @@ export class WorkerData {
   constructor(private key: string) {}
 
   update(data: any, config_id: string, max_n: number, detectPeaks: boolean): void {
+    this.errors = data.errors;
     this.mapSpectrum(data.spectrum, max_n, detectPeaks);
     this.mapAudio(data.audio, config_id);
     this.mapRdsNames(data.rds_name);

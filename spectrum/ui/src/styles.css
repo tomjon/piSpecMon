@@ -104,32 +104,6 @@ psm-scan .message {
   padding-bottom: 10px;
 }
 
-/* specials for the sweep table component */
-tbody tr {
-  cursor: default;
-}
-.btn-selected {
-  background: lightblue;
-}
-.btn-right {
-  float: right;
-}
-.row-selected {
-  background: lightblue;
-}
-.running {
-  color: green;
-}
-.feature {
-  text-align: center;
-}
-.indicator {
-  width: 30px;
-}
-.count {
-  font-style: italic
-}
-
 /* specials for range display */
 .range-slider {
   height: 50px;

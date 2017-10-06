@@ -16,14 +16,14 @@ import { Config } from './config';
        <div class="row">
          <div class="col-lg-9">
            <psm-table></psm-table>
-           <!--div class="error" *ngFor="let error of errors">{{error[0] | date}} {{error[1]}}</div FIXME -->
            <psm-process></psm-process>
-           <psm-charts [hidden]="config == undefined"></psm-charts>
+           <psm-charts [hidden]="config == undefined"></psm-charts><!--FIXME hidden needed at all? is only dependency on config-->
          </div>
          <div class="col-lg-3">
            <psm-error></psm-error>
            <psm-ident></psm-ident>
            <!--psm-details></psm-details FIXME -->
+           <!--FIXME all these ngIf should be in the widgets...-->
            <psm-logs *ngIf="user.roleIn(['admin'])"></psm-logs>
            <psm-pi *ngIf="user.roleIn(['admin'])"></psm-pi>
            <psm-pico *ngIf="user.roleIn(['admin'])"></psm-pico>
@@ -65,8 +65,4 @@ export class AppComponent {
   private get config(): Config {
     return this.stateService.currentConfig;
   }
-
-  /* FIXME get errors(): any[] {
-    return this.config ? this.config.errors : [];
-  }*/
 }

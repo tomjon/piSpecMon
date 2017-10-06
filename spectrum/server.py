@@ -157,9 +157,10 @@ def config_endpoint(config_ids=None):
     # turn a config object into a dictionary representation, including any errors
     def _config_dict(config):
         c_dict = dict((k, v) for k, v in config.__dict__.iteritems() if k[0] != '_')
-        c_dict['errors'] = {}
+        c_dict['errors'] = False
         for worker in config.values['workers']:
-            c_dict['errors']['worker'] = list(config.iter_error(worker))
+            if len(list(config.iter_error(worker))) > 0:
+                c_dict['errors'] = True
         return c_dict
     try:
         if request.method == 'GET':
@@ -201,6 +202,7 @@ def data_endpoint(config_id):
         for worker in config.values['workers']:
             start = _int_arg('start_' + worker)
             w = data[worker] = {}
+            w['errors'] = list(config.iter_error(worker))
             w['spectrum'] = list(config.iter_spectrum(worker, start=start, end=end))
             w['rds_name'] = list(config.iter_rds_name(worker, start=start, end=end))
             w['rds_text'] = list(config.iter_rds_text(worker, start=start, end=end))
