@@ -22,7 +22,7 @@ def read_temp():
     try:
         data = i2c.read_byte_data(0x69, 0x0C)
     except IOError as e:
-        log.exception(e)
+        log.warn(e)
         return None
     return format(data, "02x")
 
