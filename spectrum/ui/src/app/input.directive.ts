@@ -27,10 +27,12 @@ export class InputDirective implements OnDestroy {
   private isLoading: boolean = false;
   private isDisabled: boolean = false;
 
-  constructor(private stateService: StateService,
-              private widgetComponent: WidgetComponent,
+  constructor(widgetComponent: WidgetComponent,
+              private stateService: StateService,
               private el: ElementRef,
               private renderer: Renderer) {
+    this.isLoading = widgetComponent.loading;
+    this.config = stateService.currentConfig;
     this.subscriptions.push(stateService.configChange.subscribe(config => this.config = config));
     this.subscriptions.push(widgetComponent.loadingChange.subscribe(loading => this.loading = loading));
   }
