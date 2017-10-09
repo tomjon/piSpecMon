@@ -5,7 +5,7 @@ export class WorkerData {
     agg: { latest: [], min: [], max: [], avg: [] }
   };
   samples: any = [];
-  audio: any = {length: 0};
+  audio: any = [];
   rdsNames: any = {};
   rdsText: any = {};
   temperature: any = [];
@@ -32,7 +32,6 @@ export class WorkerData {
   private mapAudio(audio: any[], config_id: string) {
     // want this.samples to be a lookup from freq_n to a list of {timestamp: .., path: .., filetype: .., filesize: ..}
     // want this.audio to be a lookup like this.audio[{sweep_n}_{freq_n}] = ..
-    this.audio.length = audio.length; //FIXME a mistake to do this? Use Object.keys.length or whatever instead where needed?
     let sweep_n = -1;
     let sweep_t = null;
     for (let a of audio) {
@@ -52,7 +51,7 @@ export class WorkerData {
 
   private mapRdsNames(data: any[]) {
     for (let rds of data) {
-      this.rdsNames[rds[1]] = rds[2]; //FIXME ignores timestamp, effectively takes last known RDS name per frequency
+      this.rdsNames[rds[1]] = rds[2]; // ignores timestamp, effectively takes last known RDS name per frequency
       this.updateTimestamp(rds[0]);
     }
   }
