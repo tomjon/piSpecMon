@@ -159,8 +159,9 @@ class Process(object):
         """
         self._stop = True
 
-    def init(self):
-        """ Initialise the process.
+    def init(self, f):
+        """ Initialise the process. The argument 'f' is an appending file handle
+            to the log file, should it be needed, only closed after process stop.
         """
         try:
             pid = self.read_pid()

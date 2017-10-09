@@ -3,12 +3,13 @@
 import os
 import Hamlib
 from time import sleep
+from gpiozero import CPUTemperature
 from spectrum.process import Process
 from spectrum.common import log, parse_config, now, scan
 from spectrum.monitor import Monitor, TimeoutError, get_capabilities
 from spectrum.audio import AudioClient
 from spectrum.power import power_on
-from spectrum.config import PICO_PATH, RIG_DEVICE, RADIO_ON_SLEEP_SECS
+from spectrum.config import PICO_PATH, RIG_DEVICE, RIG_LOG_LEVEL, RADIO_ON_SLEEP_SECS
 
 try:
     import smbus
@@ -16,22 +17,18 @@ try:
 except:
     i2c = None
 
-def read_temp():
-    if not os.path.exists(PICO_PATH) or i2c is None:
-        return None
-    try:
-        data = i2c.read_byte_data(0x69, 0x0C)
-    except IOError as e:
-        log.warn(e)
-        return None
-    return format(data, "02x")
-
+cpu = CPUTemperature()
 
 class Worker(Process):
     """ Process implementation for spectrum scanning using the Hamlib rig.
     """
     def __init__(self, data_store):
         super(Worker, self).__init__(data_store, 'hamlib')
+
+    def init(self, f):
+        Hamlib.rig_set_debug_file(f)
+        Hamlib.rig_set_debug(getattr(Hamlib, 'RIG_DEBUG_{0}'.format(RIG_LOG_LEVEL)))
+        super(Worker, self).init(f)
 
     # try fn() handling timeout errors until the number of attempts is exceeded
     def _timeout_try(self, attempts, fn, *args):
@@ -50,13 +47,6 @@ class Worker(Process):
 
     def get_capabilities(self):
         return get_capabilities()
-
-    def start(self):
-        #FIXME the following causes a malloc() error! is log.path ok?
-        #with open(log.path, 'a') as f:
-        #    Hamlib.rig_set_debug_file(f)
-        #    Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
-        super(Worker, self).start()
 
     def iterator(self, config, initial_count):
         """ Scan the spectrum, storing data through the config object, and yield status.
@@ -116,7 +106,7 @@ class Worker(Process):
                         self.status['sweep']['peaks'].append(peak)
                         yield
 
-                    sleep(1) #FIXME do not commit this
+                    self._read_temp(config)
 
                 if w[1][1] < w[2][1] and w[2][1] >= threshold:
                     peaks.append((w[2][2], w[2][0]))
@@ -126,10 +116,6 @@ class Worker(Process):
                 yield
 
                 config.write_spectrum(self.prefix, time_0, strengths)
-
-                temp = read_temp()
-                if temp is not None:
-                    config.write_temperature(self.prefix, time_0, temp) #FIXME temperature should be an independant worker?? but this way is easiest to correlate...
 
                 if audio_t is not None and now() - audio_t > period * 1000:
                     audio_t = now()
@@ -157,6 +143,21 @@ class Worker(Process):
             with AudioClient(config.values['audio']['receiver_channel']) as audio:
                 for count, _ in enumerate(audio):
                     self.status['sweep']['record']['strength'] = monitor.get_strength()
+                    self._read_temp(config)
                     yield
                     if count >= config.values['hamlib']['audio']['duration'] - 1: break
                 audio.write(path)
+
+    # fall back to Pi CPU temperature if Pico temperature not available
+    def _read_temp(self, config):
+        try:
+            if not os.path.exists(PICO_PATH) or i2c is None:
+                raise IOError("No Pico")
+            data = i2c.read_byte_data(0x69, 0x0C)
+            temp = format(data, "02x")
+        except IOError as e:
+            log.debug("No UPS temperature ({0})".format(str(e)))
+            temp = str(cpu.temperature)
+
+        config.write_temperature(self.prefix, now(), temp)
+        self.status['temp'] = temp

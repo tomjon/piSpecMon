@@ -18,9 +18,10 @@ from spectrum.common import log
 # conditionally import workers, and define an entry point for each
 def entry_point_fn(w_class):
     def entry_point():
-        worker_process = w_class(BinaryDataStore(DATA_PATH))
-        worker_process.init()
-        worker_process.start()
+        with open(log.path, 'a') as f:
+            worker_process = w_class(BinaryDataStore(DATA_PATH))
+            worker_process.init(f)
+            worker_process.start()
     return entry_point
 
 WORKER_MODULES = ['hamlib_worker', 'sdr_worker', 'ams_worker', 'rds_worker']

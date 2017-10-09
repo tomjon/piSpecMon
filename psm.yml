@@ -37,6 +37,9 @@ audio:
 rig_device: ttyUSB0
 rds_device: ttyACM0
 
+# Hamlib log level
+rig_log_level: WARN
+
 # data directory (FsDataStore)
 data_path: /var/lib/psm
 
