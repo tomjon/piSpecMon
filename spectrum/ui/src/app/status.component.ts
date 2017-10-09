@@ -18,6 +18,7 @@ import { Component, Input } from '@angular/core';
       <span *ngIf="s.strength != undefined">Strength: {{s.strength}}</span>
       <span *ngIf="s.name">Station name: {{s.name}}</span>
       <span *ngIf="s.text"><i>{{s.text}}</i></span>
+      <span *ngIf="s.temp">Temperature {{s.temp}}&#x2103;</span>
       <span *ngIf="s.error">{{s.error}}</span>
     </div>`
 })
