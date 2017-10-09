@@ -20,14 +20,13 @@ export class WorkerData {
     this.mapRdsNames(data.rds_name);
     this.mapRdsText(data.rds_text);
     this.temperature = this.temperature.concat(data.temperature);
+    if (this.temperature.length > 0) {
+      this.updateTimestamp(this.temperature[this.temperature.length - 1][0]);
+    }
   }
 
-  private update_timestamp(t: number) {
-    if (this.timestamp == undefined) {
-      this.timestamp = t;
-    } else {
-      this.timestamp = Math.max(this.timestamp, t);
-    }
+  private updateTimestamp(t: number) {
+    this.timestamp = Math.max(this.timestamp || t, t);
   }
 
   private mapAudio(audio: any[], config_id: string) {
@@ -37,7 +36,7 @@ export class WorkerData {
     let sweep_n = -1;
     let sweep_t = null;
     for (let a of audio) {
-      this.update_timestamp(a.timestamp);
+      this.updateTimestamp(a.timestamp);
       a.path = `/audio/${config_id}/${this.key}/${a.freq_n}/${a.timestamp}`;
       if (! this.samples[a.freq_n]) {
         this.samples[a.freq_n] = [];
@@ -54,7 +53,7 @@ export class WorkerData {
   private mapRdsNames(data: any[]) {
     for (let rds of data) {
       this.rdsNames[rds[1]] = rds[2]; //FIXME ignores timestamp, effectively takes last known RDS name per frequency
-      this.update_timestamp(rds[0]);
+      this.updateTimestamp(rds[0]);
     }
   }
 
@@ -63,7 +62,7 @@ export class WorkerData {
       let freq_n = rds[1];
       if (this.rdsText[freq_n] == undefined) this.rdsText[freq_n] = [];
       this.rdsText[freq_n].push({ timestamp: +rds[0], text: rds[2] });
-      this.update_timestamp(rds[0]);
+      this.updateTimestamp(rds[0]);
     }
   }
 
@@ -79,7 +78,7 @@ export class WorkerData {
     if (data.length == 0) return;
 
     // just take the last spectrum to get latest timestamp
-    this.update_timestamp(data[data.length - 1][0]);
+    this.updateTimestamp(data[data.length - 1][0]);
 
     // data[sweep_n] = [timestamp, [strength_0, strength_1, strength_2, .., strength_N]]
     for (let freq_idx in data[data.length - 1][1]) {
