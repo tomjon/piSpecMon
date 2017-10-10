@@ -54,7 +54,7 @@ class Worker(Process):
         scan_config = parse_config(config.values, 'hamlib')
         values = config.values['hamlib']
         audio_t = 0 if values['audio']['enabled'] else None
-        attempts = config.values['hamlib']['rig']['radio_on']
+        attempts = config.values['rig']['radio_on']
         threshold = values['audio']['threshold']
         period = values['audio']['period']
 
@@ -63,7 +63,7 @@ class Worker(Process):
 
         # open the rig for monitoring
         def _monitor_open(config):
-            monitor = Monitor(rig_device=RIG_DEVICE, **config.values['hamlib']['rig'])
+            monitor = Monitor(rig_device=RIG_DEVICE, **config.values['rig'])
             monitor.open()
             return monitor
 

@@ -47,6 +47,7 @@ export class WidgetComponent {
   @ContentChild('form') form: NgForm; //FIXME should the form, in fact, be part of the widget.html? If you need component access to the form, it should be via the widget base (easier if inhertance)
 
   @Input() key: string;
+  @Input('caps') capsKey: string;
   @Input() title: string;
   @Output('show') showEmitter = new EventEmitter<boolean>();
 
@@ -71,8 +72,9 @@ export class WidgetComponent {
   }
 
   get caps(): any {
-    if (this.key == undefined) return undefined;
-    return this.stateService.caps[this.key] || {};
+    let key = this.capsKey || this.key;
+    if (key == undefined) return undefined;
+    return this.stateService.caps[key] || {};
   }
 
   // values either refers to the current selected config values, or the user entered values
@@ -115,15 +117,15 @@ export class WidgetComponent {
 
   onReset(): void {
     if (! this.canReset) return;
-    this._values = Object.assign({}, this.stateService.values[this.key]);
+    this._values = $.extend(true, {}, this.stateService.values[this.key]);
   }
 
   onSubmit(): void {
     if (! this.canSubmit) return;
     this.busy(this.dataService.setSettings(this.key, this.values))
         .subscribe(() => {
-          Object.assign(this.stateService.values[this.key], this.values);
-          Object.assign(this._values, this.values);
+          $.extend(true, this.stateService.values[this.key], this.values);
+          $.extend(true, this._values, this.values);
         });
   }
 

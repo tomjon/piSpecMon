@@ -32,11 +32,11 @@ _parse_args()
 
 # set the default rig model based on whether the PSM test model is available in Hamlib
 # pylint: disable=undefined-variable
-if not DEFAULT_HAMLIB_SETTINGS['rig'].get('model', None):
+if not DEFAULT_RIG_SETTINGS.get('model', None):
     try:
         import Hamlib
-        DEFAULT_HAMLIB_SETTINGS['rig']['model'] = Hamlib.RIG_MODEL_PSMTEST
+        DEFAULT_RIG_SETTINGS['model'] = Hamlib.RIG_MODEL_PSMTEST
     except ImportError:
         pass
     except AttributeError:
-        DEFAULT_HAMLIB_SETTINGS['rig']['model'] = Hamlib.RIG_MODEL_AR8200
+        DEFAULT_RIG_SETTINGS['model'] = Hamlib.RIG_MODEL_AR8200

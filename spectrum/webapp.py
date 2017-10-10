@@ -4,7 +4,7 @@ import os
 from spectrum.event import EVENT_INIT
 from spectrum.common import log, psm_name
 from spectrum.secure import SecureStaticFlask
-from spectrum.config import VERSION_FILE, DEFAULT_AUDIO_SETTINGS, DEFAULT_AMS_SETTINGS, DEFAULT_RDS_SETTINGS, DEFAULT_SDR_SETTINGS, DEFAULT_HAMLIB_SETTINGS
+from spectrum.config import VERSION_FILE, DEFAULT_AUDIO_SETTINGS, DEFAULT_AMS_SETTINGS, DEFAULT_RDS_SETTINGS, DEFAULT_SDR_SETTINGS, DEFAULT_HAMLIB_SETTINGS, DEFAULT_RIG_SETTINGS
 
 class WebApplication(SecureStaticFlask): # pylint: disable=too-many-instance-attributes
     """ The curious looking two-step initialisation is so that the application instance can
@@ -28,6 +28,7 @@ class WebApplication(SecureStaticFlask): # pylint: disable=too-many-instance-att
         self.rds = self.data_store.settings('rds').read(DEFAULT_RDS_SETTINGS)
         self.sdr = self.data_store.settings('sdr').read(DEFAULT_SDR_SETTINGS)
         self.hamlib = self.data_store.settings('hamlib').read(DEFAULT_HAMLIB_SETTINGS)
+        self.rig = self.data_store.settings('rig').read(DEFAULT_RIG_SETTINGS)
         self.description = self.data_store.settings('description').read('')
         self.clients = clients
         self.event_client = event_client
