@@ -1,6 +1,7 @@
 """ Module for converting wav format files to mp3 format.
 """
 import os
+import shutil
 import subprocess
 from tempfile import mkstemp
 from spectrum.common import log
@@ -16,12 +17,13 @@ def convert(dir_path, wav_filename):
     os.close(f)
     try:
         subprocess.call(['avconv', '-loglevel', 'warning', '-y', '-f', 'wav', '-i', wav_path, '-f', 'mp3', tmp_path])
-        os.rename(tmp_path, mp3_path)
+        shutil.copyfile(tmp_path, mp3_path) # use copyfile so we can go across file systems
+        return wav_path, mp3_path
     except (IOError, MemoryError, KeyboardInterrupt) as e:
         log.exception("Could not convert %s: %s", wav_path, e)
-        os.remove(tmp_path)
         return None, None
-    return wav_path, mp3_path
+    finally:
+        os.remove(tmp_path)
 
 def walk_convert(root_dir):
     """ Walk the file system starting at root_dir, converting wav files to mp3.
