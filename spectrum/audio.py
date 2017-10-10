@@ -2,6 +2,7 @@
     to ZMQ message topics.
 """
 import os
+import shutil
 import wave
 from tempfile import NamedTemporaryFile
 import zmq
@@ -84,10 +85,9 @@ class AudioClient(object):
         self.wav.close()
         if self.temp is not None:
             self.temp.close()
-            if self.path is None:
-                os.remove(self.temp.name)
-            else:
-                os.rename(self.temp.name, self.path)
+            if self.path is not None:
+                shutil.copyfile(self.temp.name, self.path) # copy because might be on a different drive from /tmp
+            os.remove(self.temp.name)
         else:
             self.f.close()
         self.socket.close()
