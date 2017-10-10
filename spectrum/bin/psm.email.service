@@ -4,7 +4,7 @@ After=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/home/ses/piSpecMon/spectrum/bin/mail.sh
+ExecStart=/var/lib/psm/bin/mail.sh
 
 [Install]
 WantedBy=psm.target

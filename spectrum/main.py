@@ -2,39 +2,47 @@
 """
 import time
 import sys
-import Hamlib
-from spectrum.fs_datastore import FsDataStore
-from spectrum.config import DATA_PATH, WORKER_RUN_PATH, RADIO_ON_SLEEP_SECS, MONKEY_RUN_PATH, \
-                            MONKEY_POLL, CONVERT_PERIOD, USERS_FILE, ROUNDS, SSMTP_CONF, \
-                            DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS, \
-                            DEFAULT_SCAN_SETTINGS, VERSION_FILE, USER_TIMEOUT_SECS, PICO_PATH, \
-                            EXPORT_DIRECTORY, LOG_PATH, PI_CONTROL_PATH, WORKER_CONFIG_FILE, \
-                            MONKEY_CONFIG_FILE, EVENT_PATH, EVENT_POLL_SECS, EVENT_OVERSEER_URL, \
-                            EVENT_OVERSEER_KEY
-from spectrum.worker import Worker
-from spectrum.monkey import Monkey
-from spectrum.wav2mp3 import walk_convert
-from spectrum.users import Users
+import importlib
+
 from spectrum.power import power_on, power_off
+from spectrum.wav2mp3 import walk_convert
+from spectrum.binary_datastore import BinaryDataStore
+from spectrum.config import DATA_PATH, CONVERT_PERIOD, USERS_FILE, ROUNDS, SSMTP_CONF, EVENT_PATH
+from spectrum.audio import AudioServer
+from spectrum.users import Users
 from spectrum.queue import Queue
 from spectrum.event import EventManager, EventClient
-from spectrum.common import log, psm_name
+from spectrum.common import log
+
+
+# conditionally import workers, and define an entry point for each
+def entry_point_fn(w_class):
+    def entry_point():
+        with open(log.path, 'a') as f:
+            worker_process = w_class(BinaryDataStore(DATA_PATH))
+            worker_process.init(f)
+            worker_process.start()
+    return entry_point
+
+WORKER_MODULES = ['hamlib_worker', 'sdr_worker', 'ams_worker', 'rds_worker']
+Workers = []
+for name in WORKER_MODULES:
+    try:
+        Worker = importlib.import_module('spectrum.' + name).Worker
+        Workers.append(Worker)
+        setattr(sys.modules[__name__], name, entry_point_fn(Worker))
+    except (ImportError, OSError) as e:
+        log.info("Not importing %s module: %s", name, e.message)
 
 
 def init_application():
     """ Initiliase the web application object imported from spectrum.server.
     """
     from spectrum.server import application
-    data_store = FsDataStore(DATA_PATH)
-    w_args = (data_store, WORKER_RUN_PATH, WORKER_CONFIG_FILE, RADIO_ON_SLEEP_SECS)
-    worker_client = Worker(*w_args).client()
-    m_args = (data_store, MONKEY_RUN_PATH, MONKEY_CONFIG_FILE, MONKEY_POLL)
-    monkey_client = Monkey(*m_args).client()
+    data_store = BinaryDataStore(DATA_PATH)
+    clients = [Worker(data_store).client() for Worker in Workers]
     event_client = EventClient(Queue(EVENT_PATH))
-    application.initialise(data_store, Users(USERS_FILE, ROUNDS), worker_client, monkey_client,
-                           DEFAULT_RIG_SETTINGS, DEFAULT_AUDIO_SETTINGS, DEFAULT_RDS_SETTINGS,
-                           DEFAULT_SCAN_SETTINGS, LOG_PATH, VERSION_FILE, USER_TIMEOUT_SECS,
-                           EXPORT_DIRECTORY, PI_CONTROL_PATH, PICO_PATH, event_client)
+    application.initialise(data_store, Users(USERS_FILE, ROUNDS), clients, event_client)
     return application
 
 
@@ -46,31 +54,17 @@ def server():
     application.run('0.0.0.0', port=8080)
 
 
-def worker():
-    """ Run the worker process, for collecting spectrum data.
+def audio():
+    """ Run the audio server (publishes left/right channels to a ZMQ socket).
     """
-    w_args = (FsDataStore(DATA_PATH), WORKER_RUN_PATH, WORKER_CONFIG_FILE, RADIO_ON_SLEEP_SECS)
-    worker_process = Worker(*w_args)
-    worker_process.init()
-    with open(log.path, 'a') as f:
-        Hamlib.rig_set_debug_file(f)
-        Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_TRACE)
-        worker_process.start()
-
-
-def monkey():
-    """ Run the monkey process, for collecting RDS data.
-    """
-    m_args = (FsDataStore(DATA_PATH), MONKEY_RUN_PATH, MONKEY_CONFIG_FILE, MONKEY_POLL)
-    monkey_process = Monkey(*m_args)
-    monkey_process.init()
-    monkey_process.start()
+    with AudioServer() as server:
+        server.run()
 
 
 def wav2mp3():
     """ Run the wav to mp3 conversion process.
     """
-    fsds = FsDataStore(DATA_PATH)
+    fsds = BinaryDataStore(DATA_PATH)
     while True:
         walk_convert(fsds.samples_path)
         log.debug("Sleeping for %ds", CONVERT_PERIOD)
@@ -119,15 +113,8 @@ def email():
         f.write("AuthPass={0}\n".format(sys.argv[1]))
 
 
-def event():
-    """ Run the PSM Event Manager.
+def rdevice():
+    """ Run the PSM Event Manager (RDevice implementation).
     """
-    if EVENT_OVERSEER_URL.strip() == '':
-        print "Not running: overseer URL missing"
-        return
-    if EVENT_OVERSEER_KEY.strip() == '':
-        print "Not running: overseer key missing"
-        return
-    args = (Queue(EVENT_PATH), EVENT_POLL_SECS, EVENT_OVERSEER_URL, EVENT_OVERSEER_KEY)
-    manager = EventManager(psm_name(), *args)
+    manager = EventManager(Queue(EVENT_PATH))
     manager.run()

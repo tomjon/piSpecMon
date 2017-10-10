@@ -19,8 +19,7 @@ def _load_settings(path):
             if isinstance(value, dict):
                 for key2, value2 in value.iteritems():
                     _setattr('_'.join((key, key2)), value2)
-            else:
-                _setattr(key, value)
+            _setattr(key, value)
 
 # load settings from any YML files specified on the command line (overriding previous)
 def _parse_args():
@@ -33,11 +32,11 @@ _parse_args()
 
 # set the default rig model based on whether the PSM test model is available in Hamlib
 # pylint: disable=undefined-variable
-if not DEFAULT_RIG_SETTINGS.get('model', None):
+if not DEFAULT_HAMLIB_SETTINGS['rig'].get('model', None):
     try:
         import Hamlib
-        DEFAULT_RIG_SETTINGS['model'] = Hamlib.RIG_MODEL_PSMTEST
+        DEFAULT_HAMLIB_SETTINGS['rig']['model'] = Hamlib.RIG_MODEL_PSMTEST
     except ImportError:
         pass
     except AttributeError:
-        DEFAULT_RIG_SETTINGS['model'] = Hamlib.RIG_MODEL_AR8200
+        DEFAULT_HAMLIB_SETTINGS['rig']['model'] = Hamlib.RIG_MODEL_AR8200

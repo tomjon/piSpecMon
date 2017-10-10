@@ -6,6 +6,11 @@ import httplib
 import requests
 from spectrum.common import log, now
 
+try:
+    from ses_rdevice import rdevice
+except ImportError:
+    rdevice = None
+
 # event types
 EVENT_INIT = 'init'
 EVENT_IDENT = 'ident'
@@ -16,52 +21,35 @@ EVENT_STOP = 'stop'
 
 
 class EventManager(object):
-    """ PSM event manager.
+    """ PSM event manager - this is an RDevice implementation.
     """
-    def __init__(self, psm_name, queue, poll_secs, overseer_url, overseer_key):
-        self.data = {'name': psm_name, 'key': overseer_key}
+    def __init__(self, queue):
         self.queue = queue
-        self.poll_secs = poll_secs
-        self.overseer_url = overseer_url
 
-    def _send_post(self, endpoint, payload=None):
-        """ Send a POST to the Overseer.
+    def upload(self, timestamp, json):
+        """ Upload data since the specified date.
         """
-        headers = {'content-type': 'application/x-www-form-urlencoded'}
-        if payload is not None:
-            self.data['json'] = json.dumps(payload)
-        else:
-            self.data.pop('json', None)
-        try:
-            url = '{0}/{1}'.format(self.overseer_url, endpoint)
-            r = requests.post(url, headers=headers, data=self.data)
-            if r.status_code != httplib.OK:
-                log.error("Could not POST to overseer - HTTP status %s", r.status_code)
-            return r.status_code == httplib.OK
-        except requests.exceptions.RequestException as e:
-            log.warn("Could not POST to overseer: %s", e)
-            return None
+        timestamp = json.get('timestamp', 0)
+        pass
 
     def run(self):
-        """ Poll the queue directory for events, indefinitely, and POST them to the overseer.
-
-            Also, send a heartbeat every time we poll. FIXME: might want to separate these?)
+        """ Run the RDevice service.
         """
-        while True:
-            self._send_post('heartbeat')
-
-            log.info("Checking for messages...")
-            for message_id, message_text in self.queue.iter_messages():
-                event = json.loads(message_text)
-                event['delivered'] = now()
-                r = self._send_post('event', event)
-                if r is not None:
-                    self.queue.consume(message_id)
-                if r is True:
-                    log.info("Delivered event %s", message_id)
-                elif r is False:
-                    log.warn("Could not deliver event %s", message_id)
-            time.sleep(self.poll_secs)
+#            log.info("Checking for messages...")
+#            for message_id, message_text in self.queue.iter_messages():
+#                event = json.loads(message_text)
+#                event['delivered'] = now()
+#                r = self._send_post('event', event)
+#                if r is not None:
+#                    self.queue.consume(message_id)
+#                if r is True:
+#                    log.info("Delivered event %s", message_id)
+#                elif r is False:
+#                    log.warn("Could not deliver event %s", message_id)
+        if rdevice is None:
+            log.error("No rdevice support")
+            return
+        rdevice.main(rdevice.sleep_timer(), upload=self.upload)
 
 
 class EventClient(object):

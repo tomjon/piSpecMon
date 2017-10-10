@@ -5,6 +5,7 @@ import os
 import subprocess
 import heapq
 from datetime import datetime
+from StringIO import StringIO
 from slugify import slugify
 from flask import redirect, request, Response, send_file
 from flask_login import current_user
@@ -13,7 +14,10 @@ from spectrum.datastore import StoreError
 from spectrum.common import log, now, parse_config, scan, freq
 from spectrum.users import IncorrectPasswordError, UsersError
 from spectrum.webapp import WebApplication
+from spectrum.audio import AudioClient
 from spectrum.event import EVENT_IDENT, EVENT_LOGIN, EVENT_LOGOUT, EVENT_START, EVENT_STOP
+from spectrum.config import UI_CONFIG, EXPORT_DIRECTORY, PI_CONTROL_PATH, PICO_PATH
+from spectrum.main import WORKER_MODULES
 
 
 application = WebApplication(__name__) # pylint: disable=invalid-name
@@ -33,94 +37,114 @@ def main_endpoint():
 def favicon_endpoint():
     """ Serve a favicon.
     """
-    path = os.path.join(application.root_path, 'ui', 'favicon.ico')
+    path = os.path.join(application.root_path, 'ui', 'dist', 'assets', 'favicon.ico')
     return send_file(path, mimetype='image/vnd.microsoft.icon')
 
 
-# id: name, version and description
-@application.route('/ident', methods=['GET', 'PUT'])
-@application.role_required(['admin', 'freq', 'data'])
-def ident_endpoint():
-    """ Serve or set the ident.
-    """
-    if request.method == 'GET':
-        return json.dumps(application.ident)
-    else:
-        application.set_ident(request.get_json())
-        application.event_client.write(EVENT_IDENT, application.ident)
-        return json.dumps({})
-
-
-# rig capabilities API
+# capabilities API
 @application.route('/caps')
 @application.role_required(['admin', 'freq', 'data'])
 def caps():
-    """ Serve rig capabilities JSON.
+    """ Serve worker capabilities JSON.
     """
-    return json.dumps(application.caps)
+    caps = dict((c.prefix, c.get_capabilities()) for c in application.clients)
+    #FIXME a hack until we streamline the worker stuff
+    for name in WORKER_MODULES:
+        name = name[:-7]
+        if name not in caps:
+            caps[name] = None
+    return json.dumps(caps)
 
 
-@application.route('/rig', methods=['GET', 'PUT'])
-@application.route('/audio', methods=['GET', 'PUT'])
-@application.route('/rds', methods=['GET', 'PUT'])
-@application.route('/scan', methods=['GET', 'PUT'])
+@application.route('/settings')
+@application.route('/settings/<key>', methods=['PUT'])
 @application.role_required(['admin', 'freq'])
-def settings():
+def settings(key=None):
     """ Settings API: endpoints for serving and putting settings.
     """
-    rule = request.url_rule.rule[1:]
     if request.method == 'GET':
-        return json.dumps(getattr(application, rule).values)
-    elif request.method == 'PUT':
-        getattr(application, rule).write(request.get_json())
+        # return all settings
+        values = {'ident': application.ident}
+        for key in ['audio', 'rds', 'ams', 'hamlib', 'sdr']: #FIXME improve by storing audio, .. in a dict on the app
+            values[key] = getattr(application, key).values
+        return json.dumps(values)
+    else:
+        # set a particular value set
+        if key == 'ident':
+            application.set_ident(request.get_json()) #FIXME treat ident same as other keys by storing ident differently?
+            application.event_client.write(EVENT_IDENT, application.ident)
+        elif key in ['audio', 'rds', 'ams', 'hamlib', 'sdr']:#FIXME as above
+            getattr(application, key).write(request.get_json())
+        else:
+            return "Key not found", 404
         return json.dumps({})
 
-
-@application.route('/monitor', methods=['GET', 'PUT', 'DELETE'])
+@application.route('/process', methods=['GET', 'PUT', 'DELETE'])
 @application.role_required(['admin', 'freq', 'data'])
-def monitor():
-    """ Monitor API.
+def process():
+    """ Process API.
 
-        GET /monitor - return process status
-        PUT /monitor - start process with supplied config as request body
-        DELETE /monitor - stop process
+        GET /process - return process status for all (running) processes
+        PUT /process - start processes
+        DELETE /process - stop processes
+
+        For PUT /process, the request body specifies which workers to run and
+        the description for the run in JSON format:
+
+        { "workers": ["hamlib", "rds"], "description": "foo" }
     """
-    if request.method == 'PUT':
-        if 'config_id' in application.worker.status():
-            return "Worker already running", 400
-        if 'config_id' in application.monkey.status():
-            return "Monkey already running", 400
-        values = json.loads(request.get_data())
-        values['rig'] = application.rig.values
+    if request.method == 'GET':
+        config_id = None
+        for client in application.clients:
+            if client.config_id() is None: continue
+            if config_id is None:
+                config_id = client.config_id()
+            elif config_id != client.config_id():
+                return "Unexpected differing config_id from {2} ({0} != {1})".format(config_id, client.config_id(), client.prefix), 500
+        status = dict((c.prefix, c.status()) for c in application.clients)
+        if config_id is not None:
+            status['config_id'] = config_id
+        return json.dumps(status)
+    elif request.method == 'PUT':
+        for c in application.clients:
+            if 'config_id' in c.status():
+                return "Worker '{0}' already running".format(c.prefix), 400
+
+        params = request.get_json()
+        values = {}
+        values['description'] = params.get('description', '')
+        values['workers'] = params.get('workers', [])
+
+        #FIXME this all gets tidied up, too, perhaps into values['values']
         values['audio'] = application.audio.values
         values['rds'] = application.rds.values
+        values['sdr'] = application.sdr.values
+        values['hamlib'] = application.hamlib.values
+        values['ams'] = application.ams.values
         values['ident'] = application.ident
         values['user'] = current_user.name
+
+        clients = [c for c in application.clients if c.prefix in values['workers']]
+        if len(clients) == 0:
+            return "No valid workers specified", 400
 
         try:
             config = application.data_store.config().write(now(), values)
         except StoreError as e:
             return e.message, 500
 
-        application.worker.start(config.id)
-        if config.values['scan']['rds']:
-            application.monkey.start(config.id)
+        for c in clients:
+            c.start(config.id)
+
         application.event_client.write(EVENT_START, config.values)
 
         return json.dumps({})
-    if request.method == 'DELETE':
+    elif request.method == 'DELETE':
         # stop process
-        if 'timestamp' not in application.worker.status() and \
-           'timestamp' not in application.monkey.status():
-            return "Neither Worker nor Monkey are running", 400
-        application.worker.stop()
-        application.monkey.stop()
+        for c in application.clients:
+            c.stop()
         application.event_client.write(EVENT_STOP, {})
         return json.dumps({})
-    if request.method == 'GET':
-        # monitor status
-        return json.dumps({'worker': application.worker.status(),
-                           'monkey': application.monkey.status()})
 
 
 @application.route('/config')
@@ -133,7 +157,10 @@ def config_endpoint(config_ids=None):
     # turn a config object into a dictionary representation, including any errors
     def _config_dict(config):
         c_dict = dict((k, v) for k, v in config.__dict__.iteritems() if k[0] != '_')
-        c_dict['errors'] = list(config.iter_error())
+        c_dict['errors'] = False
+        for worker in config.values['workers']:
+            if len(list(config.iter_error(worker))) > 0:
+                c_dict['errors'] = True
         return c_dict
     try:
         if request.method == 'GET':
@@ -147,10 +174,9 @@ def config_endpoint(config_ids=None):
                 return "No config ids specified to delete", 400
             for config_id in config_ids.split(','):
                 # check the config id is not in use
-                if application.worker.status().get('config_id', None) == config_id:
-                    return "Cannot delete config under running spectrum sweep", 400
-                if application.monkey.status().get('config_id', None) == config_id:
-                    return "Cannot delete config under running RDS sweep", 400
+                for c in application.clients:
+                    if c.status().get('config_id', None) == config_id:
+                        return "Cannot delete config under running spectrum sweep", 400
                 # delete config and associated data
                 application.data_store.config(config_id).delete()
             return json.dumps({})
@@ -173,19 +199,31 @@ def data_endpoint(config_id):
         config = application.data_store.config(config_id).read()
         data = {}
         end = _int_arg('end')
-        data['spectrum'] = list(config.iter_spectrum(start=_int_arg('spectrum'), end=end))
-        data['audio'] = list(config.iter_audio(start=_int_arg('audio'), end=end))
-        data['rds_name'] = list(config.iter_rds_name(start=_int_arg('rds_name'), end=end))
-        data['rds_text'] = list(config.iter_rds_text(start=_int_arg('rds_text'), end=end))
-        data['temperature'] = list(config.iter_temperature(start=_int_arg('temperature'), end=end))
+        for worker in config.values['workers']:
+            start = _int_arg('start_' + worker)
+            w = data[worker] = {}
+            w['errors'] = list(config.iter_error(worker))
+            w['spectrum'] = list(config.iter_spectrum(worker, start=start, end=end))
+            w['rds_name'] = list(config.iter_rds_name(worker, start=start, end=end))
+            w['rds_text'] = list(config.iter_rds_text(worker, start=start, end=end))
+            w['temperature'] = list(config.iter_temperature(worker, start=start, end=end))
+
+            w['audio'] = []
+            for timestamp, freq_n in config.iter_audio(worker, start=start, end=end):
+                sample = {'timestamp': timestamp, 'freq_n': freq_n}
+                path = application.find_audio_path(config_id, worker, freq_n, timestamp)
+                if path is not None:
+                    sample['filetype'] = (os.path.splitext(path)[1] or '.')[1:]
+                    sample['filesize'] = os.path.getsize(path)
+                w['audio'].append(sample)
         return json.dumps(data)
     except StoreError as e:
         return e.message, 500
 
 
-@application.route('/audio/<config_id>/<freq_n>/<timestamp>')
+@application.route('/audio/<config_id>/<worker>/<freq_n>/<timestamp>')
 @application.role_required(['admin', 'freq', 'data'])
-def audio_endpoint(config_id, freq_n, timestamp):
+def audio_endpoint(config_id, worker, freq_n, timestamp):
     """ Endpoint for streaming audio sample data.
     """
     if '.' in config_id or '/' in config_id or '\\' in config_id:
@@ -194,14 +232,46 @@ def audio_endpoint(config_id, freq_n, timestamp):
         int(timestamp), int(freq_n)
     except ValueError:
         return 'Bad parameter', 400
-    base = application.data_store.config(config_id).audio_path(timestamp, freq_n)
-    for ext in ['mp3', 'ogg', 'wav']:
-        path = '{0}.{1}'.format(base, ext)
-        try:
-            return application.send_file_partial(path)
-        except IOError as e:
-            log.error("Error sending file partial: %s", e)
+    path = application.find_audio_path(config_id, worker, freq_n, timestamp)
+    if path is not None:
+        return application.send_file_partial(path)
     return 'File not found', 404
+
+
+@application.route('/live/<channel>')
+def live_endpoint(channel):
+    """ Endpoint for live streaming an audio channel.
+
+        FIXME: this doesn't actually stream, rather sends the whole .wav in one go
+    """
+    try:
+        n = int(request.args.get('n', 1))
+        if n < 0 or n > 600:
+            raise ValueError()
+    except ValueError:
+        return 'Bad value for "n"', 400
+
+    class Buffer(StringIO):
+        def close(self):
+            self.v = self.getvalue()
+            StringIO.close(self)
+
+    f = Buffer()
+    with AudioClient(channel, f) as audio:
+        for count, _ in enumerate(audio):
+            if count >= n: break
+
+    range_header = request.headers.get('Range', 'bytes=0-')
+    if range_header[:6] != 'bytes=':
+        return "Bad range header", 400
+    r0, r1 = range_header[6:].split('-')
+
+    if r0 != '0': return "Unsupported range header", 400
+
+    rsp = Response(f.v, 206, mimetype="audio/x-wav", direct_passthrough=True)
+    bytes_range = 'bytes {0}-{1}/{2}'.format(0, len(f.v) - 1, len(f.v))
+    rsp.headers.add('Content-Range', bytes_range)
+    return rsp
 
 
 @application.route('/users')
@@ -317,13 +387,30 @@ def logout_endpoint():
 @application.role_required(['admin', 'freq', 'data'])
 def export_endpoint(config_id):
     """ Export data endpoint for writing file locally (POST) or streaming the output (GET).
+
+        Worker key is given as a query string parameter called 'key'.
+        Type of data is given as a query string parameter called 'name' (expecting
+        'waterfall' or 'rds' etc.)
+
+        Currently only 'waterfall' and 'rds' are supported.
     """
+    try:
+        config = application.data_store.config(config_id).read()
+    except StoreError as e:
+        return e.message, 404
+    key = request.args.get('key', None)
+    if key is None:
+        raise "No worker key specified", 400
+    name = request.args.get('name', None)
+    if name is None:
+        raise "No data name specified", 400
+
     # yield export spectrum data
     def _iter_spectrum_export(scan_config):
         yield '#TimeDate,'
-        yield ','.join([str(freq) for _, freq in scan(**scan_config)])
+        yield ','.join([str(freq) for _, freq in scan(scan_config)])
         yield '\n'
-        for timestamp, strengths in config.iter_spectrum():
+        for timestamp, strengths in config.iter_spectrum(key):
             yield str(datetime.fromtimestamp(timestamp / 1000))
             yield ','
             yield ','.join([str(v) if v > -128 else '' for v in strengths])
@@ -332,42 +419,37 @@ def export_endpoint(config_id):
     # yield export RDS data
     def _iter_rds_export(scan_config):
         def _name():
-            for timestamp, freq_n, name in config.iter_rds_name():
+            for timestamp, freq_n, name in config.iter_rds_name(key):
                 yield timestamp, freq_n, name, ''
         def _text():
-            for timestamp, freq_n, text in config.iter_rds_text():
+            for timestamp, freq_n, text in config.iter_rds_text(key):
                 yield timestamp, freq_n, '', text
         yield '#TimeDate,Freq,RDS Name,RDS Text\n'
         for timestamp, freq_n, name, text in heapq.merge(_name(), _text()): # luckily, natural sort order for tuples is what we want
             yield str(datetime.fromtimestamp(timestamp / 1000))
             yield ','
-            yield str(freq(freq_n, **scan_config))
+            yield str(freq(freq_n, scan_config))
             yield ',"'
             yield name.replace('"', r'\"')
             yield '","'
             yield text.replace('"', r'\"')
             yield '"\n'
 
-    try:
-        config = application.data_store.config(config_id).read()
-    except StoreError as e:
-        return e.message, 404
-    rds = request.args.get('rds', 'false') == 'true'
     ident = config.values['ident']
-    scan_config = parse_config(config.values)
-    export = _iter_spectrum_export(scan_config) if not rds else _iter_rds_export(scan_config)
+    scan_config = parse_config(config.values, key)
+    export = _iter_spectrum_export(scan_config) if name != 'rds' else _iter_rds_export(scan_config)
 
     date = datetime.fromtimestamp(config.timestamp / 1000.0)
     date_s = date.strftime("%Y-%m-%d-%H-%M-%S")
-    name = '_'.join([slugify(x) for x in [date_s, ident['name'], ident['description']]])
+    identifier = '_'.join([slugify(x) for x in [date_s, ident['name'], ident['description']]])
 
-    filename = '{0}{1}.csv'.format(name, '' if not rds else '_rds')
+    filename = '{0}_{1}_{2}.csv'.format(key, name, identifier)
     if request.method == 'GET':
         response = Response(export, mimetype='text/csv')
         response.headers['Content-Disposition'] = 'attachment; filename={0}'.format(filename)
         return response
     else:
-        path = os.path.join(application.export_directory, filename)
+        path = os.path.join(EXPORT_DIRECTORY, filename)
         with open(path, 'w') as f:
             for x in export:
                 f.write(x)
@@ -421,7 +503,7 @@ def pi_endpoint(command):
     """ Endpoint for executing a Pi control command.
     """
     if command in ['shutdown', 'reboot']:
-        os.system("{0} {1}".format(application.pi_control_path, command))
+        os.system("{0} {1}".format(PI_CONTROL_PATH, command))
         return "OK"
     return "Command not recognized: " + command, 400
 
@@ -434,8 +516,15 @@ def pico_endpoint():
     result = {}
     try:
         python = subprocess.check_output(['which', 'python']).strip()
-        args = [python, application.pico_path]
+        args = [python, PICO_PATH]
         result['text'] = subprocess.check_output(args, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         result['error'] = e.output
     return json.dumps(result)
+
+
+@application.route('/constants')
+def constants_endpoint():
+    """ Direct read only access to the UI constants section of the config file.
+    """
+    return json.dumps(UI_CONFIG)

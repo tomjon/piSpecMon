@@ -1,0 +1,250 @@
+%YAML 1.1
+---
+version_file: /version
+
+log:
+    path: /var/log/psm
+    size: 1048576
+    level: INFO
+
+run_path: /var/run/psm-$-worker
+config_path: /var/lib/psm/$-worker-config_id
+
+# Monkey (RDS decoder)
+monkey_poll: 1.0
+
+export_directory: /tmp
+
+users_file: /var/lib/psm/users.passwords
+rounds: 100000
+
+# user session inactivity timeout
+user_timeout_secs: 60
+
+# location of the SSMTP configuration file (fixed by ssmtp package)
+ssmtp_conf: /etc/ssmtp/ssmtp.conf
+
+# GPIO radio 'on' script settings
+radio_on:
+    switch: 21 # BCM numbering
+    sleep_secs: 1.0
+
+# audio settings (for AudioServer and AudioClient)
+audio:
+    oss_device: dsp1
+    zmq_port: 8234
+
+rig_device: ttyUSB0
+rds_device: ttyACM0
+
+# Hamlib log level
+rig_log_level: WARN
+
+# data directory (FsDataStore)
+data_path: /var/lib/psm
+
+# location of the pi_control binary
+pi_control_path: /usr/local/bin/pi_control
+
+# location of the pid_kill binary
+pid_kill_path: /usr/local/bin/pid_kill
+
+# location of the pico_status script
+pico_path: /usr/local/bin/pico_status.py
+
+# how often (in s) the wav2mp3 converter should run
+convert_period: 300
+
+# rdevice settings
+rdevice:
+    action_period: 5
+    overseer_url: http://overseer.jsquared.co.uk:8080
+    rdid: !!python/object/apply:socket.gethostname []
+    log_filename: rdevice.log
+    log_level: DEBUG
+
+# where to store events
+event_path: /var/lib/psm/events
+
+# default settings - if left empty, rig model is set later using Hamlib
+default:
+    audio_settings:
+        rate: 44100
+        receiver_channel: L
+        rds_channel: R
+
+    rds_settings:
+        freqs:
+          - enabled: true
+            range: [87.5, 108.0, 0.1]
+            exp: 6
+          - enabled: false
+            freq:
+            exp: 6
+        scan:
+            enabled: true
+            strength_threshold: 60
+            strength_timeout: 2
+            name_timeout: 4
+            text_timeout: 6
+        audio:
+            enabled: false
+        duration: 10
+
+    hamlib_settings:
+        rig:
+            model:
+            data_bits: 8
+            rate: 9600
+            stop_bits: 1
+            parity: 0
+            attenuation: False
+            radio_on: '*'
+            set_check: 2
+            retries: 2
+            interval: 1000
+            write_delay: 50
+        mode: 64 #FIXME move into freqs or monitor possibly... looks orphaned out here
+        freqs:
+          - enabled: true
+            range: [87.5, 108.0, 0.1]
+            exp: 6
+          - enabled: false
+            freq:
+            exp: 6
+        monitor:
+            radio_on: 1
+        audio:
+            enabled: false
+            duration: 10
+            threshold: -20
+            period: 600
+
+    sdr_settings:
+        scan:
+          antenna: 0
+        freqs:
+          - enabled: true
+            range: [87.5, 108.0, 0.1]
+            exp: 6
+          - enabled: false
+            freq:
+            exp: 6
+
+    ams_settings:
+        address:
+        port: 8080
+        scan:
+          antenna:
+          preamp:
+          attenuation:
+          window:
+        freqs:
+          - enabled: true
+            range: [87.5, 108.0, 0.1]
+            exp: 6
+
+# UI configuration
+ui_config:
+    tick_interval: 1000
+    hz_labels: {0: 'Hz', 3: 'kHz', 6: 'MHz', 9: 'GHz'}
+    max_n: 10
+
+    worker_labels:
+        hamlib: Hamlib Receiver
+        rds: Monkeyboard RDS
+        sdr: SDRPlay
+        ams: Keysight Sensor
+
+    hamlib_frequency_chart:
+        y_axis: [-80, 0, 10]
+        margin: { top: 25, left: 80, right: 80, bottom: 30 }
+        width: 1200
+        height: 400
+
+    hamlib_level_chart:
+        y_axis: [-80, 0, 10]
+        margin: { top: 30, left: 40, right: 200, bottom: 40 }
+        width: 1200
+        height: 400
+        x_ticks: 7
+
+    hamlib_waterfall_chart:
+        heat: [-80, -40, 0]
+        margin: { top: 25, left: 80, right: 80, bottom: 30 }
+        width: 1200
+        height: 400
+        y_ticks: 7
+
+    hamlib_temperature_chart:
+        y_axis: [0, 50, 10]
+        margin: { top: 30, left: 40, right: 200, bottom: 40 }
+        width: 1200
+        height: 400
+        x_ticks: 7
+
+    rds_frequency_chart:
+        y_axis: [0, 100, 10]
+        margin: { top: 25, left: 80, right: 80, bottom: 30 }
+        width: 1200
+        height: 400
+
+    rds_level_chart:
+        y_axis: [0, 100, 10]
+        margin: { top: 30, left: 40, right: 200, bottom: 40 }
+        width: 1200
+        height: 400
+        x_ticks: 7
+
+    rds_waterfall_chart:
+        heat: [0, 50, 100]
+        margin: { top: 25, left: 80, right: 80, bottom: 30 }
+        width: 1200
+        height: 400
+        y_ticks: 7
+
+    rds_audio_chart:
+        margin: { top: 20, left: 80, right: 80, bottom: 30 }
+        width: 1200
+        height: 400
+        y_ticks: 10
+
+    sdr_frequency_chart:
+        y_axis: [0, 128, 16]
+        margin: { top: 25, left: 80, right: 80, bottom: 30 }
+        width: 1200
+        height: 400
+
+    sdr_level_chart:
+        y_axis: [0, 128, 16]
+        margin: { top: 30, left: 40, right: 200, bottom: 40 }
+        width: 1200
+        height: 400
+        x_ticks: 7
+
+    sdr_waterfall_chart:
+        heat: [0, 64, 128]
+        margin: { top: 25, left: 80, right: 80, bottom: 30 }
+        width: 1200
+        height: 400
+        y_ticks: 7
+
+    ams_frequency_chart:
+        y_axis: [-128, -32, 16]
+        margin: { top: 25, left: 80, right: 80, bottom: 30 }
+        width: 1200
+        height: 400
+
+    ams_level_chart:
+        y_axis: [-128, -32, 16]
+        margin: { top: 30, left: 40, right: 200, bottom: 40 }
+        width: 1200
+        height: 400
+        x_ticks: 7
+
+    ams_waterfall_chart:
+        heat: [-127, -80, -32]
+        margin: { top: 25, left: 80, right: 80, bottom: 30 }
+        width: 1200
+        height: 400
+        y_ticks: 7

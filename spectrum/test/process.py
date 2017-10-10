@@ -30,8 +30,10 @@ class MockDataStore(object):
 class PytestProcess(Process):
     """ Test process implementation that increments the data store's counter every so often.
     """
-    def __init__(self, data_store, run_dir, config_file):
-        super(PytestProcess, self).__init__(data_store, run_dir, config_file)
+    def __init__(self, temp_dir, data_store):
+        run_path = '{0}/run'.format(str(temp_dir))
+        config_file = '{0}/config_file'.format(str(temp_dir))
+        super(PytestProcess, self).__init__(data_store, run_path=run_path, config_file=config_file)
 
     def iterator(self, config):
         config._data_store.config_id.value = config.id # pylint: disable=protected-access
@@ -40,11 +42,11 @@ class PytestProcess(Process):
             time.sleep(0.1)
             yield
 
-def process_fn(tmpdir, config_file, counter, config_id):
-    """ We run this is a child process.
+def process_fn(tmpdir, counter, config_id):
+    """ We run this in a child process.
     """
     data_store = MockDataStore(counter, config_id)
-    process = PytestProcess(data_store, str(tmpdir), config_file)
+    process = PytestProcess(tmpdir, data_store)
     process.init()
     process.start()
 
@@ -54,19 +56,18 @@ def test(tmpdir):
     """
     counter = multiprocessing.Value('i', 0)
     config_id = multiprocessing.Array('c', 'some random value')
-    config_file = os.path.join(str(tmpdir), 'config')
-    args = (tmpdir, config_file, counter, config_id)
+    args = (tmpdir, counter, config_id)
     multiprocessing.Process(target=process_fn, args=args).start()
     time.sleep(1)
 
     CONFIG_ID = 'my id'
-    client = PytestProcess(None, str(tmpdir), config_file).client()
+    client = PytestProcess(tmpdir, None).client()
     client.start(CONFIG_ID)
 
     with open(client.process.config_file) as f:
         assert f.read().strip() == CONFIG_ID
 
-    time.sleep(1)
+    time.sleep(0.95)
 
     with open(client.process.config_file) as f:
         assert f.read().strip() == CONFIG_ID

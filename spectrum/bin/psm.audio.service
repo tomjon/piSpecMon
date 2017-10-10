@@ -1,0 +1,14 @@
+[Unit]
+Description=Audio server publishing left/right channels to a ZMQ socket
+After=sound.target
+
+[Service]
+Type=idle
+ExecStart=/var/lib/psm/bin/audio.sh
+Restart=always
+RestartSec=1
+User=root
+Group=root
+
+[Install]
+WantedBy=psm.target

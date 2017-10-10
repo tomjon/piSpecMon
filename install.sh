@@ -3,7 +3,7 @@
 # chdir to where the script lives
 cd "${0%/*}"
 
-# compile typescript into javascript
+# build UI
 hash npm 2>/dev/null || ({
   curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
   sudo apt-get -y install nodejs
@@ -16,7 +16,7 @@ sudo apt-get install -y python-pip
 sudo -H pip install -e .
 
 # copy default config to /etc/psm.yml
-sudo cp spectrum/psm.yml /etc
+sudo cp psm.yml /etc
 
 # function returning config values, ultimately from the YML
 function vbl {
@@ -36,16 +36,6 @@ DATA_PATH=`vbl DATA_PATH`
 sudo mkdir -p $DATA_PATH
 sudo chown $USER: $DATA_PATH
 
-# create the worker run directory
-RUN_PATH=`vbl WORKER_RUN_PATH`
-sudo mkdir -p $RUN_PATH
-sudo chown $USER: $RUN_PATH
-
-# create the monkey run directory
-RUN_PATH=`vbl MONKEY_RUN_PATH`
-sudo mkdir -p $RUN_PATH
-sudo chown $USER: $RUN_PATH
-
 # create the event queue directory
 EVENT_PATH=`vbl EVENT_PATH`
 sudo mkdir -p $EVENT_PATH
@@ -59,8 +49,9 @@ hash apt-get 2>/dev/null && (
   sudo chown $USER: $SSMTP_CONF
 )
 
-# check umtskeeper is installed
-[ -e /home/ses/umtskeeper ] || echo "***** please install umtskeeper with pi:ses ownership"
+# install service scripts
+sudo mkdir -p /var/lib/psm/bin
+sudo cp spectrum/bin/*.sh /var/lib/psm/bin
 
 # install the systemd service descriptors and restart services
 hash systemctl 2>/dev/null && (
@@ -90,6 +81,14 @@ gcc -o spectrum/bin/pi_control spectrum/pi_control.c && (
   sudo cp spectrum/bin/pi_control $PI_CONTROL_PATH
   sudo chown root: $PI_CONTROL_PATH
   sudo chmod a+s $PI_CONTROL_PATH
+)
+
+
+# build the pi_control binary
+PID_KILL_PATH=`vbl PID_KILL_PATH`
+gcc -o spectrum/bin/pid_kill spectrum/pid_kill.c && (
+  sudo cp spectrum/bin/pid_kill $PID_KILL_PATH
+  sudo setcap cap_kill+ep $PID_KILL_PATH
 )
 
 # remind about post install steps

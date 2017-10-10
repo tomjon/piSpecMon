@@ -1,0 +1,17 @@
+[Unit]
+Description=Pi Spectrum Monitor Monkey Service
+After=basic.target
+
+[Service]
+Type=idle
+Environment=SES_CONFIG_PATH=/etc/psm.yml
+ExecStart=/usr/local/bin/psm-rds-worker
+Restart=always
+RestartSec=1
+WorkingDirectory=~
+RuntimeDirectory=psm-rds-worker
+User=ses
+Group=ses
+
+[Install]
+WantedBy=psm.target

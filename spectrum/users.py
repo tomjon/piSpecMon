@@ -1,7 +1,14 @@
 """ Module provides functions for manipulating the users.passwords file (which is very much
     like /etc/passwords).
 """
-import hashlib
+from spectrum.common import log
+try:
+    from hashlib import pbkdf2_hmac
+except ImportError:
+    log.warn("No pbkdf2_hmac function - no password protection")
+    def pbkdf2_hmac(*args):
+        return "FAKEHASH"
+
 import binascii
 import os
 import tempfile
@@ -122,7 +129,7 @@ class Users(object):
 
     def _new_user(self, username, password, data):
         salt = os.urandom(32)
-        hash_value = hashlib.pbkdf2_hmac('sha256', password, salt, self.rounds)
+        hash_value = pbkdf2_hmac('sha256', password, salt, self.rounds)
         return _UserEntry(username, salt, hash_value, data)
 
     def _validate_username(self, username): # pylint: disable=no-self-use
@@ -153,11 +160,11 @@ class Users(object):
         self._validate_username(username)
         for user in self._iter_users():
             if user.name == username:
-                hash_value = hashlib.pbkdf2_hmac('sha256', password, user.salt, self.rounds)
+                hash_value = pbkdf2_hmac('sha256', password, user.salt, self.rounds)
                 if hash_value == user.hash:
                     return user.data
         # fake attempt so hackers can't guess validity of usernames by time taken
-        hashlib.pbkdf2_hmac('sha256', password, b'foo', self.rounds)
+        pbkdf2_hmac('sha256', password, b'foo', self.rounds)
         raise IncorrectPasswordError()
 
     def iter_users(self):

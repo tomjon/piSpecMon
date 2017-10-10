@@ -1,8 +1,8 @@
 """ Module for converting wav format files to mp3 format.
 """
 import os
-from pydub import AudioSegment
-from pydub.exceptions import CouldntDecodeError
+import subprocess
+from tempfile import mkstemp
 from spectrum.common import log
 
 def convert(dir_path, wav_filename):
@@ -12,10 +12,14 @@ def convert(dir_path, wav_filename):
     wav_path = os.path.join(dir_path, wav_filename)
     mp3_path = os.path.join(dir_path, mp3_filename)
     log.debug("Converting %s -> %s", wav_path, mp3_path)
+    f, tmp_path = mkstemp()
+    os.close(f)
     try:
-        AudioSegment.from_file(wav_path).export(mp3_path, format='mp3')
-    except CouldntDecodeError as e:
-        log.warn("Could not convert %s: %s", wav_path, e)
+        subprocess.call(['avconv', '-loglevel', 'warning', '-y', '-f', 'wav', '-i', wav_path, '-f', 'mp3', tmp_path])
+        os.rename(tmp_path, mp3_path)
+    except (IOError, MemoryError, KeyboardInterrupt) as e:
+        log.exception("Could not convert %s: %s", wav_path, e)
+        os.remove(tmp_path)
         return None, None
     return wav_path, mp3_path
 

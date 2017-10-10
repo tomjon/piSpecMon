@@ -2,18 +2,9 @@
 """
 import math
 import inspect
-import wave
 from time import sleep
 import Hamlib
-try:
-    import ossaudiodev
-except ImportError:
-    import spectrum.fake_ossaudiodev as ossaudiodev
 from spectrum.common import check_device
-
-CHANNELS = 1
-FORMAT = ossaudiodev.AFMT_S16_LE
-SAMPLE_WIDTH = 2
 
 Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_NONE)
 
@@ -21,7 +12,7 @@ Hamlib.rig_set_debug(Hamlib.RIG_DEBUG_NONE)
 def get_capabilities():
     """ Return a dictionary of rig capabilities.
     """
-    caps = {'models': [], 'modes': [], 'rates': [], 'parities': []}
+    caps = {'models': [], 'rates': [], 'parities': [], 'modes': []}
 
     is_int = lambda n: isinstance(n, int)
     #FIXME WinRadio RIG_MODEL_G313 is causing problems on Linux machines - ignore for now
@@ -40,14 +31,14 @@ def get_capabilities():
 
     for n in xrange(int(math.log(Hamlib.RIG_MODE_TESTS_MAX - 1, 2))):
         mode = 2 ** n
-        caps['modes'].append({'mode': mode, 'name': Hamlib.rig_strrmode(mode)})
+        caps['modes'].append({'value': mode, 'label': Hamlib.rig_strrmode(mode)})
 
-    caps['rates'] = [{'rate': 2400, 'label': '2400'},
-                     {'rate': 4800, 'label': '4800'},
-                     {'rate': 9600, 'label': '9600'},
-                     {'rate': 14400, 'label': '14.4k'},
-                     {'rate': 19200, 'label': '19.2k'},
-                     {'rate': 28800, 'label': '28.8k'}]
+    caps['rates'] = [{'value': 2400, 'label': '2400'},
+                     {'value': 4800, 'label': '4800'},
+                     {'value': 9600, 'label': '9600'},
+                     {'value': 14400, 'label': '14.4k'},
+                     {'value': 19200, 'label': '19.2k'},
+                     {'value': 28800, 'label': '28.8k'}]
 
     for x, n in inspect.getmembers(Hamlib, is_int):
         if not x.startswith('RIG_PARITY_'):
@@ -189,42 +180,3 @@ class Monitor(object):
         """ Power down the rig (use power module to turn it back on).
         """
         self.rig.set_powerstat(Hamlib.RIG_POWER_OFF)
-
-
-class Recorder(object): # pylint: disable=too-few-public-methods
-    """ API for recording audio from the rig.
-
-        path - audio sample path
-        device - audio device path
-    """
-    def __init__(self, path, device):
-        self.path = path
-        self.device = check_device(device)
-        self.audio = None
-        self.wav = None
-
-    def __enter__(self):
-        self.audio = ossaudiodev.open(self.device, 'r')
-        self.wav = wave.open(self.path, 'w')
-        return self
-
-    def record(self, monitor, freq, rate, duration):
-        """ Record audio.
-        """
-        if not monitor.set_frequency(freq):
-            raise Exception("could not set frequency")
-        self.audio.channels(CHANNELS)
-        self.audio.setfmt(FORMAT)
-        self.audio.speed(rate)
-        self.wav.setnchannels(CHANNELS)
-        self.wav.setsampwidth(SAMPLE_WIDTH)
-        self.wav.setframerate(rate)
-        yield #monitor.get_strength()
-        for _ in xrange(duration):
-            data = self.audio.read(rate * CHANNELS * SAMPLE_WIDTH)
-            self.wav.writeframes(data)
-            yield #monitor.get_strength()
-
-    def __exit__(self, *args):
-        self.wav.close()
-        self.audio.close()
