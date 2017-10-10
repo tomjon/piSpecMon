@@ -6,12 +6,13 @@ cd "${0%/*}"
 # compile typescript into javascript
 hash npm 2>/dev/null || ({
   curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
-  sudo apt-get install nodejs
-  (cd spectrum/ui && npm install)
+  sudo apt-get -y install nodejs
 })
-(cd spectrum/ui && npm run tsc)
+(cd spectrum/ui && npm install)
+(cd spectrum/ui && ng build --base-href=.)
 
 # build Python egg (includes javascript built above)
+sudo apt-get install -y python-pip
 sudo -H pip install -e .
 
 # copy default config to /etc/psm.yml
