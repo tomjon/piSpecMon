@@ -1,7 +1,7 @@
 """ Module providing PSM event queue manager and client.
 """
 import time
-import json
+from json import dumps
 import httplib
 import requests
 from spectrum.common import log, now
@@ -23,14 +23,17 @@ EVENT_STOP = 'stop'
 class EventManager(object):
     """ PSM event manager - this is an RDevice implementation.
     """
-    def __init__(self, queue):
+    def __init__(self, data_store, queue):
+        self.data_store = data_store
         self.queue = queue
 
-    def upload(self, timestamp, json):
+    def upload(self, t0, json):
         """ Upload data since the specified date.
         """
         timestamp = json.get('timestamp', 0)
-        pass
+        for config in self.data_store.iter_config(timestamp=timestamp):
+            data = dumps(config.get_json(start=timestamp, maskTemp=True))
+            rdevice.upload(data, 'application/json', t0)
 
     def run(self):
         """ Run the RDevice service.
@@ -63,5 +66,5 @@ class EventClient(object):
         """
         timestamp = now()
         event = {'type': event_type, 'timestamp': timestamp}
-        event['data'] = json.dumps(event_data)
-        self.queue.write(str(timestamp), json.dumps(event))
+        event['data'] = dumps(event_data)
+        self.queue.write(str(timestamp), dumps(event))

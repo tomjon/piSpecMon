@@ -116,5 +116,5 @@ def email():
 def rdevice():
     """ Run the PSM Event Manager (RDevice implementation).
     """
-    manager = EventManager(Queue(EVENT_PATH))
+    manager = EventManager(BinaryDataStore(DATA_PATH), Queue(EVENT_PATH))
     manager.run()

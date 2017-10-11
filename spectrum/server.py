@@ -199,25 +199,9 @@ def data_endpoint(config_id):
     try:
         config = application.data_store.config(config_id).read()
         data = {}
-        end = _int_arg('end')
-        for worker in config.values['workers']:
-            start = _int_arg('start_' + worker)
-            w = data[worker] = {}
-            w['errors'] = list(config.iter_error(worker))
-            w['spectrum'] = list(config.iter_spectrum(worker, start=start, end=end))
-            w['rds_name'] = list(config.iter_rds_name(worker, start=start, end=end))
-            w['rds_text'] = list(config.iter_rds_text(worker, start=start, end=end))
-            w['temperature'] = list(config.iter_temperature(worker, start=start, end=end))
-
-            w['audio'] = []
-            for timestamp, freq_n in config.iter_audio(worker, start=start, end=end):
-                sample = {'timestamp': timestamp, 'freq_n': freq_n}
-                path = application.find_audio_path(config_id, worker, freq_n, timestamp)
-                if path is not None:
-                    sample['filetype'] = (os.path.splitext(path)[1] or '.')[1:]
-                    sample['filesize'] = os.path.getsize(path)
-                w['audio'].append(sample)
-        return json.dumps(data)
+        #FIXME ok, just take the max... abandon per-worker start/end times and have data store not take a timestamp parameter when storing data (it will always be 'now')
+        start = max(_int_arg('start_' + worker) for worker in config.values['workers'])
+        return json.dumps(config.get_json(start=start, end=_int_arg('end')))
     except StoreError as e:
         return e.message, 500
 

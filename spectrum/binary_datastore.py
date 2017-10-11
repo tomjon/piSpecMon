@@ -88,8 +88,10 @@ class BinaryDataStore(DataStore):
         """
         return Config(self, config_id=config_id)
 
-    def iter_config(self, config_ids=None):
-        """ Yield stored Config objects.
+    def iter_config(self, config_ids=None, timestamp=None):
+        """ Yield stored Config objects. If config_ids is specified, restrict to
+            that set. If timestamp is specified, only yield configs with
+            timestamp later or equal to the given timestamp.
         """
         def _iter_ids():
             with open(self.index_path) as f:
@@ -99,7 +101,8 @@ class BinaryDataStore(DataStore):
         for config_id in _iter_ids() if config_ids is None else config_ids:
             config = Config(self, config_id=config_id)
             config.read()
-            yield config
+            if timestamp is None or config.timestamp >= timestamp:
+                yield config
 
 
 class Config(ConfigBase):
@@ -391,12 +394,12 @@ class Config(ConfigBase):
             raise StoreError("Uninitialised config (call read or write)")
         self._write_freq_data(worker, self.TEMPERATURE_TIMES, self.TEMPERATURE_DATA, timestamp, 0, temperature)
 
-    def iter_error(self, worker):
+    def iter_error(self, worker, start=None, end=None):
         """ Yield (timestamp, error) for all errors.
         """
         if self.values is None:
             raise StoreError("Uninitialised config (call read or write)")
-        for timestamp, _, error in self._iter_freq_data(worker, self.ERROR_TIMES, self.ERROR_DATA):
+        for timestamp, _, error in self._iter_freq_data(worker, self.ERROR_TIMES, self.ERROR_DATA, start, end):
             yield timestamp, error
 
     def write_error(self, worker, timestamp, error):
