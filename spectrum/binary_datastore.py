@@ -176,7 +176,7 @@ class Config(ConfigBase):
                         f.seek(0, os.SEEK_END)
                         pos = f.tell()
                         if get_n: pos -= _N_STRUCT.size
-                        self.counts[worker] = pos / _T_STRUCT.size
+                        self.counts[worker] = pos / _T_STRUCT.size #FIXME this isn't working because strength is stored by hamlib worker every second during audio recording, not once per sweep
         self.first = min(firsts) if len(firsts) > 0 else None
         self.latest = max(latests) if len(latests) > 0 else None
         return self

@@ -134,8 +134,7 @@ class Worker(Process):
             self.status['sweep']['record'] = {'freq_n': idx}
             yield
 
-            path = '{0}.wav'.format(config.write_audio(self.prefix, now(), idx))
-            log.info("Recording audio at %sHz and storing in %s", freq, path)
+            log.info("Recording audio at %sHz", freq)
 
             if not monitor.set_frequency(freq):
                 raise Exception("Could not change frequency: {0}".format(freq))
@@ -146,7 +145,8 @@ class Worker(Process):
                     self._read_temp(config)
                     yield
                     if count >= config.values['hamlib']['audio']['duration'] - 1: break
-                audio.write(path)
+                path = config.write_audio(self.prefix, now(), idx)
+                audio.write('{0}.wav'.format(path))
 
     # fall back to Pi CPU temperature if Pico temperature not available
     def _read_temp(self, config):

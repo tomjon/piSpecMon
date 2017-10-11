@@ -19,14 +19,18 @@ export class WorkerData {
     this.mapAudio(data.audio, config_id);
     this.mapRdsNames(data.rds_name);
     this.mapRdsText(data.rds_text);
-    this.temperature = this.temperature.concat(data.temperature);
-    if (this.temperature.length > 0) {
-      this.updateTimestamp(this.temperature[this.temperature.length - 1][0]);
-    }
+    this.mapTemperature(data.temperature);
   }
 
   private updateTimestamp(t: number) {
     this.timestamp = Math.max(this.timestamp || t, t);
+  }
+
+  // update from [[time0, temp0], [time1, temp1], [time2, temp2], ...]
+  private mapTemperature(temperature: any[]) {
+    if (temperature.length == 0) return;
+    this.temperature = this.temperature.concat(temperature);
+    this.updateTimestamp(this.temperature[this.temperature.length - 1][0]);
   }
 
   private mapAudio(audio: any[], config_id: string) {
@@ -35,17 +39,21 @@ export class WorkerData {
     let sweep_n = -1;
     let sweep_t = null;
     for (let a of audio) {
-      this.updateTimestamp(a.timestamp);
-      a.path = `/audio/${config_id}/${this.key}/${a.freq_n}/${a.timestamp}`;
-      if (! this.samples[a.freq_n]) {
-        this.samples[a.freq_n] = [];
+      if (a.filesize) {
+        this.updateTimestamp(a.timestamp);
       }
-      this.samples[a.freq_n].push(a);
+      a.path = `/audio/${config_id}/${this.key}/${a.freq_n}/${a.timestamp}`;
       while (sweep_t == null || (sweep_t != 0 && a.timestamp > sweep_t)) {
         let sweep = this.spectrum.levels[++sweep_n];
         sweep_t = sweep ? sweep.timestamp : 0;
       }
-      this.audio[`${sweep_n - 1}_${a.freq_n}`] = a.path;
+      if (! this.samples[a.freq_n]) {
+        this.samples[a.freq_n] = [];
+      }
+      this.samples[a.freq_n][sweep_n - 1] = a;
+      if (a.filesize) {
+        this.audio[`${sweep_n - 1}_${a.freq_n}`] = a.path;
+      }
     }
   }
 

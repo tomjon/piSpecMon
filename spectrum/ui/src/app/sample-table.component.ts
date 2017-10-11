@@ -16,16 +16,14 @@ import { Chart } from './chart';
                </div>
                <table *ngIf="data != undefined && data.samples[freq_n] && data.samples[freq_n].length > 0">
                  <tr>
-                   <th>Timestamp</th>
+                   <th>Timestamp (end)</th>
                    <th>Sample</th>
                    <th>File details</th>
                  </tr>
                  <tr *ngFor="let sample of data.samples[freq_n].slice().reverse(); let first = first">
                    <td>{{sample.timestamp | date}}</td>
                    <td>
-                     <audio *ngIf="sample.filesize != undefined" controls src="{{sample.path}}" preload="none"></audio>
-                     <span *ngIf="sample.filesize == undefined && first">Sample recording</span>
-                     <span *ngIf="sample.filesize == undefined && ! first">No sample file</span>
+                     <audio controls src="{{sample.path}}" preload="none"></audio>
                    </td>
                    <td>{{sample.filetype}} {{sample.filesize | bytes}}</td>
                  </tr>
