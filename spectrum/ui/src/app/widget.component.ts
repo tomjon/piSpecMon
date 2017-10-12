@@ -18,7 +18,6 @@ declare var $;
          {{title}}
          <span *ngIf="show" class="toggle glyphicon glyphicon-collapse-down"></span>
          <span *ngIf="! show" class="toggle glyphicon glyphicon-collapse-up"></span>
-         <span *ngIf="loading" class="busy glyphicon glyphicon-transfer"></span>
        </h1>
        <div *ngIf="showIcons && show" class="icons">
          <span *ngIf="loading" class="busy glyphicon glyphicon-transfer"></span>
