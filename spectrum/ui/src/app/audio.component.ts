@@ -1,30 +1,22 @@
 import { Component, ViewChild } from '@angular/core';
 import { DataService } from './data.service';
+import { StateService } from './state.service';
 import { WidgetBase } from './widget.base';
 
 @Component({
   selector: 'psm-audio',
-  template: `<psm-widget key="audio" title="Audio Configuration">
-              <div class="form-group">
-                <label for="rate">Rate (samples /s)</label>
-                <select psmInput class="form-control" [(ngModel)]="values.rate" name="rate">
-                  <option value="8000">8000</option>
-                  <option value="11025">11025</option>
-                  <option value="22050">22050</option>
-                  <option value="44100">44100</option>
-                  <option value="96000">96000</option>
-                </select>
-              </div>
-              <div [hidden]="true">
-                <audio #audioL controls preload="none"></audio>
-                <audio #audioR controls preload="none"></audio>
-              </div>
-              <div class="form-group">
-                Play <input type="number" min="1" step="1" [(ngModel)]="n" /> second of audio from:
-                <button (click)="onClick('L')">Left</button>
-                <button (click)="onClick('R')">Right</button>
-              </div>
-             </psm-widget>`,
+  template: `
+    <psm-widget title="Live Audio">
+      <div [hidden]="true">
+        <audio #audioL controls preload="none"></audio>
+        <audio #audioR controls preload="none"></audio>
+      </div>
+      <div class="form-group">
+        Play <input type="number" min="1" step="1" [(ngModel)]="n" /> second of audio from:
+        <button (click)="onClick('L')">{{label('L')}}</button>
+        <button (click)="onClick('R')">{{label('R')}}</button>
+      </div>
+    </psm-widget>`,
   styles: ['input[type=number] { width: 40px }']
 })
 export class AudioComponent extends WidgetBase {
@@ -33,7 +25,11 @@ export class AudioComponent extends WidgetBase {
 
   private n: number = 1;
 
-  constructor (private dataService: DataService) { super() }
+  constructor (private dataService: DataService, private stateService: StateService) { super() }
+
+  label(channel): string {
+    return this.stateService.constants.channel_label[channel];
+  }
 
   onClick(channel) {
     let audio = this[channel].nativeElement;

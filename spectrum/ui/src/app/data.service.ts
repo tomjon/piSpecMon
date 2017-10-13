@@ -14,7 +14,7 @@ export class DataService {
   getConstants(): Observable<any> {
     return this.http.get(`${this.baseUrl}constants`)
                     .map(res => res.json())
-                    .catch(this.errorHandler("get UI cpnstants"));
+                    .catch(this.errorHandler("get UI constants"));
   }
 
   getSettings(): Observable<any> {

@@ -31,6 +31,7 @@ radio_on:
 
 # audio settings (for AudioServer and AudioClient)
 audio:
+    rate: 44100
     oss_device: dsp1
     zmq_port: 8234
 
@@ -69,7 +70,6 @@ event_path: /var/lib/psm/events
 # default settings - if left empty, rig model is set later using Hamlib
 default:
     audio_settings:
-        rate: 44100
         receiver_channel: L
         rds_channel: R
 
@@ -150,6 +150,10 @@ ui_config:
     tick_interval: 1000
     hz_labels: {0: 'Hz', 3: 'kHz', 6: 'MHz', 9: 'GHz'}
     max_n: 10
+
+    channel_label:
+        L: Receiver
+        R: Monkeyboard
 
     worker_labels:
         hamlib: Hamlib Receiver

@@ -6,7 +6,7 @@ import shutil
 import wave
 from tempfile import NamedTemporaryFile
 import zmq
-from spectrum.config import AUDIO_OSS_DEVICE, AUDIO_ZMQ_PORT
+from spectrum.config import AUDIO_OSS_DEVICE, AUDIO_ZMQ_PORT, AUDIO_RATE
 try:
     import ossaudiodev
 except ImportError:
@@ -16,7 +16,6 @@ from spectrum.common import check_device
 # fixed format and rate for now
 FORMAT = ossaudiodev.AFMT_S16_LE
 SAMPLE_WIDTH = 2
-RATE = 44100
 
 # these contants are used to specify channel
 CHANNEL_LEFT = 'L'
@@ -50,9 +49,9 @@ class AudioServer(object): # pylint: disable=too-few-public-methods
     def run(self):
         """ Grab audio and publish wav frames on left/right.
         """
-        self.audio.setparameters(FORMAT, 2, RATE, True)
+        self.audio.setparameters(FORMAT, 2, AUDIO_RATE, True)
         while True:
-            data = self.audio.read(SAMPLE_WIDTH * 2 * RATE) # read a one second chunk
+            data = self.audio.read(SAMPLE_WIDTH * 2 * AUDIO_RATE) # read a one second chunk
             chunked = list(chunks(data, SAMPLE_WIDTH))
             for offset, topic in enumerate((CHANNEL_LEFT, CHANNEL_RIGHT)):
                 msg = ''.join(chunked[offset::2])
@@ -78,7 +77,7 @@ class AudioClient(object):
         self.wav = wave.open(self.temp or self.f, 'wb')
         self.wav.setsampwidth(SAMPLE_WIDTH)
         self.wav.setnchannels(1)
-        self.wav.setframerate(RATE)
+        self.wav.setframerate(AUDIO_RATE)
         return self
 
     def __exit__(self, *args):
