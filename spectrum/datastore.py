@@ -41,6 +41,14 @@ class DataStore(object):
             'free': fs_free(self.data_path)
         }
 
+    #FIXME this multiplicity of audio path functions will go when data not stored against config (just timestamp, type)
+    def find_audio_file(self, relpath, extensions):
+        for ext in extensions:
+            path = os.path.join(self.samples_path, '{0}.{1}'.format(relpath, ext))
+            if os.path.isfile(path):
+                return path, ext
+        return None
+
 
 class ConfigBase(object):
     """ Class for managing config id, timestamp, values, first and last sweep times,
@@ -57,10 +65,16 @@ class ConfigBase(object):
         self.latest = latest
         self.count = count
 
+    def rel_audio_path(self, worker, timestamp, freq_n):
+        """ Return a (base) path at which an audio sample is stored, relative
+            to the samples path.
+        """
+        return os.path.join(self.id, worker, str(freq_n), str(timestamp))
+
     def audio_path(self, worker, timestamp, freq_n):
         """ Return a (base) path at which an audio sample is stored.
         """
-        return os.path.join(self._data_store.samples_path, self.id, worker, str(freq_n), str(timestamp))
+        return os.path.join(self._data_store.samples_path, self.rel_audio_path(worker, timestamp, freq_n))
 
     def _delete_audio(self):
         """ Delete all audio samples stored for the config.

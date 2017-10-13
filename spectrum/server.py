@@ -231,7 +231,8 @@ def audio_endpoint(config_id, worker, freq_n, timestamp):
         int(timestamp), int(freq_n)
     except ValueError:
         return 'Bad parameter', 400
-    path = application.find_audio_path(config_id, worker, freq_n, timestamp)
+    config = application.data_store.config(config_id)
+    path = config.find_audio_path(worker, timestamp, freq_n)
     if path is not None:
         return application.send_file_partial(path)
     return 'File not found', 404

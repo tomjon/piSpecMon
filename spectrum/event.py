@@ -30,10 +30,39 @@ class EventManager(object):
     def upload(self, t0, json):
         """ Upload data since the specified date.
         """
-        timestamp = json.get('timestamp', 0)
+        timestamp = int(json.get('timestamp', 0)) * 1000
         for config in self.data_store.iter_config(timestamp=timestamp):
-            data = dumps(config.get_json(start=timestamp))
-            rdevice.upload(data, 'application/json', t0)
+            data = config.get_json(start=timestamp)
+
+            count = sum(sum(len(data[w][k]) for k in data[w]) for w in data)
+            if count == 0: continue
+
+            #FIXME store the sample file path in the Overseer for ease of recall - this will go when data not stored against config
+            for worker in data:
+                samples = []
+                for t, freq_n in data[worker]['audio']:
+                    sample = {'timestamp': t, 'freq_n': freq_n}
+                    sample['path'] = config.rel_audio_path(worker, t, freq_n)
+                    samples.append(sample)
+                data[worker]['audio'] = samples
+
+            rdevice.upload(dumps(data), 'application/json', t0)
+
+    def file(self, t0, json):
+        """ Send a requested file to the Overseer. Relative path (less extension)
+            is specified, and list of accepted file types (extensions).
+
+            FIXME for now we assume this is an audio sample, so the path is relative to the samples path
+        """
+        relpath = json.get('path', None)
+        extensions = json.get('allow', None)
+        if relpath is None or extensions is None:
+            return
+        path, ext = self.data_store.find_audio_file(relpath, extensions)
+        if path is not None:
+            with open(path) as f:
+                #FIXME no streaming, no nothing
+                rdevice.upload(f.read(), 'audio/{0}'.format(ext), t0)
 
     def run(self):
         """ Run the RDevice service.
@@ -52,7 +81,7 @@ class EventManager(object):
         if rdevice is None:
             log.error("No rdevice support")
             return
-        rdevice.main(rdevice.sleep_timer(), upload=self.upload)
+        rdevice.main(rdevice.sleep_timer(), upload=self.upload, file=self.file)
 
 
 class EventClient(object):

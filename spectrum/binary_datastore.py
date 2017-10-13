@@ -101,7 +101,8 @@ class BinaryDataStore(DataStore):
         for config_id in _iter_ids() if config_ids is None else config_ids:
             config = Config(self, config_id=config_id)
             config.read()
-            if timestamp is None or config.timestamp >= timestamp:
+            #FIXME need to yield the last config before the timestamp cutoff... problem goes away once data not stored against config
+            if True or timestamp is None or config.timestamp >= timestamp:
                 yield config
 
 
