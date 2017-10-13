@@ -106,7 +106,8 @@ class Worker(Process):
                         self.status['sweep']['peaks'].append(peak)
                         yield
 
-                    self._read_temp(config)
+                    temp = self._read_temp(config)
+                    config.write_temperature(self.prefix, now(), temp)
 
                 if w[1][1] < w[2][1] and w[2][1] >= threshold:
                     peaks.append((w[2][2], w[2][0]))
@@ -158,6 +159,5 @@ class Worker(Process):
         except IOError as e:
             log.debug("No UPS temperature ({0})".format(str(e)))
             temp = str(cpu.temperature)
-
-        config.write_temperature(self.prefix, now(), temp)
         self.status['temp'] = temp
+        return temp
