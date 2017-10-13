@@ -69,7 +69,7 @@ class ConfigBase(object):
         if os.path.isdir(samples_path):
             shutil.rmtree(samples_path)
 
-    def _find_audio_path(self, worker, timestamp, freq_n):
+    def find_audio_path(self, worker, timestamp, freq_n):
         base = self.audio_path(worker, timestamp, freq_n)
         for ext in ['mp3', 'ogg', 'wav']:
             path = '{0}.{1}'.format(base, ext)
@@ -77,7 +77,7 @@ class ConfigBase(object):
                 return path
         return None
 
-    def get_json(self, start=None, end=None, maskTemp=False): #FIXME rather than mask the temperatures, Overseer should ask for what it wants explicitely
+    def get_json(self, start=None, end=None):
         data = {}
         for worker in self.values['workers']:
             w = data[worker] = {}
@@ -85,17 +85,8 @@ class ConfigBase(object):
             w['spectrum'] = list(self.iter_spectrum(worker, start=start, end=end))
             w['rds_name'] = list(self.iter_rds_name(worker, start=start, end=end))
             w['rds_text'] = list(self.iter_rds_text(worker, start=start, end=end))
-            if not maskTemp:
-                w['temperature'] = list(self.iter_temperature(worker, start=start, end=end))
-
-            w['audio'] = []
-            for timestamp, freq_n in self.iter_audio(worker, start=start, end=end):
-                sample = {'timestamp': timestamp, 'freq_n': freq_n}
-                path = self._find_audio_path(worker, timestamp, freq_n)
-                if path is not None:
-                    sample['filetype'] = (os.path.splitext(path)[1] or '.')[1:]
-                    sample['filesize'] = os.path.getsize(path)
-                w['audio'].append(sample)
+            w['temperature'] = list(self.iter_temperature(worker, start=start, end=end))
+            w['audio'] = list(self.iter_audio(worker, start=start, end=end))
         return data
 
 

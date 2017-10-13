@@ -32,7 +32,7 @@ class EventManager(object):
         """
         timestamp = json.get('timestamp', 0)
         for config in self.data_store.iter_config(timestamp=timestamp):
-            data = dumps(config.get_json(start=timestamp, maskTemp=True))
+            data = dumps(config.get_json(start=timestamp))
             rdevice.upload(data, 'application/json', t0)
 
     def run(self):

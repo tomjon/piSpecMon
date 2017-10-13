@@ -201,7 +201,21 @@ def data_endpoint(config_id):
         data = {}
         #FIXME ok, just take the max... abandon per-worker start/end times and have data store not take a timestamp parameter when storing data (it will always be 'now')
         start = max(_int_arg('start_' + worker) for worker in config.values['workers'])
-        return json.dumps(config.get_json(start=start, end=_int_arg('end')))
+        data = config.get_json(start=start, end=_int_arg('end'))
+
+        # transform audio data into something more useful for the UI, adding file details
+        for worker in data:
+            samples = []
+            for timestamp, freq_n in data[worker]['audio']:
+                sample = {'timestamp': timestamp, 'freq_n': freq_n}
+                path = config.find_audio_path(worker, timestamp, freq_n)
+                if path is not None:
+                    sample['filetype'] = (os.path.splitext(path)[1] or '.')[1:]
+                    sample['filesize'] = os.path.getsize(path)
+                samples.append(sample)
+            data[worker]['audio'] = samples
+
+        return json.dumps(data)
     except StoreError as e:
         return e.message, 500
 
