@@ -20,13 +20,15 @@ import { Chart } from './chart';
                    <th>Sample</th>
                    <th>File details</th>
                  </tr>
-                 <tr *ngFor="let sample of data.samples[freq_n].slice().reverse(); let first = first">
-                   <td>{{sample.timestamp | date}}</td>
-                   <td>
-                     <audio controls src="{{sample.path}}" preload="none"></audio>
-                   </td>
-                   <td>{{sample.filetype}} {{sample.filesize | bytes}}</td>
-                 </tr>
+                 <ng-container *ngFor="let sample of data.samples[freq_n].slice().reverse()">
+                   <tr *ngIf="sample != undefined">
+                     <td>{{sample.timestamp | date}}</td>
+                     <td>
+                       <audio controls src="{{sample.path}}" preload="none"></audio>
+                     </td>
+                     <td>{{sample.filetype}} {{sample.filesize | bytes}}</td>
+                   </tr>
+                 </ng-container>
                </table>
                <div *ngIf="data != undefined && (! data.samples[freq_n] || data.samples[freq_n].length == 0)">
                  No audio samples recorded at selected frequency
