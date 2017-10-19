@@ -62,7 +62,7 @@ class EventManager(object):
         if path is not None:
             with open(path) as f:
                 #FIXME no streaming, no nothing
-                rdevice.upload(f.read(), 'audio/{0}'.format(ext), t0, headers={'X-Path': path})
+                rdevice.upload(f.read(), 'audio/{0}'.format(ext), t0, headers={'X-Path': relpath})
 
     def run(self):
         """ Run the RDevice service.
