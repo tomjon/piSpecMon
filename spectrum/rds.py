@@ -59,17 +59,22 @@ class RdsApi(object):
             raise Exception("Error reading signal strength: {0}".format(error.contents.value))
         return strength
 
+    #FIXME we ought to be able to handle Unicode
+    def _ascii(self):
+        s = self._buffer.value.strip()
+        return s.encode('ascii', 'ignore') if s is not None else None
+
     def get_name(self):
         """ Read the decoded RDS name string.
         """
         value = DLL.GetProgramName(c_char_p(MODE_FM), c_long(0), c_char_p(1), self._buffer)
-        return self._buffer.value.strip() if value > 0 else None
+        return self._ascii() if value > 0 else None
 
     def get_text(self):
         """ Read the decoded RDS text string.
         """
         value = DLL.GetProgramText(self._buffer)
-        return self._buffer.value.strip() if value == 0 else None
+        return self._ascii() if value == 0 else None
 
 if __name__ == '__main__':
     from audio import AudioClient

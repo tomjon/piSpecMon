@@ -142,8 +142,6 @@ class Worker(Process):
 
         while time() < time_0 + self.rds['scan']['text_timeout']:
             text = self.api.get_text()
-            if text is not None:
-                text = text.encode('ascii', 'ignore') #FIXME should be able to store Unicode
             self.status['strength'] = self.api.get_strength()
             self.status['text'] = text
             yield self.status['strength'], False
