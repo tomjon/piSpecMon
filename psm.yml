@@ -34,6 +34,7 @@ audio:
     rate: 44100
     oss_device: dsp1
     zmq_port: 8234
+    aac_bitrate: 128
 
 rig_device: ttyUSB0
 rds_device: ttyACM0

@@ -12,7 +12,7 @@ import { WidgetBase } from './widget.base';
         <audio #audioR controls preload="none"></audio>
       </div>
       <div class="form-group">
-        Play <input type="number" min="1" step="1" [(ngModel)]="n" /> second of audio from:
+        Stream audio from:
         <button (click)="onClick('L')">{{label('L')}}</button>
         <button (click)="onClick('R')">{{label('R')}}</button>
       </div>
@@ -33,7 +33,11 @@ export class AudioComponent extends WidgetBase {
 
   onClick(channel) {
     let audio = this[channel].nativeElement;
-    let qs = `?n=${this.n}&x=${Date.now()}`; // the Date.now() is a cache buster
+    if (! audio.paused) {
+      audio.pause();
+      return;
+    }
+    let qs = `?x=${Date.now()}`; //FIXME the Date.now() is a cache buster; is this needed now we are streaming? (try and see)
     audio.src = this.dataService.getAudioUrl(channel) + qs;
     audio.load();
     audio.play();

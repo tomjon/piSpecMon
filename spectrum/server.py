@@ -14,7 +14,7 @@ from spectrum.datastore import StoreError
 from spectrum.common import log, now, parse_config, scan, freq
 from spectrum.users import IncorrectPasswordError, UsersError
 from spectrum.webapp import WebApplication
-from spectrum.audio import AudioClient
+from spectrum.audio import AudioStream
 from spectrum.event import EVENT_IDENT, EVENT_LOGIN, EVENT_LOGOUT, EVENT_START, EVENT_STOP
 from spectrum.config import UI_CONFIG, EXPORT_DIRECTORY, PI_CONTROL_PATH, PICO_PATH
 from spectrum.main import WORKER_MODULES
@@ -241,37 +241,16 @@ def audio_endpoint(config_id, worker, freq_n, timestamp):
 @application.route('/live/<channel>')
 def live_endpoint(channel):
     """ Endpoint for live streaming an audio channel.
-
-        FIXME: this doesn't actually stream, rather sends the whole .wav in one go
     """
-    try:
-        n = int(request.args.get('n', 1))
-        if n < 0 or n > 600:
-            raise ValueError()
-    except ValueError:
-        return 'Bad value for "n"', 400
+    f = StringIO()
 
-    class Buffer(StringIO):
-        def close(self):
-            self.v = self.getvalue()
-            StringIO.close(self)
+    def generate():
+        with AudioStream(channel, f) as audio:
+            for count, packets in enumerate(audio):
+                for packet in packets:
+                    yield packet
 
-    f = Buffer()
-    with AudioClient(channel, f) as audio:
-        for count, _ in enumerate(audio):
-            if count >= n: break
-
-    range_header = request.headers.get('Range', 'bytes=0-')
-    if range_header[:6] != 'bytes=':
-        return "Bad range header", 400
-    r0, r1 = range_header[6:].split('-')
-
-    if r0 != '0': return "Unsupported range header", 400
-
-    rsp = Response(f.v, 206, mimetype="audio/x-wav", direct_passthrough=True)
-    bytes_range = 'bytes {0}-{1}/{2}'.format(0, len(f.v) - 1, len(f.v))
-    rsp.headers.add('Content-Range', bytes_range)
-    return rsp
+    return Response(generate(), 200, mimetype="audio/aac")
 
 
 @application.route('/users')
